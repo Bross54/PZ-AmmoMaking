@@ -1,0 +1,10 @@
+module AmmoMaking
+{
+    item ZincOre
+    {
+        DisplayName = Zinc Ore,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+    }
+}
