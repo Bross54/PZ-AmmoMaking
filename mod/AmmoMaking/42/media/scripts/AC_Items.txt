@@ -8,6 +8,14 @@ module AmmoMaking
         Weight = 0.5,
     }
 
+    item ZincIngot
+    {
+        DisplayName = Zinc Ingot,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 1.0,
+    }
+
     item TestCartridge
     {
         DisplayName = Test 9mm Cartridge,
