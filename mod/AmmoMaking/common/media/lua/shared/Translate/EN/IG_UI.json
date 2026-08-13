@@ -1,4 +1,15 @@
 {
-    "IGUI_perks_AmmoMaking": "Ammo Making",
-    "IGUI_perks_Ammo Making_Description": "Knowledge and skill involved in crafting, inspecting and reloading ammunition."
+  "IGUI_perks_AmmoMaking": "Ammo Making",
+  "IGUI_perks_Ammo Making_Description": "Knowledge and skill involved in crafting, inspecting and reloading ammunition.",
+
+  "IGUI_perks_Ammo Making_Description1": "You can recognize basic ammunition components.",
+  "IGUI_perks_Ammo Making_Description2": "You can roughly judge the quality of simple ammunition.",
+  "IGUI_perks_Ammo Making_Description3": "You can identify basic casing and projectile defects.",
+  "IGUI_perks_Ammo Making_Description4": "You can estimate whether ammunition is underloaded or overloaded.",
+  "IGUI_perks_Ammo Making_Description5": "You can inspect primers and estimate cartridge reliability.",
+  "IGUI_perks_Ammo Making_Description6": "You can estimate component quality with moderate accuracy.",
+  "IGUI_perks_Ammo Making_Description7": "You can identify dangerous ammunition and probable failure types.",
+  "IGUI_perks_Ammo Making_Description8": "You can estimate ammunition quality and reliability with high accuracy.",
+  "IGUI_perks_Ammo Making_Description9": "You can identify subtle manufacturing defects and dangerous loads.",
+  "IGUI_perks_Ammo Making_Description10": "You can precisely assess ammunition quality, reliability and failure risk."
 }
