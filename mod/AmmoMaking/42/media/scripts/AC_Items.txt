@@ -7,4 +7,12 @@ module AmmoMaking
         ItemType = base:normal,
         Weight = 0.5,
     }
+
+    item TestCartridge
+    {
+        DisplayName = Test 9mm Cartridge,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+    }
 }
