@@ -5,6 +5,7 @@ module AmmoMaking
         DisplayName = Zinc Ore,
         DisplayCategory = Material,
         ItemType = base:normal,
+        Icon = IronOre,
         Weight = 0.5,
     }
 
@@ -13,6 +14,7 @@ module AmmoMaking
         DisplayName = Zinc Ingot,
         DisplayCategory = Material,
         ItemType = base:normal,
+        Icon = Ingot_Silver,
         Weight = 1.0,
     }
 
@@ -21,6 +23,7 @@ module AmmoMaking
         DisplayName = Geological Sample,
         DisplayCategory = Material,
         ItemType = base:normal,
+        Icon = SpecimanJar_Full1,
         Weight = 0.3,
     }
 
@@ -29,6 +32,7 @@ module AmmoMaking
         DisplayName = Field Assay Kit,
         DisplayCategory = Tool,
         ItemType = base:normal,
+        Icon = FirstAid_Camping,
         Weight = 1.0,
     }
 
@@ -37,6 +41,7 @@ module AmmoMaking
         DisplayName = Advanced Field Assay Kit,
         DisplayCategory = Tool,
         ItemType = base:normal,
+        Icon = MakeupCase_Professional,
         Weight = 1.5,
     }
 
@@ -45,6 +50,7 @@ module AmmoMaking
         DisplayName = Laboratory Assay Analyzer,
         DisplayCategory = Tool,
         ItemType = base:normal,
+        Icon = CarBatteryCharger,
         Weight = 12.0,
     }
 
@@ -53,6 +59,7 @@ module AmmoMaking
         DisplayName = Test 9mm Cartridge,
         DisplayCategory = Ammo,
         ItemType = base:normal,
+        Icon = RifleAmmo308loose,
         Weight = 0.01,
     }
 }
