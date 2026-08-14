@@ -1,17 +1,48 @@
 # Ammo Making
 
+> **Current target:** Project Zomboid Build 42.20 Stable  
+> **Status:** 🚧 Work in Progress  
+> **Development:** 🤖 Built with AI assistance
+
+---
+
+# 🤖 AI Disclosure
+
+This project is being developed with significant assistance from AI tools, primarily **ChatGPT by OpenAI**.
+
+AI assistance is used throughout development for:
+
+- code generation
+- code iteration and refactoring
+- debugging and troubleshooting
+- Project Zomboid Lua experimentation
+- system architecture
+- gameplay system design
+- documentation
+- development planning
+- research assistance
+
+AI-generated suggestions and code are **not treated as automatically correct**.
+
+Features are actively tested in Project Zomboid, while gameplay direction, implementation decisions and final changes are reviewed and tested by the project author.
+
+Because the project is under active development, AI-assisted code may contain bugs, incorrect assumptions or compatibility issues.
+
+Bug reports, testing feedback and technical suggestions are welcome.
+
+---
+
+# About
+
 **Ammo Making** is an advanced ammunition manufacturing, geology, mining and metallurgy mod for **Project Zomboid Build 42**.
 
 The goal of the mod is to turn ammunition production into a complete progression system rather than a simple crafting recipe.
 
 Players will be able to survey the world for raw materials, analyze geological samples, mine finite ore deposits, process metals, manufacture ammunition components and eventually produce different types and qualities of ammunition.
 
-> **Current target:** Project Zomboid Build 42.20 Stable  
-> **Status:** Work in Progress
-
 ---
 
-## Overview
+# Overview
 
 Ammo Making is designed around a complete production chain:
 
@@ -64,13 +95,13 @@ The skill is integrated into the Build 42 perk system.
 
 ## Procedural Geology
 
-Copper and zinc are distributed through the world using deterministic procedural geology.
+Copper and zinc are distributed throughout the world using deterministic procedural geology.
 
 Each save receives its own geology layout.
 
-The same save always generates the same deposits after restarting the game.
+The same save always generates the same geology after restarting the game.
 
-Geology currently supports:
+Current geology supports:
 
 - procedural copper concentration
 - procedural zinc concentration
@@ -158,8 +189,9 @@ Features:
 - processing pauses when electricity is unavailable
 - approximately 24 in-game hours per analysis
 - processing survives save/reload
-- sample remains stored inside the analyzer
+- samples remain stored inside the analyzer
 - analyzer cannot be picked up while occupied
+- analyzer can be picked up again when empty
 - laboratory results use approximately ±2% instrument tolerance
 
 Example result:
@@ -175,6 +207,8 @@ Grade: Trace
 
 Instrument Tolerance: +/-2%
 ```
+
+The Laboratory Assay Analyzer currently uses a temporary vanilla Project Zomboid world sprite while final visuals are still in development.
 
 ---
 
@@ -303,27 +337,25 @@ Material quality will eventually influence ammunition quality.
 
 The long-term goal is to support a complete ammunition production workflow.
 
-Planned systems include:
-
-### Cartridge Cases
+## Cartridge Cases
 
 Brass will be formed into cartridge cases using molds and manufacturing equipment.
 
-### Projectiles
+## Projectiles
 
 Copper and other materials will be used to manufacture projectile components.
 
-### Primers
+## Primers
 
 Primers will require dedicated manufacturing materials and processes.
 
-### Powder
+## Powder
 
 Powder load will influence cartridge performance and safety.
 
 Incorrect powder loads may create dangerous ammunition.
 
-### Cartridge Assembly
+## Cartridge Assembly
 
 Dedicated presses will be used to assemble finished ammunition.
 
@@ -389,25 +421,25 @@ Repeatedly reloading the same casing may gradually reduce its reliability.
 
 # Design Goals
 
-Ammo Making is being built around several principles:
+Ammo Making is being built around several principles.
 
-### No Infinite Resource Machines
+## No Infinite Resource Machines
 
 Mining should depend on actual geological deposits.
 
-### Persistent World Systems
+## Persistent World Systems
 
 Deposits, machines and processing should survive save/reload.
 
-### Player Progression
+## Player Progression
 
 Advanced manufacturing should require knowledge, equipment and skill.
 
-### Risk vs Reward
+## Risk vs Reward
 
 Poor manufacturing decisions should have meaningful consequences.
 
-### Project Zomboid Integration
+## Project Zomboid Integration
 
 Where possible, Ammo Making uses existing Build 42 systems, materials, animations and world mechanics rather than replacing them.
 
@@ -417,54 +449,72 @@ Where possible, Ammo Making uses existing Build 42 systems, materials, animation
 
 The mod is currently in active development.
 
-### Implemented
+## ✅ Implemented
 
-- [x] Build 42 mod structure
-- [x] Ammo Making skill
-- [x] Ammunition quality framework
-- [x] Ammunition inspection system
-- [x] Deterministic geology seed
-- [x] Procedural copper geology
-- [x] Procedural zinc geology
-- [x] Geological sampling
-- [x] Field assay system
-- [x] Advanced field assay system
-- [x] Laboratory assay system
-- [x] Placeable Laboratory Assay Analyzer
-- [x] Electrical power requirement
-- [x] Processing pause during power loss
-- [x] Persistent laboratory processing
-- [x] Zinc ore
-- [x] Zinc ingot
+✅ Build 42 mod structure  
+✅ Ammo Making skill  
+✅ Ammunition quality framework  
+✅ Ammunition inspection system  
+✅ Deterministic geology seed  
+✅ Procedural copper geology  
+✅ Procedural zinc geology  
+✅ Geological sampling  
+✅ Shovel-based geological sample collection  
+✅ 3×3 geological sample areas  
+✅ Field assay system  
+✅ Advanced field assay system  
+✅ Laboratory assay system  
+✅ Placeable Laboratory Assay Analyzer  
+✅ Laboratory Analyzer world-object persistence  
+✅ Laboratory Analyzer pickup and placement system  
+✅ Electrical power requirement  
+✅ Utility-grid electricity support  
+✅ Generator electricity support  
+✅ Processing pause during power loss  
+✅ 24-hour laboratory processing  
+✅ Persistent laboratory processing  
+✅ Laboratory sample persistence  
+✅ Laboratory ±2% instrument tolerance  
+✅ Zinc ore  
+✅ Zinc ingot  
 
-### In Development
+## 🚧 In Development
 
-- [ ] Final Laboratory Analyzer visuals
-- [ ] Finite ore deposits
-- [ ] Deposit depletion
-- [ ] Mining machine
-- [ ] Mining fuel consumption
-- [ ] Mining component wear
+🔄 Final Laboratory Analyzer visuals  
+🔄 Laboratory Analyzer directional sprites / visual rotation  
+🔄 Finite ore deposits  
+🔄 Deposit depletion  
+🔄 Mining machine  
+🔄 Mining fuel consumption  
+🔄 Mining component wear  
 
-### Planned
+## 📋 Planned
 
-- [ ] Furnaces
-- [ ] Copper smelting
-- [ ] Zinc smelting
-- [ ] Brass alloys
-- [ ] Material purity
-- [ ] Cartridge case manufacturing
-- [ ] Projectile manufacturing
-- [ ] Primer manufacturing
-- [ ] Cartridge presses
-- [ ] Shotgun shell presses
-- [ ] Reloading
-- [ ] Spent casing recovery
-- [ ] Ammunition failures
-- [ ] Advanced ammunition types
-- [ ] Skill books / manuals
-- [ ] Sandbox settings
-- [ ] Multiplayer support and synchronization
+⬜ Furnaces  
+⬜ Copper smelting  
+⬜ Zinc smelting  
+⬜ Brass production  
+⬜ Multiple brass alloys  
+⬜ Material purity  
+⬜ Clay molds  
+⬜ Metal molds  
+⬜ Cartridge case manufacturing  
+⬜ Projectile manufacturing  
+⬜ Primer manufacturing  
+⬜ Cartridge presses  
+⬜ Shotgun shell presses  
+⬜ Shotgun ammunition variants  
+⬜ Reloading  
+⬜ Spent casing recovery  
+⬜ Spent shotgun hull recovery  
+⬜ Casing degradation  
+⬜ Ammunition failures  
+⬜ Weapon damage from dangerous ammunition  
+⬜ Advanced ammunition types  
+⬜ Specialty ammunition  
+⬜ Skill books / manuals  
+⬜ Sandbox settings  
+⬜ Multiplayer support and synchronization  
 
 ---
 
@@ -474,30 +524,43 @@ Currently developed for:
 
 **Project Zomboid Build 42.20 Stable**
 
-Compatibility with other builds is not guaranteed during development.
+Compatibility with other Project Zomboid builds is not guaranteed during development.
+
+The project is being developed and tested primarily against Build 42 systems and APIs.
 
 ---
 
 # Installation
 
-The mod is currently intended for development and testing.
+The mod is currently intended primarily for development and testing.
 
-Clone or download the repository and place the `AmmoMaking` mod folder inside:
+Clone or download the repository.
+
+Place the `AmmoMaking` mod folder inside:
 
 ```text
 C:\Users\<USERNAME>\Zomboid\mods\
 ```
 
-The resulting structure should contain:
+The resulting installation should look similar to:
 
 ```text
 Zomboid
 └── mods
     └── AmmoMaking
         ├── common
+        │   └── media
+        │       └── lua
+        │           └── shared
+        │
         └── 42
             ├── mod.info
             └── media
+                ├── scripts
+                └── lua
+                    ├── client
+                    ├── server
+                    └── shared
 ```
 
 Enable **Ammo Making** from the Project Zomboid Mods menu.
@@ -506,39 +569,87 @@ Enable **Ammo Making** from the Project Zomboid Mods menu.
 
 # Repository Structure
 
+The development repository is currently organized approximately as follows:
+
 ```text
-AmmoMaking
-├── common
-│   └── media
-│       └── lua
-│           └── shared
-│               └── Translate
+PZ-AmmoMaking
+├── README.md
+├── PROJECT_CONTEXT.md
 │
-└── 42
-    ├── mod.info
-    │
-    └── media
-        ├── scripts
+└── mod
+    └── AmmoMaking
+        ├── common
+        │   └── media
+        │       └── lua
+        │           └── shared
+        │               └── Translate
         │
-        └── lua
-            ├── client
-            ├── server
-            │   └── BuildingObjects
-            └── shared
+        └── 42
+            ├── mod.info
+            │
+            └── media
+                ├── scripts
+                │   └── AC_Items.txt
+                │
+                └── lua
+                    ├── client
+                    │   ├── AC_AmmoContextMenu.lua
+                    │   ├── AC_AmmoInspectionUI.lua
+                    │   ├── AC_GeologyDebug.lua
+                    │   ├── AC_GeologyAssayUI.lua
+                    │   ├── AC_GeologySamplingContextMenu.lua
+                    │   └── AC_DigGeologicalSampleAction.lua
+                    │
+                    ├── server
+                    │   └── BuildingObjects
+                    │       └── AC_LaboratoryAnalyzerObject.lua
+                    │
+                    └── shared
+                        ├── AC_AmmoMakingSkill.lua
+                        ├── AC_AmmoQuality.lua
+                        ├── AC_AmmoInspection.lua
+                        ├── AC_WorldData.lua
+                        ├── AC_Geology.lua
+                        ├── AC_GeologySampling.lua
+                        └── AC_LaboratoryAnalyzer.lua
 ```
+
+The repository structure may change as additional systems are implemented.
 
 ---
 
 # Disclaimer
 
-Ammo Making is an unofficial community mod for Project Zomboid.
+Ammo Making is an unofficial community mod for **Project Zomboid**.
+
+This project is not affiliated with, endorsed by, sponsored by or associated with **The Indie Stone**.
 
 Project Zomboid and The Indie Stone are trademarks of their respective owners.
+
+Parts of this project's code, documentation, design process and development workflow were created with the assistance of AI tools.
+
+---
+
+# Contributing & Feedback
+
+Ammo Making is currently an experimental work-in-progress project.
+
+Bug reports, testing results, balance suggestions and technical feedback are welcome.
+
+When reporting an issue, useful information includes:
+
+- Project Zomboid build number
+- whether the issue occurs in a new or existing save
+- relevant steps to reproduce the issue
+- relevant `console.txt` errors
+- screenshots where applicable
 
 ---
 
 # Development
 
-This repository contains active development code and systems may change significantly between commits.
+This repository contains active development code.
 
-Bug reports, testing feedback and development suggestions are welcome.
+Systems, recipes, item names, balancing, world-generation logic and save-data structures may change significantly between versions.
+
+Backwards compatibility between development versions is not guaranteed.
