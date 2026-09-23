@@ -100,10 +100,12 @@ MOCK.cell = {
 
 function getCell() return MOCK.cell end
 
+MOCK.hydroPowerOn = false
+
 function getWorld()
     return {
         getWorld = function() return MOCK.saveName end,
-        isHydroPowerOn = function() return false end,
+        isHydroPowerOn = function() return MOCK.hydroPowerOn end,
         getCell = function() return MOCK.cell end,
     }
 end
@@ -484,6 +486,7 @@ local function newSquare(x, y, z, spriteName, opts)
         return false
     end
     function square:haveElectricity() return false end
+    function square:hasGridPower() return opts.gridPower == true end
     return square
 end
 

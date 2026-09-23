@@ -705,26 +705,36 @@ function AC_LaboratoryAnalyzer.hasPower(
 
 
     ------------------------------------------------
-    -- Utility grid / hydro power.
+    -- Utility grid power, only for an analyzer inside
+    -- a mapped room. Same rule vanilla Build 42.20 uses
+    -- for the car battery charger:
     --
-    -- Hydro power should only count for an analyzer
-    -- placed inside a mapped room/building.
+    --   haveElectricity()
+    --   or (hasGridPower() and getRoom())
+    --
+    -- A build without IsoGridSquare:hasGridPower falls
+    -- back to the world's hydro power flag.
     ------------------------------------------------
+
+    if square:getRoom() == nil then
+        return false
+    end
+
+
+    if square.hasGridPower then
+
+        return
+            square:hasGridPower() == true
+    end
+
 
     local world =
         getWorld()
 
 
-    if world
-        and world:isHydroPowerOn()
-        and square:getRoom() ~= nil
-    then
-
-        return true
-    end
-
-
-    return false
+    return
+        world ~= nil
+        and world:isHydroPowerOn() == true
 end
 
 

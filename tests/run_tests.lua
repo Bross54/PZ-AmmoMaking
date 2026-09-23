@@ -1756,6 +1756,38 @@ do
     MOCK.worldHours = 0
 end
 
+section("Laboratory analyzer power rule")
+do
+    -- Mirrors vanilla 42.20's car battery charger check:
+    -- haveElectricity() or (hasGridPower() and getRoom()).
+    local function analyzerOn(opts)
+        local square = MOCK.newSquare(860, 30, 0, "floors_interior_tiles_01_0", opts)
+        return placeAnalyzerObject(square), square
+    end
+
+    local indoorGrid = analyzerOn({ room = {}, gridPower = true })
+    eq(AC_LaboratoryAnalyzer.hasPower(indoorGrid), true, "grid power inside a room")
+
+    local indoorNoGrid = analyzerOn({ room = {}, gridPower = false })
+    eq(AC_LaboratoryAnalyzer.hasPower(indoorNoGrid), false, "no grid power inside a room")
+
+    local outdoorGrid = analyzerOn({ gridPower = true })
+    eq(AC_LaboratoryAnalyzer.hasPower(outdoorGrid), false, "grid power does not reach an analyzer outdoors")
+
+    local generator, generatorSquare = analyzerOn({})
+    generatorSquare.haveElectricity = function() return true end
+    eq(AC_LaboratoryAnalyzer.hasPower(generator), true, "generator power outdoors")
+
+    local legacy, legacySquare = analyzerOn({ room = {} })
+    legacySquare.hasGridPower = nil
+    MOCK.hydroPowerOn = true
+    eq(AC_LaboratoryAnalyzer.hasPower(legacy), true, "falls back to hydro power without hasGridPower")
+    MOCK.hydroPowerOn = false
+    eq(AC_LaboratoryAnalyzer.hasPower(legacy), false, "fallback respects hydro power off")
+
+    eq(AC_LaboratoryAnalyzer.hasPower(MOCK.newWorldObject()), false, "not an analyzer -> no power")
+end
+
 section("Translation keys used in code exist in IG_UI.json")
 do
     local handle = io.open(ROOT .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/IG_UI.json", "r")
