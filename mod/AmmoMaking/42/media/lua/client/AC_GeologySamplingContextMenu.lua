@@ -3,6 +3,7 @@
 
 require "ISUI/ISInventoryPaneContextMenu"
 require "TimedActions/ISTimedActionQueue"
+require "BuildingObjects/AC_LaboratoryAnalyzerObject"
 require "luautils"
 
 
@@ -88,14 +89,7 @@ local function isValidSamplingSquare(
     end
 
 
-    ------------------------------------------------
-    -- Never allow soil sampling inside a mapped
-    -- room/building, regardless of the underlying
-    -- floor sprite.
-    ------------------------------------------------
-
     if square:getRoom() ~= nil then
-
         return false
     end
 
@@ -108,7 +102,84 @@ end
 
 
 ------------------------------------------------
--- FIND LAB ANALYZER
+-- SEARCH SQUARE FOR ANALYZER
+------------------------------------------------
+
+local function findAnalyzerOnSquare(
+    square
+)
+
+    if not square then
+        return nil
+    end
+
+
+    ------------------------------------------------
+    -- New placed analyzer.
+    ------------------------------------------------
+
+    local specialObjects =
+        square:getSpecialObjects()
+
+
+    if specialObjects then
+
+        for index = 0,
+            specialObjects:size() - 1
+        do
+
+            local object =
+                specialObjects:get(
+                    index
+                )
+
+
+            if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+                object
+            ) then
+
+                return object
+            end
+        end
+    end
+
+
+    ------------------------------------------------
+    -- Legacy dropped analyzer.
+    ------------------------------------------------
+
+    local worldObjects =
+        square:getWorldObjects()
+
+
+    if worldObjects then
+
+        for index = 0,
+            worldObjects:size() - 1
+        do
+
+            local object =
+                worldObjects:get(
+                    index
+                )
+
+
+            if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+                object
+            ) then
+
+                return object
+            end
+        end
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
+-- FIND ANALYZER FROM CONTEXT
 ------------------------------------------------
 
 local function getAnalyzerWorldObject(
@@ -136,6 +207,10 @@ local function getAnalyzerWorldObject(
     end
 
 
+    local checkedSquares =
+        {}
+
+
     for _,
         object
     in ipairs(
@@ -151,31 +226,22 @@ local function getAnalyzerWorldObject(
                 object:getSquare()
 
 
-            if square then
+            if square
+                and not checkedSquares[square]
+            then
 
-                local worldItems =
-                    square:getWorldObjects()
-
-
-                if worldItems then
-
-                    for index = 0,
-                        worldItems:size() - 1
-                    do
-
-                        local worldItem =
-                            worldItems:get(
-                                index
-                            )
+                checkedSquares[square] =
+                    true
 
 
-                        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
-                            worldItem
-                        ) then
+                local analyzer =
+                    findAnalyzerOnSquare(
+                        square
+                    )
 
-                            return worldItem
-                        end
-                    end
+
+                if analyzer then
+                    return analyzer
                 end
             end
         end
@@ -261,7 +327,7 @@ end
 
 
 ------------------------------------------------
--- VIEW SAMPLE RESULT
+-- VIEW ASSAY
 ------------------------------------------------
 
 local function viewAssay(
@@ -325,6 +391,7 @@ local function analyzeSample(
                 "Assay kit is empty"
             )
 
+
         elseif errorCode
             == "already_analyzed"
         then
@@ -334,6 +401,7 @@ local function analyzeSample(
                 "Sample already has an equal or better assay"
             )
 
+
         elseif errorCode
             == "lab_processing"
         then
@@ -342,6 +410,7 @@ local function analyzeSample(
                 player,
                 "Sample is currently being analyzed"
             )
+
 
         else
 
@@ -370,7 +439,76 @@ end
 
 
 ------------------------------------------------
--- SHOW LAB STATUS
+-- PLACE ANALYZER
+------------------------------------------------
+
+local function placeLaboratoryAnalyzer(
+    playerIndex,
+    analyzerItem
+)
+
+    local player =
+        getSpecificPlayer(
+            playerIndex
+        )
+
+
+    if not player
+        or not analyzerItem
+    then
+
+        return
+    end
+
+
+    if not AC_LaboratoryAnalyzer.isAnalyzerItem(
+        analyzerItem
+    ) then
+
+        return
+    end
+
+
+    if not analyzerItem:getContainer() then
+
+        HaloTextHelper.addText(
+            player,
+            "Analyzer must be in inventory"
+        )
+
+
+        return
+    end
+
+
+    local buildingObject =
+        AC_LaboratoryAnalyzerObject:new(
+            analyzerItem
+        )
+
+
+    buildingObject.player =
+        playerIndex
+
+
+    buildingObject.character =
+        player
+
+
+    getCell():setDrag(
+        buildingObject,
+        playerIndex
+    )
+
+
+    print(
+        "[AmmoMaking] Laboratory analyzer placement mode started"
+    )
+end
+
+
+------------------------------------------------
+-- LAB STATUS
 ------------------------------------------------
 
 local function showLaboratoryStatus(
@@ -439,7 +577,8 @@ local function showLaboratoryStatus(
         end
 
 
-        local text =
+        HaloTextHelper.addText(
+            player,
             string.format(
                 "%s - %.1f hours remaining",
                 prefix,
@@ -448,11 +587,6 @@ local function showLaboratoryStatus(
                 )
                 or 0
             )
-
-
-        HaloTextHelper.addText(
-            player,
-            text
         )
 
 
@@ -507,12 +641,14 @@ local function startLaboratoryAssay(
                 "Laboratory analyzer requires electricity"
             )
 
+
         elseif errorCode == "busy" then
 
             HaloTextHelper.addText(
                 player,
                 "Laboratory analyzer is already occupied"
             )
+
 
         elseif errorCode
             == "invalid_sample"
@@ -522,6 +658,7 @@ local function startLaboratoryAssay(
                 player,
                 "This sample cannot be analyzed"
             )
+
 
         else
 
@@ -577,12 +714,14 @@ local function collectLaboratorySample(
                 "Laboratory assay is still processing"
             )
 
+
         elseif errorCode == "empty" then
 
             HaloTextHelper.addText(
                 player,
                 "Laboratory analyzer is empty"
             )
+
 
         else
 
@@ -611,7 +750,132 @@ end
 
 
 ------------------------------------------------
--- ADD ANALYZER OPTIONS
+-- PICK UP PLACED ANALYZER
+------------------------------------------------
+
+local function pickUpLaboratoryAnalyzer(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    if not AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+        analyzerWorldObject
+    ) then
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- Machine must be completely idle.
+    ------------------------------------------------
+
+    local info =
+        AC_LaboratoryAnalyzer.getStatusInfo(
+            analyzerWorldObject
+        )
+
+
+    if not info
+        or info.state ~= "idle"
+    then
+
+        HaloTextHelper.addText(
+            player,
+            "Analyzer must be empty before pickup"
+        )
+
+
+        return
+    end
+
+
+    local square =
+        analyzerWorldObject:getSquare()
+
+
+    if not square then
+
+        HaloTextHelper.addText(
+            player,
+            "Could not locate analyzer"
+        )
+
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- Create inventory item.
+    ------------------------------------------------
+
+    local item =
+        player:getInventory():AddItem(
+            AC_LaboratoryAnalyzer.ITEMS.Analyzer
+        )
+
+
+    if not item then
+
+        HaloTextHelper.addText(
+            player,
+            "Could not pick up analyzer"
+        )
+
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- Remove the persistent world object.
+    --
+    -- transmitRemoveItemFromSquare() informs the
+    -- world/network state.
+    --
+    -- RemoveTileObject() removes the local object
+    -- from the IsoGridSquare immediately so the
+    -- sprite does not remain visible.
+    ------------------------------------------------
+
+    square:transmitRemoveItemFromSquare(
+        analyzerWorldObject
+    )
+
+
+    square:RemoveTileObject(
+        analyzerWorldObject
+    )
+
+
+    square:RecalcAllWithNeighbours(
+        true
+    )
+
+
+    HaloTextHelper.addText(
+        player,
+        "Laboratory Assay Analyzer picked up"
+    )
+
+
+    print(
+        "[AmmoMaking] Laboratory analyzer picked up and removed from world"
+    )
+end
+
+
+------------------------------------------------
+-- ANALYZER WORLD MENU
 ------------------------------------------------
 
 local function addLaboratoryAnalyzerOptions(
@@ -654,6 +918,19 @@ local function addLaboratoryAnalyzerOptions(
         )
 
 
+        if AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+            analyzerWorldObject
+        ) then
+
+            context:addOption(
+                "Pick Up Laboratory Assay Analyzer",
+                player,
+                pickUpLaboratoryAnalyzer,
+                analyzerWorldObject
+            )
+        end
+
+
         if not info.powered then
 
             local option =
@@ -669,6 +946,10 @@ local function addLaboratoryAnalyzerOptions(
             return
         end
 
+
+        ------------------------------------------------
+        -- Find carried geological samples.
+        ------------------------------------------------
 
         local samples =
             player:getInventory():
@@ -706,7 +987,7 @@ local function addLaboratoryAnalyzerOptions(
                         sample:getModData()
 
 
-                    local optionName =
+                    context:addOption(
                         "Start Lab Assay: Sample "
                         .. tostring(
                             data.sampleX
@@ -714,11 +995,7 @@ local function addLaboratoryAnalyzerOptions(
                         .. ", "
                         .. tostring(
                             data.sampleY
-                        )
-
-
-                    context:addOption(
-                        optionName,
+                        ),
                         player,
                         startLaboratoryAssay,
                         analyzerWorldObject,
@@ -748,8 +1025,6 @@ local function addLaboratoryAnalyzerOptions(
 
     ------------------------------------------------
     -- PROCESSING
-    --
-    -- Only ONE status option now.
     ------------------------------------------------
 
     if info.state == "processing" then
@@ -901,6 +1176,30 @@ local function onFillInventoryContextMenu(
             )
 
 
+        ------------------------------------------------
+        -- LABORATORY ANALYZER
+        ------------------------------------------------
+
+        if AC_LaboratoryAnalyzer.isAnalyzerItem(
+            item
+        ) then
+
+            context:addOption(
+                "Place Laboratory Assay Analyzer",
+                playerIndex,
+                placeLaboratoryAnalyzer,
+                item
+            )
+
+
+            return
+        end
+
+
+        ------------------------------------------------
+        -- GEOLOGICAL SAMPLE
+        ------------------------------------------------
+
         if AC_GeologySampling.isSample(
             item
         ) then
@@ -921,6 +1220,10 @@ local function onFillInventoryContextMenu(
                 or 0
 
 
+            ------------------------------------------------
+            -- VIEW RESULT
+            ------------------------------------------------
+
             if assayRank > 0 then
 
                 context:addOption(
@@ -931,6 +1234,10 @@ local function onFillInventoryContextMenu(
                 )
             end
 
+
+            ------------------------------------------------
+            -- FIELD ASSAY
+            ------------------------------------------------
 
             if assayRank < 1 then
 
@@ -953,6 +1260,10 @@ local function onFillInventoryContextMenu(
                 end
             end
 
+
+            ------------------------------------------------
+            -- ADVANCED FIELD ASSAY
+            ------------------------------------------------
 
             if assayRank < 2 then
 
@@ -1008,7 +1319,7 @@ Events.OnFillInventoryObjectContextMenu.Add(
 
 
 ------------------------------------------------
--- LOAD MESSAGE
+-- LOAD
 ------------------------------------------------
 
 print(

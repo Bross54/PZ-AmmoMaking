@@ -32,6 +32,14 @@ AC_LaboratoryAnalyzer.ITEMS = {
 
 
 ------------------------------------------------
+-- WORLD OBJECT
+------------------------------------------------
+
+AC_LaboratoryAnalyzer.OBJECT_NAME =
+    "AmmoMakingLaboratoryAnalyzer"
+
+
+------------------------------------------------
 -- SAMPLE DATA FIELDS
 ------------------------------------------------
 
@@ -149,7 +157,7 @@ end
 
 
 ------------------------------------------------
--- ANALYZER ITEM CHECK
+-- INVENTORY ANALYZER ITEM
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.isAnalyzerItem(
@@ -164,10 +172,10 @@ end
 
 
 ------------------------------------------------
--- WORLD ANALYZER CHECK
+-- LEGACY DROPPED ANALYZER
 ------------------------------------------------
 
-function AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+function AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
     worldObject
 )
 
@@ -185,22 +193,93 @@ function AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
     end
 
 
+    local item =
+        worldObject:getItem()
+
+
     return
         AC_LaboratoryAnalyzer.isAnalyzerItem(
-            worldObject:getItem()
+            item
         )
 end
 
 
 ------------------------------------------------
--- GET ANALYZER ITEM
+-- NEW PLACED ANALYZER
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+    worldObject
+)
+
+    if not worldObject then
+        return false
+    end
+
+
+    if instanceof(
+        worldObject,
+        "IsoWorldInventoryObject"
+    ) then
+
+        return false
+    end
+
+
+    local data =
+        worldObject:getModData()
+
+
+    if data
+        and data.AmmoMakingLaboratoryAnalyzerWorldObject
+            == true
+    then
+
+        return true
+    end
+
+
+    if worldObject.getName
+        and worldObject:getName()
+            == AC_LaboratoryAnalyzer.OBJECT_NAME
+    then
+
+        return true
+    end
+
+
+    return false
+end
+
+
+------------------------------------------------
+-- ANY ANALYZER WORLD OBJECT
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+    worldObject
+)
+
+    return
+        AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
+            worldObject
+        )
+        or
+        AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+            worldObject
+        )
+end
+
+
+------------------------------------------------
+-- LEGACY ANALYZER ITEM
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.getAnalyzerItem(
     worldObject
 )
 
-    if not AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+    if not AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
         worldObject
     ) then
 
@@ -213,13 +292,62 @@ end
 
 
 ------------------------------------------------
--- UPDATE ANALYZER NAME
+-- GET PERSISTENT ANALYZER DATA
 ------------------------------------------------
 
-local function updateAnalyzerName(
-    item,
+function AC_LaboratoryAnalyzer.getAnalyzerData(
+    worldObject
+)
+
+    if AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
+        worldObject
+    ) then
+
+        local item =
+            worldObject:getItem()
+
+
+        if not item then
+            return nil
+        end
+
+
+        return item:getModData()
+    end
+
+
+    if AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+        worldObject
+    ) then
+
+        return worldObject:getModData()
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
+-- UPDATE LEGACY DROPPED ITEM NAME
+------------------------------------------------
+
+local function updateLegacyAnalyzerName(
+    worldObject,
     state
 )
+
+    if not AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
+        worldObject
+    ) then
+
+        return
+    end
+
+
+    local item =
+        worldObject:getItem()
+
 
     if not item then
         return
@@ -237,11 +365,13 @@ local function updateAnalyzerName(
             "Laboratory Assay Analyzer (Processing)"
         )
 
+
     elseif state == "ready" then
 
         item:setName(
             "Laboratory Assay Analyzer (Result Ready)"
         )
+
 
     else
 
@@ -253,26 +383,30 @@ end
 
 
 ------------------------------------------------
--- INITIALIZE ANALYZER
+-- INITIALIZE
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.initialize(
     worldObject
 )
 
-    local item =
-        AC_LaboratoryAnalyzer.getAnalyzerItem(
-            worldObject
-        )
+    if not AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+        worldObject
+    ) then
 
-
-    if not item then
-        return nil, nil
+        return nil
     end
 
 
     local data =
-        item:getModData()
+        AC_LaboratoryAnalyzer.getAnalyzerData(
+            worldObject
+        )
+
+
+    if not data then
+        return nil
+    end
 
 
     data.AmmoMakingLaboratoryAnalyzer =
@@ -286,13 +420,13 @@ function AC_LaboratoryAnalyzer.initialize(
     end
 
 
-    updateAnalyzerName(
-        item,
+    updateLegacyAnalyzerName(
+        worldObject,
         data.labAnalyzerState
     )
 
 
-    return item, data
+    return data
 end
 
 
@@ -322,7 +456,7 @@ function AC_LaboratoryAnalyzer.hasPower(
 
 
     ------------------------------------------------
-    -- Generator / square-level electricity.
+    -- Generator / local electrical power.
     ------------------------------------------------
 
     if square:haveElectricity() then
@@ -332,10 +466,7 @@ function AC_LaboratoryAnalyzer.hasPower(
 
 
     ------------------------------------------------
-    -- Utility grid / hydro power.
-    --
-    -- Hydro power should only count for an analyzer
-    -- placed inside a mapped room/building.
+    -- Utility grid power.
     ------------------------------------------------
 
     local world =
@@ -356,24 +487,20 @@ end
 
 
 ------------------------------------------------
--- UPDATE PROCESSING STATE
+-- UPDATE PROCESSING
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.updateState(
     worldObject
 )
 
-    local item,
-          data =
+    local data =
         AC_LaboratoryAnalyzer.initialize(
             worldObject
         )
 
 
-    if not item
-        or not data
-    then
-
+    if not data then
         return nil
     end
 
@@ -391,7 +518,7 @@ function AC_LaboratoryAnalyzer.updateState(
 
 
     ------------------------------------------------
-    -- MIGRATION FROM OLD READY-AT TIMER
+    -- MIGRATE OLD READY-AT TIMER
     ------------------------------------------------
 
     if data.labRemainingHours == nil then
@@ -419,11 +546,6 @@ function AC_LaboratoryAnalyzer.updateState(
     end
 
 
-    ------------------------------------------------
-    -- Calculate elapsed in-game time since the
-    -- analyzer was last checked.
-    ------------------------------------------------
-
     local lastUpdate =
         tonumber(
             data.labLastUpdateAt
@@ -439,7 +561,7 @@ function AC_LaboratoryAnalyzer.updateState(
 
 
     ------------------------------------------------
-    -- Only consume processing time while powered.
+    -- Only process while powered.
     ------------------------------------------------
 
     if AC_LaboratoryAnalyzer.hasPower(
@@ -460,10 +582,6 @@ function AC_LaboratoryAnalyzer.updateState(
     data.labLastUpdateAt =
         now
 
-
-    ------------------------------------------------
-    -- Keep readyAt for debug/display compatibility.
-    ------------------------------------------------
 
     data.labReadyAt =
         now
@@ -491,8 +609,8 @@ function AC_LaboratoryAnalyzer.updateState(
             0
 
 
-        updateAnalyzerName(
-            item,
+        updateLegacyAnalyzerName(
+            worldObject,
             "ready"
         )
 
@@ -515,21 +633,6 @@ end
 
 
 ------------------------------------------------
--- GET STATE
-------------------------------------------------
-
-function AC_LaboratoryAnalyzer.getState(
-    worldObject
-)
-
-    return
-        AC_LaboratoryAnalyzer.updateState(
-            worldObject
-        )
-end
-
-
-------------------------------------------------
 -- HOURS REMAINING
 ------------------------------------------------
 
@@ -548,19 +651,15 @@ function AC_LaboratoryAnalyzer.getHoursRemaining(
     end
 
 
-    local item =
-        AC_LaboratoryAnalyzer.getAnalyzerItem(
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
             worldObject
         )
 
 
-    if not item then
+    if not data then
         return 0
     end
-
-
-    local data =
-        item:getModData()
 
 
     return
@@ -572,7 +671,7 @@ end
 
 
 ------------------------------------------------
--- CHECK SAMPLE ELIGIBILITY
+-- SAMPLE ELIGIBILITY
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.canAnalyzeSample(
@@ -621,7 +720,7 @@ end
 
 
 ------------------------------------------------
--- STORE SAMPLE DATA
+-- STORE SAMPLE
 ------------------------------------------------
 
 local function storeSampleData(
@@ -653,7 +752,7 @@ end
 
 
 ------------------------------------------------
--- CLEAR STORED SAMPLE
+-- CLEAR SAMPLE
 ------------------------------------------------
 
 local function clearStoredSample(
@@ -677,20 +776,26 @@ local function clearStoredSample(
     data.storedSample =
         nil
 
+
     data.labStartedAt =
         nil
+
 
     data.labReadyAt =
         nil
 
+
     data.labRemainingHours =
         nil
+
 
     data.labLastUpdateAt =
         nil
 
+
     data.labCopperResult =
         nil
+
 
     data.labZincResult =
         nil
@@ -698,7 +803,7 @@ end
 
 
 ------------------------------------------------
--- START LABORATORY ASSAY
+-- START ASSAY
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.startAssay(
@@ -732,16 +837,13 @@ function AC_LaboratoryAnalyzer.startAssay(
     end
 
 
-    local item,
-          analyzerData =
+    local data =
         AC_LaboratoryAnalyzer.initialize(
             worldObject
         )
 
 
-    if not item
-        or not analyzerData
-    then
+    if not data then
 
         return false,
             "invalid_analyzer"
@@ -753,7 +855,7 @@ function AC_LaboratoryAnalyzer.startAssay(
     )
 
 
-    if analyzerData.labAnalyzerState
+    if data.labAnalyzerState
         ~= "idle"
     then
 
@@ -783,67 +885,66 @@ function AC_LaboratoryAnalyzer.startAssay(
 
 
     ------------------------------------------------
-    -- SAVE SAMPLE DATA
+    -- COPY SAMPLE DATA
     ------------------------------------------------
 
     storeSampleData(
-        analyzerData,
+        data,
         sample
     )
 
 
     ------------------------------------------------
-    -- Roll final laboratory result immediately so
-    -- saving/reloading cannot reroll the assay.
+    -- Roll result immediately.
     ------------------------------------------------
 
     local sampleData =
         sample:getModData()
 
 
-    analyzerData.labCopperResult =
+    data.labCopperResult =
         laboratoryMeasurement(
             sampleData.trueCopper
         )
 
 
-    analyzerData.labZincResult =
+    data.labZincResult =
         laboratoryMeasurement(
             sampleData.trueZinc
         )
 
 
     ------------------------------------------------
-    -- START PROCESSING
+    -- START TIMER
     ------------------------------------------------
 
     local now =
         getWorldHours()
 
 
-    analyzerData.labStartedAt =
+    data.labStartedAt =
         now
 
 
-    analyzerData.labRemainingHours =
+    data.labRemainingHours =
         AC_LaboratoryAnalyzer.CONFIG.processingHours
 
 
-    analyzerData.labLastUpdateAt =
+    data.labLastUpdateAt =
         now
 
 
-    analyzerData.labReadyAt =
+    data.labReadyAt =
         now
         + AC_LaboratoryAnalyzer.CONFIG.processingHours
 
 
-    analyzerData.labAnalyzerState =
+    data.labAnalyzerState =
         "processing"
 
 
     ------------------------------------------------
-    -- REMOVE SAMPLE FROM INVENTORY
+    -- REMOVE PHYSICAL SAMPLE
     ------------------------------------------------
 
     container:Remove(
@@ -856,8 +957,8 @@ function AC_LaboratoryAnalyzer.startAssay(
     )
 
 
-    updateAnalyzerName(
-        item,
+    updateLegacyAnalyzerName(
+        worldObject,
         "processing"
     )
 
@@ -865,11 +966,11 @@ function AC_LaboratoryAnalyzer.startAssay(
     print(
         "[AmmoMaking] Laboratory assay started for sample "
         .. tostring(
-            analyzerData.stored_sampleX
+            data.stored_sampleX
         )
         .. ", "
         .. tostring(
-            analyzerData.stored_sampleY
+            data.stored_sampleY
         )
         .. "; processing time = "
         .. tostring(
@@ -884,7 +985,7 @@ end
 
 
 ------------------------------------------------
--- COLLECT COMPLETED SAMPLE
+-- COLLECT SAMPLE
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.collectSample(
@@ -899,16 +1000,13 @@ function AC_LaboratoryAnalyzer.collectSample(
     end
 
 
-    local item,
-          analyzerData =
+    local data =
         AC_LaboratoryAnalyzer.initialize(
             worldObject
         )
 
 
-    if not item
-        or not analyzerData
-    then
+    if not data then
 
         return nil,
             "invalid_analyzer"
@@ -935,7 +1033,7 @@ function AC_LaboratoryAnalyzer.collectSample(
     end
 
 
-    if analyzerData.storedSample
+    if data.storedSample
         ~= true
     then
 
@@ -943,6 +1041,10 @@ function AC_LaboratoryAnalyzer.collectSample(
             "missing_sample"
     end
 
+
+    ------------------------------------------------
+    -- Recreate sample.
+    ------------------------------------------------
 
     local sample =
         player:getInventory():AddItem(
@@ -962,7 +1064,7 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     ------------------------------------------------
-    -- RESTORE ORIGINAL SAMPLE DATA
+    -- Restore original geology.
     ------------------------------------------------
 
     for _,
@@ -973,7 +1075,7 @@ function AC_LaboratoryAnalyzer.collectSample(
     do
 
         sampleData[field] =
-            analyzerData[
+            data[
                 "stored_" .. field
             ]
     end
@@ -984,7 +1086,7 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     ------------------------------------------------
-    -- LAB RESULT
+    -- FINAL LAB RESULT
     ------------------------------------------------
 
     sampleData.assayRank =
@@ -1000,7 +1102,7 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     sampleData.labStartedAt =
-        analyzerData.labStartedAt
+        data.labStartedAt
 
 
     sampleData.labReadyAt =
@@ -1009,14 +1111,14 @@ function AC_LaboratoryAnalyzer.collectSample(
 
     sampleData.labCopperResult =
         tonumber(
-            analyzerData.labCopperResult
+            data.labCopperResult
         )
         or 0
 
 
     sampleData.labZincResult =
         tonumber(
-            analyzerData.labZincResult
+            data.labZincResult
         )
         or 0
 
@@ -1048,16 +1150,16 @@ function AC_LaboratoryAnalyzer.collectSample(
     ------------------------------------------------
 
     clearStoredSample(
-        analyzerData
+        data
     )
 
 
-    analyzerData.labAnalyzerState =
+    data.labAnalyzerState =
         "idle"
 
 
-    updateAnalyzerName(
-        item,
+    updateLegacyAnalyzerName(
+        worldObject,
         "idle"
     )
 
@@ -1072,7 +1174,7 @@ end
 
 
 ------------------------------------------------
--- STATUS INFO
+-- STATUS
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.getStatusInfo(
@@ -1090,19 +1192,15 @@ function AC_LaboratoryAnalyzer.getStatusInfo(
     end
 
 
-    local item =
-        AC_LaboratoryAnalyzer.getAnalyzerItem(
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
             worldObject
         )
 
 
-    if not item then
+    if not data then
         return nil
     end
-
-
-    local data =
-        item:getModData()
 
 
     return {
@@ -1130,7 +1228,7 @@ end
 
 
 ------------------------------------------------
--- LOAD MESSAGE
+-- LOAD
 ------------------------------------------------
 
 print(
