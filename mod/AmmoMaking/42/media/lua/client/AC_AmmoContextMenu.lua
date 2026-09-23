@@ -168,74 +168,6 @@ end
 
 
 ------------------------------------------------
--- DEBUG AMMO MAKING LEVEL
-------------------------------------------------
-
-local function setAmmoMakingLevel(player, targetLevel)
-    if not player then
-        return
-    end
-
-    targetLevel = tonumber(targetLevel)
-
-    if not targetLevel then
-        return
-    end
-
-
-    -- Clamp to valid range
-    if targetLevel < 0 then
-        targetLevel = 0
-    elseif targetLevel > 10 then
-        targetLevel = 10
-    end
-
-
-    ------------------------------------------------
-    -- Direct debug level setter
-    ------------------------------------------------
-
-    player:setPerkLevelDebug(
-        AmmoMakingSkill.perk,
-        targetLevel
-    )
-
-
-    ------------------------------------------------
-    -- Synchronize XP with selected level
-    ------------------------------------------------
-
-    player:getXp():setXPToLevel(
-        AmmoMakingSkill.perk,
-        targetLevel
-    )
-
-
-    ------------------------------------------------
-    -- Verify actual level
-    ------------------------------------------------
-
-    local actualLevel =
-        AmmoMakingSkill.getLevel(player)
-
-
-    print(
-        "[AmmoMaking] Debug skill level set. Target="
-        .. tostring(targetLevel)
-        .. " Actual="
-        .. tostring(actualLevel)
-    )
-
-
-    HaloTextHelper.addText(
-        player,
-        "Ammo Making Level "
-        .. tostring(actualLevel)
-    )
-end
-
-
-------------------------------------------------
 -- DEBUG QUALITY SUBMENU
 ------------------------------------------------
 
@@ -308,48 +240,6 @@ end
 
 
 ------------------------------------------------
--- DEBUG SKILL LEVEL SUBMENU
-------------------------------------------------
-
-local function addSkillDebugMenu(
-    context,
-    player
-)
-
-    local levelOption =
-        context:addOption(
-            "Debug Ammo Making Level"
-        )
-
-
-    local levelMenu =
-        ISContextMenu:getNew(context)
-
-
-    context:addSubMenu(
-        levelOption,
-        levelMenu
-    )
-
-
-    ------------------------------------------------
-    -- Level 0 - 10
-    ------------------------------------------------
-
-    for level = 0, 10 do
-
-        levelMenu:addOption(
-            "Level " .. tostring(level),
-            player,
-            setAmmoMakingLevel,
-            level
-        )
-
-    end
-end
-
-
-------------------------------------------------
 -- INVENTORY CONTEXT MENU
 ------------------------------------------------
 
@@ -408,7 +298,12 @@ local function onFillInventoryContextMenu(
                 )
 
 
-                addSkillDebugMenu(
+                ------------------------------------------------
+                -- Shared with the world "Ammo Making Debug"
+                -- menu (AC_GeologyDebug).
+                ------------------------------------------------
+
+                AC_GeologyDebug.addSkillLevelMenu(
                     context,
                     player
                 )

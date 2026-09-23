@@ -1,12 +1,21 @@
--- Ammo Making - Geology debug tools
+-- Ammo Making - Debug tools
 -- Project Zomboid Build 42.20
+--
+-- One "Ammo Making Debug" submenu on the world context
+-- menu, available only when the game runs with -debug
+-- (isDebugEnabled() == true).
+--
+-- These tools reveal exact geology and reserves and can
+-- spawn items, so nothing here may be reachable outside
+-- debug mode. Labels are intentionally plain English;
+-- they are not player-facing.
 
 AC_GeologyDebug =
     AC_GeologyDebug or {}
 
 
 ------------------------------------------------
--- ROUND
+-- HELPERS
 ------------------------------------------------
 
 local function round(value)
@@ -18,17 +27,139 @@ local function round(value)
 end
 
 
+local function log(text)
+
+    print(
+        "[AmmoMaking] "
+        .. tostring(text)
+    )
+end
+
+
+local function halo(
+    player,
+    text
+)
+
+    HaloTextHelper.addText(
+        player,
+        tostring(text)
+    )
+end
+
+
+local function playerTile(
+    player
+)
+
+    return
+        math.floor(
+            player:getX()
+        ),
+        math.floor(
+            player:getY()
+        )
+end
+
+
 ------------------------------------------------
--- CHECK SURVEY SURFACE
+-- Spawns one item into the player's inventory and
+-- reports whether the item script exists. Returns
+-- the item or nil.
 ------------------------------------------------
 
-local function checkSurveySurface(
+local function spawnItem(
     player,
-    actionName
+    itemType
+)
+
+    local item =
+        player:getInventory():AddItem(
+            itemType
+        )
+
+
+    if item then
+
+        log(
+            "Debug spawn OK: "
+            .. tostring(itemType)
+        )
+
+    else
+
+        log(
+            "WARNING: debug spawn FAILED: "
+            .. tostring(itemType)
+            .. " (item script not found on this build?)"
+        )
+    end
+
+
+    return item
+end
+
+
+local function spawnItems(
+    player,
+    itemTypes,
+    label
 )
 
     if not player then
-        return nil
+        return
+    end
+
+
+    local okCount = 0
+
+
+    for _,
+        itemType
+    in ipairs(
+        itemTypes
+    )
+    do
+
+        if spawnItem(
+            player,
+            itemType
+        ) then
+
+            okCount =
+                okCount + 1
+        end
+    end
+
+
+    halo(
+        player,
+        label
+        .. ": "
+        .. okCount
+        .. "/"
+        .. #itemTypes
+        .. " items spawned"
+    )
+end
+
+
+------------------------------------------------
+-- INSPECT CURRENT TILE
+------------------------------------------------
+--
+-- True geology and reserve state of the tile the
+-- player stands on. Works on any square; the terrain
+-- verdict is reported instead of enforced so invalid
+-- ground can be diagnosed too.
+------------------------------------------------
+
+local function inspectTile(
+    player
+)
+
+    if not player then
+        return
     end
 
 
@@ -36,62 +167,225 @@ local function checkSurveySurface(
         player:getSquare()
 
 
-    if not square then
-
-        print(
-            "[AmmoMaking] "
-            .. tostring(actionName)
-            .. " failed: player square not found"
-        )
-
-        return nil
-    end
-
-
-    local spriteName =
-        AC_Geology.getFloorSpriteName(
-            square
+    local x,
+          y =
+        playerTile(
+            player
         )
 
 
-    print(
-        "[AmmoMaking] "
-        .. tostring(actionName)
-        .. " floor sprite: "
-        .. tostring(spriteName)
+    log("GEOLOGY TILE " .. x .. ", " .. y)
+
+
+    log(
+        "Floor sprite: "
+        .. tostring(
+            AC_Geology.getFloorSpriteName(
+                square
+            )
+        )
+        .. " | z = "
+        .. tostring(
+            square and square:getZ()
+        )
+        .. " | room = "
+        .. tostring(
+            square and square:getRoom() ~= nil
+        )
+        .. " | water = "
+        .. tostring(
+            AC_Geology.isWaterSquare(
+                square
+            )
+        )
+        .. " | mineable = "
+        .. tostring(
+            AC_Mining.isMineableSquare(
+                square
+            )
+        )
     )
 
 
-    if not AC_Geology.isSurveyableSquare(
-        square
-    ) then
-
-        print(
-            "[AmmoMaking] "
-            .. tostring(actionName)
-            .. " rejected: invalid ground surface"
+    local info =
+        AC_Deposits.getTileInfo(
+            x,
+            y
         )
 
 
-        HaloTextHelper.addText(
-            player,
-            "Requires natural ground"
+    local haloParts = {}
+
+
+    for _,
+        metal
+    in ipairs(
+        AC_Deposits.METALS
+    )
+    do
+
+        local m =
+            info[metal]
+
+
+        log(
+            AC_Deposits.METAL_NAMES[metal]
+            .. ": "
+            .. string.format("%.1f", m.concentration)
+            .. "% ("
+            .. m.grade
+            .. ") reserve "
+            .. m.remaining
+            .. "/"
+            .. m.initial
+            .. ", extracted "
+            .. m.extracted
+            .. ", worked "
+            .. tostring(m.worked)
         )
 
 
-        return nil
+        table.insert(
+            haloParts,
+            AC_Deposits.METAL_NAMES[metal]:sub(1, 2)
+            .. " "
+            .. round(m.concentration)
+            .. "% "
+            .. m.remaining
+            .. "/"
+            .. m.initial
+        )
     end
 
 
-    return square
+    halo(
+        player,
+        "Tile "
+        .. x
+        .. ","
+        .. y
+        .. ": "
+        .. table.concat(
+            haloParts,
+            " | "
+        )
+    )
 end
 
 
 ------------------------------------------------
--- PRINT GEOLOGY SEED
+-- SURVEY 3x3 AREA
 ------------------------------------------------
 
-local function printGeologySeed(
+local function surveyArea(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local x,
+          y =
+        playerTile(
+            player
+        )
+
+
+    local survey =
+        AC_Geology.surveyArea(
+            x,
+            y
+        )
+
+
+    log("GEOLOGICAL SURVEY " .. x .. ", " .. y .. " (3x3)")
+
+
+    log(
+        "Copper average "
+        .. round(survey.copperAverage)
+        .. "% ("
+        .. AC_Geology.getGrade(survey.copperAverage)
+        .. "), peak "
+        .. round(survey.copperPeak)
+        .. "%"
+    )
+
+
+    log(
+        "Zinc average "
+        .. round(survey.zincAverage)
+        .. "% ("
+        .. AC_Geology.getGrade(survey.zincAverage)
+        .. "), peak "
+        .. round(survey.zincPeak)
+        .. "%"
+    )
+
+
+    ------------------------------------------------
+    -- Per-tile reserves of the area, so a tester can
+    -- pick a tile with known ore before mining.
+    ------------------------------------------------
+
+    for offsetY = -1, 1 do
+
+        local row = {}
+
+
+        for offsetX = -1, 1 do
+
+            local tx =
+                x + offsetX
+
+            local ty =
+                y + offsetY
+
+
+            table.insert(
+                row,
+                tx
+                .. ","
+                .. ty
+                .. " Cu"
+                .. AC_Deposits.getRemaining(tx, ty, "copper")
+                .. "/"
+                .. AC_Deposits.getInitialReserve(tx, ty, "copper")
+                .. " Zn"
+                .. AC_Deposits.getRemaining(tx, ty, "zinc")
+                .. "/"
+                .. AC_Deposits.getInitialReserve(tx, ty, "zinc")
+            )
+        end
+
+
+        log(
+            table.concat(
+                row,
+                "   "
+            )
+        )
+    end
+
+
+    halo(
+        player,
+        "Survey: Cu "
+        .. round(survey.copperAverage)
+        .. "% | Zn "
+        .. round(survey.zincAverage)
+        .. "%"
+    )
+end
+
+
+------------------------------------------------
+-- GEOLOGY SEED
+------------------------------------------------
+
+local function showSeed(
     player
 )
 
@@ -104,205 +398,45 @@ local function printGeologySeed(
         AC_Geology.getSeedInfo()
 
 
-    print(
-        "[AmmoMaking] GEOLOGY SEEDS"
-    )
+    if not seeds then
 
+        log("WARNING: no save identity; geology seed unavailable")
 
-    print(
-        "[AmmoMaking] World Geology Seed: "
-        .. tostring(
-            seeds.geology
-        )
-    )
-
-
-    print(
-        "[AmmoMaking] Copper Seed: "
-        .. tostring(
-            seeds.copper
-        )
-    )
-
-
-    print(
-        "[AmmoMaking] Zinc Seed: "
-        .. tostring(
-            seeds.zinc
-        )
-    )
-
-
-    HaloTextHelper.addText(
-        player,
-        "Geology Seed: "
-        .. tostring(
-            seeds.geology
-        )
-    )
-end
-
-
-------------------------------------------------
--- INSPECT CURRENT TILE
-------------------------------------------------
-
-local function printTileGeology(
-    player
-)
-
-    if not player then
-        return
-    end
-
-
-    local square =
-        checkSurveySurface(
+        halo(
             player,
-            "Tile inspection"
+            "Geology seed unavailable"
         )
 
 
-    if not square then
         return
     end
 
 
-    local x =
-        math.floor(
-            player:getX()
-        )
-
-    local y =
-        math.floor(
-            player:getY()
-        )
-
-
-    local geology =
-        AC_Geology.getTileGeology(
-            x,
-            y
-        )
-
-
-    local copper =
-        round(
-            geology.copper
-        )
-
-
-    local zinc =
-        round(
-            geology.zinc
-        )
-
-
-    local copperGrade =
-        AC_Geology.getGrade(
-            geology.copper
-        )
-
-
-    local zincGrade =
-        AC_Geology.getGrade(
-            geology.zinc
-        )
-
-
-    print(
-        "[AmmoMaking] GEOLOGY TILE"
+    log(
+        "Save identity: "
+        .. tostring(seeds.identity)
+        .. " | geology seed "
+        .. tostring(seeds.geology)
+        .. " | copper "
+        .. tostring(seeds.copper)
+        .. " | zinc "
+        .. tostring(seeds.zinc)
     )
 
 
-    print(
-        "[AmmoMaking] Position: "
-        .. tostring(x)
-        .. ", "
-        .. tostring(y)
-    )
-
-
-    print(
-        "[AmmoMaking] Copper: "
-        .. tostring(copper)
-        .. "% ("
-        .. tostring(copperGrade)
-        .. ")"
-    )
-
-
-    print(
-        "[AmmoMaking] Zinc: "
-        .. tostring(zinc)
-        .. "% ("
-        .. tostring(zincGrade)
-        .. ")"
-    )
-
-
-    ------------------------------------------------
-    -- Mining reserves
-    ------------------------------------------------
-
-    local reserves =
-        AC_Deposits.getTileInfo(
-            x,
-            y
-        )
-
-
-    for _,
-        metal
-    in ipairs(
-        AC_Deposits.METALS
-    )
-    do
-
-        local info =
-            reserves[metal]
-
-
-        print(
-            "[AmmoMaking] "
-            .. AC_Deposits.getMetalName(metal)
-            .. " reserve: "
-            .. tostring(info.remaining)
-            .. "/"
-            .. tostring(info.initial)
-            .. " (extracted "
-            .. tostring(info.extracted)
-            .. ", worked "
-            .. tostring(info.worked)
-            .. ")"
-        )
-    end
-
-
-    HaloTextHelper.addText(
+    halo(
         player,
-        "Tile: Cu "
-        .. tostring(copper)
-        .. "% ("
-        .. tostring(reserves.copper.remaining)
-        .. "/"
-        .. tostring(reserves.copper.initial)
-        .. ") | Zn "
-        .. tostring(zinc)
-        .. "% ("
-        .. tostring(reserves.zinc.remaining)
-        .. "/"
-        .. tostring(reserves.zinc.initial)
-        .. ")"
+        "Geology seed: "
+        .. tostring(seeds.geology)
     )
 end
 
 
 ------------------------------------------------
--- RESET MINING DEPLETION (3x3)
+-- RESET DEPLETION
 ------------------------------------------------
 
-local function resetAreaDepletion(
+local function resetTile(
     player
 )
 
@@ -311,14 +445,49 @@ local function resetAreaDepletion(
     end
 
 
-    local x =
-        math.floor(
-            player:getX()
+    local x,
+          y =
+        playerTile(
+            player
         )
 
-    local y =
-        math.floor(
-            player:getY()
+
+    AC_Deposits.resetTile(
+        x,
+        y
+    )
+
+
+    log(
+        "Depletion reset at "
+        .. x
+        .. ", "
+        .. y
+        .. "; worked tiles in save: "
+        .. AC_Deposits.getWorkedTileCount()
+    )
+
+
+    halo(
+        player,
+        "Depletion reset (tile)"
+    )
+end
+
+
+local function resetArea(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local x,
+          y =
+        playerTile(
+            player
         )
 
 
@@ -334,80 +503,100 @@ local function resetAreaDepletion(
     end
 
 
-    print(
-        "[AmmoMaking] Mining depletion reset around "
-        .. tostring(x)
+    log(
+        "Depletion reset around "
+        .. x
         .. ", "
-        .. tostring(y)
-        .. "; worked tiles in save: "
-        .. tostring(
-            AC_Deposits.getWorkedTileCount()
-        )
+        .. y
+        .. " (3x3); worked tiles in save: "
+        .. AC_Deposits.getWorkedTileCount()
     )
 
 
-    HaloTextHelper.addText(
+    halo(
         player,
-        "Mining depletion reset (3x3)"
+        "Depletion reset (3x3)"
     )
 end
 
 
 ------------------------------------------------
--- SPAWN MINING TEST ITEMS
+-- SPAWN TEST ITEMS
 ------------------------------------------------
 
-local function spawnMiningTestItems(
+local function spawnSamplingKit(
     player
 )
 
-    if not player then
-        return
+    spawnItems(
+        player,
+        {
+            "Base.Shovel",
+            AC_GeologySampling.ITEMS.FieldKit,
+            AC_GeologySampling.ITEMS.AdvancedFieldKit,
+        },
+        "Sampling kit"
+    )
+end
+
+
+local function spawnMiningKit(
+    player
+)
+
+    local itemTypes = {}
+
+
+    for itemType in pairs(
+        AC_Mining.PICKAXE_TYPES
+    ) do
+
+        table.insert(
+            itemTypes,
+            itemType
+        )
     end
 
 
-    local itemTypes = {
-        "Base.Shovel",
-        "Base.PickAxe",
-        AC_GeologySampling.ITEMS.FieldKit,
-        AC_GeologySampling.ITEMS.AdvancedFieldKit,
-    }
-
-
-    for _,
-        itemType
-    in ipairs(
+    table.sort(
         itemTypes
     )
-    do
-
-        local item =
-            player:getInventory():AddItem(
-                itemType
-            )
 
 
-        print(
-            "[AmmoMaking] Debug spawn "
-            .. tostring(itemType)
-            .. ": "
-            .. (item and "OK" or "FAILED")
-        )
-    end
-
-
-    HaloTextHelper.addText(
+    spawnItems(
         player,
-        "Mining test items added"
+        itemTypes,
+        "Mining kit"
+    )
+end
+
+
+local function spawnLaboratoryAnalyzer(
+    player
+)
+
+    spawnItems(
+        player,
+        {
+            AC_LaboratoryAnalyzer.ITEMS.Analyzer,
+        },
+        "Laboratory analyzer"
     )
 end
 
 
 ------------------------------------------------
--- SURVEY 3x3 AREA
+-- SPAWN ASSAYED SAMPLE
+------------------------------------------------
+--
+-- Creates a sample of the 3x3 area around the player
+-- and applies an advanced field assay without using a
+-- kit, so the mining loop can be tested in seconds.
+-- The assay still carries measurement error, exactly
+-- like a real kit.
 ------------------------------------------------
 
-local function surveyPlayerArea(
+local function spawnAssayedSample(
     player
 )
 
@@ -416,160 +605,269 @@ local function surveyPlayerArea(
     end
 
 
-    local square =
-        checkSurveySurface(
+    local x,
+          y =
+        playerTile(
+            player
+        )
+
+
+    local sample,
+          errorCode =
+        AC_GeologySampling.buildSample(
             player,
-            "Survey"
-        )
-
-
-    if not square then
-        return
-    end
-
-
-    local x =
-        math.floor(
-            player:getX()
-        )
-
-    local y =
-        math.floor(
-            player:getY()
-        )
-
-
-    local survey =
-        AC_Geology.surveyArea(
             x,
             y
         )
 
 
-    local copper =
-        round(
-            survey.copperAverage
+    if not sample then
+
+        log(
+            "WARNING: debug sample failed: "
+            .. tostring(errorCode)
         )
 
 
-    local zinc =
-        round(
-            survey.zincAverage
+        halo(
+            player,
+            "Sample creation failed"
         )
 
 
-    local copperPeak =
-        round(
-            survey.copperPeak
-        )
+        return
+    end
 
 
-    local zincPeak =
-        round(
-            survey.zincPeak
-        )
-
-
-    local copperGrade =
-        AC_Geology.getGrade(
-            survey.copperAverage
-        )
-
-
-    local zincGrade =
-        AC_Geology.getGrade(
-            survey.zincAverage
-        )
-
-
-    print(
-        "[AmmoMaking] GEOLOGICAL SURVEY"
+    AC_GeologySampling.applyAssay(
+        sample,
+        2
     )
 
 
-    print(
-        "[AmmoMaking] Position: "
-        .. tostring(x)
+    local data =
+        sample:getModData()
+
+
+    log(
+        "Debug assayed sample at "
+        .. x
         .. ", "
-        .. tostring(y)
+        .. y
+        .. ": copper "
+        .. tostring(data.copperGrade)
+        .. ", zinc "
+        .. tostring(data.zincGrade)
     )
 
 
-    print(
-        "[AmmoMaking] Copper Average: "
-        .. tostring(copper)
-        .. "% ("
-        .. tostring(copperGrade)
-        .. ")"
-    )
-
-
-    print(
-        "[AmmoMaking] Zinc Average: "
-        .. tostring(zinc)
-        .. "% ("
-        .. tostring(zincGrade)
-        .. ")"
-    )
-
-
-    print(
-        "[AmmoMaking] Copper Peak: "
-        .. tostring(copperPeak)
-        .. "%"
-    )
-
-
-    print(
-        "[AmmoMaking] Zinc Peak: "
-        .. tostring(zincPeak)
-        .. "%"
-    )
-
-
-    HaloTextHelper.addText(
+    halo(
         player,
-        "Survey: Cu "
-        .. tostring(copper)
-        .. "% | Zn "
-        .. tostring(zinc)
-        .. "%"
+        "Assayed sample: Cu "
+        .. tostring(data.copperGrade)
+        .. " | Zn "
+        .. tostring(data.zincGrade)
     )
 end
 
 
 ------------------------------------------------
--- PUBLIC DEBUG FUNCTIONS
+-- SKILL LEVEL
 ------------------------------------------------
 
-function AC_GeologyDebug.tile(
-    player
+function AC_GeologyDebug.setSkillLevel(
+    player,
+    targetLevel
 )
 
-    printTileGeology(
-        player
+    if not player then
+        return
+    end
+
+
+    targetLevel =
+        tonumber(
+            targetLevel
+        )
+
+
+    if not targetLevel then
+        return
+    end
+
+
+    if targetLevel < 0 then
+        targetLevel = 0
+    elseif targetLevel > 10 then
+        targetLevel = 10
+    end
+
+
+    player:setPerkLevelDebug(
+        AmmoMakingSkill.perk,
+        targetLevel
+    )
+
+
+    player:getXp():setXPToLevel(
+        AmmoMakingSkill.perk,
+        targetLevel
+    )
+
+
+    local actualLevel =
+        AmmoMakingSkill.getLevel(
+            player
+        )
+
+
+    log(
+        "Debug skill level set. Target="
+        .. targetLevel
+        .. " Actual="
+        .. actualLevel
+    )
+
+
+    halo(
+        player,
+        "Ammo Making level "
+        .. actualLevel
     )
 end
 
 
-function AC_GeologyDebug.survey(
+------------------------------------------------
+-- Adds a "Set Ammo Making Level" submenu to any
+-- context menu. Shared with the inventory debug
+-- menu in AC_AmmoContextMenu. Callers must already
+-- have checked isDebugEnabled().
+------------------------------------------------
+
+function AC_GeologyDebug.addSkillLevelMenu(
+    context,
     player
 )
 
-    surveyPlayerArea(
-        player
+    local option =
+        context:addOption(
+            "Set Ammo Making Level"
+        )
+
+
+    local submenu =
+        ISContextMenu:getNew(
+            context
+        )
+
+
+    context:addSubMenu(
+        option,
+        submenu
+    )
+
+
+    for level = 0, 10 do
+
+        submenu:addOption(
+            "Level " .. level,
+            player,
+            AC_GeologyDebug.setSkillLevel,
+            level
+        )
+    end
+end
+
+
+------------------------------------------------
+-- COMPATIBILITY CHECK
+------------------------------------------------
+
+local function runCompatibilityCheck(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local ok,
+          results,
+          summary =
+        pcall(
+            AC_Compat.run
+        )
+
+
+    if not ok then
+
+        log(
+            "WARNING: compatibility check failed: "
+            .. tostring(results)
+        )
+
+
+        halo(
+            player,
+            "Compatibility check failed (see console)"
+        )
+
+
+        return
+    end
+
+
+    halo(
+        player,
+        "Compat: "
+        .. summary.ok
+        .. " ok, "
+        .. summary.warnings
+        .. " warnings, "
+        .. summary.unverified
+        .. " unverified (see console)"
     )
 end
 
 
-function AC_GeologyDebug.seed(
-    player
-)
+------------------------------------------------
+-- PUBLIC ENTRY POINTS
+------------------------------------------------
+--
+-- Also usable from the Lua debug console, e.g.
+-- AC_GeologyDebug.tile(getPlayer()).
+------------------------------------------------
 
-    printGeologySeed(
-        player
-    )
-end
+AC_GeologyDebug.tile =
+    inspectTile
+
+AC_GeologyDebug.survey =
+    surveyArea
+
+AC_GeologyDebug.seed =
+    showSeed
+
+AC_GeologyDebug.resetTile =
+    resetTile
+
+AC_GeologyDebug.resetArea =
+    resetArea
+
+AC_GeologyDebug.spawnSamplingKit =
+    spawnSamplingKit
+
+AC_GeologyDebug.spawnMiningKit =
+    spawnMiningKit
+
+AC_GeologyDebug.spawnLaboratoryAnalyzer =
+    spawnLaboratoryAnalyzer
+
+AC_GeologyDebug.spawnAssayedSample =
+    spawnAssayedSample
+
+AC_GeologyDebug.compat =
+    runCompatibilityCheck
 
 
 ------------------------------------------------
@@ -589,8 +887,8 @@ local function onFillWorldObjectContextMenu(
 
 
     ------------------------------------------------
-    -- Debug tools reveal exact geology, so they are
-    -- only available when the game runs in -debug.
+    -- Debug tools reveal exact geology and spawn
+    -- items: -debug mode only, no exceptions.
     ------------------------------------------------
 
     if not isDebugEnabled() then
@@ -609,89 +907,80 @@ local function onFillWorldObjectContextMenu(
     end
 
 
-    ------------------------------------------------
-    -- ROOT DEBUG MENU
-    ------------------------------------------------
-
-    local geologyOption =
+    local rootOption =
         context:addOption(
             "Ammo Making Debug"
         )
 
 
-    local geologyMenu =
+    local menu =
         ISContextMenu:getNew(
             context
         )
 
 
     context:addSubMenu(
-        geologyOption,
-        geologyMenu
+        rootOption,
+        menu
     )
 
 
     ------------------------------------------------
-    -- SURVEY
+    -- Inspect
     ------------------------------------------------
 
-    geologyMenu:addOption(
-        "Survey Current Area",
-        player,
-        surveyPlayerArea
+    menu:addOption("Inspect Current Tile", player, inspectTile)
+
+    menu:addOption("Survey Current Area (3x3)", player, surveyArea)
+
+    menu:addOption("Show Geology Seed", player, showSeed)
+
+
+    ------------------------------------------------
+    -- Depletion
+    ------------------------------------------------
+
+    menu:addOption("Reset Depletion: Current Tile", player, resetTile)
+
+    menu:addOption("Reset Depletion: 3x3 Area", player, resetArea)
+
+
+    ------------------------------------------------
+    -- Test items
+    ------------------------------------------------
+
+    menu:addOption("Spawn Sampling Kit (shovel + assay kits)", player, spawnSamplingKit)
+
+    menu:addOption("Spawn Mining Kit (pickaxes)", player, spawnMiningKit)
+
+    menu:addOption("Spawn Laboratory Analyzer", player, spawnLaboratoryAnalyzer)
+
+    menu:addOption("Spawn Assayed Sample (current 3x3)", player, spawnAssayedSample)
+
+
+    ------------------------------------------------
+    -- Skill / diagnostics
+    ------------------------------------------------
+
+    AC_GeologyDebug.addSkillLevelMenu(
+        menu,
+        player
     )
 
 
-    ------------------------------------------------
-    -- TILE
-    ------------------------------------------------
-
-    geologyMenu:addOption(
-        "Inspect Current Tile",
-        player,
-        printTileGeology
-    )
-
-
-    ------------------------------------------------
-    -- SEED
-    ------------------------------------------------
-
-    geologyMenu:addOption(
-        "Show Geology Seed",
-        player,
-        printGeologySeed
-    )
-
-
-    ------------------------------------------------
-    -- MINING
-    ------------------------------------------------
-
-    geologyMenu:addOption(
-        "Reset Mining Depletion (3x3)",
-        player,
-        resetAreaDepletion
-    )
-
-
-    geologyMenu:addOption(
-        "Spawn Mining Test Items",
-        player,
-        spawnMiningTestItems
-    )
+    menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
 end
 
-
-------------------------------------------------
--- EVENT
-------------------------------------------------
 
 Events.OnFillWorldObjectContextMenu.Add(
     onFillWorldObjectContextMenu
 )
 
 
+------------------------------------------------
+-- LOAD MESSAGE
+------------------------------------------------
+
 print(
-    "[AmmoMaking] Geology debug tools loaded"
+    "[AmmoMaking] Debug tools loaded"
 )

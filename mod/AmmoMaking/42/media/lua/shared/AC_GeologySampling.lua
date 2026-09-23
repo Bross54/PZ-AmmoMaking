@@ -377,12 +377,61 @@ function AC_GeologySampling.createSample(
     end
 
 
-    local x =
-        square:getX()
+    local sample,
+          errorCode =
+        AC_GeologySampling.buildSample(
+            player,
+            square:getX(),
+            square:getY()
+        )
 
 
-    local y =
-        square:getY()
+    if not sample then
+        return nil, errorCode
+    end
+
+
+    applyShovelWear(
+        shovel
+    )
+
+
+    return sample, nil
+end
+
+
+------------------------------------------------
+-- BUILD SAMPLE
+------------------------------------------------
+--
+-- Creates the sample item for the 3x3 area centred
+-- on (x, y) and fills in its hidden true geology.
+-- No terrain or tool checks: createSample does those
+-- for gameplay, the debug menu calls this directly.
+------------------------------------------------
+
+function AC_GeologySampling.buildSample(
+    player,
+    x,
+    y
+)
+
+    if not player then
+        return nil, "no_player"
+    end
+
+
+    x =
+        math.floor(
+            tonumber(x)
+            or 0
+        )
+
+    y =
+        math.floor(
+            tonumber(y)
+            or 0
+        )
 
 
     ------------------------------------------------
@@ -519,11 +568,6 @@ function AC_GeologySampling.createSample(
             "IGUI_AmmoMaking_Item_Sample",
             "Geological Sample"
         )
-    )
-
-
-    applyShovelWear(
-        shovel
     )
 
 
@@ -1063,18 +1107,62 @@ function AC_GeologySampling.analyzeSample(
     end
 
 
-    if kitRank == 1 then
+    AC_GeologySampling.applyAssay(
+        sample,
+        kitRank
+    )
+
+
+    print(
+        "[AmmoMaking] Sample analyzed with "
+        .. tostring(
+            data.assayType
+        )
+        .. " Assay"
+    )
+
+
+    return true, nil
+end
+
+
+------------------------------------------------
+-- APPLY ASSAY
+------------------------------------------------
+--
+-- Writes a rank 1 (field) or rank 2 (advanced) assay
+-- onto a sample. analyzeSample calls this after the
+-- kit checks; the debug menu calls it directly.
+------------------------------------------------
+
+function AC_GeologySampling.applyAssay(
+    sample,
+    rank
+)
+
+    if not AC_GeologySampling.isSample(
+        sample
+    ) then
+
+        return false
+    end
+
+
+    if rank == 1 then
 
         performFieldAssay(
             sample
         )
 
-
-    elseif kitRank == 2 then
+    elseif rank == 2 then
 
         performAdvancedFieldAssay(
             sample
         )
+
+    else
+
+        return false
     end
 
 
@@ -1091,16 +1179,7 @@ function AC_GeologySampling.analyzeSample(
     )
 
 
-    print(
-        "[AmmoMaking] Sample analyzed with "
-        .. tostring(
-            data.assayType
-        )
-        .. " Assay"
-    )
-
-
-    return true, nil
+    return true
 end
 
 
