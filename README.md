@@ -132,11 +132,14 @@ Sampling currently supports:
 
 Sampling is blocked on:
 
-- indoor floors
+- indoor floors (any square inside a room)
 - constructed flooring
 - roads
 - asphalt
-- upper floors
+- water
+- upper floors and basements
+
+Sampling and mining share one terrain rule (`AC_Geology.isSurveyableSquare`), so they always agree.
 
 ---
 
@@ -189,9 +192,8 @@ Features:
 - processing pauses when electricity is unavailable
 - approximately 24 in-game hours per analysis
 - processing survives save/reload
-- samples remain stored inside the analyzer
-- analyzer cannot be picked up while occupied
-- analyzer can be picked up again when empty
+- samples remain stored inside the analyzer (in the analyzer item's data)
+- picking up an occupied analyzer is not blocked; its stored sample and progress travel with the item (REQUIRES IN-GAME VERIFICATION)
 - laboratory results use approximately ±2% instrument tolerance
 
 Example result:
@@ -306,10 +308,19 @@ Rules:
 - Ammo Making XP is granted per extracted ore and per completed assay
 - accepted tools: `Base.PickAxe`, `Base.PickAxeForged`
 
+Invariants (enforced in code, asserted by the offline tests):
+
+- one completed mining action gives at most one ore, one reserve decrement, one XP grant and one pickaxe wear roll
+- an interrupted or invalidated action gives none of those
+- only a real extraction writes depletion to the save; menus and lookups never do
+- the assay decides what may be attempted, the true geology decides what exists
+- outside `-debug`, no label or message shows exact concentrations or reserve counts
+
 Current limitations:
 
-- single-player only; on a multiplayer client the mining option is shown disabled until server-side extraction exists
-- the pickaxe action uses the vanilla shovel animation and sound as placeholders
+- **the whole mining loop still needs real Build 42.20 in-game validation** (see *Current Limitations* below)
+- multiplayer mining is intentionally disabled: a multiplayer client sees a disabled "Mine Ore" option (design in `docs/MULTIPLAYER_MINING.md`)
+- the pickaxe action uses the vanilla shovel animation and `Shoveling` sound as placeholders
 
 Offline checks (no game required):
 
@@ -317,7 +328,9 @@ Offline checks (no game required):
 lua5.1 tests/run_tests.lua
 ```
 
-`tests/run_tests.lua` mocks the small part of the Project Zomboid API the shared modules use and exercises reserves, depletion, save/reload persistence, terrain validation and the mining action flow. It cannot verify vanilla item ids, animations or sounds; those still need an in-game test.
+`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 500+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour.
+
+Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game).
 
 ---
 
@@ -478,38 +491,60 @@ Where possible, Ammo Making uses existing Build 42 systems, materials, animation
 
 The mod is currently in active development.
 
-## ✅ Implemented
+## Working systems
 
-✅ Build 42 mod structure  
-✅ Ammo Making skill  
-✅ Ammunition quality framework  
-✅ Ammunition inspection system  
-✅ Deterministic geology seed  
-✅ Procedural copper geology  
-✅ Procedural zinc geology  
-✅ Geological sampling  
-✅ Shovel-based geological sample collection  
-✅ 3×3 geological sample areas  
-✅ Field assay system  
-✅ Advanced field assay system  
-✅ Laboratory assay system  
-✅ Placeable Laboratory Assay Analyzer  
-✅ Laboratory Analyzer world-object persistence  
-✅ Laboratory Analyzer pickup and placement system  
-✅ Electrical power requirement  
-✅ Utility-grid electricity support  
-✅ Generator electricity support  
-✅ Processing pause during power loss  
-✅ 24-hour laboratory processing  
-✅ Persistent laboratory processing  
-✅ Laboratory sample persistence  
-✅ Laboratory ±2% instrument tolerance  
-✅ Zinc ore  
-✅ Zinc ingot  
-✅ Finite per-tile ore deposits  
-✅ Persistent deposit depletion  
-✅ Pickaxe ore extraction tied to assayed samples  
-✅ Ammo Making XP from assays and extraction  
+Implemented and covered by the offline tests; each still needs its in-game pass on Build 42.20.
+
+- **Ammo Making skill**: custom perk with 10 levels, XP from assays and extraction, level descriptions
+- **Geology**: deterministic per-save copper and zinc concentrations, grades, 3x3 surveys, terrain rules (natural outdoor ground only, never indoors or on water)
+- **Geological samples**: shovel timed action, sample item carrying its hidden true geology
+- **Field and advanced assays**: limited-use kits, measurement error, grade or range results, XP once per assay
+- **Laboratory analyzer**: placeable powered world item, 24 processed hours, pauses without power, survives save/reload, ±2 % result
+- **Mining / extraction**: pickaxe timed action inside a sampled 3x3, ore dropped on the tile, XP and tool wear
+- **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
+- **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
+- **Inspection prototype**: skill-gated inspection panel for the test cartridge
+- **Debug tools** (`-debug` only): one "Ammo Making Debug" submenu for inspecting, resetting and spawning
+- **Compatibility self-check**: one console line per Build 42 assumption at game start
+- **Localization**: every player-facing string has an `IGUI_AmmoMaking_*` key with an English fallback
+
+## Current limitations
+
+- **Mining needs real in-game Build 42.20 validation.** Item ids, world-item spawning, water detection, built floors, animation and sound are marked *REQUIRES IN-GAME VERIFICATION* in `docs/DEVELOPMENT.md`; the compatibility check reports the ones it can probe.
+- **Multiplayer mining is intentionally disabled.** A multiplayer client gets a disabled option and no extraction. The server-authoritative design is in `docs/MULTIPLAYER_MINING.md`.
+- **Metallurgy does not exist yet.** Ore is the end of the chain today; no furnaces, smelting, crushing or brass.
+- **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
+- **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
+- **Laboratory pickup is not blocked while occupied**, and processing time is only accounted for when the analyzer is interacted with.
+- The pickaxe action reuses the shovel animation and sound.
+
+## Development loop
+
+Current:
+
+```text
+geology (deterministic per save)
+        ↓
+geological sample (shovel, 3x3)
+        ↓
+assay (field / advanced / laboratory)
+        ↓
+mining (pickaxe, inside the sampled 3x3)
+        ↓
+ore on the ground, reserve depleted
+```
+
+Intended next stages (not started):
+
+```text
+ore processing (crushing / sorting)
+        ↓
+metallurgy (smelting, alloys, purity)
+        ↓
+brass and components (cases, projectiles, primers, powder)
+        ↓
+ammunition (assembly, inspection, failures)
+```
 
 ## 🚧 In Development
 
@@ -605,7 +640,12 @@ The development repository is currently organized approximately as follows:
 ```text
 PZ-AmmoMaking
 ├── README.md
-├── PROJECT_CONTEXT.md
+├── docs
+│   ├── DEVELOPMENT.md
+│   └── MULTIPLAYER_MINING.md
+├── tests
+│   ├── mock_pz.lua
+│   └── run_tests.lua
 │
 └── mod
     └── AmmoMaking
@@ -614,6 +654,8 @@ PZ-AmmoMaking
         │       └── lua
         │           └── shared
         │               └── Translate
+        │                   └── EN
+        │                       └── IG_UI.json
         │
         └── 42
             ├── mod.info
@@ -626,27 +668,25 @@ PZ-AmmoMaking
                     ├── client
                     │   ├── AC_AmmoContextMenu.lua
                     │   ├── AC_AmmoInspectionUI.lua
-                    │   ├── AC_GeologyDebug.lua
-                    │   ├── AC_GeologyAssayUI.lua
-                    │   ├── AC_GeologySamplingContextMenu.lua
                     │   ├── AC_DigGeologicalSampleAction.lua
-                    │   ├── AC_MiningContextMenu.lua
-                    │   └── AC_MineOreAction.lua
-                    │
-                    ├── server
-                    │   └── BuildingObjects
-                    │       └── AC_LaboratoryAnalyzerObject.lua
+                    │   ├── AC_GeologyAssayUI.lua
+                    │   ├── AC_GeologyDebug.lua
+                    │   ├── AC_GeologySamplingContextMenu.lua
+                    │   ├── AC_MineOreAction.lua
+                    │   └── AC_MiningContextMenu.lua
                     │
                     └── shared
+                        ├── AC_AmmoInspection.lua
                         ├── AC_AmmoMakingSkill.lua
                         ├── AC_AmmoQuality.lua
-                        ├── AC_AmmoInspection.lua
-                        ├── AC_WorldData.lua
+                        ├── AC_Compat.lua
+                        ├── AC_Deposits.lua
                         ├── AC_Geology.lua
                         ├── AC_GeologySampling.lua
                         ├── AC_LaboratoryAnalyzer.lua
-                        ├── AC_Deposits.lua
-                        └── AC_Mining.lua
+                        ├── AC_Mining.lua
+                        ├── AC_Text.lua
+                        └── AC_WorldData.lua
 ```
 
 The repository structure may change as additional systems are implemented.
