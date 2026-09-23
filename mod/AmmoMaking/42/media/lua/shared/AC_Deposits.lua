@@ -346,11 +346,19 @@ function AC_Deposits.getExtracted(
     end
 
 
+    ------------------------------------------------
+    -- A negative count (corrupt or hand-edited save)
+    -- must never inflate the reserve above initial.
+    ------------------------------------------------
+
     return
-        tonumber(
-            record[metal]
+        math.max(
+            0,
+            tonumber(
+                record[metal]
+            )
+            or 0
         )
-        or 0
 end
 
 
