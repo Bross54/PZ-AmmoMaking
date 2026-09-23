@@ -183,18 +183,19 @@ A placeable powered laboratory machine used for high-accuracy geological analysi
 
 Features:
 
-- placeable world object
-- persistent machine state
+- placeable world object: right-click the analyzer item → **Place Laboratory Assay Analyzer**, then pick a tile with the vanilla placement cursor
+- persistent machine state, stored on the placed object
 - one sample at a time
-- requires electricity
-- supports utility-grid electricity
-- supports generator electricity
+- requires electricity: a generator, or utility-grid power when the analyzer stands inside a building (the same rule vanilla Build 42 uses for its appliances)
 - processing pauses when electricity is unavailable
 - approximately 24 in-game hours per analysis
 - processing survives save/reload
-- samples remain stored inside the analyzer (in the analyzer item's data)
-- picking up an occupied analyzer is not blocked; its stored sample and progress travel with the item (REQUIRES IN-GAME VERIFICATION)
+- a running assay can be cancelled; the sample comes back exactly as it went in, with no XP
+- **an analyzer that is processing a sample or holding a finished result cannot be picked up**: cancel the assay or collect the sample first (Pick Up is shown disabled with the reason)
+- picking up takes a short timed action next to the analyzer
 - laboratory results use approximately ±2% instrument tolerance
+
+Analyzers simply dropped on the floor (the original behaviour) still work, so samples stored in them in existing saves are not lost. Their pickup is vanilla's and cannot be blocked; if a dropped analyzer is picked up mid-assay and later placed, the assay moves onto the placed analyzer.
 
 Example result:
 
@@ -328,7 +329,7 @@ Offline checks (no game required):
 lua5.1 tests/run_tests.lua
 ```
 
-`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 500+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour.
+`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 700+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), translation keys, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
 
 Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Next stage design: `docs/METALLURGY_DESIGN.md` (ore processing and metallurgy, design only) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42 provides, with evidence levels and the local verification commands).
 
@@ -499,7 +500,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Geology**: deterministic per-save copper and zinc concentrations, grades, 3x3 surveys, terrain rules (natural outdoor ground only, never indoors or on water)
 - **Geological samples**: shovel timed action, sample item carrying its hidden true geology
 - **Field and advanced assays**: limited-use kits, measurement error, grade or range results, XP once per assay
-- **Laboratory analyzer**: placeable powered world item, 24 processed hours, pauses without power, survives save/reload, ±2 % result
+- **Laboratory analyzer**: placeable powered world object, 24 processed hours, pauses without power, ±2 % result, cancel, no pickup while occupied
 - **Mining / extraction**: pickaxe timed action inside a sampled 3x3, ore dropped on the tile, XP and tool wear
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
@@ -515,7 +516,9 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Metallurgy does not exist yet.** Ore is the end of the chain today; no furnaces, smelting, crushing or brass.
 - **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
 - **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
-- **Laboratory pickup is not blocked while occupied**, and processing time is only accounted for when the analyzer is interacted with.
+- **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock.
+- **Placing and picking up the analyzer is single-player only for now.** Multiplayer clients get disabled options; the laboratory itself has no server-side synchronisation yet.
+- Laboratory processing time is only accounted for when the analyzer is interacted with, using the power state at that moment. Analyzers dropped on the floor (the original behaviour) can still be picked up mid-assay through vanilla.
 - The pickaxe action reuses the shovel animation and sound.
 
 ## Development loop
@@ -675,7 +678,12 @@ PZ-AmmoMaking
                     │   ├── AC_GeologyDebug.lua
                     │   ├── AC_GeologySamplingContextMenu.lua
                     │   ├── AC_MineOreAction.lua
-                    │   └── AC_MiningContextMenu.lua
+                    │   ├── AC_MiningContextMenu.lua
+                    │   └── AC_PickUpAnalyzerAction.lua
+                    │
+                    ├── server
+                    │   └── BuildingObjects
+                    │       └── AC_LaboratoryAnalyzerObject.lua
                     │
                     └── shared
                         ├── AC_AmmoInspection.lua

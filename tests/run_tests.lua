@@ -14,9 +14,13 @@
 --   Knowledge     the assay gates what may be attempted; true geology
 --                 decides what exists
 --   Hidden info   normal UI never shows exact geology or reserves
+--   Laboratory    one sample at a time; collect / cancel exactly once;
+--                 a placed analyzer moves only when idle and empty
 --
 -- They cannot verify vanilla item ids, animations, sounds or Java
--- behaviour; that still needs an in-game test.
+-- behaviour; that still needs an in-game test. Sections that drive the
+-- placement cursor, placed objects or the pickup action use mocked
+-- engine objects and check Lua control flow only.
 
 local ROOT = arg and arg[0] and arg[0]:match("^(.*)/tests/[^/]*$") or "."
 local LUA = ROOT .. "/mod/AmmoMaking/42/media/lua/"
