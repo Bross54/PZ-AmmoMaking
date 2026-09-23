@@ -346,6 +346,41 @@ end
 
 
 ------------------------------------------------
+-- CACHE RESET
+------------------------------------------------
+--
+-- Project Zomboid keeps Lua state alive when the
+-- player returns to the main menu and loads another
+-- save. Without this reset the first save's identity
+-- (and therefore its geology and deposit reserves)
+-- would be reused for the second save.
+--
+-- OnInitGlobalModData fires once per world load,
+-- before any gameplay code asks for a seed.
+------------------------------------------------
+
+function AC_WorldData.resetCache()
+
+    AC_WorldData.cachedSaveIdentity =
+        nil
+
+    AC_WorldData.cachedGeologySeed =
+        nil
+
+    AC_WorldData.cachedCopperSeed =
+        nil
+
+    AC_WorldData.cachedZincSeed =
+        nil
+end
+
+
+Events.OnInitGlobalModData.Add(
+    AC_WorldData.resetCache
+)
+
+
+------------------------------------------------
 -- DEBUG SEED INFORMATION
 ------------------------------------------------
 
