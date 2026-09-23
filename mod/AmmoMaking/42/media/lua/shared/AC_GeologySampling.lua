@@ -209,6 +209,24 @@ end
 
 ------------------------------------------------
 -- SHOVEL
+--
+-- Only the explicit SHOVEL_TYPES list is used.
+--
+-- item:hasTag("Shovel") must never be called:
+-- on 42.20.4 InventoryItem only has
+-- hasTag(ItemTag) and hasTag(ItemTag...), so a
+-- string argument raises "No implementation found
+-- for function: hasTag". That failure path in
+-- Kahlua (MultiLuaJavaInvoker.call) returns its
+-- pooled MethodArguments twice, which later breaks
+-- the next nested Java call - it is what made
+-- ISBaseTimedAction.begin -> StartAction throw
+-- the ReturnValues.put NullPointerException when
+-- mining with a pickaxe.
+--
+-- Tags are not used as a fallback: vanilla gives
+-- the pickaxe base:digplow, so a DIG_PLOW check
+-- would count it as a shovel.
 ------------------------------------------------
 
 function AC_GeologySampling.isShovel(item)
@@ -218,34 +236,10 @@ function AC_GeologySampling.isShovel(item)
     end
 
 
-    local fullType =
-        item:getFullType()
-
-
-    if AC_GeologySampling.SHOVEL_TYPES[
-        fullType
-    ] then
-
-        return true
-    end
-
-
-    if item:hasTag("Shovel") then
-        return true
-    end
-
-
-    if item:hasTag("DigGrave") then
-        return true
-    end
-
-
-    if item:hasTag("DigPlow") then
-        return true
-    end
-
-
-    return false
+    return
+        AC_GeologySampling.SHOVEL_TYPES[
+            item:getFullType()
+        ] == true
 end
 
 

@@ -20,6 +20,7 @@ MOCK.players = {}
 MOCK.walkAdjResult = true
 MOCK.translations = nil     -- table key -> text, or nil for "not loaded"
 MOCK.zombRandCalls = 0
+MOCK.invalidHasTagCalls = 0  -- item:hasTag("string") calls; invalid on 42.20.4
 MOCK.scriptManagerAvailable = true
 
 ------------------------------------------------
@@ -242,7 +243,17 @@ local function newItem(fullType, opts)
     function item:setCustomName(v) self.customName = v end
     function item:setName(n) self.name = n end
     function item:getName() return self.name end
-    function item:hasTag(tag) return self.tags[tag] == true end
+    -- 42.20.4 InventoryItem only has hasTag(ItemTag) / hasTag(ItemTag...)
+    -- (javap of projectzomboid.jar). A string argument raises the engine's
+    -- "No implementation found" error, so the mock raises too and counts it.
+    function item:hasTag(tag)
+        if type(tag) == "string" then
+            MOCK.invalidHasTagCalls = MOCK.invalidHasTagCalls + 1
+            error("No implementation found for function: hasTag("
+                .. tostring(self.fullType) .. ", class java.lang.String " .. tag .. ")")
+        end
+        return self.tags[tag] == true
+    end
     return item
 end
 

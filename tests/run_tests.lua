@@ -1126,6 +1126,55 @@ do
     check(ctx:find("Dig Geological Sample") == nil, "no dig option without shovel")
 end
 
+-- Lua logic plus one mocked engine rule: the mock item raises on
+-- hasTag("string"), as InventoryItem does on 42.20.4 (it only has
+-- hasTag(ItemTag) / hasTag(ItemTag...)). In game, that error also
+-- corrupts a Kahlua argument pool and breaks the next StartAction.
+section("Shovel detection never calls hasTag with a string")
+do
+    MOCK.invalidHasTagCalls = 0
+
+    -- Base.PickAxe is a HandWeapon; vanilla tags it base:digplow.
+    local pick = MOCK.newItem("Base.PickAxe", { tags = { DigPlow = true } })
+    local okPick, pickIsShovel = pcall(AC_GeologySampling.isShovel, pick)
+    check(okPick, "isShovel(Base.PickAxe) raises no error: " .. tostring(pickIsShovel))
+    eq(pickIsShovel, false, "pickaxe is not a shovel")
+    eq(MOCK.invalidHasTagCalls, 0, "no hasTag(string) call for a pickaxe")
+
+    local player = MOCK.newPlayer()
+    player.primary = pick
+    local okEq, equipped = pcall(AC_GeologySampling.getEquippedShovel, player)
+    check(okEq, "getEquippedShovel with a pickaxe raises no error: " .. tostring(equipped))
+    eq(equipped, nil, "pickaxe in hand gives no shovel")
+    player.primary = nil
+    player.secondary = pick
+    eq(AC_GeologySampling.getEquippedShovel(player), nil, "pickaxe in off hand gives no shovel")
+
+    for _, fullType in ipairs({ "Base.Shovel", "Base.Shovel2", "Base.HandShovel" }) do
+        local shovel = MOCK.newItem(fullType)
+        eq(AC_GeologySampling.isShovel(shovel), true, fullType .. " is a supported shovel")
+        player.primary = shovel
+        player.secondary = nil
+        eq(AC_GeologySampling.getEquippedShovel(player), shovel, fullType .. " found in hand")
+    end
+
+    eq(AC_GeologySampling.isShovel(nil), false, "nil is not a shovel")
+    eq(AC_GeologySampling.isShovel(MOCK.newItem("Base.Hammer", { tags = { DigGrave = true } })), false,
+        "unlisted items are not shovels, whatever their tags")
+
+    -- The right-click path that raised the error in game: pickaxe equipped,
+    -- assayed sample carried, world context menu filled.
+    MOCK.clearModData()
+    local x, y = findTile("zinc", 1)
+    local p, square = miningSetup(x, y, "None", "Good")
+    local okMenu, ctxOrErr = pcall(fillWorldMenu, p, square)
+    check(okMenu, "world context menu with a pickaxe raises no error: " .. tostring(ctxOrErr))
+    eq(MOCK.invalidHasTagCalls, 0, "world context menu makes no hasTag(string) call")
+    if okMenu then
+        check(ctxOrErr:find("Dig Geological Sample") == nil, "no dig option with only a pickaxe")
+    end
+end
+
 section("Dig action flow")
 do
     local x, y = 720, 30
