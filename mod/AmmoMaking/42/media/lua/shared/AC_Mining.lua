@@ -556,6 +556,8 @@ end
 --     item = ore item dropped on the square,
 --     metal = "copper" / "zinc",
 --     remaining = units left on this tile,
+--     initial = the tile's initial reserve,
+--     xp = Ammo Making XP granted (requested amount),
 -- }
 --
 -- Failure returns nil, errorCode:
@@ -767,15 +769,25 @@ function AC_Mining.extract(
         )
 
 
-    AmmoMakingSkill.addXP(
-        player,
-        AC_Mining.CONFIG.xpPerOre
-    )
+    local xpAwarded =
+        AmmoMakingSkill.awardXP(
+            player,
+            AC_Mining.CONFIG.xpPerOre,
+            "Mining"
+        )
 
 
     applyPickaxeWear(
         pickaxe
     )
+
+
+    local initialReserve =
+        AC_Deposits.getInitialReserve(
+            x,
+            y,
+            metal
+        )
 
 
     print(
@@ -788,13 +800,7 @@ function AC_Mining.extract(
         .. "; remaining "
         .. tostring(remainingAfter)
         .. "/"
-        .. tostring(
-            AC_Deposits.getInitialReserve(
-                x,
-                y,
-                metal
-            )
-        )
+        .. tostring(initialReserve)
     )
 
 
@@ -808,6 +814,12 @@ function AC_Mining.extract(
 
         remaining =
             remainingAfter,
+
+        initial =
+            initialReserve,
+
+        xp =
+            xpAwarded,
     }
 end
 

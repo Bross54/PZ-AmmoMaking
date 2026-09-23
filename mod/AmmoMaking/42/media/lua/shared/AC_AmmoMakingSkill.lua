@@ -62,6 +62,67 @@ function AmmoMakingSkill.addXP(player, amount)
     )
 end
 
+-- Current Ammo Making XP total, or nil when it cannot be read.
+-- getXp():getXP(perk) is how vanilla ISPlayerStatsUI reads a perk's XP.
+function AmmoMakingSkill.getXP(player)
+    if not player then
+        return nil
+    end
+
+    local xp = player:getXp()
+
+    if not xp or not xp.getXP then
+        return nil
+    end
+
+    return xp:getXP(AmmoMakingSkill.perk)
+end
+
+-- "5" for whole numbers, "2.50" otherwise
+function AmmoMakingSkill.formatXP(amount)
+    amount = tonumber(amount)
+
+    if not amount then
+        return "?"
+    end
+
+    if amount == math.floor(amount) then
+        return string.format("%d", amount)
+    end
+
+    return string.format("%.2f", amount)
+end
+
+-- Add Ammo Making XP once and log it, with the perk's XP total before
+-- and after so the console shows what the engine actually applied (it
+-- may scale the amount; that is not assumed here). Returns the amount
+-- requested, or 0 when nothing was added.
+function AmmoMakingSkill.awardXP(player, amount, source)
+    if not player or not amount or amount <= 0 then
+        return 0
+    end
+
+    local before = AmmoMakingSkill.getXP(player)
+
+    AmmoMakingSkill.addXP(player, amount)
+
+    local after = AmmoMakingSkill.getXP(player)
+
+    print(
+        "[AmmoMaking] "
+        .. tostring(source or "XP")
+        .. ": +"
+        .. AmmoMakingSkill.formatXP(amount)
+        .. " Ammo Making XP (total "
+        .. AmmoMakingSkill.formatXP(before)
+        .. " -> "
+        .. AmmoMakingSkill.formatXP(after)
+        .. ")"
+    )
+
+    return amount
+end
+
 -- Get current Ammo Making level
 function AmmoMakingSkill.getLevel(player)
     if not player then

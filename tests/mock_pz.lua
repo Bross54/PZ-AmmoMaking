@@ -392,6 +392,7 @@ local function newPlayer(opts)
                 table.insert(p.xpLog, amount)
             end,
             setXPToLevel = function(_, perk, level) end,
+            getXP = function(_, perk) return p:totalXP() end,
         }
     end
     function player:SetVariable(key, value)
@@ -669,20 +670,22 @@ function require(name) end
 AC_GeologyAssayUI = { opened = 0, open = function() AC_GeologyAssayUI.opened = AC_GeologyAssayUI.opened + 1 end }
 AC_AmmoInspectionUI = { opened = 0, open = function() AC_AmmoInspectionUI.opened = AC_AmmoInspectionUI.opened + 1 end }
 
--- Skill: PerkFactory is not mocked; the real file registers a perk with
--- the Java factory. This equivalent keeps the same public functions.
-AmmoMakingSkill = { perk = { name = "AmmoMaking" } }
-function AmmoMakingSkill.addXP(player, amount)
-    if not player then return end
-    if not amount or amount <= 0 then return end
-    player:getXp():AddXP(AmmoMakingSkill.perk, amount)
-end
-function AmmoMakingSkill.getLevel(player)
-    return player and player.perkLevel or 0
-end
-function AmmoMakingSkill.hasLevel(player, required)
-    return AmmoMakingSkill.getLevel(player) >= required
-end
+-- Skill: just enough of the Java PerkFactory for the real
+-- AC_AmmoMakingSkill.lua to load. Registration itself is engine behaviour
+-- and is not tested; the mock player ignores which perk XP goes to.
+PerkFactory = {
+    Perk = {
+        new = function(name, parent)
+            return {
+                name = name,
+                setCustom = function() end,
+                getName = function(self) return self.name end,
+            }
+        end,
+    },
+    AddPerk = function() end,
+    initTranslations = function() end,
+}
 
 ------------------------------------------------
 -- TIMED ACTION BASE
@@ -789,7 +792,7 @@ end
 -- Mod Lua files the tests load, relative to media/lua/ (UI panels are
 -- mocked instead of loaded).
 MOCK.MOD_FILES = {
-    "shared/AC_AmmoInspection", "shared/AC_AmmoQuality", "shared/AC_Compat",
+    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Geology", "shared/AC_GeologySampling",
     "shared/AC_LaboratoryAnalyzer", "shared/AC_Mining", "shared/AC_Text",
     "shared/AC_WorldData",
@@ -825,6 +828,7 @@ function MOCK.resetLuaState()
     AC_GeologyDebug = nil
     AmmoInspection = nil
     AmmoQuality = nil
+    AmmoMakingSkill = nil
     MOCK.resetEvents()
 end
 

@@ -402,6 +402,95 @@ end
 ------------------------------------------------
 -- RESULT FEEDBACK
 ------------------------------------------------
+--
+-- Exactly one halo message per completed action,
+-- so the XP gain is not pushed off screen by a
+-- second message:
+--
+--   Zinc ore extracted - vein thinning out - +5 Ammo Making XP
+--   Zinc ore extracted - deposit exhausted - +5 Ammo Making XP
+--   No workable zinc ore here
+--
+-- Exact reserve counts ("1/2 remaining") appear
+-- only with -debug; normal play keeps the hidden-
+-- information rule (no reserve numbers).
+------------------------------------------------
+
+function AC_MineOreAction.getSuccessText(
+    metal,
+    result
+)
+
+    local parts = {
+
+        AC_Text.get(
+            "IGUI_AmmoMaking_OreExtracted",
+            "%1 ore extracted",
+            AC_Deposits.getMetalName(
+                metal
+            )
+        ),
+    }
+
+
+    if result.remaining <= 0 then
+
+        table.insert(
+            parts,
+            AC_Text.get(
+                "IGUI_AmmoMaking_ResultDepositExhausted",
+                "deposit exhausted"
+            )
+        )
+
+    elseif isDebugEnabled() then
+
+        table.insert(
+            parts,
+            AC_Text.get(
+                "IGUI_AmmoMaking_ResultRemaining",
+                "%1/%2 remaining",
+                result.remaining,
+                result.initial
+            )
+        )
+
+    elseif result.remaining
+        <= AC_Mining.CONFIG.thinningThreshold
+    then
+
+        table.insert(
+            parts,
+            AC_Text.get(
+                "IGUI_AmmoMaking_ResultVeinThinning",
+                "vein thinning out"
+            )
+        )
+    end
+
+
+    if (tonumber(result.xp) or 0) > 0 then
+
+        table.insert(
+            parts,
+            AC_Text.get(
+                "IGUI_AmmoMaking_ResultXP",
+                "+%1 Ammo Making XP",
+                AmmoMakingSkill.formatXP(
+                    result.xp
+                )
+            )
+        )
+    end
+
+
+    return
+        table.concat(
+            parts,
+            " - "
+        )
+end
+
 
 local function showResult(
     character,
@@ -421,43 +510,21 @@ local function showResult(
 
     if result then
 
-        if result.remaining <= 0 then
-
-            text =
-                AC_Text.get(
-                    "IGUI_AmmoMaking_OreExtractedExhausted",
-                    "%1 ore extracted - the deposit is exhausted",
-                    metalName
-                )
-
-        elseif result.remaining
-            <= AC_Mining.CONFIG.thinningThreshold
-        then
-
-            text =
-                AC_Text.get(
-                    "IGUI_AmmoMaking_OreExtractedThinning",
-                    "%1 ore extracted - the vein is thinning out",
-                    metalName
-                )
-
-        else
-
-            text =
-                AC_Text.get(
-                    "IGUI_AmmoMaking_OreExtracted",
-                    "%1 ore extracted",
-                    metalName
-                )
-        end
+        text =
+            AC_MineOreAction.getSuccessText(
+                metal,
+                result
+            )
 
     elseif errorCode == "no_ore" then
 
         text =
             AC_Text.get(
                 "IGUI_AmmoMaking_NoWorkableOre",
-                "No workable ore here (%1)",
-                metalName
+                "No workable %1 ore here",
+                string.lower(
+                    metalName
+                )
             )
 
     elseif errorCode == "no_prospect" then

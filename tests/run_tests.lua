@@ -635,6 +635,92 @@ do
     eq(AC_Deposits.getExtracted(x, y, "copper"), r, "extracted never exceeds the initial reserve")
 end
 
+section("Mining result feedback: one message per action, XP granted and logged once")
+do
+    -- Lua-level only: HaloTextHelper and print are mocked. How the halo
+    -- looks in game, and whether the engine scales the XP, is not tested.
+    MOCK.clearModData()
+    MOCK.debug = false
+    local xp = AC_Mining.CONFIG.xpPerOre
+    local x, y = findTile("copper", 2, 2)
+    local player, square, pick = miningSetup(x, y, "Good", "None")
+
+    local function mineOnce()
+        HaloTextHelper.clear()
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local action = AC_MineOreAction:new(player, square, "copper", pick)
+        action:start()
+        action:perform()
+        MOCK.capturePrint(false)
+        return HaloTextHelper.log
+    end
+
+    local halos = mineOnce()
+    eq(#halos, 1, "exactly one halo message for a successful extraction")
+    eq(halos[1], "Copper ore extracted - vein thinning out - +" .. xp .. " Ammo Making XP", "normal-mode message (1 of 2 left)")
+    eq(#player.xpLog, 1, "XP granted once")
+    eq(player.xpLog[1], xp, "XP value unchanged")
+    check(MOCK.printLogContains("[AmmoMaking] Mining: +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), "XP award logged with before/after total")
+
+    halos = mineOnce()
+    eq(#halos, 1, "one halo message for the exhausting extraction")
+    eq(halos[1], "Copper ore extracted - deposit exhausted - +" .. xp .. " Ammo Making XP", "exhausted message")
+    eq(#player.xpLog, 2, "second extraction adds exactly one more XP grant")
+    check(MOCK.printLogContains("[AmmoMaking] Mining: +" .. xp .. " Ammo Making XP (total " .. xp .. " -> " .. (2 * xp) .. ")"), "second award logged")
+
+    -- Debug mode shows the exact reserve for in-game testing.
+    MOCK.clearModData()
+    MOCK.debug = true
+    local dx, dy = findTile("zinc", 2, 2)
+    local dPlayer, dSquare, dPick = miningSetup(dx, dy, "None", "Good")
+    player, square, pick = dPlayer, dSquare, dPick
+    HaloTextHelper.clear()
+    local action = AC_MineOreAction:new(player, square, "zinc", pick)
+    action:start()
+    action:perform()
+    eq(#HaloTextHelper.log, 1, "one halo message in debug mode")
+    eq(HaloTextHelper.last(), "Zinc ore extracted - 1/2 remaining - +" .. xp .. " Ammo Making XP", "debug message shows the reserve")
+    action = AC_MineOreAction:new(player, square, "zinc", pick)
+    action:start()
+    action:perform()
+    eq(HaloTextHelper.last(), "Zinc ore extracted - deposit exhausted - +" .. xp .. " Ammo Making XP", "debug exhausted message")
+    eq(#player.xpLog, 2, "one XP grant per extraction in debug mode")
+    MOCK.debug = false
+
+    -- No ore: one message, no XP, no XP log line.
+    local ex, ey = findTile("zinc", 0, 0)
+    local ePlayer, eSquare, ePick = miningSetup(ex, ey, "None", "Good")
+    HaloTextHelper.clear()
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    action = AC_MineOreAction:new(ePlayer, eSquare, "zinc", ePick)
+    action:start()
+    action:perform()
+    MOCK.capturePrint(false)
+    eq(#HaloTextHelper.log, 1, "one halo message for no ore")
+    eq(HaloTextHelper.last(), "No workable zinc ore here", "no-ore message")
+    eq(#ePlayer.xpLog, 0, "no XP when there is no ore")
+    check(not MOCK.printLogContains("Ammo Making XP"), "no XP log line when there is no ore")
+
+    -- A stopped action shows nothing and grants nothing.
+    local sx, sy = findTile("copper", 1)
+    local sPlayer, sSquare, sPick = miningSetup(sx, sy, "Good", "None")
+    HaloTextHelper.clear()
+    action = AC_MineOreAction:new(sPlayer, sSquare, "copper", sPick)
+    action:start()
+    action:stop()
+    eq(#HaloTextHelper.log, 0, "no message when the action is stopped")
+    eq(#sPlayer.xpLog, 0, "no XP when the action is stopped")
+
+    -- awardXP guards
+    eq(AmmoMakingSkill.awardXP(sPlayer, 0, "Test"), 0, "zero XP is not awarded")
+    eq(AmmoMakingSkill.awardXP(nil, 5, "Test"), 0, "no player -> nothing")
+    eq(#sPlayer.xpLog, 0, "guards add nothing")
+    eq(AmmoMakingSkill.formatXP(5), "5", "whole XP formatted without decimals")
+    eq(AmmoMakingSkill.formatXP(2.5), "2.50", "fractional XP formatted")
+end
+
 section("Copper and zinc extract independently")
 do
     MOCK.clearModData()
@@ -819,7 +905,7 @@ do
     eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "no decrement")
     eq(AC_Deposits.hasBeenWorked(x, y, "copper"), true, "tile recorded as worked")
     eq(AC_Deposits.isKnownExhausted(x, y, "copper"), true, "shown as exhausted afterwards")
-    eq(HaloTextHelper.last(), "No workable ore here (Copper)", "player told there is nothing")
+    eq(HaloTextHelper.last(), "No workable copper ore here", "player told there is nothing")
     eq(AC_MineOreAction:new(player, square, "copper", pick):isValid(), false, "further attempts refused")
 end
 
@@ -938,7 +1024,10 @@ do
     local action = AC_MineOreAction:new(player, square, "copper", pick)
     action:start()
     action:perform()
-    check(not hasDigit(HaloTextHelper.last()), "extraction message without numbers: " .. tostring(HaloTextHelper.last()))
+    -- The XP gain is not geology; everything else must be number-free.
+    local withoutXP = string.gsub(tostring(HaloTextHelper.last()), " %- %+%d+ Ammo Making XP$", "")
+    check(withoutXP ~= HaloTextHelper.last(), "extraction message ends with the XP gain: " .. tostring(HaloTextHelper.last()))
+    check(not hasDigit(withoutXP), "extraction message without reserve numbers: " .. tostring(HaloTextHelper.last()))
 
     for i = 1, 3 do AC_Mining.extract(player, square, "copper", pick) end
     ctx = fillWorldMenu(player, square)
