@@ -46,13 +46,11 @@ AC_Mining.CONFIG = {
     -- PROSPECTING
     ------------------------------------------------
     --
-    -- Samples represent a 3x3 area, so a sample
-    -- covers tiles within 1 tile of its center.
+    -- A sample covers the tiles it was surveyed from
+    -- (AC_Geology.CONFIG.surveyRadius, 1 = 3x3).
     --
     -- Rank 1 = field assay or better.
     ------------------------------------------------
-
-    prospectRadius = 1,
 
     minimumAssayRank = 1,
 
@@ -403,7 +401,7 @@ function AC_Mining.sampleCoversSquare(
 
 
     local radius =
-        AC_Mining.CONFIG.prospectRadius
+        AC_Geology.CONFIG.surveyRadius
 
 
     return

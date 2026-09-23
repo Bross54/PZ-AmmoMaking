@@ -40,6 +40,19 @@ AC_Geology.CONFIG = {
     copperThreshold = 0.50,
 
     zincThreshold = 0.52,
+
+
+    ------------------------------------------------
+    -- SURVEY AREA
+    ------------------------------------------------
+    --
+    -- A geological sample represents the square area
+    -- within this many tiles of its centre (1 = 3x3).
+    -- Mining coverage and the debug 3x3 tools read
+    -- the same value so they can never drift apart.
+    ------------------------------------------------
+
+    surveyRadius = 1,
 }
 
 
@@ -499,9 +512,13 @@ function AC_Geology.surveyArea(
     local tiles = 0
 
 
-    for offsetX = -1, 1 do
+    local radius =
+        AC_Geology.CONFIG.surveyRadius
 
-        for offsetY = -1, 1 do
+
+    for offsetX = -radius, radius do
+
+        for offsetY = -radius, radius do
 
             local geology =
                 AC_Geology.getTileGeology(

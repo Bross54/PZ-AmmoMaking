@@ -330,12 +330,16 @@ local function surveyArea(
     -- pick a tile with known ore before mining.
     ------------------------------------------------
 
-    for offsetY = -1, 1 do
+    local radius =
+        AC_Geology.CONFIG.surveyRadius
+
+
+    for offsetY = -radius, radius do
 
         local row = {}
 
 
-        for offsetX = -1, 1 do
+        for offsetX = -radius, radius do
 
             local tx =
                 x + offsetX
@@ -491,9 +495,13 @@ local function resetArea(
         )
 
 
-    for offsetX = -1, 1 do
+    local radius =
+        AC_Geology.CONFIG.surveyRadius
 
-        for offsetY = -1, 1 do
+
+    for offsetX = -radius, radius do
+
+        for offsetY = -radius, radius do
 
             AC_Deposits.resetTile(
                 x + offsetX,
