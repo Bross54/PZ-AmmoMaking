@@ -1,32 +1,41 @@
--- Ammo Making - mocked unit tests for the geology / deposit / mining loop
+-- Ammo Making - offline tests for the geology / assay / mining loop
 --
 -- Runs outside Project Zomboid with plain Lua 5.1:
 --
 --     lua5.1 tests/run_tests.lua
 --
--- The Project Zomboid API is mocked just enough to load the shared
--- modules and the mining timed action. These tests verify Lua-level
--- logic (reserves, depletion, persistence, validation, action flow).
+-- The Project Zomboid API is mocked in tests/mock_pz.lua. These tests
+-- verify Lua-level logic and the invariants the mining loop promises:
+--
+--   Extraction    one completed action -> at most one reserve decrement,
+--                 one ore, one XP grant, one wear roll
+--   Cancellation  an interrupted / invalidated action -> nothing
+--   Persistence   only real extraction changes persistent depletion
+--   Knowledge     the assay gates what may be attempted; true geology
+--                 decides what exists
+--   Hidden info   normal UI never shows exact geology or reserves
+--
 -- They cannot verify vanilla item ids, animations, sounds or Java
 -- behaviour; that still needs an in-game test.
 
 local ROOT = arg and arg[0] and arg[0]:match("^(.*)/tests/[^/]*$") or "."
 local LUA = ROOT .. "/mod/AmmoMaking/42/media/lua/"
 
+local MOCK = dofile(ROOT .. "/tests/mock_pz.lua")
+
 ------------------------------------------------
 -- MINIMAL TEST FRAMEWORK
 ------------------------------------------------
 
 local passed, failed = 0, 0
-local failures = {}
+local currentSection = ""
 
 local function check(condition, message)
     if condition then
         passed = passed + 1
     else
         failed = failed + 1
-        table.insert(failures, message)
-        print("  FAIL: " .. tostring(message))
+        print("  FAIL [" .. currentSection .. "]: " .. tostring(message))
     end
 end
 
@@ -36,430 +45,20 @@ local function eq(actual, expected, message)
 end
 
 local function section(name)
+    currentSection = name
     print("== " .. name)
 end
 
 ------------------------------------------------
--- PZ API MOCKS
+-- LOAD
 ------------------------------------------------
 
-local MOCK = {}
+MOCK.loadMod(LUA)
 
-MOCK.saveName = "TestSave"
-MOCK.modDataRegistry = {}
-MOCK.randomSequence = nil   -- optional deterministic override
-MOCK.worldHours = 0
-
--- Global ModData
-ModData = {}
-function ModData.getOrCreate(key)
-    if not MOCK.modDataRegistry[key] then
-        MOCK.modDataRegistry[key] = {}
-    end
-    return MOCK.modDataRegistry[key]
+local function reloadMod()
+    MOCK.resetLuaState()
+    MOCK.loadMod(LUA)
 end
-function ModData.exists(key)
-    return MOCK.modDataRegistry[key] ~= nil
-end
-
--- Deep copy that only allows what Kahlua global ModData can persist
--- (string/number keys, string/number/boolean/table values). Used to
--- simulate a save + reload.
-local function persistCopy(value, path)
-    path = path or "root"
-    local t = type(value)
-    if t == "number" or t == "string" or t == "boolean" then
-        return value
-    end
-    if t ~= "table" then
-        error("unpersistable value at " .. path .. ": " .. t)
-    end
-    local copy = {}
-    for k, v in pairs(value) do
-        local kt = type(k)
-        if kt ~= "string" and kt ~= "number" then
-            error("unpersistable key at " .. path .. ": " .. kt)
-        end
-        copy[k] = persistCopy(v, path .. "." .. tostring(k))
-    end
-    return copy
-end
-
-function MOCK.simulateSaveReload()
-    local copy = {}
-    for key, value in pairs(MOCK.modDataRegistry) do
-        copy[key] = persistCopy(value, key)
-    end
-    MOCK.modDataRegistry = copy
-end
-
--- World / time
-function getWorld()
-    return {
-        getWorld = function() return MOCK.saveName end,
-        isHydroPowerOn = function() return false end,
-    }
-end
-function getGameTime()
-    return {
-        getWorldAgeHours = function() return MOCK.worldHours end,
-        getMultiplier = function() return 1 end,
-    }
-end
-function getTimestamp() return 0 end
-
--- Random
-local rngState = 12345
-function ZombRand(a, b)
-    if MOCK.randomSequence then
-        local v = table.remove(MOCK.randomSequence, 1)
-        if v ~= nil then return v end
-    end
-    rngState = (rngState * 1103515245 + 12345) % 2147483648
-    if b then
-        return a + (rngState % (b - a))
-    end
-    return rngState % a
-end
-function ZombRandFloat(a, b)
-    return a + (b - a) * 0.5
-end
-
--- Events
-Events = setmetatable({}, {
-    __index = function(t, name)
-        local ev = { handlers = {} }
-        function ev.Add(fn) table.insert(ev.handlers, fn) end
-        function ev.Remove(fn) end
-        function ev.fire(...)
-            for _, fn in ipairs(ev.handlers) do fn(...) end
-        end
-        rawset(t, name, ev)
-        return ev
-    end,
-})
-
--- Items
-local nextItemId = 1
-local knownScriptItems = {
-    ["Base.CopperOre"] = true,
-    ["AmmoMaking.ZincOre"] = true,
-    ["AmmoMaking.GeologicalSample"] = true,
-    ["Base.PickAxe"] = true,
-    ["Base.PickAxeForged"] = true,
-    ["Base.PickAxeHead"] = true,
-    ["Base.Shovel"] = true,
-}
-
-local function newItem(fullType, opts)
-    opts = opts or {}
-    local item = {
-        fullType = fullType,
-        condition = opts.condition or 10,
-        conditionMax = 10,
-        modData = {},
-        id = nextItemId,
-        container = nil,
-        name = fullType,
-    }
-    nextItemId = nextItemId + 1
-    function item:getFullType() return self.fullType end
-    function item:getID() return self.id end
-    function item:getModData() return self.modData end
-    function item:getCondition() return self.condition end
-    function item:setCondition(v) self.condition = v end
-    function item:isBroken() return self.condition <= 0 end
-    function item:getContainer() return self.container end
-    function item:setJobType() end
-    function item:setJobDelta() end
-    function item:setCustomName() end
-    function item:setName(n) self.name = n end
-    function item:hasTag() return false end
-    return item
-end
-MOCK.newItem = newItem
-
-function instanceItem(fullType)
-    if not knownScriptItems[fullType] then return nil end
-    return newItem(fullType)
-end
-InventoryItemFactory = {
-    CreateItem = function(fullType) return instanceItem(fullType) end,
-}
-function getScriptManager()
-    return {
-        FindItem = function(_, fullType)
-            if knownScriptItems[fullType] then return {} end
-            return nil
-        end,
-    }
-end
-
--- Java ArrayList-like
-local function arrayList(items)
-    local list = { items = items }
-    function list:size() return #self.items end
-    function list:get(i) return self.items[i + 1] end
-    return list
-end
-
--- Inventory
-local function newInventory()
-    local inv = { items = {}, dirty = false }
-    function inv:AddItem(fullType)
-        local item = instanceItem(fullType)
-        if item then
-            item.container = self
-            table.insert(self.items, item)
-        end
-        return item
-    end
-    function inv:addItem(item)
-        item.container = self
-        table.insert(self.items, item)
-        return item
-    end
-    function inv:Remove(item)
-        for i, it in ipairs(self.items) do
-            if it == item then table.remove(self.items, i) break end
-        end
-        item.container = nil
-    end
-    function inv:getItemsFromFullType(fullType, recurse)
-        local found = {}
-        for _, it in ipairs(self.items) do
-            if it.fullType == fullType then table.insert(found, it) end
-        end
-        return arrayList(found)
-    end
-    function inv:containsID(id)
-        for _, it in ipairs(self.items) do
-            if it.id == id then return true end
-        end
-        return false
-    end
-    function inv:getItemById(id)
-        for _, it in ipairs(self.items) do
-            if it.id == id then return it end
-        end
-        return nil
-    end
-    function inv:setDrawDirty(v) self.dirty = v end
-    return inv
-end
-
--- Player
-local function newPlayer(opts)
-    opts = opts or {}
-    local player = {
-        inventory = newInventory(),
-        primary = nil,
-        secondary = nil,
-        xpLog = {},
-        perkLevel = opts.perkLevel or 0,
-        x = opts.x or 100,
-        y = opts.y or 100,
-        z = 0,
-        square = opts.square,
-    }
-    function player:getInventory() return self.inventory end
-    function player:getPrimaryHandItem() return self.primary end
-    function player:getSecondaryHandItem() return self.secondary end
-    function player:getXp()
-        local p = self
-        return {
-            AddXP = function(_, perk, amount)
-                table.insert(p.xpLog, amount)
-            end,
-        }
-    end
-    function player:getPerkLevel(perk) return self.perkLevel end
-    function player:getX() return self.x end
-    function player:getY() return self.y end
-    function player:getZ() return self.z end
-    function player:getSquare() return self.square end
-    function player:getCurrentSquare() return self.square end
-    function player:faceLocation() end
-    function player:isTurning() return false end
-    function player:shouldBeTurning() return false end
-    function player:setMetabolicTarget() end
-    function player:addCombatMuscleStrain() end
-    function player:getEmitter() return nil end
-    function player:isTimedActionInstant() return false end
-    function player:totalXP()
-        local total = 0
-        for _, v in ipairs(self.xpLog) do total = total + v end
-        return total
-    end
-    return player
-end
-MOCK.newPlayer = newPlayer
-
--- Squares
-local function newSquare(x, y, z, spriteName, opts)
-    opts = opts or {}
-    local square = {
-        x = x, y = y, z = z or 0,
-        spriteName = spriteName,
-        room = opts.room,
-        water = opts.water or false,
-        worldItems = {},
-        properties = {},
-    }
-    function square:getX() return self.x end
-    function square:getY() return self.y end
-    function square:getZ() return self.z end
-    function square:getRoom() return self.room end
-    function square:getFloor()
-        if not self.spriteName then return nil end
-        local s = self
-        return {
-            getSprite = function()
-                return { getName = function() return s.spriteName end }
-            end,
-        }
-    end
-    function square:AddWorldInventoryItem(item, ox, oy, oz)
-        table.insert(self.worldItems, item)
-        return { getItem = function() return item end }
-    end
-    function square:getWorldObjects() return arrayList({}) end
-    function square:hasWater() return self.water end
-    function square:Is(flag)
-        if flag == "water" then return self.water end
-        return false
-    end
-    function square:haveElectricity() return false end
-    return square
-end
-MOCK.newSquare = newSquare
-
-IsoFlagType = { water = "water", exterior = "exterior" }
-
--- Misc globals used by client files
-function isClient() return false end
-function isServer() return false end
-function isDebugEnabled() return MOCK.debug == true end
-function getSpecificPlayer(i) return MOCK.players and MOCK.players[i + 1] or nil end
-function addSound() end
-function getText(key) return key end
-HaloTextHelper = { log = {} }
-function HaloTextHelper.addText(player, text)
-    table.insert(HaloTextHelper.log, text)
-end
-Metabolics = { DiggingSpade = "DiggingSpade" }
-Perks = { Strength = "Strength", Crafting = "Crafting" }
-BuildingHelper = {
-    getShovelAnim = function(item) return "DigShovel" end,
-}
-luautils = {
-    walkAdj = function(player, square) return MOCK.walkAdjResult ~= false end,
-}
-ISWorldObjectContextMenu = {
-    addToolTip = function() return {} end,
-}
-ISTimedActionQueue = { queue = {} }
-function ISTimedActionQueue.add(action)
-    table.insert(ISTimedActionQueue.queue, action)
-    return action
-end
-function require(name) end
-
--- Skill (AC_AmmoMakingSkill needs PerkFactory; use an equivalent mock)
-AmmoMakingSkill = {}
-function AmmoMakingSkill.addXP(player, amount)
-    if not player or not amount or amount <= 0 then return end
-    player:getXp():AddXP("AmmoMaking", amount)
-end
-function AmmoMakingSkill.getLevel(player)
-    return player and player.perkLevel or 0
-end
-
--- Timed action base
-ISBaseTimedAction = {}
-ISBaseTimedAction.__index = ISBaseTimedAction
-function ISBaseTimedAction:derive(name)
-    local cls = {}
-    cls.__index = cls
-    cls.Type = name
-    setmetatable(cls, { __index = ISBaseTimedAction })
-    return cls
-end
-function ISBaseTimedAction:new(character)
-    local o = {}
-    setmetatable(o, self)
-    o.character = character
-    o.completed = false
-    o.stopped = false
-    return o
-end
-function ISBaseTimedAction:setActionAnim() end
-function ISBaseTimedAction:setOverrideHandModels() end
-function ISBaseTimedAction:getJobDelta() return 0 end
-function ISBaseTimedAction:perform() self.completed = true end
-function ISBaseTimedAction:stop() self.stopped = true end
-function ISBaseTimedAction:forceStop() self.stopped = true end
-
--- Context menu mock
-local function newContext()
-    local ctx = { options = {} }
-    function ctx:addOption(name, target, fn, ...)
-        local option = { name = name, target = target, fn = fn, args = { ... } }
-        table.insert(self.options, option)
-        return option
-    end
-    function ctx:find(prefix)
-        for _, o in ipairs(self.options) do
-            if o.name:sub(1, #prefix) == prefix then return o end
-        end
-        return nil
-    end
-    function ctx:invoke(option)
-        return option.fn(option.target, unpack(option.args))
-    end
-    return ctx
-end
-MOCK.newContext = newContext
-
-------------------------------------------------
--- LOAD THE MOD (shared then client, like PZ)
-------------------------------------------------
-
--- Silence the mod's load messages
-local realPrint = print
-local quiet = true
-print = function(...)
-    if not quiet then realPrint(...) end
-end
-
-local function loadMod()
-    dofile(LUA .. "shared/AC_Text.lua")
-    dofile(LUA .. "shared/AC_WorldData.lua")
-    dofile(LUA .. "shared/AC_Geology.lua")
-    dofile(LUA .. "shared/AC_GeologySampling.lua")
-    dofile(LUA .. "shared/AC_LaboratoryAnalyzer.lua")
-    dofile(LUA .. "shared/AC_Deposits.lua")
-    dofile(LUA .. "shared/AC_Mining.lua")
-    dofile(LUA .. "client/AC_MineOreAction.lua")
-    dofile(LUA .. "client/AC_MiningContextMenu.lua")
-end
-
--- Simulates PZ reloading Lua state for a fresh game session.
-local function resetLuaState()
-    AC_Text = nil
-    AC_WorldData = nil
-    AC_Geology = nil
-    AC_LaboratoryAnalyzer = nil
-    AC_GeologySampling = nil
-    AC_Deposits = nil
-    AC_Mining = nil
-    AC_MineOreAction = nil
-    Events = setmetatable({}, getmetatable(Events))
-end
-
-loadMod()
-quiet = false
-print = realPrint
 
 ------------------------------------------------
 -- HELPERS
@@ -467,20 +66,33 @@ print = realPrint
 
 local GRASS = "blends_natural_01_16"
 
-local function findTile(metal, minReserve, maxReserve)
-    for x = 0, 3000 do
-        for y = 0, 60 do
-            local r = AC_Deposits.getInitialReserve(x, y, metal)
-            if r >= minReserve and (not maxReserve or r <= maxReserve) then
-                return x, y, r
+-- Finds an unused tile whose initial reserve for the metal is within
+-- [minReserve, maxReserve] (and optionally has some of another metal).
+local usedTiles = {}
+
+local function findTile(metal, minReserve, maxReserve, opts)
+    opts = opts or {}
+    for x = 0, 4000 do
+        for y = 0, 80 do
+            local key = x .. "," .. y
+            if not usedTiles[key] then
+                local r = AC_Deposits.getInitialReserve(x, y, metal)
+                local otherOk = true
+                if opts.otherMetal then
+                    otherOk = AC_Deposits.getInitialReserve(x, y, opts.otherMetal) >= (opts.otherMin or 1)
+                end
+                if r >= minReserve and (not maxReserve or r <= maxReserve) and otherOk then
+                    usedTiles[key] = true
+                    return x, y, r
+                end
             end
         end
     end
-    return nil
+    error("no tile found for " .. metal .. " reserve " .. minReserve .. ".." .. tostring(maxReserve))
 end
 
 local function makeSample(x, y, rank, copperGrade, zincGrade)
-    local sample = newItem("AmmoMaking.GeologicalSample")
+    local sample = MOCK.newItem("AmmoMaking.GeologicalSample")
     local d = sample.modData
     d.AmmoMakingGeologicalSample = true
     d.sampleX = x
@@ -493,25 +105,186 @@ local function makeSample(x, y, rank, copperGrade, zincGrade)
 end
 
 local function equipPickaxe(player, fullType, condition)
-    local pick = newItem(fullType or "Base.PickAxe", { condition = condition })
+    local pick = MOCK.newItem(fullType or "Base.PickAxe", { condition = condition })
     player.inventory:addItem(pick)
     player.primary = pick
     return pick
 end
 
+local function equipShovel(player, condition)
+    local shovel = MOCK.newItem("Base.Shovel", { condition = condition })
+    player.inventory:addItem(shovel)
+    player.primary = shovel
+    return shovel
+end
+
+-- Player standing on a mineable grass square at (x, y) with an equipped
+-- pickaxe and an assayed sample covering the square.
+local function miningSetup(x, y, copperGrade, zincGrade, rank)
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square, x = x, y = y })
+    local pick = equipPickaxe(player)
+    local sample = makeSample(x, y, rank or 1, copperGrade or "Good", zincGrade or "Good")
+    player.inventory:addItem(sample)
+    return player, square, pick, sample
+end
+
+local function worldObjectsFor(square)
+    return { { getSquare = function() return square end } }
+end
+
+local function fillWorldMenu(player, square)
+    MOCK.players = { player }
+    local ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjectsFor(square), false)
+    return ctx
+end
+
+local function fillInventoryMenu(player, item)
+    MOCK.players = { player }
+    local ctx = MOCK.newContext()
+    Events.OnFillInventoryObjectContextMenu.fire(0, ctx, { item })
+    return ctx
+end
+
+local function hasDigit(text)
+    return string.find(tostring(text), "%d") ~= nil
+end
+
+local function storeSnapshot()
+    local store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    local out = {}
+    for key, record in pairs(store.tiles or {}) do
+        out[key] = { copper = record.copper, zinc = record.zinc }
+    end
+    return out
+end
+
+local function sameSnapshot(a, b)
+    for key, ra in pairs(a) do
+        local rb = b[key]
+        if not rb or rb.copper ~= ra.copper or rb.zinc ~= ra.zinc then return false end
+    end
+    for key in pairs(b) do
+        if not a[key] then return false end
+    end
+    return true
+end
+
 ------------------------------------------------
--- TESTS
+-- TEXT HELPER
 ------------------------------------------------
 
-section("Deterministic reserves")
+section("AC_Text fallbacks and substitution")
 do
-    local cx, cy, cr = findTile("copper", 2)
-    check(cx ~= nil, "found a copper tile with reserve >= 2")
-    local zx, zy, zr = findTile("zinc", 1)
-    check(zx ~= nil, "found a zinc tile with reserve >= 1")
+    MOCK.translations = nil
+    eq(AC_Text.get("IGUI_AmmoMaking_Nope", "Fallback"), "Fallback", "missing translation uses fallback")
+    eq(AC_Text.get("IGUI_AmmoMaking_Nope", "Mine %1 Ore (%2)", "Copper", "Good"), "Mine Copper Ore (Good)", "fallback substitutes %1 %2")
+    eq(AC_Text.get("IGUI_AmmoMaking_Nope", "%1: %2-%3% (%4)", "Cu", 40, 60, "Good"), "Cu: 40-60% (Good)", "literal percent after placeholder survives")
+    eq(AC_Text.get("IGUI_AmmoMaking_Nope", "Only %1 here"), "Only %1 here", "unfilled placeholder left visible rather than erroring")
+    eq(AC_Text.get("IGUI_AmmoMaking_Nope"), "IGUI_AmmoMaking_Nope", "no fallback at all falls back to key")
+    eq(AC_Text.get(nil, "x"), "x", "nil key is safe")
 
-    eq(AC_Deposits.getInitialReserve(cx, cy, "copper"), cr, "reserve stable on repeat query")
-    eq(AC_Deposits.getInitialReserve(cx + 0.7, cy + 0.2, "copper"), cr, "float coordinates floor to same tile")
+    MOCK.translations = { IGUI_AmmoMaking_MineOreOption = "Kopaj %1 rudu (%2)" }
+    eq(AC_Text.get("IGUI_AmmoMaking_MineOreOption", "Mine %1 Ore (%2)", "Bakar", "Dobro"), "Kopaj Bakar rudu (Dobro)", "loaded translation wins over fallback")
+    eq(AC_Text.get("IGUI_AmmoMaking_Other", "English"), "English", "keys absent from the loaded table still fall back")
+    MOCK.translations = nil
+
+    -- A translator that throws must not propagate
+    local real = getTextOrNull
+    getTextOrNull = function() error("boom") end
+    eq(AC_Text.get("k", "safe"), "safe", "throwing translator falls back")
+    getTextOrNull = real
+
+    -- Display names never expose raw keys
+    eq(AC_Deposits.getMetalName("copper"), "Copper", "metal name fallback")
+    eq(AC_Deposits.getMetalName("unobtainium"), "unobtainium", "unknown metal echoes id")
+    eq(AC_Geology.getGradeName("Very Rich"), "Very Rich", "grade name fallback")
+    eq(AC_Geology.getGradeName(nil), "nil", "nil grade does not error")
+end
+
+------------------------------------------------
+-- GEOLOGY
+------------------------------------------------
+
+section("Deterministic geology and seeds")
+do
+    local c1 = AC_Geology.getCopperConcentration(1234, 567)
+    eq(AC_Geology.getCopperConcentration(1234, 567), c1, "same tile, same save -> same copper concentration")
+    eq(AC_Geology.getTileGeology(1234.9, 567.2).copper, c1, "float coordinates floor to the tile")
+
+    local seedA = AC_WorldData.getCopperSeed()
+    check(type(seedA) == "number" and seedA >= 100000 and seedA <= 999999, "seed is a six-digit number")
+    check(AC_WorldData.getCopperSeed() ~= AC_WorldData.getZincSeed(), "copper and zinc seeds differ")
+    check(AC_WorldData.getGeologySeed() ~= AC_WorldData.getCopperSeed(), "geology and copper seeds differ")
+
+    -- Switching saves inside one Lua session (the real game keeps Lua alive)
+    MOCK.saveName = "SwitchedSave"
+    Events.OnInitGlobalModData.fire(true)
+    local seedB = AC_WorldData.getCopperSeed()
+    check(seedB ~= seedA, "OnInitGlobalModData clears the cached seed")
+    local valuesB = {}
+    for x = 0, 200 do valuesB[x] = AC_Geology.getCopperConcentration(x, 10) end
+
+    MOCK.saveName = "TestSave"
+    Events.OnInitGlobalModData.fire(false)
+    eq(AC_WorldData.getCopperSeed(), seedA, "switching back restores the original seed")
+    eq(AC_Geology.getCopperConcentration(1234, 567), c1, "original geology restored")
+    local differs = false
+    for x = 0, 200 do
+        if AC_Geology.getCopperConcentration(x, 10) ~= valuesB[x] then differs = true break end
+    end
+    check(differs, "two saves produce different copper geology")
+
+    -- Full Lua reload gives identical geology for the same save
+    reloadMod()
+    eq(AC_WorldData.getCopperSeed(), seedA, "seed survives a Lua reload for the same save")
+    eq(AC_Geology.getCopperConcentration(1234, 567), c1, "geology survives a Lua reload")
+
+    -- Missing save identity is handled without throwing
+    local realGetWorld = getWorld
+    getWorld = function() return nil end
+    Events.OnInitGlobalModData.fire(true)
+    eq(AC_WorldData.getGeologySeed(), nil, "no world -> nil seed, no error")
+    getWorld = realGetWorld
+    Events.OnInitGlobalModData.fire(false)
+    eq(AC_WorldData.getCopperSeed(), seedA, "seed back after world returns")
+end
+
+section("Grades and survey")
+do
+    eq(AC_Geology.getGrade(0), "None", "0 -> None")
+    eq(AC_Geology.getGrade(14.9), "Trace", "14.9 -> Trace")
+    eq(AC_Geology.getGrade(15), "Poor", "15 -> Poor")
+    eq(AC_Geology.getGrade(29.9), "Poor", "29.9 -> Poor")
+    eq(AC_Geology.getGrade(30), "Moderate", "30 -> Moderate")
+    eq(AC_Geology.getGrade(50), "Good", "50 -> Good")
+    eq(AC_Geology.getGrade(70), "Rich", "70 -> Rich")
+    eq(AC_Geology.getGrade(85), "Very Rich", "85 -> Very Rich")
+    eq(AC_Geology.getGrade(100), "Very Rich", "100 -> Very Rich")
+
+    local x, y = 300, 40
+    local survey = AC_Geology.surveyArea(x, y)
+    local total, peak = 0, 0
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            local c = AC_Geology.getCopperConcentration(x + dx, y + dy)
+            total = total + c
+            if c > peak then peak = c end
+        end
+    end
+    check(math.abs(survey.copperAverage - total / 9) < 1e-9, "survey average is the 3x3 mean")
+    eq(survey.copperPeak, peak, "survey peak is the 3x3 maximum")
+    check(survey.copperPeak >= survey.copperAverage, "peak >= average")
+end
+
+------------------------------------------------
+-- RESERVES
+------------------------------------------------
+
+section("Reserves by grade and untouched tiles")
+do
+    MOCK.clearModData()
     eq(AC_Deposits.getReserveForConcentration(0), 0, "None -> 0")
     eq(AC_Deposits.getReserveForConcentration(10), 0, "Trace -> 0")
     eq(AC_Deposits.getReserveForConcentration(20), 1, "Poor -> 1")
@@ -519,138 +292,147 @@ do
     eq(AC_Deposits.getReserveForConcentration(60), 2, "Good -> 2")
     eq(AC_Deposits.getReserveForConcentration(75), 3, "Rich -> 3")
     eq(AC_Deposits.getReserveForConcentration(90), 4, "Very Rich -> 4")
-    eq(AC_Deposits.getInitialReserve(cx, cy, "gold"), 0, "unknown metal -> 0")
-    eq(AC_Deposits.getWorkedTileCount(), 0, "nothing stored for untouched ground")
+    eq(AC_Deposits.getReserveForConcentration("abc"), 0, "non-numeric concentration -> 0")
+    eq(AC_Deposits.getInitialReserve(5, 5, "gold"), 0, "unknown metal -> 0")
+    eq(AC_Deposits.isMetal("copper"), true, "copper is a metal")
+    eq(AC_Deposits.isMetal("Copper"), false, "metal ids are case sensitive")
+
+    local x, y = findTile("copper", 2)
+    -- Pure reads must not create persistent entries
+    AC_Deposits.getRemaining(x, y, "copper")
+    AC_Deposits.getExtracted(x, y, "copper")
+    AC_Deposits.hasBeenWorked(x, y, "copper")
+    AC_Deposits.isKnownExhausted(x, y, "copper")
+    AC_Deposits.getTileInfo(x, y)
+    AC_Deposits.getInitialReserve(x + 0.5, y + 0.5, "copper")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "reads never create save entries")
+    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), false, "untouched tile is not worked")
+    eq(AC_Deposits.isKnownExhausted(x, y, "copper"), false, "untouched tile is not known exhausted")
+
+    AC_Deposits.markWorked(x, y, "gold")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "marking an unknown metal writes nothing")
+    eq(AC_Deposits.recordExtraction(x, y, "gold", 1), 0, "extracting an unknown metal writes nothing")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "still nothing stored")
 end
 
-section("Extraction, depletion and XP")
+section("Geology rebalancing keeps extracted counts")
 do
-    local cx, cy, cr = findTile("copper", 2, 2)
-    local square = newSquare(cx, cy, 0, GRASS)
-    local player = newPlayer({ square = square })
-    local pick = equipPickaxe(player, "Base.PickAxe", 10)
+    MOCK.clearModData()
+    local x, y, r = findTile("copper", 3)
+    AC_Deposits.recordExtraction(x, y, "copper", 2)
+    eq(AC_Deposits.getRemaining(x, y, "copper"), r - 2, "two extracted")
 
-    -- No sample -> no prospect
-    local result, err = AC_Mining.extract(player, square, "copper", pick)
-    eq(err, "no_prospect", "extract without sample is refused")
-    eq(AC_Deposits.hasBeenWorked(cx, cy, "copper"), false, "refused extraction does not mark tile")
+    local saved = AC_Deposits.CONFIG.reserveByGrade
+    AC_Deposits.CONFIG.reserveByGrade = { ["None"] = 0, ["Trace"] = 0, ["Poor"] = 1, ["Moderate"] = 1, ["Good"] = 1, ["Rich"] = 1, ["Very Rich"] = 1 }
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 2, "extracted count untouched by rebalancing")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), 0, "remaining clamps at zero when reserves shrink below extracted")
+    AC_Deposits.CONFIG.reserveByGrade = saved
+    eq(AC_Deposits.getRemaining(x, y, "copper"), r - 2, "restored")
 
-    -- Sample covering the square (center one tile away)
-    local sample = makeSample(cx + 1, cy + 1, 1, "Good", "None")
-    player.inventory:addItem(sample)
-
-    result, err = AC_Mining.extract(player, square, "copper", pick)
-    check(result ~= nil, "extraction succeeds with covering sample: " .. tostring(err))
-    eq(#square.worldItems, 1, "one ore dropped on the square")
-    eq(square.worldItems[1].fullType, "Base.CopperOre", "dropped item is Base.CopperOre")
-    eq(result.remaining, 1, "remaining after first extraction")
-    eq(#player.xpLog, 1, "XP granted exactly once per extraction")
-    eq(player.xpLog[1], AC_Mining.CONFIG.xpPerOre, "XP amount per ore")
-    eq(AC_Deposits.getExtracted(cx, cy, "copper"), 1, "extracted count stored")
-
-    result, err = AC_Mining.extract(player, square, "copper", pick)
-    eq(result and result.remaining, 0, "second extraction exhausts the tile")
-    eq(#square.worldItems, 2, "two ore items total")
-    eq(AC_Deposits.isKnownExhausted(cx, cy, "copper"), true, "tile known exhausted")
-
-    result, err = AC_Mining.extract(player, square, "copper", pick)
-    eq(err, "no_ore", "third extraction refused")
-    eq(#square.worldItems, 2, "no ore duplicated after exhaustion")
-    eq(#player.xpLog, 2, "no XP for failed extraction")
-    eq(AC_Deposits.getExtracted(cx, cy, "copper"), 2, "extracted count never exceeds reserve")
-
-    -- Zinc on same tile is untouched by copper work
-    eq(AC_Deposits.hasBeenWorked(cx, cy, "zinc"), false, "zinc not marked by copper extraction")
+    local savedThreshold = AC_Geology.CONFIG.copperThreshold
+    AC_Geology.CONFIG.copperThreshold = 0.99
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 2, "extracted count survives a geology change")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), 0, "remaining never negative")
+    AC_Geology.CONFIG.copperThreshold = savedThreshold
 end
 
-section("Zero-resource tile inside an assayed area")
+section("Malformed ModData is tolerated")
 do
-    local x, y = findTile("copper", 0, 0)
-    local square = newSquare(x, y, 0, GRASS)
-    local player = newPlayer({ square = square })
-    local pick = equipPickaxe(player)
-    player.inventory:addItem(makeSample(x, y, 2, "Rich", "None"))
-    local result, err = AC_Mining.extract(player, square, "copper", pick)
-    eq(err, "no_ore", "assay says Rich but true geology has no ore -> no_ore")
-    eq(#square.worldItems, 0, "no ore spawned")
-    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), true, "tile marked worked")
-    eq(AC_Deposits.isKnownExhausted(x, y, "copper"), true, "shown as exhausted afterwards")
-    eq(#player.xpLog, 0, "no XP")
+    MOCK.clearModData()
+    local x, y, r = findTile("copper", 2)
+    local store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    store.tiles = "garbage"
+    local ok = pcall(AC_Deposits.getRemaining, x, y, "copper")
+    check(ok, "non-table tiles does not raise")
+    eq(type(store.tiles), "table", "non-table tiles reset")
+
+    store.tiles[x .. "," .. y] = 42
+    eq(AC_Deposits.getRemaining(x, y, "copper"), r, "non-table record reads as unworked")
+    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), false, "non-table record is not worked")
+    AC_Deposits.recordExtraction(x, y, "copper", 1)
+    eq(type(store.tiles[x .. "," .. y]), "table", "write replaces malformed record")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "write after malformed record counts from zero")
+
+    store.tiles[x .. "," .. y].copper = "abc"
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "non-numeric extracted reads as 0")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), r, "remaining from non-numeric extracted is the full reserve")
+
+    store.tiles[x .. "," .. y].copper = -5
+    check(AC_Deposits.getRemaining(x, y, "copper") <= r, "negative extracted count cannot inflate the reserve")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "negative extracted reads as 0")
+
+    store.version = nil
+    AC_Deposits.getRemaining(x, y, "copper")
+    eq(store.version, 1, "version restored")
+    MOCK.clearModData()
 end
 
-section("Persistence across save/reload")
+------------------------------------------------
+-- TERRAIN
+------------------------------------------------
+
+section("Surveyable / mineable terrain")
 do
-    local cx, cy, cr = findTile("copper", 3, 4)
-    local square = newSquare(cx, cy, 0, GRASS)
-    local player = newPlayer({ square = square })
-    local pick = equipPickaxe(player)
-    player.inventory:addItem(makeSample(cx, cy, 1, "Rich", "None"))
-    AC_Mining.extract(player, square, "copper", pick)
-    local before = AC_Deposits.getRemaining(cx, cy, "copper")
-    eq(before, cr - 1, "one unit extracted before save")
-
-    local okSave, saveErr = pcall(MOCK.simulateSaveReload)
-    check(okSave, "deposit store only contains persistable data: " .. tostring(saveErr))
-
-    -- Simulate a full Lua reload of a fresh game session
-    quiet = true
-    print = function() end
-    resetLuaState()
-    loadMod()
-    quiet = false
-    print = realPrint
-
-    eq(AC_Deposits.getRemaining(cx, cy, "copper"), before, "remaining survives save/reload")
-    eq(AC_Deposits.hasBeenWorked(cx, cy, "copper"), true, "worked flag survives save/reload")
-    eq(AC_Deposits.getInitialReserve(cx, cy, "copper"), cr, "geology identical after reload")
-
-    -- Different save identity -> different geology, no shared depletion key issues
-    local oldSeed = AC_WorldData.getCopperSeed()
-    MOCK.saveName = "OtherSave"
-    quiet = true
-    print = function() end
-    resetLuaState()
-    loadMod()
-    quiet = false
-    print = realPrint
-    check(AC_WorldData.getCopperSeed() ~= oldSeed, "different save gives a different copper seed")
-    MOCK.saveName = "TestSave"
-    quiet = true
-    print = function() end
-    resetLuaState()
-    loadMod()
-    quiet = false
-    print = realPrint
-    eq(AC_WorldData.getCopperSeed(), oldSeed, "original save seed restored")
-end
-
-section("Seed cache invalidation when switching saves in one session")
-do
-    -- Real PZ keeps Lua state between loading different saves.
-    local seedA = AC_WorldData.getCopperSeed()
-    MOCK.saveName = "SwitchedSave"
-    if Events.OnInitGlobalModData then
-        Events.OnInitGlobalModData.fire(true)
+    local function ok(sprite, opts, z)
+        return AC_Mining.isMineableSquare(MOCK.newSquare(1, 1, z or 0, sprite, opts))
     end
-    local seedB = AC_WorldData.getCopperSeed()
-    check(seedA ~= seedB, "loading another save without restarting recomputes seeds")
-    MOCK.saveName = "TestSave"
-    if Events.OnInitGlobalModData then
-        Events.OnInitGlobalModData.fire(false)
+    eq(ok("blends_natural_01_16"), true, "grass accepted")
+    eq(ok("blends_natural_01_0"), true, "sand blend accepted")
+    eq(ok("blends_natural_02_8"), true, "dark grass accepted")
+    eq(ok("BLENDS_NATURAL_01_16"), true, "sprite name matching is case-insensitive")
+    eq(ok("floors_exterior_natural_plowed_01"), true, "plowed land accepted")
+    eq(ok("blends_street_01_16"), false, "asphalt street rejected")
+    eq(ok("floors_exterior_street_01_8"), false, "concrete sidewalk rejected")
+    eq(ok("carpentry_02_56"), false, "constructed wooden floor rejected")
+    eq(ok("floors_interior_tiles_01_0"), false, "interior tiles rejected")
+    eq(ok("floors_interior_wood_01_0"), false, "interior wood rejected")
+    eq(ok(nil), false, "no floor object rejected")
+    eq(ok(nil, { noSprite = true }), false, "floor without sprite rejected")
+    eq(ok("blends_natural_01_16", { room = {} }), false, "square inside a room rejected")
+    eq(ok("blends_natural_01_16", nil, 1), false, "z = 1 rejected")
+    eq(ok("blends_natural_01_16", nil, -1), false, "basement z rejected")
+    eq(ok("blends_natural_02_0", { water = true }), false, "water square rejected via hasWater")
+    eq(AC_Mining.isMineableSquare(nil), false, "nil square rejected")
+
+    -- Water detection through the flag API only (older builds)
+    local sq = MOCK.newSquare(1, 1, 0, GRASS, { water = true })
+    sq.hasWater = nil
+    eq(AC_Geology.isWaterSquare(sq), true, "water detected through Is(IsoFlagType.water)")
+    sq.Is = nil
+    eq(AC_Geology.isWaterSquare(sq), false, "no water API -> not water, no error")
+    eq(AC_Geology.isWaterSquare(nil), false, "nil square is not water")
+
+    -- Sampling and mining share the same verdict
+    for _, sprite in ipairs({ "blends_natural_01_16", "blends_street_01_16", "carpentry_02_56" }) do
+        local s = MOCK.newSquare(1, 1, 0, sprite)
+        eq(AC_Mining.isMineableSquare(s), AC_Geology.isSurveyableSquare(s), "mining and sampling agree on " .. sprite)
     end
-    eq(AC_WorldData.getCopperSeed(), seedA, "switching back restores seed")
 end
 
-section("Prospect lookup: coverage, overlap, rank")
+------------------------------------------------
+-- PROSPECT LOOKUP
+------------------------------------------------
+
+section("Prospect lookup: coverage, overlap, rank, malformed samples")
 do
-    local square = newSquare(500, 500, 0, GRASS)
-    local player = newPlayer({ square = square })
+    local square = MOCK.newSquare(500, 500, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square })
 
     eq(AC_Mining.findProspect(player, square, "copper"), nil, "no samples -> nil")
+    eq(AC_Mining.findProspect(nil, square, "copper"), nil, "nil player -> nil")
+    eq(AC_Mining.findProspect(player, nil, "copper"), nil, "nil square -> nil")
+    eq(AC_Mining.findProspect(player, square, "gold"), nil, "unknown metal -> nil")
 
-    local far = makeSample(503, 500, 1, "Rich", "Rich")
-    player.inventory:addItem(far)
-    eq(AC_Mining.findProspect(player, square, "copper"), nil, "sample 3 tiles away does not cover")
+    -- Coverage boundaries around centre (500,500): |dx|<=1 and |dy|<=1
+    local cases = {
+        { 501, 501, true }, { 499, 499, true }, { 501, 499, true }, { 499, 501, true },
+        { 502, 500, false }, { 500, 502, false }, { 498, 500, false }, { 500, 498, false },
+        { 502, 502, false },
+    }
+    for _, c in ipairs(cases) do
+        local s = makeSample(c[1], c[2], 1, "Poor", "Poor")
+        eq(AC_Mining.sampleCoversSquare(s, square), c[3], "sample at " .. c[1] .. "," .. c[2] .. " covers 500,500")
+    end
 
     local edge = makeSample(501, 499, 1, "Poor", "None")
     player.inventory:addItem(edge)
@@ -663,216 +445,1004 @@ do
     player.inventory:addItem(untested)
     eq(AC_Mining.findProspect(player, square, "copper"), edge, "unassayed sample ignored")
 
-    local better = makeSample(499, 501, 2, "Good", "Trace")
-    player.inventory:addItem(better)
+    local advanced = makeSample(499, 501, 2, "Good", "Trace")
+    player.inventory:addItem(advanced)
     s, grade = AC_Mining.findProspect(player, square, "copper")
-    eq(s, better, "overlapping samples: highest assay rank wins")
-    eq(grade, "Good", "grade from the higher-rank sample")
-    s, grade = AC_Mining.findProspect(player, square, "zinc")
-    eq(s, better, "Trace grade still counts as knowledge")
+    eq(s, advanced, "advanced assay preferred over field assay")
+    eq(grade, "Good", "grade from the advanced sample")
+    eq(AC_Mining.findProspect(player, square, "zinc"), advanced, "Trace still counts as knowledge")
 
-    better.modData.labProcessing = true
+    local lab = makeSample(500, 500, 3, "Moderate", "None")
+    player.inventory:addItem(lab)
+    s = AC_Mining.findProspect(player, square, "copper")
+    eq(s, lab, "laboratory assay preferred over advanced")
+    eq(AC_Mining.findProspect(player, square, "zinc"), advanced, "a lab None does not hide a lower-rank Trace (knowledge is per sample)")
+    player.inventory:Remove(lab)
+
+    advanced.modData.labProcessing = true
     eq(AC_Mining.findProspect(player, square, "copper"), edge, "lab-processing sample skipped")
-    better.modData.labProcessing = false
+    advanced.modData.labProcessing = false
 
-    player.inventory:Remove(better)
+    -- Malformed sample data never raises and never grants access
+    local broken1 = makeSample(nil, nil, 2, "Rich", "Rich")
+    local broken2 = makeSample("abc", 500, 2, "Rich", "Rich")
+    local broken3 = makeSample(500, 500, "two", "Rich", "Rich")
+    player.inventory:addItem(broken1)
+    player.inventory:addItem(broken2)
+    player.inventory:addItem(broken3)
+    local okCall, result = pcall(AC_Mining.findProspect, player, square, "copper")
+    check(okCall, "malformed samples do not raise")
+    eq(result, advanced, "malformed samples are ignored")
+    eq(AC_Mining.sampleCoversSquare(broken1, square), false, "sample without coordinates covers nothing")
+
+    player.inventory:Remove(advanced)
     player.inventory:Remove(edge)
     eq(AC_Mining.findProspect(player, square, "copper"), nil, "removed samples no longer grant access")
+
+    local saved = AC_Mining.CONFIG.minimumAssayRank
+    player.inventory:addItem(edge)
+    AC_Mining.CONFIG.minimumAssayRank = 2
+    eq(AC_Mining.findProspect(player, square, "copper"), nil, "field assay below minimum rank ignored")
+    AC_Mining.CONFIG.minimumAssayRank = saved
 end
 
-section("Terrain validation")
-do
-    local function ok(sprite, opts)
-        return AC_Mining.isMineableSquare(newSquare(1, 1, 0, sprite, opts))
-    end
-    eq(ok("blends_natural_01_16"), true, "grass is mineable")
-    eq(ok("blends_natural_01_0"), true, "sand blend is mineable")
-    eq(ok("blends_street_01_16"), false, "asphalt street rejected")
-    eq(ok("floors_exterior_street_01_8"), false, "concrete sidewalk rejected")
-    eq(ok("carpentry_02_56"), false, "constructed wooden floor rejected")
-    eq(ok("floors_interior_tiles_01_0"), false, "interior tiles rejected")
-    eq(ok(nil), false, "no floor rejected")
-    eq(ok("blends_natural_01_16", { room = {} }), false, "indoors (room) rejected")
-    eq(AC_Mining.isMineableSquare(newSquare(1, 1, 1, "blends_natural_01_16")), false, "z=1 rejected")
-    eq(AC_Mining.isMineableSquare(newSquare(1, 1, -1, "blends_natural_01_16")), false, "basement z rejected")
-    eq(AC_Mining.isMineableSquare(nil), false, "nil square rejected")
-    eq(ok("blends_natural_02_0", { water = true }), false, "water square rejected")
-end
+------------------------------------------------
+-- PICKAXES
+------------------------------------------------
 
-section("Pickaxe handling")
+section("Pickaxe detection and wear")
 do
-    local player = newPlayer()
+    local player = MOCK.newPlayer()
     eq(AC_Mining.getEquippedPickaxe(player), nil, "no pickaxe")
-    local head = newItem("Base.PickAxeHead")
-    player.primary = head
+    eq(AC_Mining.isPickaxe(nil), false, "nil is not a pickaxe")
+    player.primary = MOCK.newItem("Base.PickAxeHead")
     eq(AC_Mining.getEquippedPickaxe(player), nil, "pickaxe head is not a pickaxe")
-    local forged = newItem("Base.PickAxeForged", { condition = 0 })
+    player.primary = MOCK.newItem("Base.Shovel")
+    eq(AC_Mining.getEquippedPickaxe(player), nil, "shovel is not a pickaxe")
+    local forged = MOCK.newItem("Base.PickAxeForged", { condition = 0 })
     player.primary = nil
     player.secondary = forged
     eq(AC_Mining.getEquippedPickaxe(player), forged, "forged pickaxe in secondary hand found")
-    eq(AC_Mining.isUsablePickaxe(forged), false, "broken pickaxe unusable")
+    eq(AC_Mining.isUsablePickaxe(forged), false, "condition 0 unusable")
     forged.condition = 1
     eq(AC_Mining.isUsablePickaxe(forged), true, "condition 1 usable")
+    local plain = MOCK.newItem("Base.PickAxe")
+    player.primary = plain
+    eq(AC_Mining.getEquippedPickaxe(player), plain, "primary hand preferred")
 
-    -- Wear never goes below 0 and never touches a broken tool
+    -- Wear: exactly one roll per successful extraction, never below 0
+    MOCK.clearModData()
     local x, y = findTile("copper", 4)
-    local square = newSquare(x, y, 0, GRASS)
-    local p = newPlayer({ square = square })
-    local pick = equipPickaxe(p, "Base.PickAxe", 1)
-    p.inventory:addItem(makeSample(x, y, 1, "Very Rich", "None"))
-    MOCK.randomSequence = { 0 } -- force wear
-    AC_Mining.extract(p, square, "copper", pick)
+    local p, square, pick = miningSetup(x, y, "Very Rich", "None")
+    pick.condition = 1
+    MOCK.zombRandCalls = 0
+    MOCK.randomSequence = { 0 } -- roll < wear chance -> wear
+    local result = AC_Mining.extract(p, square, "copper", pick)
     MOCK.randomSequence = nil
+    check(result ~= nil, "extraction succeeded")
+    eq(MOCK.zombRandCalls, 1, "exactly one wear roll per extraction")
     eq(pick.condition, 0, "wear reduces condition by 1")
     local r, e = AC_Mining.extract(p, square, "copper", pick)
     eq(e, "no_pickaxe", "broken pickaxe refused after wear")
+
+    pick.condition = 5
+    MOCK.randomSequence = { 99 }
+    AC_Mining.extract(p, square, "copper", pick)
+    MOCK.randomSequence = nil
+    eq(pick.condition, 5, "roll above wear chance leaves condition")
 end
 
-section("Timed action flow")
+------------------------------------------------
+-- EXTRACTION INVARIANT
+------------------------------------------------
+
+section("Extraction invariant: one action -> one ore, one decrement, one XP, one wear roll")
 do
-    local x, y, r = findTile("zinc", 2)
-    local square = newSquare(x, y, 0, GRASS)
-    local player = newPlayer({ square = square })
-    local pick = equipPickaxe(player)
-    local sample = makeSample(x, y, 1, "None", "Good")
-    player.inventory:addItem(sample)
+    MOCK.clearModData()
+    local x, y, r = findTile("copper", 2, 2)
+    local player, square, pick = miningSetup(x, y, "Good", "None")
 
+    local action = AC_MineOreAction:new(player, square, "copper", pick)
+    eq(action:isValid(), true, "action valid")
+    action:start()
+    action:update()
+    MOCK.zombRandCalls = 0
+    action:perform()
+    eq(action.completed, true, "parent perform called")
+    eq(#square.worldItems, 1, "exactly one ore on the square")
+    eq(square.worldItems[1].fullType, "Base.CopperOre", "it is Base.CopperOre")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "exactly one reserve decrement")
+    eq(#player.xpLog, 1, "exactly one XP grant")
+    eq(player.xpLog[1], AC_Mining.CONFIG.xpPerOre, "XP amount per ore")
+    eq(MOCK.zombRandCalls, 1, "exactly one wear roll")
+    eq(pick.jobDelta, 0, "job delta cleared")
+    eq(player.inventory.dirty, true, "container redraw requested")
+
+    action = AC_MineOreAction:new(player, square, "copper", pick)
+    action:start()
+    action:perform()
+    eq(AC_Deposits.getRemaining(x, y, "copper"), 0, "tile exhausted")
+    eq(AC_Deposits.isKnownExhausted(x, y, "copper"), true, "known exhausted")
+    eq(#square.worldItems, 2, "two ores total")
+
+    local snapshot = storeSnapshot()
+    local xpBefore = #player.xpLog
+    action = AC_MineOreAction:new(player, square, "copper", pick)
+    eq(action:isValid(), false, "action on known-exhausted tile invalid")
+    local result, err = AC_Mining.extract(player, square, "copper", pick)
+    eq(err, "no_ore", "direct extract refused")
+    eq(#square.worldItems, 2, "no duplicate ore")
+    eq(#player.xpLog, xpBefore, "no XP for failed extraction")
+    check(sameSnapshot(storeSnapshot(), snapshot), "store unchanged by refused extraction on exhausted tile")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), r, "extracted never exceeds the initial reserve")
+end
+
+section("Copper and zinc extract independently")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 1, nil, { otherMetal = "zinc", otherMin = 1 })
+    local player, square, pick = miningSetup(x, y, "Good", "Good")
+    local rc = AC_Deposits.getInitialReserve(x, y, "copper")
+    local rz = AC_Deposits.getInitialReserve(x, y, "zinc")
+
+    local result = AC_Mining.extract(player, square, "zinc", pick)
+    check(result ~= nil, "zinc extraction succeeded")
+    eq(square.worldItems[1].fullType, "AmmoMaking.ZincOre", "zinc drops AmmoMaking.ZincOre")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), rc, "copper reserve untouched by zinc extraction")
+    eq(AC_Deposits.getRemaining(x, y, "zinc"), rz - 1, "zinc reserve decremented")
+    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), false, "copper not marked worked")
+
+    result = AC_Mining.extract(player, square, "copper", pick)
+    check(result ~= nil, "copper extraction succeeded")
+    eq(square.worldItems[2].fullType, "Base.CopperOre", "copper drops Base.CopperOre")
+    eq(AC_Deposits.getRemaining(x, y, "zinc"), rz - 1, "zinc reserve untouched by copper extraction")
+end
+
+------------------------------------------------
+-- CANCELLATION INVARIANT
+------------------------------------------------
+
+section("Cancellation invariant: interrupted or invalidated actions change nothing")
+do
+    MOCK.clearModData()
+    local x, y = findTile("zinc", 2)
+    local player, square, pick, sample = miningSetup(x, y, "None", "Good")
+    local snapshot = storeSnapshot()
+
+    local function assertNothingHappened(label)
+        eq(#square.worldItems, 0, label .. ": no ore")
+        eq(AC_Deposits.getExtracted(x, y, "zinc"), 0, label .. ": no decrement")
+        eq(#player.xpLog, 0, label .. ": no XP")
+        eq(pick.condition, 10, label .. ": no wear")
+        check(sameSnapshot(storeSnapshot(), snapshot), label .. ": store unchanged")
+    end
+
+    -- Interrupted mid-way (walk/run/aim -> engine calls stop())
     local action = AC_MineOreAction:new(player, square, "zinc", pick)
-    eq(action:isValid(), true, "action valid with pickaxe + sample")
-    eq(action:getDuration(), AC_Mining.CONFIG.baseActionTime, "base duration at level 0")
-
-    -- Interrupted: stop() must not extract
+    eq(action.stopOnWalk, true, "stopOnWalk set")
+    eq(action.stopOnRun, true, "stopOnRun set")
+    eq(action.stopOnAim, true, "stopOnAim set")
     action:start()
     action:update()
     action:stop()
-    eq(#square.worldItems, 0, "interrupted action produces no ore")
-    eq(AC_Deposits.getExtracted(x, y, "zinc"), 0, "interrupted action does not deplete")
+    eq(action.stopped, true, "parent stop called")
+    eq(action.completed, false, "perform never ran")
+    assertNothingHappened("interrupted")
 
-    -- Completed: exactly one extraction
     action = AC_MineOreAction:new(player, square, "zinc", pick)
     action:start()
-    action:perform()
-    eq(#square.worldItems, 1, "completed action drops one ore")
-    eq(square.worldItems[1].fullType, "AmmoMaking.ZincOre", "zinc ore item")
-    eq(AC_Deposits.getExtracted(x, y, "zinc"), 1, "completed action depletes once")
-    eq(#player.xpLog, 1, "XP once")
-
-    -- Pickaxe unequipped mid action
-    action = AC_MineOreAction:new(player, square, "zinc", pick)
     player.primary = nil
-    eq(action:isValid(), false, "unequipped pickaxe invalidates action")
+    eq(action:isValid(), false, "unequipped pickaxe invalidates")
     player.primary = pick
+    assertNothingHappened("pickaxe unequipped")
 
-    -- Broken pickaxe
+    MOCK.client = true
+    player.inventory:Remove(pick)
+    eq(action:isValid(), false, "pickaxe gone from inventory invalidates (client)")
+    player.inventory:addItem(pick)
+    MOCK.client = false
+
     pick.condition = 0
-    eq(action:isValid(), false, "broken pickaxe invalidates action")
+    eq(action:isValid(), false, "broken pickaxe invalidates")
     pick.condition = 10
 
-    -- Sample removed mid action
     player.inventory:Remove(sample)
-    eq(action:isValid(), false, "removing the sample invalidates the action")
+    eq(action:isValid(), false, "removing the sample invalidates")
     player.inventory:addItem(sample)
 
-    -- Surface changes (e.g. indoors)
-    square.room = {}
-    eq(action:isValid(), false, "square no longer mineable invalidates action")
-    square.room = nil
+    square.spriteName = "carpentry_02_56"
+    eq(action:isValid(), false, "square no longer mineable invalidates")
+    square.spriteName = GRASS
 
-    -- Exhaust, then queued repeat attempts are invalid
-    action = AC_MineOreAction:new(player, square, "zinc", pick)
-    action:start()
-    action:perform()
-    if r == 2 then
-        eq(AC_Deposits.isKnownExhausted(x, y, "zinc"), true, "tile exhausted")
-        action = AC_MineOreAction:new(player, square, "zinc", pick)
-        eq(action:isValid(), false, "queued action on known-exhausted tile is invalid")
-    end
-
-    -- Skill reduces time
-    player.perkLevel = 10
-    eq(AC_Mining.getActionTime(player), math.floor(AC_Mining.CONFIG.baseActionTime * 0.6), "level 10 = 40% faster")
+    -- (a nil character never reaches the constructor: mineOre() returns first)
+    eq(AC_MineOreAction:new(player, nil, "zinc", pick):isValid(), false, "nil square invalid")
+    eq(AC_MineOreAction:new(player, square, nil, pick):isValid(), false, "nil metal invalid")
+    eq(AC_MineOreAction:new(player, square, "zinc", nil):isValid(), false, "nil pickaxe invalid")
+    assertNothingHappened("validity checks")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "isValid never creates save entries")
 end
 
-section("Context menu")
+section("Repeated queued mining actions")
 do
-    local x, y = findTile("copper", 1)
-    local square = newSquare(x, y, 0, GRASS)
-    local player = newPlayer({ square = square })
-    MOCK.players = { player }
-    local worldObjects = { { getSquare = function() return square end } }
+    MOCK.clearModData()
+    local x, y = findTile("copper", 1, 1)
+    local player, square, pick = miningSetup(x, y, "Poor", "None")
 
-    local ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjects, false)
+    -- Player spams "Mine" five times: the queue holds five actions and
+    -- the engine checks isValid before starting each one.
+    local actions = {}
+    for i = 1, 5 do
+        actions[i] = AC_MineOreAction:new(player, square, "copper", pick)
+    end
+    local performed = 0
+    for i = 1, 5 do
+        if actions[i]:isValid() then
+            actions[i]:start()
+            actions[i]:perform()
+            performed = performed + 1
+        end
+    end
+    eq(performed, 1, "only the first queued action runs on a reserve-1 tile")
+    eq(#square.worldItems, 1, "exactly one ore")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "exactly one decrement")
+    eq(#player.xpLog, 1, "exactly one XP grant")
+end
+
+------------------------------------------------
+-- FAILURE MODES DURING EXTRACTION
+------------------------------------------------
+
+section("Item creation failure")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 1)
+    local player, square, pick = miningSetup(x, y, "Good", "None")
+    MOCK.knownScriptItems["Base.CopperOre"] = nil
+    local result, err = AC_Mining.extract(player, square, "copper", pick)
+    MOCK.knownScriptItems["Base.CopperOre"] = true
+    eq(err, "item_creation_failed", "unknown item id reported")
+    eq(#square.worldItems, 0, "no ore")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "no decrement")
+    eq(#player.xpLog, 0, "no XP")
+    eq(pick.condition, 10, "no wear")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "no persistent entry")
+
+    local realInstance = instanceItem
+    instanceItem = function() error("factory exploded") end
+    result, err = AC_Mining.extract(player, square, "copper", pick)
+    instanceItem = realInstance
+    eq(err, "item_creation_failed", "throwing factory reported, not raised")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "no decrement after factory error")
+
+    instanceItem = nil
+    result, err = AC_Mining.extract(player, square, "copper", pick)
+    instanceItem = realInstance
+    check(result ~= nil, "InventoryItemFactory fallback works: " .. tostring(err))
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "fallback extraction decremented once")
+end
+
+section("World item spawn failure")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 1)
+    local square = MOCK.newSquare(x, y, 0, GRASS, { spawnError = "AddWorldInventoryItem exploded" })
+    local player = MOCK.newPlayer({ square = square })
+    local pick = equipPickaxe(player)
+    player.inventory:addItem(makeSample(x, y, 1, "Good", "None"))
+    local result, err = AC_Mining.extract(player, square, "copper", pick)
+    eq(err, "spawn_failed", "engine spawn error reported, not raised")
+    eq(#square.worldItems, 0, "no ore")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "no decrement")
+    eq(#player.xpLog, 0, "no XP")
+    eq(pick.condition, 10, "no wear")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "no persistent entry")
+
+    local action = AC_MineOreAction:new(player, square, "copper", pick)
+    action:start()
+    HaloTextHelper.clear()
+    local okPerform = pcall(function() action:perform() end)
+    check(okPerform, "perform survives spawn failure")
+    eq(HaloTextHelper.last(), "Could not extract ore", "generic failure message shown")
+end
+
+section("Zero-resource tile inside an assayed area")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 0, 0)
+    local player, square, pick = miningSetup(x, y, "Rich", "None", 2)
+    HaloTextHelper.clear()
+    local action = AC_MineOreAction:new(player, square, "copper", pick)
+    eq(action:isValid(), true, "attempt allowed: the assay says Rich")
+    action:start()
+    action:perform()
+    eq(#square.worldItems, 0, "true geology has nothing -> no ore")
+    eq(#player.xpLog, 0, "no XP")
+    eq(pick.condition, 10, "no wear")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "no decrement")
+    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), true, "tile recorded as worked")
+    eq(AC_Deposits.isKnownExhausted(x, y, "copper"), true, "shown as exhausted afterwards")
+    eq(HaloTextHelper.last(), "No workable ore here (Copper)", "player told there is nothing")
+    eq(AC_MineOreAction:new(player, square, "copper", pick):isValid(), false, "further attempts refused")
+end
+
+------------------------------------------------
+-- PERSISTENCE INVARIANT
+------------------------------------------------
+
+section("Persistence invariant: only extraction changes depletion")
+do
+    MOCK.clearModData()
+    local x, y, r = findTile("copper", 2)
+    local player, square, pick, sample = miningSetup(x, y, "Good", "Good")
+
+    fillWorldMenu(player, square)
+    fillInventoryMenu(player, sample)
+    AC_Mining.findProspect(player, square, "copper")
+    AC_MineOreAction:new(player, square, "copper", pick):isValid()
+    eq(AC_Deposits.getWorkedTileCount(), 0, "menus/lookups/validity create no entries")
+
+    AC_Mining.extract(player, MOCK.newSquare(x, y, 0, "blends_street_01_16"), "copper", pick)
+    player.inventory:Remove(sample)
+    AC_Mining.extract(player, square, "copper", pick)
+    player.inventory:addItem(sample)
+    pick.condition = 0
+    AC_Mining.extract(player, square, "copper", pick)
+    pick.condition = 10
+    AC_Mining.extract(player, square, "gold", pick)
+    eq(AC_Deposits.getWorkedTileCount(), 0, "refused extractions create no entries")
+
+    AC_Mining.extract(player, square, "copper", pick)
+    eq(AC_Deposits.getWorkedTileCount(), 1, "one entry after one extraction")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "one unit recorded")
+    eq(AC_Deposits.getExtracted(x, y, "zinc"), 0, "zinc untouched")
+
+    local okSave, saveErr = pcall(MOCK.simulateSaveReload)
+    check(okSave, "store only holds persistable data: " .. tostring(saveErr))
+    reloadMod()
+    eq(AC_Deposits.getRemaining(x, y, "copper"), r - 1, "remaining survives save/reload")
+    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), true, "worked flag survives save/reload")
+    eq(AC_Deposits.hasBeenWorked(x, y, "zinc"), false, "zinc still unworked after reload")
+    eq(AC_Deposits.getWorkedTileCount(), 1, "still exactly one entry")
+    eq(AC_Deposits.getInitialReserve(x, y, "copper"), r, "geology identical after reload")
+
+    for i = 1, r do AC_Mining.extract(player, square, "copper", pick) end
+    pcall(MOCK.simulateSaveReload)
+    reloadMod()
+    eq(AC_Deposits.isKnownExhausted(x, y, "copper"), true, "exhaustion survives reload")
+    local result, err = AC_Mining.extract(player, square, "copper", pick)
+    eq(err, "no_ore", "no ore after reload of an exhausted tile")
+    eq(#square.worldItems, r, "total ore equals the initial reserve")
+
+    AC_Deposits.resetTile(x, y)
+    eq(AC_Deposits.getWorkedTileCount(), 0, "reset removes the entry")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), r, "reserve restored")
+end
+
+section("Store keys are exact per tile")
+do
+    MOCK.clearModData()
+    AC_Deposits.recordExtraction(10, 20, "copper", 1)
+    eq(AC_Deposits.getExtracted(10, 20, "copper"), 1, "10,20 recorded")
+    eq(AC_Deposits.getExtracted(20, 10, "copper"), 0, "20,10 is a different tile")
+    eq(AC_Deposits.getExtracted(10.9, 20.9, "copper"), 1, "float coordinates map to the same tile")
+    eq(AC_Deposits.getExtracted(102, 0, "copper"), 0, "'102,0' does not collide with '10,20'")
+    local store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    eq(store.tiles["10,20"].copper, 1, "key format is 'x,y'")
+    MOCK.clearModData()
+end
+
+------------------------------------------------
+-- KNOWLEDGE INVARIANT
+------------------------------------------------
+
+section("Knowledge invariant: assay gates attempts, geology decides output")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 2, 2)
+    local player, square, pick, sample = miningSetup(x, y, "None", "None")
+    local ctx = fillWorldMenu(player, square)
+    check(ctx:find("Mine Copper Ore") == nil, "assay None hides the option despite real ore")
+    local result, err = AC_Mining.extract(player, square, "copper", pick)
+    eq(err, "no_prospect", "direct extraction refused without knowledge")
+    eq(#square.worldItems, 0, "no ore without knowledge")
+
+    sample.modData.copperGrade = "Poor"
+    ctx = fillWorldMenu(player, square)
+    check(ctx:find("Mine Copper Ore (Assay: Poor)") ~= nil, "option label shows the assay, not the geology")
+    result = AC_Mining.extract(player, square, "copper", pick)
+    check(result ~= nil, "extraction allowed with knowledge")
+    eq(AC_Deposits.getInitialReserve(x, y, "copper"), 2, "true reserve unaffected by the assay grade")
+
+    for _, g in ipairs({ "Trace", "Very Rich", "Good" }) do
+        sample.modData.copperGrade = g
+        eq(AC_Deposits.getInitialReserve(x, y, "copper"), 2, "assay '" .. g .. "' does not alter the reserve")
+    end
+end
+
+------------------------------------------------
+-- HIDDEN INFORMATION INVARIANT
+------------------------------------------------
+
+section("Hidden information invariant: normal UI reveals no exact geology")
+do
+    MOCK.clearModData()
+    MOCK.debug = false
+    local x, y = findTile("copper", 3)
+    local player, square, pick = miningSetup(x, y, "Rich", "Poor", 1)
+
+    local ctx = fillWorldMenu(player, square)
+    for _, name in ipairs(ctx:names()) do
+        check(not hasDigit(name), "menu label without numbers: " .. name)
+        check(not string.find(name, "Debug", 1, true), "no debug entry in normal mode: " .. name)
+    end
+
+    HaloTextHelper.clear()
+    local action = AC_MineOreAction:new(player, square, "copper", pick)
+    action:start()
+    action:perform()
+    check(not hasDigit(HaloTextHelper.last()), "extraction message without numbers: " .. tostring(HaloTextHelper.last()))
+
+    for i = 1, 3 do AC_Mining.extract(player, square, "copper", pick) end
+    ctx = fillWorldMenu(player, square)
+    local exhausted = ctx:find("Mine Copper Ore (Exhausted)")
+    check(exhausted ~= nil and not hasDigit(exhausted.name), "exhausted label without numbers")
+
+    local sample = makeSample(x, y, 1, "Rich", "Poor")
+    sample.modData.trueCopper = 77.7
+    local leaked = false
+    for _, line in ipairs(AC_GeologySampling.getResultLines(sample)) do
+        if string.find(line, "77", 1, true) then leaked = true end
+    end
+    check(not leaked, "field assay lines do not contain the true concentration")
+
+    local ex, ey = findTile("copper", 0, 0)
+    local p2, s2 = miningSetup(ex, ey, "Good", "None")
+    ctx = fillWorldMenu(p2, s2)
+    check(ctx:find("Mine Copper Ore (Assay: Good)") ~= nil, "unworked empty tile still offers the attempt")
+    check(ctx:find("Mine Copper Ore (Exhausted)") == nil, "unworked empty tile is not labelled exhausted")
+end
+
+------------------------------------------------
+-- MULTIPLAYER GUARD
+------------------------------------------------
+
+section("Multiplayer client guard")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 1)
+    local player, square, pick = miningSetup(x, y, "Poor", "None")
+    MOCK.client = true
+
+    local result, err = AC_Mining.extract(player, square, "copper", pick)
+    eq(err, "multiplayer_unsupported", "client-side extraction refused")
+    eq(#square.worldItems, 0, "no ore on a multiplayer client")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "no depletion recorded on a multiplayer client")
+
+    local ctx = fillWorldMenu(player, square)
+    local opt = ctx:find("Mine Ore")
+    check(opt ~= nil and opt.notAvailable == true, "disabled explanatory option shown")
+    check(ctx:find("Mine Copper Ore") == nil, "no live mining option")
+
+    local action = AC_MineOreAction:new(player, square, "copper", pick)
+    action:start()
+    HaloTextHelper.clear()
+    action:perform()
+    eq(#square.worldItems, 0, "timed action produces nothing on a client")
+    eq(HaloTextHelper.last(), "Ore extraction is not available in multiplayer yet", "client told why")
+    MOCK.client = false
+end
+
+------------------------------------------------
+-- CONTEXT MENU
+------------------------------------------------
+
+section("Mining context menu states")
+do
+    MOCK.clearModData()
+    MOCK.debug = false
+    local x, y = findTile("copper", 1)
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square })
+
+    local ctx = fillWorldMenu(player, square)
     eq(#ctx.options, 0, "no options without a sample")
 
     player.inventory:addItem(makeSample(x, y, 1, "Poor", "None"))
-    ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjects, false)
+    ctx = fillWorldMenu(player, square)
     local opt = ctx:find("Mine Copper Ore")
     check(opt ~= nil, "copper option offered with sample")
     check(ctx:find("Mine Zinc Ore") == nil, "no zinc option when assay says None")
     eq(opt and opt.notAvailable, true, "option disabled without a pickaxe")
+    check(opt and opt.toolTip ~= nil, "disabled option has a tooltip")
 
     local pick = equipPickaxe(player, "Base.PickAxe", 0)
-    ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjects, false)
+    ctx = fillWorldMenu(player, square)
     opt = ctx:find("Mine Copper Ore")
     eq(opt and opt.notAvailable, true, "option disabled with a broken pickaxe")
 
     pick.condition = 10
-    ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjects, false)
+    ctx = fillWorldMenu(player, square)
     opt = ctx:find("Mine Copper Ore")
     check(opt and opt.notAvailable == nil, "option enabled with usable pickaxe")
-    ISTimedActionQueue.queue = {}
+    ISTimedActionQueue.clear()
     ctx:invoke(opt)
     eq(#ISTimedActionQueue.queue, 1, "selecting the option queues one action")
     eq(ISTimedActionQueue.queue[1].Type, "AC_MineOreAction", "queued action type")
 
-    -- Asphalt: no options even with sample + pickaxe
-    local asphalt = newSquare(x, y, 0, "blends_street_01_16")
-    ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { { getSquare = function() return asphalt end } }, false)
+    MOCK.walkAdjResult = false
+    ISTimedActionQueue.clear()
+    HaloTextHelper.clear()
+    ctx:invoke(opt)
+    eq(#ISTimedActionQueue.queue, 0, "unreachable square queues nothing")
+    eq(HaloTextHelper.last(), "Cannot reach mining location", "player told the square is unreachable")
+    MOCK.walkAdjResult = true
+
+    pick.condition = 0
+    ISTimedActionQueue.clear()
+    ctx:invoke(opt)
+    eq(#ISTimedActionQueue.queue, 0, "stale option with broken pickaxe queues nothing")
+    pick.condition = 10
+
+    local far = MOCK.newSquare(x + 2, y, 0, GRASS)
+    ctx = fillWorldMenu(player, far)
+    eq(#ctx.options, 0, "no options two tiles from the sample centre")
+
+    ctx = fillWorldMenu(player, MOCK.newSquare(x, y, 0, "blends_street_01_16"))
     eq(#ctx.options, 0, "no options on asphalt")
+    ctx = fillWorldMenu(player, MOCK.newSquare(x, y, 0, GRASS, { room = {} }))
+    eq(#ctx.options, 0, "no options indoors")
+    ctx = fillWorldMenu(player, MOCK.newSquare(x, y, 0, GRASS, { water = true }))
+    eq(#ctx.options, 0, "no options on water")
 
-    -- Test mode: nothing added
-    ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjects, true)
+    ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjectsFor(square), true)
     eq(#ctx.options, 0, "test flag adds nothing")
+    ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, {}, false)
+    eq(#ctx.options, 0, "no world objects adds nothing")
+    ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, nil, false)
+    eq(#ctx.options, 0, "nil world objects adds nothing")
 
-    -- Exhausted display
     AC_Deposits.recordExtraction(x, y, "copper", 99)
-    ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, worldObjects, false)
+    ctx = fillWorldMenu(player, square)
     opt = ctx:find("Mine Copper Ore (Exhausted)")
     check(opt ~= nil and opt.notAvailable == true, "exhausted tile shown as disabled")
 end
 
-section("Multiplayer client guard")
+------------------------------------------------
+-- SAMPLING AND ASSAY
+------------------------------------------------
+
+section("Geological sampling")
 do
-    local x, y = findTile("copper", 1)
-    AC_Deposits.resetTile(x, y) -- earlier sections may have worked this tile
-    local square = newSquare(x, y, 0, GRASS)
-    local player = newPlayer({ square = square })
+    MOCK.clearModData()
+    local x, y = 700, 30
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square })
+
+    local s, err = AC_GeologySampling.createSample(player, square, nil)
+    eq(err, "no_shovel", "no shovel refused")
+    local shovel = equipShovel(player, 10)
+    s, err = AC_GeologySampling.createSample(player, MOCK.newSquare(x, y, 0, "blends_street_01_16"), shovel)
+    eq(err, "invalid_surface", "asphalt refused")
+    s, err = AC_GeologySampling.createSample(player, MOCK.newSquare(x, y, 0, GRASS, { water = true }), shovel)
+    eq(err, "invalid_surface", "water refused")
+    s, err = AC_GeologySampling.createSample(player, MOCK.newSquare(x, y, 0, GRASS, { room = {} }), shovel)
+    eq(err, "invalid_surface", "indoors refused")
+
+    MOCK.zombRandCalls = 0
+    s, err = AC_GeologySampling.createSample(player, square, shovel)
+    check(s ~= nil, "sample created: " .. tostring(err))
+    eq(MOCK.zombRandCalls, 1, "exactly one shovel wear roll")
+    local d = s.modData
+    eq(d.sampleX, x, "sampleX stored")
+    eq(d.sampleY, y, "sampleY stored")
+    eq(d.assayRank, 0, "new sample is unassayed")
+    eq(d.copperGrade, nil, "no grade before assay")
+    local survey = AC_Geology.surveyArea(x, y)
+    eq(d.trueCopper, survey.copperAverage, "true copper average stored on the item")
+    eq(d.trueCopperPeak, survey.copperPeak, "true copper peak stored on the item")
+    eq(d.labProcessing, false, "labProcessing initialised false")
+    eq(s.name, "Geological Sample", "item named")
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "sample in inventory")
+
+    MOCK.knownScriptItems["AmmoMaking.GeologicalSample"] = nil
+    s, err = AC_GeologySampling.createSample(player, square, shovel)
+    MOCK.knownScriptItems["AmmoMaking.GeologicalSample"] = true
+    eq(err, "item_creation_failed", "missing sample item reported")
+
+    player.inventory.items = {}
+    equipShovel(player, 10)
+    local ctx = fillWorldMenu(player, square)
+    check(ctx:find("Dig Geological Sample") ~= nil, "dig option with shovel on grass")
+    ctx = fillWorldMenu(player, MOCK.newSquare(x, y, 0, GRASS, { water = true }))
+    check(ctx:find("Dig Geological Sample") == nil, "no dig option on water")
+    player.primary = nil
+    ctx = fillWorldMenu(player, square)
+    check(ctx:find("Dig Geological Sample") == nil, "no dig option without shovel")
+end
+
+section("Dig action flow")
+do
+    local x, y = 720, 30
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square })
+    local shovel = equipShovel(player, 10)
+
+    local action = AC_DigGeologicalSampleAction:new(player, square, shovel)
+    eq(action:getDuration(), AC_GeologySampling.CONFIG.digActionTime, "duration from CONFIG")
+    eq(action:isValid(), true, "valid with shovel")
+    action:start()
+    action:update()
+    action:stop()
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 0, "interrupted dig gives no sample")
+
+    action = AC_DigGeologicalSampleAction:new(player, square, shovel)
+    action:start()
+    action:perform()
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "completed dig gives exactly one sample")
+
+    shovel.condition = 0
+    eq(AC_DigGeologicalSampleAction:new(player, square, shovel):isValid(), false, "broken shovel invalid")
+    shovel.condition = 10
+    square.room = {}
+    eq(AC_DigGeologicalSampleAction:new(player, square, shovel):isValid(), false, "indoors invalid")
+    square.room = nil
+end
+
+section("Portable assays: kit uses and XP exactly once")
+do
+    local player = MOCK.newPlayer()
+    local sample = makeSample(700, 30, 0, nil, nil)
+    sample.modData.trueCopper = 55
+    sample.modData.trueZinc = 0
+    player.inventory:addItem(sample)
+
+    local ctx = fillInventoryMenu(player, sample)
+    check(ctx:find("Analyze with Field Assay Kit") == nil, "no analyze option without a kit")
+    check(ctx:find("View Assay Result") == nil, "no view option before assay")
+
+    local fieldKit = player.inventory:AddItem("AmmoMaking.FieldAssayKit")
+    ctx = fillInventoryMenu(player, sample)
+    local opt = ctx:find("Analyze with Field Assay Kit")
+    check(opt ~= nil, "field analyze option with a kit")
+    eq(fieldKit.name, "Field Assay Kit (20/20)", "kit name initialised with uses")
+
+    ctx:invoke(opt)
+    eq(sample.modData.assayRank, 1, "field assay applied")
+    check(sample.modData.copperGrade ~= nil, "copper grade set")
+    eq(#player.xpLog, 1, "XP granted once")
+    eq(player.xpLog[1], AC_GeologySampling.CONFIG.fieldAssayXP, "field assay XP amount")
+    eq(AC_GeologySampling.getKitUses(fieldKit), 19, "one kit use consumed")
+    eq(sample.name, "Tested Geological Sample", "sample renamed")
+
+    local okAgain, errAgain = AC_GeologySampling.analyzeSample(sample, fieldKit)
+    eq(errAgain, "already_analyzed", "re-analysis at the same rank refused")
+    eq(#player.xpLog, 1, "no second XP")
+    eq(AC_GeologySampling.getKitUses(fieldKit), 19, "no kit use on refusal")
+    ctx = fillInventoryMenu(player, sample)
+    check(ctx:find("Analyze with Field Assay Kit") == nil, "field option gone after field assay")
+    check(ctx:find("View Assay Result") ~= nil, "view option after assay")
+
+    local advKit = player.inventory:AddItem("AmmoMaking.AdvancedFieldAssayKit")
+    ctx = fillInventoryMenu(player, sample)
+    opt = ctx:find("Re-analyze with Advanced Field Assay Kit")
+    check(opt ~= nil, "re-analyze option offered")
+    ctx:invoke(opt)
+    eq(sample.modData.assayRank, 2, "advanced assay applied")
+    check(sample.modData.copperMin ~= nil and sample.modData.copperMax ~= nil, "range stored")
+    check(sample.modData.copperMax - sample.modData.copperMin <= 2 * AC_GeologySampling.CONFIG.advancedRangeHalfWidth, "range width bounded")
+    eq(#player.xpLog, 2, "XP granted once more for the better assay")
+    eq(player.xpLog[2], AC_GeologySampling.CONFIG.advancedAssayXP, "advanced XP amount")
+    eq(AC_GeologySampling.getKitUses(advKit), 9, "advanced kit use consumed")
+
+    local center = (sample.modData.copperMin + sample.modData.copperMax) / 2
+    check(math.abs(center - 55) <= AC_GeologySampling.CONFIG.advancedMeasurementError + 1, "advanced centre within error of the truth")
+
+    advKit.modData.assayUsesRemaining = 0
+    local sample2 = makeSample(700, 30, 0, nil, nil)
+    player.inventory:addItem(sample2)
+    local okEmpty, errEmpty = AC_GeologySampling.analyzeSample(sample2, advKit)
+    eq(errEmpty, "kit_empty", "empty kit refused")
+    ctx = fillInventoryMenu(player, sample2)
+    check(ctx:find("Analyze with Advanced Field Assay Kit") == nil, "empty kit not offered")
+
+    eq(select(2, AC_GeologySampling.analyzeSample(nil, fieldKit)), "invalid_sample", "nil sample")
+    eq(select(2, AC_GeologySampling.analyzeSample(sample2, MOCK.newItem("Base.Shovel"))), "invalid_kit", "non-kit item")
+    sample2.modData.labProcessing = true
+    eq(select(2, AC_GeologySampling.analyzeSample(sample2, fieldKit)), "lab_processing", "lab-processing sample refused")
+    sample2.modData.labProcessing = false
+
+    local lines = AC_GeologySampling.getResultLines(sample)
+    eq(lines[2], "Analysis: Advanced Field Assay", "advanced result header")
+    check(string.find(lines[3], "^Copper: %d+%-%d+%% %(") ~= nil, "advanced copper line format: " .. lines[3])
+    local fresh = makeSample(1, 1, 0, nil, nil)
+    eq(AC_GeologySampling.getResultLines(fresh)[2], "Status: Untested", "untested line")
+    eq(AC_GeologySampling.getResultLines(MOCK.newItem("Base.Shovel")), nil, "non-sample -> nil lines")
+end
+
+section("Laboratory analyzer flow and XP once")
+do
+    local x, y = 740, 30
+    local powered = MOCK.newSquare(x, y, 0, "floors_interior_tiles_01_0", { room = {} })
+    powered.haveElectricity = function() return true end
+    local analyzerItem = MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local analyzerObject = { __class = "IsoWorldInventoryObject", getItem = function() return analyzerItem end, getSquare = function() return powered end }
+    local player = MOCK.newPlayer({ square = powered })
+    local sample = makeSample(x, y, 2, "Good", "None")
+    sample.modData.trueCopper = 60
+    sample.modData.trueZinc = 5
+    player.inventory:addItem(sample)
+    MOCK.worldHours = 100
+
     MOCK.players = { player }
-    local pick = equipPickaxe(player)
-    player.inventory:addItem(makeSample(x, y, 1, "Poor", "None"))
+    local ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { analyzerObject }, false)
+    local start = ctx:find("Start Lab Assay: Sample " .. x .. ", " .. y)
+    check(start ~= nil, "start option lists the carried sample")
+    ctx:invoke(start)
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 0, "sample moved into the analyzer")
+    eq(analyzerItem.modData.labAnalyzerState, "processing", "analyzer processing")
+    eq(#player.xpLog, 0, "no XP at start")
 
-    local realIsClient = isClient
-    isClient = function() return true end
+    ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { analyzerObject }, false)
+    check(ctx:find("Check Laboratory Progress") ~= nil, "progress option while processing")
+    check(ctx:find("Collect Laboratory Sample") == nil, "no collect option while processing")
 
-    local result, err = AC_Mining.extract(player, square, "copper", pick)
-    eq(err, "multiplayer_unsupported", "client-side extraction refused on a multiplayer client")
-    eq(#square.worldItems, 0, "no ore spawned on a multiplayer client")
-    eq(AC_Deposits.hasBeenWorked(x, y, "copper"), false, "no depletion recorded on a multiplayer client")
+    powered.haveElectricity = function() return false end
+    MOCK.worldHours = 130
+    eq(AC_LaboratoryAnalyzer.getState(analyzerObject), "processing", "still processing after unpowered hours")
+    powered.haveElectricity = function() return true end
+    MOCK.worldHours = 154
+    eq(AC_LaboratoryAnalyzer.getState(analyzerObject), "ready", "ready after 24 powered hours")
 
-    local ctx = newContext()
-    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { { getSquare = function() return square end } }, false)
-    local opt = ctx:find("Mine Ore")
-    check(opt ~= nil and opt.notAvailable == true, "multiplayer client sees a disabled explanatory option")
-    check(ctx:find("Mine Copper Ore") == nil, "no live mining option on a multiplayer client")
+    ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { analyzerObject }, false)
+    local collect = ctx:find("Collect Laboratory Sample")
+    check(collect ~= nil, "collect option when ready")
+    ctx:invoke(collect)
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "sample returned")
+    local returned = player.inventory:getItemsFromFullType("AmmoMaking.GeologicalSample"):get(0)
+    eq(returned.modData.assayRank, 3, "laboratory rank")
+    eq(returned.modData.sampleX, x, "sample location preserved")
+    check(math.abs(returned.modData.labCopperResult - 60) <= AC_LaboratoryAnalyzer.CONFIG.measurementError, "lab result within tolerance")
+    eq(#player.xpLog, 1, "XP granted exactly once on collection")
+    eq(player.xpLog[1], AC_LaboratoryAnalyzer.CONFIG.assayXP, "lab XP amount")
+    eq(analyzerItem.modData.labAnalyzerState, "idle", "analyzer idle again")
 
-    isClient = realIsClient
+    local again, errAgain = AC_LaboratoryAnalyzer.collectSample(player, analyzerObject)
+    eq(errAgain, "empty", "second collect refused")
+    eq(#player.xpLog, 1, "no second XP")
+    eq(AC_LaboratoryAnalyzer.canAnalyzeSample(returned), false, "lab sample cannot be re-analysed")
+
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local p2 = MOCK.newPlayer({ square = square })
+    p2.inventory:addItem(returned)
+    eq(AC_Mining.findProspect(p2, square, "copper"), returned, "laboratory sample is a valid prospect")
+    MOCK.worldHours = 0
+end
+
+------------------------------------------------
+-- ACTION TIME
+------------------------------------------------
+
+section("Action time scaling")
+do
+    local player = MOCK.newPlayer()
+    eq(AC_Mining.getActionTime(player), AC_Mining.CONFIG.baseActionTime, "level 0 = base")
+    player.perkLevel = 10
+    eq(AC_Mining.getActionTime(player), math.floor(AC_Mining.CONFIG.baseActionTime * 0.6), "level 10 = 40% faster")
+    player.perkLevel = 30
+    check(AC_Mining.getActionTime(player) >= 1, "absurd level never yields a non-positive duration")
+    player.perkLevel = 0
+    player.isTimedActionInstant = function() return true end
+    local sq = MOCK.newSquare(1, 1, 0, GRASS)
+    eq(AC_MineOreAction:new(player, sq, "copper", MOCK.newItem("Base.PickAxe")):getDuration(), 1, "instant actions (debug/cheat) take 1")
+end
+
+------------------------------------------------
+-- DEBUG GATING AND TOOLS
+------------------------------------------------
+
+section("Debug menu gating")
+do
+    MOCK.clearModData()
+    local x, y = findTile("copper", 1)
+    local player, square = miningSetup(x, y, "Poor", "None")
+
+    MOCK.debug = false
+    local ctx = fillWorldMenu(player, square)
+    check(ctx:find("Ammo Making Debug") == nil, "no debug submenu in normal mode")
+    local cartridge = MOCK.newItem("AmmoMaking.TestCartridge")
+    ctx = fillInventoryMenu(player, cartridge)
+    check(ctx:find("Inspect Ammunition") ~= nil, "inspect option always present")
+    check(ctx:find("Debug Ammo Quality") == nil, "no quality debug in normal mode")
+    check(ctx:find("Set Ammo Making Level") == nil, "no level debug in normal mode")
+
+    MOCK.debug = true
+    ctx = fillWorldMenu(player, square)
+    local root = ctx:find("Ammo Making Debug")
+    check(root ~= nil and root.submenu ~= nil, "debug submenu in debug mode")
+    local expected = {
+        "Inspect Current Tile", "Survey Current Area (3x3)", "Show Geology Seed",
+        "Reset Depletion: Current Tile", "Reset Depletion: 3x3 Area",
+        "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
+        "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
+        "Set Ammo Making Level", "Run Compatibility Check",
+    }
+    for _, e in ipairs(expected) do
+        check(root.submenu:find(e) ~= nil, "debug entry present: " .. e)
+    end
+    eq(#root.submenu.options, #expected, "no unexpected debug entries")
+    ctx = fillInventoryMenu(player, cartridge)
+    check(ctx:find("Debug Ammo Quality") ~= nil, "quality debug in debug mode")
+    check(ctx:find("Set Ammo Making Level") ~= nil, "level debug in debug mode")
+    MOCK.debug = false
+end
+
+section("Debug tools behave")
+do
+    MOCK.clearModData()
+    MOCK.debug = true
+    local x, y, r = findTile("copper", 2)
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square, x = x + 0.4, y = y + 0.6 })
+    MOCK.players = { player }
+
+    AC_GeologyDebug.spawnSamplingKit(player)
+    eq(player.inventory:count("Base.Shovel"), 1, "shovel spawned")
+    eq(player.inventory:count("AmmoMaking.FieldAssayKit"), 1, "field kit spawned")
+    eq(player.inventory:count("AmmoMaking.AdvancedFieldAssayKit"), 1, "advanced kit spawned")
+    AC_GeologyDebug.spawnMiningKit(player)
+    eq(player.inventory:count("Base.PickAxe"), 1, "pickaxe spawned")
+    eq(player.inventory:count("Base.PickAxeForged"), 1, "forged pickaxe spawned")
+    AC_GeologyDebug.spawnLaboratoryAnalyzer(player)
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 1, "analyzer spawned")
+
+    MOCK.knownScriptItems["Base.PickAxeForged"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local okSpawn = pcall(AC_GeologyDebug.spawnMiningKit, player)
+    MOCK.capturePrint(false)
+    MOCK.knownScriptItems["Base.PickAxeForged"] = true
+    check(okSpawn, "spawn with missing item does not raise")
+    check(MOCK.printLogContains("WARNING: debug spawn FAILED: Base.PickAxeForged"), "missing item logged as WARNING")
+
+    AC_GeologyDebug.spawnAssayedSample(player)
+    local sample = player.inventory:getItemsFromFullType("AmmoMaking.GeologicalSample"):get(0)
+    check(sample ~= nil, "debug sample created")
+    eq(sample.modData.sampleX, x, "debug sample centred on the player tile")
+    eq(sample.modData.assayRank, 2, "debug sample carries an advanced assay")
+    eq(AC_GeologySampling.getKitUses(player.inventory:getItemsFromFullType("AmmoMaking.AdvancedFieldAssayKit"):get(0)), 10, "no kit use consumed")
+
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local okInspect = pcall(AC_GeologyDebug.tile, player)
+    MOCK.capturePrint(false)
+    check(okInspect, "inspect tile does not raise")
+    check(MOCK.printLogContains("reserve " .. r .. "/" .. r), "inspect prints initial reserve")
+    check(MOCK.printLogContains("mineable = true"), "inspect prints terrain verdict")
+
+    AC_Deposits.recordExtraction(x, y, "copper", 1)
+    AC_Deposits.recordExtraction(x + 1, y + 1, "copper", 1)
+    AC_GeologyDebug.resetTile(player)
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "reset tile clears the player's tile")
+    eq(AC_Deposits.getExtracted(x + 1, y + 1, "copper"), 1, "reset tile leaves neighbours")
+    AC_GeologyDebug.resetArea(player)
+    eq(AC_Deposits.getExtracted(x + 1, y + 1, "copper"), 0, "reset area clears neighbours")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "store empty after area reset")
+
+    AC_GeologyDebug.setSkillLevel(player, 7)
+    eq(AmmoMakingSkill.getLevel(player), 7, "skill level set")
+    AC_GeologyDebug.setSkillLevel(player, 99)
+    eq(AmmoMakingSkill.getLevel(player), 10, "skill level clamped")
+
+    check(pcall(AC_GeologyDebug.seed, player), "seed tool runs")
+    check(pcall(AC_GeologyDebug.survey, player), "survey tool runs")
+    MOCK.capturePrint(true)
+    local okCompat = pcall(AC_GeologyDebug.compat, player)
+    MOCK.capturePrint(false)
+    check(okCompat, "compat tool runs")
+    MOCK.debug = false
+end
+
+------------------------------------------------
+-- COMPATIBILITY CHECK
+------------------------------------------------
+
+section("Compatibility self-check")
+do
+    local player = MOCK.newPlayer({ square = MOCK.newSquare(1, 1, 0, GRASS) })
+    MOCK.players = { player }
+    local fullTranslations = {
+        IGUI_perks_AmmoMaking = "Ammo Making",
+        ["IGUI_perks_Ammo Making_Description1"] = "level one",
+    }
+    MOCK.translations = fullTranslations
+
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local results, summary = AC_Compat.run()
+    MOCK.capturePrint(false)
+    eq(summary.warnings, 0, "no warnings with every API mocked")
+    eq(summary.unverified, 0, "nothing unverified with a player present")
+    check(MOCK.printLogContains("[AmmoMaking] OK: Base.CopperOre"), "OK line format")
+    check(MOCK.printLogContains("Compatibility check:"), "summary line printed")
+
+    MOCK.knownScriptItems["Base.CopperOre"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    results, summary = AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.knownScriptItems["Base.CopperOre"] = true
+    eq(summary.warnings, 1, "one warning for the missing item")
+    check(MOCK.printLogContains("[AmmoMaking] WARNING: Base.CopperOre not found"), "WARNING line format")
+
+    MOCK.players = {}
+    MOCK.scriptManagerAvailable = false
+    MOCK.capturePrint(true)
+    local okRun, r2, s2 = pcall(AC_Compat.run)
+    MOCK.capturePrint(false)
+    MOCK.scriptManagerAvailable = true
+    check(okRun, "run without player or script manager does not raise")
+    check(s2.unverified > 0, "unavailable probes reported as unverified")
+    eq(s2.warnings, 0, "unavailable probes are not warnings")
+
+    MOCK.players = { player }
+    MOCK.translations = fullTranslations
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_Compat.run()
+    MOCK.capturePrint(false)
+    check(MOCK.printLogContains("translation file loaded"), "loaded translation detected")
+    check(MOCK.printLogContains("perk level descriptions resolve (spaced key)"), "spaced description key reported")
+
+    MOCK.translations = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local r3, s3 = AC_Compat.run()
+    MOCK.capturePrint(false)
+    check(MOCK.printLogContains("WARNING: translation file not loaded"), "missing translation file is a WARNING")
+    check(MOCK.printLogContains("UNVERIFIED: perk level descriptions"), "unresolvable description keys are UNVERIFIED, not WARNING")
+    eq(s3.warnings, 1, "only the translation warning without a translation table")
+    MOCK.translations = fullTranslations
+
+    AC_Compat.hasRun = false
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    Events.OnGameStart.fire()
+    Events.OnGameStart.fire()
+    MOCK.capturePrint(false)
+    local count = 0
+    for _, line in ipairs(MOCK.printLog) do
+        if string.find(line, "Compatibility check:", 1, true) then count = count + 1 end
+    end
+    eq(count, 1, "OnGameStart runs the check once")
+    MOCK.translations = nil
+end
+
+------------------------------------------------
+-- INSPECTION PROTOTYPE (smoke)
+------------------------------------------------
+
+section("Ammunition inspection lines")
+do
+    local player = MOCK.newPlayer()
+    local cartridge = MOCK.newItem("AmmoMaking.TestCartridge")
+    local r = AmmoInspection.inspect(player, cartridge)
+    eq(r.title, "Ammo Inspection", "title separate from lines")
+    eq(#r.lines, 1, "level 0: one line")
+    for level = 1, 10 do
+        player.perkLevel = level
+        r = AmmoInspection.inspect(player, cartridge)
+        check(#r.lines >= 1, "level " .. level .. " produces lines")
+        for _, line in ipairs(r.lines) do
+            check(not string.find(line, "IGUI_", 1, true), "no raw keys at level " .. level)
+        end
+    end
+    eq(AmmoQuality.getQualityLabel(nil), "Unknown", "nil item label")
 end
 
 ------------------------------------------------
