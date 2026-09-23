@@ -83,22 +83,11 @@ local function isValidSamplingSquare(
     square
 )
 
-    if not square then
-        return false
-    end
-
-
     ------------------------------------------------
-    -- Never allow soil sampling inside a mapped
-    -- room/building, regardless of the underlying
-    -- floor sprite.
+    -- Terrain rules (natural ground, ground level,
+    -- not indoors, not water) live in one place so
+    -- sampling, mining and debug tools always agree.
     ------------------------------------------------
-
-    if square:getRoom() ~= nil then
-
-        return false
-    end
-
 
     return
         AC_Geology.isSurveyableSquare(
