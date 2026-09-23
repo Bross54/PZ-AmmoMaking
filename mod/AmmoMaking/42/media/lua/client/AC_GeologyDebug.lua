@@ -916,6 +916,201 @@ end
 
 
 ------------------------------------------------
+-- LABORATORY ANALYZER
+------------------------------------------------
+--
+-- Offered only for an analyzer on the clicked
+-- square. Inspect is read-only; it does not credit
+-- the pending hours. Complete skips the remaining
+-- processing time but grants no XP: the sample is
+-- still collected through the normal menu.
+------------------------------------------------
+
+local function formatHours(
+    value
+)
+
+    value =
+        tonumber(
+            value
+        )
+
+
+    if not value then
+        return "nil"
+    end
+
+
+    return
+        string.format(
+            "%.2f",
+            value
+        )
+end
+
+
+local function inspectAnalyzer(
+    player,
+    analyzer
+)
+
+    if not player then
+        return
+    end
+
+
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
+            analyzer
+        )
+
+
+    if not data then
+
+        halo(
+            player,
+            "Not an Ammo Making analyzer"
+        )
+
+
+        return
+    end
+
+
+    local square =
+        analyzer:getSquare()
+
+
+    local now =
+        getGameTime():getWorldAgeHours()
+
+
+    local lastUpdate =
+        tonumber(
+            data.labLastUpdateAt
+        )
+
+
+    local kind =
+        AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+            analyzer
+        )
+        and "placed"
+        or "dropped"
+
+
+    log(
+        "ANALYZER (" .. kind .. ") at "
+        .. tostring(square and square:getX())
+        .. ", "
+        .. tostring(square and square:getY())
+        .. ", "
+        .. tostring(square and square:getZ())
+    )
+
+
+    log(
+        "  state=" .. tostring(data.labAnalyzerState)
+        .. " storedSample=" .. tostring(data.storedSample == true)
+        .. " sample at " .. tostring(data.stored_sampleX)
+        .. ", " .. tostring(data.stored_sampleY)
+        .. " assayRank=" .. tostring(data.stored_assayRank)
+    )
+
+
+    log(
+        "  remaining=" .. formatHours(data.labRemainingHours) .. " h"
+        .. " lastUpdate=" .. formatHours(lastUpdate)
+        .. " now=" .. formatHours(now)
+        .. " pending=" .. formatHours(lastUpdate and math.max(0, now - lastUpdate))
+        .. " h (credited at the next check if powered then)"
+    )
+
+
+    local gridPower =
+        square
+        and square.hasGridPower
+        and square:hasGridPower()
+
+
+    log(
+        "  powered=" .. tostring(AC_LaboratoryAnalyzer.hasPower(analyzer))
+        .. " (haveElectricity=" .. tostring(square and square:haveElectricity())
+        .. " hasGridPower=" .. tostring(gridPower)
+        .. " room=" .. tostring(square ~= nil and square:getRoom() ~= nil)
+        .. ")"
+    )
+
+
+    log(
+        "  rolled lab result copper=" .. tostring(data.labCopperResult)
+        .. " zinc=" .. tostring(data.labZincResult)
+        .. " (hidden until collection)"
+    )
+
+
+    log(
+        "  idle and empty (pick-up allowed)="
+        .. tostring(AC_LaboratoryAnalyzer.isIdleAndEmpty(analyzer))
+    )
+
+
+    halo(
+        player,
+        "Analyzer "
+        .. tostring(data.labAnalyzerState)
+        .. ", "
+        .. formatHours(data.labRemainingHours)
+        .. " h left (see console)"
+    )
+end
+
+
+local function completeAnalyzerJob(
+    player,
+    analyzer
+)
+
+    if not player then
+        return
+    end
+
+
+    local ok,
+          reason =
+        AC_LaboratoryAnalyzer.debugFinishProcessing(
+            analyzer
+        )
+
+
+    if ok then
+
+        halo(
+            player,
+            "Analyzer job complete - collect the sample normally"
+        )
+
+
+        return
+    end
+
+
+    log(
+        "DEBUG: Complete Analyzer Job refused: "
+        .. tostring(reason)
+    )
+
+
+    halo(
+        player,
+        "Analyzer is not processing ("
+        .. tostring(reason)
+        .. ")"
+    )
+end
+
+
+------------------------------------------------
 -- SKILL LEVEL
 ------------------------------------------------
 
@@ -1116,6 +1311,12 @@ AC_GeologyDebug.compat =
 AC_GeologyDebug.objects =
     inspectTileObjects
 
+AC_GeologyDebug.inspectAnalyzer =
+    inspectAnalyzer
+
+AC_GeologyDebug.completeAnalyzerJob =
+    completeAnalyzerJob
+
 
 ------------------------------------------------
 -- CLICKED SQUARE
@@ -1231,6 +1432,24 @@ local function onFillWorldObjectContextMenu(
     if clickedSquare then
 
         menu:addOption("Inspect Clicked Tile Objects (sprites, analyzer state)", player, inspectTileObjects, clickedSquare)
+    end
+
+
+    ------------------------------------------------
+    -- Laboratory analyzer (clicked analyzer only)
+    ------------------------------------------------
+
+    local analyzer =
+        AC_LaboratoryAnalyzer.findInWorldObjects(
+            worldObjects
+        )
+
+
+    if analyzer then
+
+        menu:addOption("Inspect Analyzer State", player, inspectAnalyzer, analyzer)
+
+        menu:addOption("Complete Analyzer Job (no XP; collect normally)", player, completeAnalyzerJob, analyzer)
     end
 
 

@@ -2386,6 +2386,105 @@ do
     MOCK.debug = false
 end
 
+section("Debug analyzer tools: gated, clicked analyzer only, no XP (mocked placed object)")
+do
+    local x, y = 920, 30
+    local square = poweredLabSquare(x, y)
+    local player = MOCK.newPlayer({ square = square })
+    local analyzer = placeAnalyzerObject(square)
+    local hours = AC_LaboratoryAnalyzer.CONFIG.processingHours
+    local s = makeSample(x, y, 1, "Good", "None")
+    s.modData.trueCopper = 70
+    s.modData.trueZinc = 0
+    player.inventory:addItem(s)
+    MOCK.worldHours = 5000
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    local function debugMenu(objects)
+        MOCK.players = { player }
+        local ctx = MOCK.newContext()
+        Events.OnFillWorldObjectContextMenu.fire(0, ctx, objects, false)
+        local root = ctx:find("Ammo Making Debug")
+        return root and root.submenu, ctx
+    end
+
+    -- Normal mode: nothing, and the helper itself refuses
+    MOCK.debug = false
+    local menu, ctx = debugMenu({ analyzer })
+    eq(menu, nil, "no debug submenu in normal mode, even on an analyzer")
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, s)
+    local ok, why = AC_LaboratoryAnalyzer.debugFinishProcessing(analyzer)
+    eq(ok, false, "helper refuses outside debug mode")
+    eq(why, "debug_only", "reason: debug_only")
+    eq(analyzer.modData.labAnalyzerState, "processing", "state unchanged outside debug mode")
+    eq(analyzer.modData.labRemainingHours, hours, "remaining time unchanged outside debug mode")
+
+    -- Debug mode: entries only when an analyzer was clicked
+    MOCK.debug = true
+    menu = debugMenu({ analyzer })
+    check(menu and menu:find("Inspect Analyzer State") ~= nil, "inspect entry for a clicked analyzer")
+    check(menu and menu:find("Complete Analyzer Job (no XP; collect normally)") ~= nil, "complete entry for a clicked analyzer")
+    local floor = { getSquare = function() return square end }
+    menu = debugMenu({ floor })
+    check(menu and menu:find("Inspect Analyzer State") ~= nil, "analyzer found via the clicked square")
+    local grass = MOCK.newSquare(x + 3, y, 0, GRASS)
+    menu = debugMenu({ { getSquare = function() return grass end } })
+    check(menu and menu:find("Inspect Analyzer State") == nil, "no analyzer entries without an analyzer")
+    check(menu and menu:find("Complete Analyzer Job (no XP; collect normally)") == nil, "no complete entry without an analyzer")
+
+    -- Inspect is read-only
+    MOCK.worldHours = 5003
+    local lastUpdate = analyzer.modData.labLastUpdateAt
+    MOCK.clearPrintLog()
+    check(pcall(AC_GeologyDebug.inspectAnalyzer, player, analyzer), "inspect runs")
+    check(MOCK.printLogContains("state=processing storedSample=true sample at " .. x), "inspect prints the state")
+    check(MOCK.printLogContains("pending=3.00 h"), "inspect prints uncredited hours")
+    eq(analyzer.modData.labLastUpdateAt, lastUpdate, "inspect does not advance the analyzer")
+    eq(analyzer.modData.labRemainingHours, hours, "inspect credits nothing")
+    check(pcall(AC_GeologyDebug.inspectAnalyzer, player, MOCK.newWorldObject()), "inspect tolerates a non-analyzer")
+
+    -- Complete: ready, same sample and result, no XP, CONFIG untouched
+    local rolled = analyzer.modData.labCopperResult
+    menu = debugMenu({ analyzer })
+    menu:invoke(menu:find("Complete Analyzer Job (no XP; collect normally)"))
+    eq(analyzer.modData.labAnalyzerState, "ready", "job complete -> ready")
+    eq(analyzer.modData.storedSample, true, "sample still stored")
+    eq(analyzer.modData.stored_sampleX, x, "same sample stored")
+    eq(analyzer.modData.labCopperResult, rolled, "result rolled at start is kept")
+    eq(#player.xpLog, 0, "debug completion grants no XP")
+    eq(AC_LaboratoryAnalyzer.CONFIG.processingHours, hours, "production duration unchanged")
+    check(MOCK.printLogContains("DEBUG: analyzer processing finished early"), "debug completion logged")
+    check(MOCK.printLogContains("Laboratory analyzer completed sample " .. x), "normal completion path ran")
+
+    -- Refusals: ready, idle, not an analyzer
+    eq(select(2, AC_LaboratoryAnalyzer.debugFinishProcessing(analyzer)), "not_processing", "ready analyzer refused")
+    eq(select(2, AC_LaboratoryAnalyzer.debugFinishProcessing(MOCK.newWorldObject())), "invalid_analyzer", "ordinary object refused")
+    HaloTextHelper.clear()
+    AC_GeologyDebug.completeAnalyzerJob(player, analyzer)
+    eq(HaloTextHelper.last(), "Analyzer is not processing (not_processing)", "refusal shown")
+
+    -- Normal collection still grants the XP, exactly once
+    ctx = fillAnalyzerMenu(player, analyzer)
+    ctx:invoke(ctx:find("Collect Laboratory Sample"))
+    eq(#player.xpLog, 1, "collection after debug completion grants XP once")
+    eq(player.xpLog[1], AC_LaboratoryAnalyzer.CONFIG.assayXP, "normal laboratory XP")
+    eq(select(2, AC_LaboratoryAnalyzer.debugFinishProcessing(analyzer)), "not_processing", "idle analyzer refused")
+
+    -- Unpowered analyzer can still be completed for testing
+    local back = player.inventory:getItemsFromFullType("AmmoMaking.GeologicalSample"):get(0)
+    back.modData.assayRank = 1                              -- re-analysable for the test
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, back)
+    square.haveElectricity = function() return false end
+    eq(AC_LaboratoryAnalyzer.debugFinishProcessing(analyzer), true, "debug completion ignores power")
+    square.haveElectricity = function() return true end
+    eq(#player.xpLog, 1, "still no extra XP")
+
+    MOCK.capturePrint(false)
+    MOCK.debug = false
+    MOCK.worldHours = 0
+end
+
 ------------------------------------------------
 -- COMPATIBILITY CHECK
 ------------------------------------------------

@@ -1913,6 +1913,94 @@ end
 
 
 ------------------------------------------------
+-- DEBUG: FINISH PROCESSING NOW
+------------------------------------------------
+--
+-- -debug only (AC_GeologyDebug "Complete Analyzer
+-- Job"). Skips the rest of a running assay so the
+-- collect path can be tested without waiting the
+-- full processing time. Completion goes through
+-- updateState() like a normal finish; the result
+-- rolled at start is kept. No XP is granted here:
+-- collecting the sample still does that, once.
+-- Power is not required and CONFIG.processingHours
+-- is not touched.
+--
+-- Returns true, or false and a reason:
+--   debug_only, invalid_analyzer, not_processing
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.debugFinishProcessing(
+    worldObject
+)
+
+    if not isDebugEnabled() then
+
+        return false,
+            "debug_only"
+    end
+
+
+    local state =
+        AC_LaboratoryAnalyzer.updateState(
+            worldObject
+        )
+
+
+    if not state then
+
+        return false,
+            "invalid_analyzer"
+    end
+
+
+    if state ~= "processing" then
+
+        return false,
+            "not_processing"
+    end
+
+
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
+            worldObject
+        )
+
+
+    local skipped =
+        tonumber(
+            data.labRemainingHours
+        )
+        or 0
+
+
+    data.labRemainingHours =
+        0
+
+
+    state =
+        AC_LaboratoryAnalyzer.updateState(
+            worldObject
+        )
+
+
+    print(
+        string.format(
+            "[AmmoMaking] DEBUG: analyzer processing finished early (%.2f h skipped); state %s; no XP granted, collect normally",
+            skipped,
+            tostring(state)
+        )
+    )
+
+
+    return state == "ready",
+        state ~= "ready"
+            and "not_processing"
+            or nil
+end
+
+
+------------------------------------------------
 -- STATUS INFO
 ------------------------------------------------
 
