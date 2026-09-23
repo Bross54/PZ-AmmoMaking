@@ -2025,6 +2025,46 @@ do
     eq(s3.warnings, 1, "only the translation warning without a translation table")
     MOCK.translations = fullTranslations
 
+    -- Laboratory analyzer assumptions
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_Compat.run()
+    MOCK.capturePrint(false)
+    check(MOCK.printLogContains("OK: analyzer world sprite (industry_03_61)"), "analyzer sprite probed")
+    check(MOCK.printLogContains("OK: IsoGridSquare:AddSpecialObject"), "placement square method probed")
+    check(MOCK.printLogContains("OK: IsoGridSquare:hasGridPower"), "grid power method probed")
+    check(MOCK.printLogContains("OK: AC_LaboratoryAnalyzerObject loaded"), "building object load probed")
+    check(MOCK.printLogContains("OK: IsoPlayer:getPlayerNum"), "placement player method probed")
+
+    MOCK.knownSprites["industry_03_61"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local r4, s4 = AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.knownSprites["industry_03_61"] = true
+    eq(s4.warnings, 1, "missing analyzer sprite is one WARNING")
+    check(MOCK.printLogContains("WARNING: analyzer world sprite industry_03_61 not found"), "sprite WARNING line")
+
+    local realGetSprite = getSprite
+    getSprite = nil
+    MOCK.capturePrint(true)
+    local r5, s5 = AC_Compat.run()
+    MOCK.capturePrint(false)
+    getSprite = realGetSprite
+    eq(s5.warnings, 0, "no getSprite is not a warning")
+    check(s5.unverified >= 1, "no getSprite reported as unverified")
+
+    local bareSquare = MOCK.newSquare(1, 1, 0, GRASS)
+    bareSquare.AddSpecialObject = nil
+    MOCK.players = { MOCK.newPlayer({ square = bareSquare }) }
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local r6, s6 = AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.players = { player }
+    eq(s6.warnings, 1, "missing square method is one WARNING")
+    check(MOCK.printLogContains("WARNING: IsoGridSquare:AddSpecialObject missing (the laboratory analyzer cannot be placed)"), "consequence named")
+
     AC_Compat.hasRun = false
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)

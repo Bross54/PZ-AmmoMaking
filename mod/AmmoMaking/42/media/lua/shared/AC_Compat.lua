@@ -378,6 +378,14 @@ local function checkSquareMethods(
         )
 
 
+        addResult(
+            results,
+            "UNVERIFIED",
+            "laboratory analyzer square methods",
+            "no player square available"
+        )
+
+
         return
     end
 
@@ -476,6 +484,47 @@ local function checkSquareMethods(
             )
         end
     end
+
+
+    ------------------------------------------------
+    -- Placed laboratory analyzer.
+    ------------------------------------------------
+
+    for _,
+        check
+    in ipairs(
+        {
+            { "AddSpecialObject", "the laboratory analyzer cannot be placed" },
+
+            { "getSpecialObjects", "a placed analyzer is not found by the menu" },
+
+            { "transmitRemoveItemFromSquare", "the laboratory analyzer cannot be picked up" },
+
+            { "RemoveTileObject", "the laboratory analyzer cannot be picked up" },
+
+            { "hasGridPower", "analyzer grid power falls back to the world hydro flag" },
+        }
+    )
+    do
+
+        if hasMethod(square, check[1]) == true then
+
+            addResult(
+                results,
+                "OK",
+                "IsoGridSquare:" .. check[1]
+            )
+
+        else
+
+            addResult(
+                results,
+                "WARNING",
+                "IsoGridSquare:" .. check[1] .. " missing",
+                check[2]
+            )
+        end
+    end
 end
 
 
@@ -484,59 +533,85 @@ local function checkCharacterMethods(
     player
 )
 
-    local names = {
-        "getPrimaryHandItem",
-        "getSecondaryHandItem",
-        "getInventory",
-        "getXp",
-        "getPerkLevel",
-        "faceLocation",
-        "setMetabolicTarget",
-        "addCombatMuscleStrain",
-        "getEmitter",
-        "isTimedActionInstant",
+    local groups = {
+
+        {
+            consequence = "used by the sampling/mining timed actions",
+
+            names = {
+                "getPrimaryHandItem",
+                "getSecondaryHandItem",
+                "getInventory",
+                "getXp",
+                "getPerkLevel",
+                "faceLocation",
+                "setMetabolicTarget",
+                "addCombatMuscleStrain",
+                "getEmitter",
+                "isTimedActionInstant",
+            },
+        },
+
+        {
+            consequence = "used by laboratory analyzer placement and pickup",
+
+            names = {
+                "setPrimaryHandItem",
+                "setSecondaryHandItem",
+                "getPlayerNum",
+                "SetVariable",
+            },
+        },
     }
 
 
     for _,
-        name
+        group
     in ipairs(
-        names
+        groups
     )
     do
 
-        local present =
-            hasMethod(
-                player,
-                name
-            )
+        for _,
+            name
+        in ipairs(
+            group.names
+        )
+        do
+
+            local present =
+                hasMethod(
+                    player,
+                    name
+                )
 
 
-        if present == true then
+            if present == true then
 
-            addResult(
-                results,
-                "OK",
-                "IsoPlayer:" .. name
-            )
+                addResult(
+                    results,
+                    "OK",
+                    "IsoPlayer:" .. name
+                )
 
-        elseif present == false then
+            elseif present == false then
 
-            addResult(
-                results,
-                "WARNING",
-                "IsoPlayer:" .. name .. " missing",
-                "used by the sampling/mining timed actions"
-            )
+                addResult(
+                    results,
+                    "WARNING",
+                    "IsoPlayer:" .. name .. " missing",
+                    group.consequence
+                )
 
-        else
+            else
 
-            addResult(
-                results,
-                "UNVERIFIED",
-                "IsoPlayer:" .. name,
-                "no player available"
-            )
+                addResult(
+                    results,
+                    "UNVERIFIED",
+                    "IsoPlayer:" .. name,
+                    "no player available"
+                )
+            end
         end
     end
 end
@@ -571,6 +646,18 @@ local function checkGlobals(
         { "Perks.Strength", function() return Perks ~= nil and Perks.Strength ~= nil end, "muscle strain scaling" },
 
         { "Ammo Making perk registered", function() return AmmoMakingSkill ~= nil and AmmoMakingSkill.perk ~= nil end, "XP cannot be granted" },
+
+        { "ISBuildingObject", function() return ISBuildingObject ~= nil and ISBuildingObject.derive ~= nil end, "the laboratory analyzer cannot be placed" },
+
+        { "IsoThumpable.new", function() return IsoThumpable ~= nil and IsoThumpable.new ~= nil end, "the laboratory analyzer cannot be placed" },
+
+        { "getCell", function() return type(getCell) == "function" end, "the analyzer placement cursor cannot start" },
+
+        { "ISInventoryPaneContextMenu.transferIfNeeded", function() return ISInventoryPaneContextMenu ~= nil and ISInventoryPaneContextMenu.transferIfNeeded ~= nil end, "an analyzer in a bag is not moved to the main inventory before placing" },
+
+        { "AC_LaboratoryAnalyzerObject loaded", function() return AC_LaboratoryAnalyzerObject ~= nil end, "server/BuildingObjects/AC_LaboratoryAnalyzerObject.lua did not load; the analyzer cannot be placed" },
+
+        { "Metabolics.HeavyDomestic", function() return Metabolics ~= nil and Metabolics.HeavyDomestic ~= nil end, "metabolic load while picking up the analyzer" },
     }
 
 
@@ -757,6 +844,76 @@ end
 
 
 ------------------------------------------------
+-- The placed analyzer's temporary vanilla sprite.
+-- Vanilla code treats a nil getSprite(name) as "no
+-- such tile", which is what this relies on.
+------------------------------------------------
+
+local function checkAnalyzerSprite(
+    results
+)
+
+    local spriteName =
+        AC_LaboratoryAnalyzer.CONFIG.worldSprite
+
+
+    if type(getSprite) ~= "function" then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "analyzer world sprite " .. tostring(spriteName),
+            "getSprite unavailable"
+        )
+
+
+        return
+    end
+
+
+    local sprite,
+          err =
+        safe(
+            function()
+
+                return
+                    getSprite(
+                        spriteName
+                    )
+            end
+        )
+
+
+    if err then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "analyzer world sprite " .. tostring(spriteName),
+            tostring(err)
+        )
+
+    elseif sprite then
+
+        addResult(
+            results,
+            "OK",
+            "analyzer world sprite (" .. tostring(spriteName) .. ")"
+        )
+
+    else
+
+        addResult(
+            results,
+            "WARNING",
+            "analyzer world sprite " .. tostring(spriteName) .. " not found",
+            "a placed analyzer would be invisible; change AC_LaboratoryAnalyzer.CONFIG.worldSprite"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- RUN
 ------------------------------------------------
 --
@@ -799,6 +956,8 @@ function AC_Compat.run()
     checkTranslations(results)
 
     checkGeologySeed(results)
+
+    checkAnalyzerSprite(results)
 
 
     local summary = {

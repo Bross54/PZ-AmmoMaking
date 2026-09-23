@@ -531,6 +531,14 @@ end
 
 MOCK.newWorldObject = newWorldObject
 
+-- Tile sprites getSprite() knows; unknown names return nil.
+MOCK.knownSprites = { ["industry_03_61"] = true }
+
+function getSprite(name)
+    if not MOCK.knownSprites[name] then return nil end
+    return { getName = function() return name end }
+end
+
 ------------------------------------------------
 -- PLACEMENT CURSOR BASE AND THUMPABLES
 ------------------------------------------------
