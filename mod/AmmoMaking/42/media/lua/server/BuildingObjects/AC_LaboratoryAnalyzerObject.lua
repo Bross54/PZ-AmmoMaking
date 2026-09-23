@@ -190,6 +190,18 @@ function AC_LaboratoryAnalyzerObject:create(
 
 
     ------------------------------------------------
+    -- Vanilla hands dismantable thumpables to its own
+    -- dismantle / move handling (ISMoveableSpriteProps,
+    -- ISDestroyCursor), which would bypass the pick-up
+    -- rule. Vanilla traps set this explicitly too.
+    ------------------------------------------------
+
+    analyzer:setIsDismantable(
+        false
+    )
+
+
+    ------------------------------------------------
     -- Fresh state, or the state of an item that still
     -- holds a sample (see initializePlacedData).
     ------------------------------------------------

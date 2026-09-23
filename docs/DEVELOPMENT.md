@@ -138,6 +138,10 @@ Rules, all in `AC_LaboratoryAnalyzer` and covered by the offline tests:
   created before the object is removed; if that fails the analyzer stays.
 - **Cancel** returns the stored sample exactly as it went in and discards the
   unseen laboratory result, so it cannot be used to re-roll.
+- **Vanilla removal paths**: the object is created non-thumpable (zombies
+  cannot break it) and non-dismantable (vanilla's dismantle and move handling
+  skip it). A sledgehammer "Destroy" can still remove it and would lose a
+  stored sample; that vanilla action is not intercepted.
 - **Placement carries state**: an item that still holds a sample (a dropped
   analyzer picked up mid-assay) keeps it on the placed object. The processing
   clock restarts at placement, so time in an inventory does not count.
@@ -165,6 +169,7 @@ Build 42 evidence, checked against the installed 42.20.2 Lua and jar:
 | `ISBuildAction:perform()` calls `create()` only when not a multiplayer client, and subtracts 50 ticks for Handy | CONFIRMED: `client/BuildingObjects/TimedActions/ISBuildAction.lua` |
 | `IsoThumpable.new(cell, square, sprite, north, self)`, `AddSpecialObject`, `transmitCompleteItemToClients`, item removed after the object exists | CONFIRMED pattern: `TrapBO`, `ISSimpleFurniture` |
 | Removal with `transmitRemoveItemFromSquare` then `RemoveTileObject` | CONFIRMED pattern: `ISAddTakeDispenserBottle:complete()` |
+| `setIsDismantable(false)` keeps a thumpable out of vanilla dismantle / move handling | CONFIRMED: `ISMoveableSpriteProps.fromObject`, `ISDestroyCursor`; vanilla `MOTrap.lua` sets it the same way |
 | `hasModData()`, `getObjectIndex() == -1`, `hasGridPower()` | CONFIRMED: vanilla Lua usage, method names present in the jar |
 | `industry_03_61` exists and is not a vanilla moveable | CONFIRMED: `media/newtiledefinitions.tiles.txt` has no `IsMoveAble`, so vanilla furniture pickup cannot grab the analyzer |
 | `getSprite(name)` returns nil for an unknown tile | STRONG INDICATION: vanilla TileGeometryEditor relies on it |

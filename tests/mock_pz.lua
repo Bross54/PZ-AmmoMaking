@@ -580,6 +580,7 @@ function IsoThumpable.new(cell, square, sprite, north, luaObject)
     o.transmitted = 0
     function o:setCanBarricade(v) self.canBarricade = v end
     function o:setIsThumpable(v) self.isThumpable = v end
+    function o:setIsDismantable(v) self.dismantable = v end
     function o:transmitCompleteItemToClients() self.transmitted = self.transmitted + 1 end
     return o
 end

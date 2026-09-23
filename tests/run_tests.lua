@@ -1547,6 +1547,7 @@ do
     check(AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(placed), "created object is a placed analyzer")
     eq(placed and placed.name, AC_LaboratoryAnalyzer.OBJECT_NAME, "object name set")
     eq(placed and placed.isThumpable, false, "zombies cannot thump it")
+    eq(placed and placed.dismantable, false, "not handed to vanilla dismantle / move handling")
     eq(placed and placed.canBarricade, false, "not barricadable")
     eq(placed and placed.transmitted, 1, "object transmitted once")
     eq(placed and placed.modData.labAnalyzerState, "idle", "new analyzer idle")
