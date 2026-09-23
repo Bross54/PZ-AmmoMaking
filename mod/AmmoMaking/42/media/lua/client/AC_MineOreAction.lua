@@ -291,8 +291,8 @@ function AC_MineOreAction:start()
     --
     -- No pcall here: the old guarded call threw the
     -- enum away (it is not a Lua string) and hid
-    -- errors. Whether DigPickAxe looks right is
-    -- REQUIRES IN-GAME VERIFICATION.
+    -- errors. CONFIRMED on 42.20.4 in game: the
+    -- DigPickAxe animation plays with a pickaxe.
     ------------------------------------------------
 
     local animation =

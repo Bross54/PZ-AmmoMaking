@@ -3,6 +3,44 @@
 Target: Project Zomboid Build 42.20 Stable. Everything in this file can be
 checked without the game unless it is marked **REQUIRES IN-GAME VERIFICATION**.
 
+## Real-game validation (Build 42.20.4)
+
+Results of a manual test in the real game, reported by the developer. Only
+what was actually observed in game is listed as confirmed; offline tests
+never move an item into that list.
+
+### CONFIRMED IN B42.20.4
+
+- The pickaxe mining timed action starts and completes without a debugger
+  break or NullPointerException (the `hasTag` / `StartAction` failure is
+  gone).
+- The `DigPickAxe` animation plays with the pickaxe.
+- Zinc ore (`AmmoMaking.ZincOre`) appears on the ground after a successful
+  extraction.
+- The reserve decrements: a reserve-2 tile logged `remaining 1/2` after the
+  first extraction.
+- A tile that is exhausted becomes Exhausted and produces no more ore.
+- Mining a tile with no workable copper returns `no_ore`.
+- Walking away during mining cancels the action and produces no ore.
+- Geological sample digging still works with `Base.Shovel`, with the
+  `DigShovel` animation.
+- The compatibility self-check passes on 42.20.4.
+
+### STILL UNVERIFIED
+
+- **Mining depletion persistence after save/reload** - REQUIRES IN-GAME
+  VERIFICATION.
+- **Laboratory analyzer processing persistence after save/reload** - REQUIRES
+  IN-GAME VERIFICATION.
+- The single mining result message and its XP text (changed after the test
+  above), and that the XP total in the console log rises by the logged
+  amount.
+- `Base.CopperOre` spawning (the copper tile tested had no ore, so no copper
+  ore item was created), picking the ore up, and the `Shoveling` sound
+  with a pickaxe.
+- The whole placed laboratory analyzer loop, and everything else under
+  *REQUIRES IN-GAME VERIFICATION* at the end of this file.
+
 ## Module map
 
 | File | Layer | Responsibility |
@@ -11,12 +49,12 @@ checked without the game unless it is marked **REQUIRES IN-GAME VERIFICATION**.
 | `shared/AC_WorldData.lua` | shared | Save identity and the per-save geology / copper / zinc seeds; cache reset on `OnInitGlobalModData` |
 | `shared/AC_Geology.lua` | shared | Deterministic noise, concentration, grades, 3x3 survey, terrain rules (`isSurveyableSquare`, `isWaterSquare`) |
 | `shared/AC_GeologySampling.lua` | shared | Sample items, shovel checks, field / advanced assays, kit uses, result lines |
-| `shared/AC_LaboratoryAnalyzer.lua` | shared | Laboratory analyzer rules for placed and dropped analyzers: state machine, timing, power, sample storage, cancel, pick-up rule, state repair |
+| `shared/AC_LaboratoryAnalyzer.lua` | shared | Laboratory analyzer rules for placed and dropped analyzers: state machine, timing, power, sample storage, cancel, pick-up rule, state repair, finding the analyzer among clicked objects, debug-only completion |
 | `server/BuildingObjects/AC_LaboratoryAnalyzerObject.lua` | server | `ISBuildingObject` placement cursor; `create()` turns the analyzer item into an `IsoThumpable` |
 | `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology, depletion records in global ModData |
 | `shared/AC_Mining.lua` | shared | Pickaxe rules, prospect lookup, `extract()` (the only mutation point of the mining loop) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
-| `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers |
+| `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
 | `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype |
 | `client/AC_GeologySamplingContextMenu.lua` | client | Dig / assay / laboratory menus (place, start, cancel, collect, pick up) |
 | `client/AC_DigGeologicalSampleAction.lua` | client | Shovel timed action |
@@ -24,7 +62,7 @@ checked without the game unless it is marked **REQUIRES IN-GAME VERIFICATION**.
 | `client/AC_MiningContextMenu.lua` | client | Mining options and tooltips |
 | `client/AC_MineOreAction.lua` | client | Pickaxe timed action |
 | `client/AC_GeologyAssayUI.lua`, `client/AC_AmmoInspectionUI.lua` | client | Result panels |
-| `client/AC_GeologyDebug.lua` | client | "Ammo Making Debug" submenu (`-debug` only) |
+| `client/AC_GeologyDebug.lua` | client | "Ammo Making Debug" submenu (`-debug` only), including the analyzer inspect / complete tools |
 | `client/AC_AmmoContextMenu.lua` | client | Ammunition inspection and debug presets |
 
 Load order is alphabetical within `shared/`, `client/` and `server/`. Modules
@@ -82,7 +120,8 @@ These are enforced by the code and asserted by `tests/run_tests.lua`.
   actually comes out. An assay can be wrong in both directions.
 - **Hidden information.** Outside `-debug`, no menu label, tooltip, message or
   field-assay line contains an exact concentration or a reserve count. A tile is
-  labelled exhausted only after someone has worked it.
+  labelled exhausted only after someone has worked it. The XP gain in the
+  result message is not geology and is allowed.
 
 ## Timed-action conventions (reviewed, no change needed)
 
@@ -105,10 +144,40 @@ These are enforced by the code and asserted by `tests/run_tests.lua`.
 - `perform()` clears the job delta, stops the sound, does the work, shows the
   result, then calls `ISBaseTimedAction.perform(self)` last.
 
-Placeholders that still need the game: the pickaxe action calls
-`BuildingHelper.getShovelAnim` directly, as the dig action does; on 42.20.4 it
-returns `CharacterActionAnims.DigPickAxe` for a pickaxe. That animation and the
-`Shoveling` sound with a pickaxe are **REQUIRES IN-GAME VERIFICATION.**
+The pickaxe action calls `BuildingHelper.getShovelAnim` directly, as the dig
+action does; on 42.20.4 it returns `CharacterActionAnims.DigPickAxe` for a
+pickaxe. The animation is confirmed in game; the `Shoveling` sound with a
+pickaxe is still **REQUIRES IN-GAME VERIFICATION.**
+
+### Mining result feedback
+
+`perform()` shows exactly one halo message per completed action, built by
+`AC_MineOreAction.getSuccessText()`:
+
+| Outcome | Message |
+|---|---|
+| ore, reserve left | `Zinc ore extracted - +5 Ammo Making XP` (`- vein thinning out -` when 1 unit is left) |
+| ore, last unit | `Zinc ore extracted - deposit exhausted - +5 Ammo Making XP` |
+| ore, `-debug` | `Zinc ore extracted - 1/2 remaining - +5 Ammo Making XP` |
+| no ore | `No workable zinc ore here` |
+
+The exact reserve appears only with `-debug`: normal play keeps the
+hidden-information rule. The separator is a plain ` - ` like the other
+messages; whether the halo font has an em dash was not checked. The XP figure
+is the amount the mod requested (`AC_Mining.CONFIG.xpPerOre`, unchanged).
+
+Every XP grant from mining and laboratory collection goes through
+`AmmoMakingSkill.awardXP()`, which prints one console line with the perk's
+total before and after, read with `getXp():getXP(perk)` as vanilla
+`ISPlayerStatsUI` does:
+
+```text
+[AmmoMaking] Mining: +5 Ammo Making XP (total 40 -> 45)
+[AmmoMaking] Laboratory: +10 Ammo Making XP (total 45 -> 55)
+```
+
+If the engine scales XP (sandbox multiplier, boosts), the difference in the
+totals shows what was really applied; the mod does not assume either way.
 
 ### Kahlua hazard: "No implementation found" on an overloaded Java method
 
@@ -174,9 +243,70 @@ Rules, all in `AC_LaboratoryAnalyzer` and covered by the offline tests:
   vanilla 42.20 uses for the car battery charger. `isHydroPowerOn()` is only a
   fallback for a build without `hasGridPower`.
 - **Lazy time accounting**: elapsed hours are credited when the analyzer is
-  next looked at, using the power state at that moment. Continuous power
-  tracking would need a global object system (as vanilla uses for traps and
-  farming) and is out of scope.
+  next looked at (menu, start, cancel, collect, pickup), using the power state
+  at that moment. What this guarantees, and what it does not:
+  - unpowered at a check: the hours since the previous check are not
+    credited, and the clock restarts, so processing does not advance;
+  - powered again: hours from that check on are credited at the next check;
+  - opening the menu repeatedly adds nothing: each check credits only the time
+    since the previous one;
+  - **limitation**: the whole interval between two checks follows the power
+    state at the later check. An outage nobody looked at, which ended before
+    the next check, is credited as powered time; power lost just before a
+    check discards the powered hours since the previous one. Continuous power
+    tracking would need a global object system (as vanilla uses for traps and
+    farming) and is out of scope. The offline tests pin both directions of
+    this limitation so a change to it is deliberate.
+- **Console log** (only on player interaction, never per tick):
+
+  ```text
+  [AmmoMaking] Laboratory Assay Analyzer placed at x, y, z
+  [AmmoMaking] Laboratory assay started for sample x, y; processing time = 24 hours
+  [AmmoMaking] Laboratory analyzer powered: 5.00 h since last check credited; 19.00 h remaining
+  [AmmoMaking] Laboratory analyzer UNPOWERED: 3.00 h since last check not credited (paused); 19.00 h remaining
+  [AmmoMaking] Laboratory analyzer completed sample x, y
+  [AmmoMaking] Laboratory: +10 Ammo Making XP (total a -> b)
+  [AmmoMaking] Laboratory tested sample collected: sample x, y; analyzer idle
+  [AmmoMaking] Laboratory assay cancelled; sample x, y returned
+  [AmmoMaking] Laboratory Assay Analyzer picked up at x, y
+  [AmmoMaking] Laboratory assay start refused: no_power | busy | invalid_sample | ...
+  [AmmoMaking] Laboratory sample collection refused: not_ready | empty | ...
+  [AmmoMaking] Analyzer pickup refused: processing | ready | gone | ...
+  [AmmoMaking] Analyzer placement aborted: <reason>
+  ```
+
+- **XP**: granted only by a successful collection, once, from the menu
+  handler (`AC_LaboratoryAnalyzer.CONFIG.assayXP`, 10). Start, completion,
+  cancel, pickup and the debug tools grant none. The collect message reads
+  `Laboratory tested sample collected - +10 Ammo Making XP`.
+
+### Next in-game test: placed analyzer (`-debug`)
+
+The loop the code supports, each step with the log line to look for:
+
+1. Spawn the analyzer and a sample (debug menu: Spawn Laboratory Analyzer,
+   Spawn Assayed Sample). Inventory → **Place Laboratory Assay Analyzer** on a
+   powered indoor tile. Log: `placed at`. The item leaves the inventory.
+2. Right-click it → **Start Lab Assay: Sample x, y**. Log: `assay started`.
+   The sample leaves the inventory; no XP line.
+3. While processing: no second Start option, **Pick Up** disabled with the
+   reason, **Cancel Laboratory Assay** offered.
+4. Debug → **Inspect Analyzer State** prints the state without advancing it.
+5. Debug → **Complete Analyzer Job (no XP; collect normally)**. Log:
+   `DEBUG: analyzer processing finished early` and `completed sample`; still
+   no XP line.
+6. **Collect Laboratory Sample**. One sample returns (laboratory tested), one
+   `Laboratory: +10 Ammo Making XP` line, the halo shows the XP.
+7. **Pick Up Laboratory Assay Analyzer** once idle. One analyzer item returns,
+   the object disappears. Log: `picked up at`.
+8. Power: start an assay, cut power (generator off / grid off), wait, check
+   (`UNPOWERED ... not credited`), restore power, wait, check (`powered ...
+   credited`). Remaining hours only drop in the powered interval.
+9. Cancel: start, cancel; the original sample returns unchanged, no XP line.
+
+Save/reload of a processing analyzer is part of the analyzer test when a
+save/reload is possible; until then it stays **REQUIRES IN-GAME
+VERIFICATION**.
 - **Multiplayer**: placing and picking up are disabled on clients
   (`isPlacementAvailable()`): Build 42 runs `create()` on the server, and a
   client-side pickup would add the item only locally. Starting, cancelling
@@ -227,6 +357,20 @@ Kit, Spawn Laboratory Analyzer, Spawn Assayed Sample (current 3x3), Set Ammo
 Making Level, Run Compatibility Check. Everything prints to `console.txt`. From
 the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
 
+Right-clicking a square that holds an Ammo Making analyzer (placed or dropped)
+adds two more entries; they never appear for other squares:
+
+- **Inspect Analyzer State**: state, stored sample, remaining hours, hours
+  not yet credited, the inputs of the power rule, the rolled result and
+  whether pickup is allowed. Read-only: it credits no time.
+- **Complete Analyzer Job (no XP; collect normally)**: sets the remaining
+  time of a running assay to zero and lets `updateState()` finish it the
+  normal way. It keeps the result rolled at start, ignores power, grants no
+  XP and does not touch `CONFIG.processingHours`; the sample is then
+  collected through the normal menu, which grants the XP.
+  `AC_LaboratoryAnalyzer.debugFinishProcessing()` refuses unless
+  `isDebugEnabled()` is true, even when called from the Lua console.
+
 Inspect Clicked Tile Objects lists every object, special object and world item
 on the clicked square with its sprite name (how the analyzer's sprite was
 found), plus a placed or dropped analyzer's stored state, read without
@@ -246,15 +390,27 @@ flow, not engine behaviour.
 
 Any Lua 5.1 runtime works. Without a `lua5.1` binary (for example on Windows),
 Python's `lupa` package ships one: `lupa.lua51.LuaRuntime().execute(...)` with
-`arg = { [0] = "<repo>/tests/run_tests.lua" }` set before `dofile`.
+`arg = { [0] = "<repo>/tests/run_tests.lua" }` set before `dofile`. A syntax
+check is `loadfile(path)` on every `.lua` file in the same runtime.
+
+The tests load the real `AC_AmmoMakingSkill.lua` with a minimal `PerkFactory`
+mock, so `awardXP()` and its log line are the mod's own code; perk
+registration itself is engine behaviour and not tested.
 
 ## REQUIRES IN-GAME VERIFICATION
 
-- Vanilla item ids `Base.CopperOre`, `Base.PickAxe`, `Base.PickAxeForged`
-  (the compatibility check reports them at startup).
-- `instanceItem` vs `InventoryItemFactory.CreateItem` on 42.20 (either works).
-- `IsoGridSquare:AddWorldInventoryItem` placing the ore where the player can see
-  and pick it up.
+- **Mining depletion persistence after save/reload** (extracted counts in
+  global ModData).
+- **Laboratory analyzer processing persistence after save/reload** (state on
+  the placed object's ModData).
+- `Base.CopperOre` being created and dropped (only zinc ore has been seen in
+  game so far), and `Base.PickAxeForged` (the 42.20.4 test used a pickaxe;
+  which id was not recorded). The compatibility check reports the ids at
+  startup.
+- Picking the dropped ore up. That it appears on the ground is confirmed for
+  zinc.
+- The single mining result message and the `Mining: +5 Ammo Making XP (total
+  a -> b)` log line, added after the 42.20.4 test.
 - Water detection: `IsoGridSquare:hasWater()` only. Its presence is confirmed on
   42.20.4 by the compatibility check; that it returns true on lake and river
   tiles still needs a look in game. The old `square:Is(IsoFlagType.water)`
@@ -263,22 +419,25 @@ Python's `lupa` package ships one: `lupa.lua51.LuaRuntime().execute(...)` with
   every land tile.
 - Player-built floors on grass: whether `square:getFloor()` returns the built
   floor or the original grass.
-- Mining starts and completes with a pickaxe after a world right-click with the
-  pickaxe in hand (the `hasTag` / `StartAction` failure), with the
-  `DigPickAxe` animation and the `Shoveling` sound.
-- Shovel detection now uses only `Base.Shovel`, `Base.Shovel2` and
-  `Base.HandShovel`. Other vanilla digging tools (`EntrenchingTool`,
+- The `Shoveling` sound with a pickaxe. (Mining starting, completing and the
+  `DigPickAxe` animation are confirmed on 42.20.4.)
+- Shovel detection uses only `Base.Shovel`, `Base.Shovel2` and
+  `Base.HandShovel`; `Base.Shovel` is confirmed on 42.20.4, the other two are
+  not. Other vanilla digging tools (`EntrenchingTool`,
   `SpadeForged`, `SpadeWood`) are not accepted; vanilla's own check is
   `item:hasTag(ItemTag.DIG_GRAVE)` in `client/Mining/DiggingUtil.lua` if they
   should be.
 - Whether the JSON translation file is loaded and which perk-description key
   spelling the skill panel uses.
-- The placed laboratory analyzer: the placement cursor (ghost sprite, walking,
+- The placed laboratory analyzer (see *Next in-game test: placed analyzer*):
+  the placement cursor (ghost sprite, walking,
   placement time), the `industry_03_61` object appearing and blocking the tile,
   its ModData surviving save/reload and leaving/re-entering the area, pickup
   removing the object and giving exactly one item, Pick Up disabled while
   processing or ready, cancel returning the sample.
 - Grid power through `IsoGridSquare:hasGridPower()` inside a building, and
-  generator power, for both placed and dropped analyzers.
+  generator power, for both placed and dropped analyzers; processing pausing
+  without power and resuming with it.
+- The debug tools Inspect Analyzer State and Complete Analyzer Job.
 - A dropped analyzer from an older save still working, and one picked up
   mid-assay keeping its sample when placed.
