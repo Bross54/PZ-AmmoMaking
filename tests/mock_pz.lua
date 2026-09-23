@@ -389,6 +389,9 @@ local function newSquare(x, y, z, spriteName, opts)
         room = opts.room,
         water = opts.water or false,
         worldItems = {},
+        objects = {},                       -- IsoObjects on the square
+        specialObjects = {},                -- subset added with AddSpecialObject
+        transmittedRemovals = {},           -- objects passed to transmitRemoveItemFromSquare
         spawnError = opts.spawnError,       -- string -> AddWorldInventoryItem throws
         spriteError = opts.spriteError,     -- true -> getSprite throws
         noSprite = opts.noSprite,           -- true -> floor without sprite
@@ -416,6 +419,27 @@ local function newSquare(x, y, z, spriteName, opts)
         return { getItem = function() return item end }
     end
     function square:getWorldObjects() return arrayList({}) end
+    function square:getObjects() return arrayList(self.objects) end
+    function square:getSpecialObjects() return arrayList(self.specialObjects) end
+    function square:AddSpecialObject(object)
+        table.insert(self.objects, object)
+        table.insert(self.specialObjects, object)
+        object.square = self
+    end
+    -- Only records the call: what the engine does with it (network
+    -- message, local removal) is not modelled here.
+    function square:transmitRemoveItemFromSquare(object)
+        table.insert(self.transmittedRemovals, object)
+    end
+    function square:RemoveTileObject(object)
+        for _, list in ipairs({ self.objects, self.specialObjects }) do
+            for i, o in ipairs(list) do
+                if o == object then table.remove(list, i) break end
+            end
+        end
+        object.square = nil
+    end
+    function square:RecalcAllWithNeighbours() end
     function square:hasWater() return self.water end
     function square:Is(flag)
         if flag == "water" then return self.water end
@@ -428,6 +452,43 @@ end
 MOCK.newSquare = newSquare
 
 IsoFlagType = { water = "water", exterior = "exterior" }
+
+------------------------------------------------
+-- WORLD OBJECTS
+------------------------------------------------
+
+-- Generic IsoObject stand-in (walls, placed machines). ModData is created
+-- lazily by getModData() and hasModData() reports whether it exists; that
+-- is a mock convention, not a statement about the engine.
+local function newWorldObject(opts)
+    opts = opts or {}
+    local object = {
+        __class = opts.class or "IsoObject",
+        name = opts.name,
+        spriteName = opts.sprite,
+        modData = opts.modData,
+        square = nil,
+    }
+    function object:hasModData() return self.modData ~= nil end
+    function object:getModData()
+        if not self.modData then self.modData = {} end
+        return self.modData
+    end
+    function object:getName() return self.name end
+    function object:setName(n) self.name = n end
+    function object:getSquare() return self.square end
+    function object:getTextureName() return self.spriteName end
+    function object:getObjectIndex()
+        if not self.square then return -1 end
+        for i, o in ipairs(self.square.objects) do
+            if o == self then return i - 1 end
+        end
+        return -1
+    end
+    return object
+end
+
+MOCK.newWorldObject = newWorldObject
 
 ------------------------------------------------
 -- MISC GLOBALS USED BY CLIENT FILES

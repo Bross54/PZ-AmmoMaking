@@ -35,6 +35,21 @@ AC_LaboratoryAnalyzer.ITEMS = {
 
 
 ------------------------------------------------
+-- WORLD OBJECT
+------------------------------------------------
+--
+-- A placed analyzer is the IsoThumpable created by
+-- AC_LaboratoryAnalyzerObject (server/BuildingObjects).
+-- It is recognised by a flag in its own ModData; the
+-- object name is only a fallback for an object whose
+-- ModData did not survive.
+------------------------------------------------
+
+AC_LaboratoryAnalyzer.OBJECT_NAME =
+    "AmmoMakingLaboratoryAnalyzer"
+
+
+------------------------------------------------
 -- SAMPLE DATA FIELDS
 ------------------------------------------------
 
@@ -167,10 +182,16 @@ end
 
 
 ------------------------------------------------
--- WORLD ANALYZER CHECK
+-- DROPPED ANALYZER (ITEM ON THE GROUND)
+------------------------------------------------
+--
+-- The original analyzer: the inventory item dropped
+-- on the floor, with its state in the item's ModData.
+-- Still supported so analyzers, and samples stored in
+-- them, from existing saves keep working.
 ------------------------------------------------
 
-function AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+function AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
     worldObject
 )
 
@@ -196,14 +217,80 @@ end
 
 
 ------------------------------------------------
+-- PLACED ANALYZER (WORLD OBJECT)
+------------------------------------------------
+--
+-- hasModData() is checked before getModData() so that
+-- looking at an arbitrary wall or floor does not
+-- create an empty ModData table on it.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+    worldObject
+)
+
+    if not worldObject then
+        return false
+    end
+
+
+    if instanceof(
+        worldObject,
+        "IsoWorldInventoryObject"
+    ) then
+
+        return false
+    end
+
+
+    if worldObject.hasModData
+        and worldObject:hasModData()
+        and worldObject:getModData().AmmoMakingLaboratoryAnalyzerWorldObject
+            == true
+    then
+
+        return true
+    end
+
+
+    return
+        worldObject.getName ~= nil
+        and worldObject:getName()
+            == AC_LaboratoryAnalyzer.OBJECT_NAME
+end
+
+
+------------------------------------------------
+-- ANY ANALYZER IN THE WORLD
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+    worldObject
+)
+
+    return
+        AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
+            worldObject
+        )
+        or AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+            worldObject
+        )
+end
+
+
+------------------------------------------------
 -- GET ANALYZER ITEM
+------------------------------------------------
+--
+-- Only a dropped analyzer has an item; a placed
+-- analyzer returns nil.
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzer.getAnalyzerItem(
     worldObject
 )
 
-    if not AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+    if not AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(
         worldObject
     ) then
 
@@ -216,13 +303,58 @@ end
 
 
 ------------------------------------------------
+-- GET PERSISTENT ANALYZER DATA
+------------------------------------------------
+--
+-- Dropped analyzer: the item's ModData.
+-- Placed analyzer: the world object's ModData.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.getAnalyzerData(
+    worldObject
+)
+
+    local item =
+        AC_LaboratoryAnalyzer.getAnalyzerItem(
+            worldObject
+        )
+
+
+    if item then
+        return item:getModData()
+    end
+
+
+    if AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+        worldObject
+    ) then
+
+        return worldObject:getModData()
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
 -- UPDATE ANALYZER NAME
+------------------------------------------------
+--
+-- Only a dropped analyzer shows its state in its
+-- item name; a placed analyzer has no item.
 ------------------------------------------------
 
 local function updateAnalyzerName(
-    item,
+    worldObject,
     state
 )
+
+    local item =
+        AC_LaboratoryAnalyzer.getAnalyzerItem(
+            worldObject
+        )
+
 
     if not item then
         return
@@ -272,19 +404,15 @@ function AC_LaboratoryAnalyzer.initialize(
     worldObject
 )
 
-    local item =
-        AC_LaboratoryAnalyzer.getAnalyzerItem(
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
             worldObject
         )
 
 
-    if not item then
-        return nil, nil
+    if not data then
+        return nil
     end
-
-
-    local data =
-        item:getModData()
 
 
     data.AmmoMakingLaboratoryAnalyzer =
@@ -299,12 +427,12 @@ function AC_LaboratoryAnalyzer.initialize(
 
 
     updateAnalyzerName(
-        item,
+        worldObject,
         data.labAnalyzerState
     )
 
 
-    return item, data
+    return data
 end
 
 
@@ -375,17 +503,13 @@ function AC_LaboratoryAnalyzer.updateState(
     worldObject
 )
 
-    local item,
-          data =
+    local data =
         AC_LaboratoryAnalyzer.initialize(
             worldObject
         )
 
 
-    if not item
-        or not data
-    then
-
+    if not data then
         return nil
     end
 
@@ -504,7 +628,7 @@ function AC_LaboratoryAnalyzer.updateState(
 
 
         updateAnalyzerName(
-            item,
+            worldObject,
             "ready"
         )
 
@@ -560,19 +684,15 @@ function AC_LaboratoryAnalyzer.getHoursRemaining(
     end
 
 
-    local item =
-        AC_LaboratoryAnalyzer.getAnalyzerItem(
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
             worldObject
         )
 
 
-    if not item then
+    if not data then
         return 0
     end
-
-
-    local data =
-        item:getModData()
 
 
     return
@@ -744,16 +864,13 @@ function AC_LaboratoryAnalyzer.startAssay(
     end
 
 
-    local item,
-          analyzerData =
+    local analyzerData =
         AC_LaboratoryAnalyzer.initialize(
             worldObject
         )
 
 
-    if not item
-        or not analyzerData
-    then
+    if not analyzerData then
 
         return false,
             "invalid_analyzer"
@@ -869,7 +986,7 @@ function AC_LaboratoryAnalyzer.startAssay(
 
 
     updateAnalyzerName(
-        item,
+        worldObject,
         "processing"
     )
 
@@ -911,16 +1028,13 @@ function AC_LaboratoryAnalyzer.collectSample(
     end
 
 
-    local item,
-          analyzerData =
+    local analyzerData =
         AC_LaboratoryAnalyzer.initialize(
             worldObject
         )
 
 
-    if not item
-        or not analyzerData
-    then
+    if not analyzerData then
 
         return nil,
             "invalid_analyzer"
@@ -1072,7 +1186,7 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     updateAnalyzerName(
-        item,
+        worldObject,
         "idle"
     )
 
@@ -1105,19 +1219,15 @@ function AC_LaboratoryAnalyzer.getStatusInfo(
     end
 
 
-    local item =
-        AC_LaboratoryAnalyzer.getAnalyzerItem(
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
             worldObject
         )
 
 
-    if not item then
+    if not data then
         return nil
     end
-
-
-    local data =
-        item:getModData()
 
 
     return {

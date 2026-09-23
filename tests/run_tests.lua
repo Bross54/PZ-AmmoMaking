@@ -171,6 +171,29 @@ local function sameSnapshot(a, b)
     return true
 end
 
+-- Stand-in for a placed analyzer: a mock world object carrying the
+-- ModData flag the building object writes. Engine behaviour of the real
+-- IsoThumpable (rendering, saving, networking) is not modelled.
+local function placeAnalyzerObject(square)
+    local object = MOCK.newWorldObject({ class = "IsoThumpable", name = AC_LaboratoryAnalyzer.OBJECT_NAME })
+    object:getModData().AmmoMakingLaboratoryAnalyzerWorldObject = true
+    square:AddSpecialObject(object)
+    return object
+end
+
+local function poweredLabSquare(x, y)
+    local square = MOCK.newSquare(x, y, 0, "floors_interior_tiles_01_0", { room = {} })
+    square.haveElectricity = function() return true end
+    return square
+end
+
+local function fillAnalyzerMenu(player, analyzer)
+    MOCK.players = { player }
+    local ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { analyzer }, false)
+    return ctx
+end
+
 ------------------------------------------------
 -- TEXT HELPER
 ------------------------------------------------
@@ -1221,6 +1244,68 @@ do
     local p2 = MOCK.newPlayer({ square = square })
     p2.inventory:addItem(returned)
     eq(AC_Mining.findProspect(p2, square, "copper"), returned, "laboratory sample is a valid prospect")
+    MOCK.worldHours = 0
+end
+
+section("Placed laboratory analyzer: detection and flow on object ModData")
+do
+    -- Lua state machine only; the object is a mock (see placeAnalyzerObject).
+    local x, y = 760, 30
+    local powered = poweredLabSquare(x, y)
+    local analyzer = placeAnalyzerObject(powered)
+
+    check(AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(analyzer), "placed analyzer recognised by its ModData flag")
+    check(AC_LaboratoryAnalyzer.isAnalyzerWorldObject(analyzer), "placed analyzer is an analyzer world object")
+    check(not AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(analyzer), "placed analyzer is not a dropped item")
+    eq(AC_LaboratoryAnalyzer.getAnalyzerItem(analyzer), nil, "placed analyzer has no item")
+
+    local wall = MOCK.newWorldObject({ name = "wall" })
+    check(not AC_LaboratoryAnalyzer.isAnalyzerWorldObject(wall), "ordinary object is not an analyzer")
+    eq(wall:hasModData(), false, "checking an ordinary object creates no ModData on it")
+    check(not AC_LaboratoryAnalyzer.isAnalyzerWorldObject({ getSquare = function() return powered end }), "plain table is not an analyzer")
+
+    local nameOnly = MOCK.newWorldObject({ class = "IsoThumpable", name = AC_LaboratoryAnalyzer.OBJECT_NAME })
+    check(AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(nameOnly), "object name is a fallback when the ModData flag is missing")
+
+    local droppedItem = MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local dropped = { __class = "IsoWorldInventoryObject", getItem = function() return droppedItem end, getSquare = function() return powered end }
+    check(AC_LaboratoryAnalyzer.isLegacyDroppedAnalyzer(dropped), "dropped analyzer still recognised")
+    check(not AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(dropped), "dropped analyzer is not a placed object")
+
+    local player = MOCK.newPlayer({ square = powered })
+    local sample = makeSample(x, y, 1, "Poor", "None")
+    sample.modData.trueCopper = 30
+    sample.modData.trueZinc = 0
+    player.inventory:addItem(sample)
+    MOCK.worldHours = 200
+
+    local ctx = fillAnalyzerMenu(player, analyzer)
+    local start = ctx:find("Start Lab Assay: Sample " .. x .. ", " .. y)
+    check(start ~= nil, "start option on a placed analyzer")
+    ctx:invoke(start)
+    eq(analyzer.modData.labAnalyzerState, "processing", "state stored on the object")
+    eq(analyzer.modData.stored_sampleX, x, "sample stored on the object")
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 0, "sample moved into the placed analyzer")
+    eq(#player.xpLog, 0, "no XP at start")
+
+    local ok2, err2 = AC_LaboratoryAnalyzer.startAssay(player, analyzer, makeSample(x, y, 0))
+    eq(ok2, false, "second start refused")
+    eq(err2, "busy", "busy while processing")
+
+    MOCK.worldHours = 224
+    eq(AC_LaboratoryAnalyzer.getState(analyzer), "ready", "placed analyzer completes after 24 powered hours")
+
+    ctx = fillAnalyzerMenu(player, analyzer)
+    local collect = ctx:find("Collect Laboratory Sample")
+    check(collect ~= nil, "collect option on a ready placed analyzer")
+    if collect then ctx:invoke(collect) end
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "sample returned from the placed analyzer")
+    eq(#player.xpLog, 1, "XP once on collection")
+    eq(player.xpLog[1], AC_LaboratoryAnalyzer.CONFIG.assayXP, "lab XP amount")
+    eq(analyzer.modData.labAnalyzerState, "idle", "placed analyzer idle again")
+    eq(analyzer.modData.stored_sampleX, nil, "stored sample cleared from the object")
+    eq(select(2, AC_LaboratoryAnalyzer.collectSample(player, analyzer)), "empty", "second collection refused")
+    eq(#player.xpLog, 1, "still one XP grant")
     MOCK.worldHours = 0
 end
 
