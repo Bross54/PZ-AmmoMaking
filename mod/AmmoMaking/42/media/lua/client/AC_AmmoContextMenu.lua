@@ -393,24 +393,23 @@ local function onFillInventoryContextMenu(
 
 
             ------------------------------------------------
-            -- DEBUG QUALITY
+            -- DEBUG MENUS (-debug mode only)
             ------------------------------------------------
 
-            addQualityDebugMenu(
-                context,
-                player,
-                item
-            )
+            if isDebugEnabled() then
+
+                addQualityDebugMenu(
+                    context,
+                    player,
+                    item
+                )
 
 
-            ------------------------------------------------
-            -- DEBUG SKILL LEVEL
-            ------------------------------------------------
-
-            addSkillDebugMenu(
-                context,
-                player
-            )
+                addSkillDebugMenu(
+                    context,
+                    player
+                )
+            end
 
 
             -- We found the relevant item,

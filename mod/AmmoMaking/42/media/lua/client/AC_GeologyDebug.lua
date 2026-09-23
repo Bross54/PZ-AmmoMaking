@@ -437,6 +437,16 @@ local function onFillWorldObjectContextMenu(
     end
 
 
+    ------------------------------------------------
+    -- Debug tools reveal exact geology, so they are
+    -- only available when the game runs in -debug.
+    ------------------------------------------------
+
+    if not isDebugEnabled() then
+        return
+    end
+
+
     local player =
         getSpecificPlayer(
             playerIndex
