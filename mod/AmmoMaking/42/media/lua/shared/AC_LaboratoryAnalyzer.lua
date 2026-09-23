@@ -397,6 +397,203 @@ end
 
 
 ------------------------------------------------
+-- CLEAR STORED SAMPLE
+------------------------------------------------
+
+local function clearStoredSample(
+    data
+)
+
+    for _,
+        field
+    in ipairs(
+        AC_LaboratoryAnalyzer.SAMPLE_FIELDS
+    )
+    do
+
+        data[
+            "stored_" .. field
+        ] =
+            nil
+    end
+
+
+    data.storedSample =
+        nil
+
+    data.labStartedAt =
+        nil
+
+    data.labReadyAt =
+        nil
+
+    data.labRemainingHours =
+        nil
+
+    data.labLastUpdateAt =
+        nil
+
+    data.labCopperResult =
+        nil
+
+    data.labZincResult =
+        nil
+end
+
+
+------------------------------------------------
+-- NORMALISE STORED STATE
+------------------------------------------------
+--
+-- Analyzer state lives in ModData that an older
+-- version or a damaged save may have left
+-- inconsistent. Repair it so the machine is never
+-- stuck and a stored sample is never lost:
+--
+--   unknown state          -> processing if a sample
+--                             is stored, else idle
+--   idle with a sample     -> processing (it can then
+--                             finish, or be cancelled)
+--   processing / ready
+--   without a sample       -> idle
+--   sample without results -> results rolled now
+--   non-numeric timers     -> dropped; updateState()
+--                             rebuilds them
+------------------------------------------------
+
+local VALID_STATES = {
+
+    idle = true,
+
+    processing = true,
+
+    ready = true,
+}
+
+
+local function dropIfNotNumber(
+    data,
+    field
+)
+
+    if data[field] ~= nil
+        and tonumber(data[field]) == nil
+    then
+
+        data[field] =
+            nil
+
+        return true
+    end
+
+
+    return false
+end
+
+
+local function normalizeState(
+    data
+)
+
+    local original =
+        data.labAnalyzerState
+
+
+    local hasSample =
+        data.storedSample == true
+
+
+    local state =
+        original
+
+
+    if not VALID_STATES[state]
+        or (state == "idle" and hasSample)
+    then
+
+        if hasSample then
+            state = "processing"
+        else
+            state = "idle"
+        end
+    end
+
+
+    if state ~= "idle"
+        and not hasSample
+    then
+
+        state = "idle"
+    end
+
+
+    local repaired =
+        original ~= nil
+        and state ~= original
+
+
+    if state == "idle" then
+
+        clearStoredSample(
+            data
+        )
+
+    else
+
+        for _,
+            field
+        in ipairs(
+            { "labRemainingHours", "labReadyAt", "labLastUpdateAt" }
+        )
+        do
+
+            if dropIfNotNumber(
+                data,
+                field
+            ) then
+
+                repaired = true
+            end
+        end
+
+
+        if tonumber(data.labCopperResult) == nil
+            or tonumber(data.labZincResult) == nil
+        then
+
+            data.labCopperResult =
+                laboratoryMeasurement(
+                    data.stored_trueCopper
+                )
+
+            data.labZincResult =
+                laboratoryMeasurement(
+                    data.stored_trueZinc
+                )
+
+            repaired = true
+        end
+    end
+
+
+    data.labAnalyzerState =
+        state
+
+
+    if repaired then
+
+        print(
+            "[AmmoMaking] WARNING: laboratory analyzer state repaired ("
+            .. tostring(original)
+            .. " -> "
+            .. state
+            .. ")"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- INITIALIZE ANALYZER
 ------------------------------------------------
 
@@ -419,11 +616,9 @@ function AC_LaboratoryAnalyzer.initialize(
         true
 
 
-    if not data.labAnalyzerState then
-
-        data.labAnalyzerState =
-            "idle"
-    end
+    normalizeState(
+        data
+    )
 
 
     updateAnalyzerName(
@@ -781,51 +976,6 @@ local function storeSampleData(
 
     analyzerData.storedSample =
         true
-end
-
-
-------------------------------------------------
--- CLEAR STORED SAMPLE
-------------------------------------------------
-
-local function clearStoredSample(
-    data
-)
-
-    for _,
-        field
-    in ipairs(
-        AC_LaboratoryAnalyzer.SAMPLE_FIELDS
-    )
-    do
-
-        data[
-            "stored_" .. field
-        ] =
-            nil
-    end
-
-
-    data.storedSample =
-        nil
-
-    data.labStartedAt =
-        nil
-
-    data.labReadyAt =
-        nil
-
-    data.labRemainingHours =
-        nil
-
-    data.labLastUpdateAt =
-        nil
-
-    data.labCopperResult =
-        nil
-
-    data.labZincResult =
-        nil
 end
 
 

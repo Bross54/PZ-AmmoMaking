@@ -1309,6 +1309,80 @@ do
     MOCK.worldHours = 0
 end
 
+section("Malformed laboratory analyzer ModData")
+do
+    local x, y = 780, 30
+    local square = poweredLabSquare(x, y)
+    local player = MOCK.newPlayer({ square = square })
+    MOCK.worldHours = 50
+
+    local function analyzerWith(fields)
+        local a = placeAnalyzerObject(square)
+        for k, v in pairs(fields) do a.modData[k] = v end
+        return a
+    end
+
+    local function withStoredSample(fields)
+        fields.storedSample = true
+        fields.stored_sampleX = x
+        fields.stored_sampleY = y
+        fields.stored_trueCopper = 70
+        fields.stored_trueZinc = 10
+        fields.stored_assayRank = 1
+        return fields
+    end
+
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    local a = analyzerWith({ labAnalyzerState = "banana", labRemainingHours = 3 })
+    local okA, infoA = pcall(AC_LaboratoryAnalyzer.getStatusInfo, a)
+    check(okA, "unknown state does not raise")
+    eq(okA and infoA.state, "idle", "unknown state without a sample -> idle")
+    eq(a.modData.labRemainingHours, nil, "stale timer cleared")
+
+    local b = analyzerWith(withStoredSample({ labAnalyzerState = 42 }))
+    eq(AC_LaboratoryAnalyzer.getState(b), "processing", "unknown state with a sample -> processing")
+    check(tonumber(b.modData.labCopperResult) ~= nil, "missing results rolled")
+
+    local c = analyzerWith(withStoredSample({ labAnalyzerState = "idle", labCopperResult = 71, labZincResult = 9 }))
+    eq(AC_LaboratoryAnalyzer.getState(c), "processing", "idle with a stored sample -> processing, sample kept")
+    eq(select(2, AC_LaboratoryAnalyzer.startAssay(player, c, makeSample(x, y, 0))), "busy", "stored sample is not overwritten by a new start")
+    eq(c.modData.stored_trueCopper, 70, "stored sample intact")
+
+    local d = analyzerWith({ labAnalyzerState = "ready", labCopperResult = 50 })
+    eq(AC_LaboratoryAnalyzer.getState(d), "idle", "ready without a sample -> idle (not stuck)")
+    local freshSample = makeSample(x, y, 0)
+    freshSample.modData.trueCopper = 20
+    freshSample.modData.trueZinc = 0
+    player.inventory:addItem(freshSample)
+    eq(AC_LaboratoryAnalyzer.startAssay(player, d, freshSample), true, "repaired analyzer accepts a new sample")
+
+    local e = analyzerWith(withStoredSample({ labAnalyzerState = "processing", labRemainingHours = "soon", labReadyAt = {}, labLastUpdateAt = "x", labCopperResult = 70, labZincResult = 10 }))
+    local okE, stateE = pcall(AC_LaboratoryAnalyzer.getState, e)
+    check(okE, "non-numeric timers do not raise: " .. tostring(stateE))
+    eq(stateE, "processing", "still processing after timer repair")
+    eq(e.modData.labRemainingHours, AC_LaboratoryAnalyzer.CONFIG.processingHours, "remaining time rebuilt from CONFIG")
+    MOCK.worldHours = 50 + AC_LaboratoryAnalyzer.CONFIG.processingHours
+    eq(AC_LaboratoryAnalyzer.getState(e), "ready", "repaired analyzer still completes")
+
+    local f = analyzerWith(withStoredSample({ labAnalyzerState = "ready" }))
+    local sampleF = AC_LaboratoryAnalyzer.collectSample(player, f)
+    check(sampleF ~= nil, "ready sample without results can be collected")
+    check(sampleF and math.abs(sampleF.modData.labCopperResult - 70) <= AC_LaboratoryAnalyzer.CONFIG.measurementError, "result rolled from the stored truth, not 0")
+
+    MOCK.capturePrint(false)
+    check(MOCK.printLogContains("WARNING: laboratory analyzer state repaired (banana -> idle)"), "repair is logged")
+
+    local droppedItem = MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    droppedItem.modData.labAnalyzerState = "???"
+    local dropped = { __class = "IsoWorldInventoryObject", getItem = function() return droppedItem end, getSquare = function() return square end }
+    MOCK.capturePrint(true)
+    eq(AC_LaboratoryAnalyzer.getState(dropped), "idle", "dropped analyzer data repaired the same way")
+    MOCK.capturePrint(false)
+    MOCK.worldHours = 0
+end
+
 ------------------------------------------------
 -- ACTION TIME
 ------------------------------------------------
