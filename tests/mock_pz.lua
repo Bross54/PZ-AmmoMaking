@@ -61,6 +61,8 @@ local function persistCopy(value, path)
     return copy
 end
 
+MOCK.persistCopy = persistCopy
+
 function MOCK.simulateSaveReload()
     local copy = {}
     for key, value in pairs(MOCK.modDataRegistry) do

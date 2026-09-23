@@ -1383,6 +1383,128 @@ do
     MOCK.worldHours = 0
 end
 
+section("Laboratory analyzer: pick-up rule, cancel, placement state")
+do
+    local x, y = 800, 30
+    local square = poweredLabSquare(x, y)
+    local player = MOCK.newPlayer({ square = square })
+    MOCK.worldHours = 300
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    local function carriedSample(rank)
+        local s = makeSample(x, y, rank, rank > 0 and "Good" or nil, rank > 0 and "Trace" or nil)
+        s.modData.trueCopper = 64
+        s.modData.trueZinc = 6
+        player.inventory:addItem(s)
+        return s
+    end
+
+    -- Pick-up rule
+    local analyzer = placeAnalyzerObject(square)
+    eq(AC_LaboratoryAnalyzer.canPickUp(analyzer), true, "idle empty analyzer can be picked up")
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, carriedSample(1))
+    local okP, whyP = AC_LaboratoryAnalyzer.canPickUp(analyzer)
+    eq(okP, false, "processing analyzer cannot be picked up")
+    eq(whyP, "processing", "reason: processing")
+    MOCK.worldHours = 300 + AC_LaboratoryAnalyzer.CONFIG.processingHours
+    local okR, whyR = AC_LaboratoryAnalyzer.canPickUp(analyzer)
+    eq(okR, false, "ready analyzer cannot be picked up")
+    eq(whyR, "ready", "reason: ready")
+    AC_LaboratoryAnalyzer.collectSample(player, analyzer)
+    eq(AC_LaboratoryAnalyzer.canPickUp(analyzer), true, "pick-up allowed again once collected")
+    local droppedItem = MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local dropped = { __class = "IsoWorldInventoryObject", getItem = function() return droppedItem end, getSquare = function() return square end }
+    eq(select(2, AC_LaboratoryAnalyzer.canPickUp(dropped)), "invalid_analyzer", "rule only applies to placed analyzers")
+    eq(select(2, AC_LaboratoryAnalyzer.canPickUp(MOCK.newWorldObject())), "invalid_analyzer", "ordinary object refused")
+
+    -- Cancel
+    player.inventory.items = {}
+    player.xpLog = {}
+    local s1 = carriedSample(1)
+    local copperGrade = s1.modData.copperGrade
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, s1)
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 0, "sample inside before cancel")
+    local back, errC = AC_LaboratoryAnalyzer.cancelAssay(player, analyzer)
+    check(back ~= nil, "cancel returns the sample: " .. tostring(errC))
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "exactly one sample back")
+    eq(back.modData.assayRank, 1, "original assay rank kept")
+    eq(back.modData.copperGrade, copperGrade, "original grade kept")
+    eq(back.modData.sampleX, x, "sample location kept")
+    eq(back.modData.trueCopper, 64, "hidden geology kept")
+    eq(back.modData.labCopperResult, nil, "no laboratory result on a cancelled sample")
+    eq(back.modData.labProcessing, false, "not flagged as processing")
+    eq(back.name, "Tested Geological Sample", "tested sample name restored")
+    eq(#player.xpLog, 0, "no XP for a cancelled assay")
+    eq(AC_LaboratoryAnalyzer.getState(analyzer), "idle", "analyzer idle after cancel")
+    eq(analyzer.modData.stored_sampleX, nil, "stored sample cleared")
+    eq(select(2, AC_LaboratoryAnalyzer.cancelAssay(player, analyzer)), "not_processing", "second cancel refused")
+    eq(select(2, AC_LaboratoryAnalyzer.collectSample(player, analyzer)), "empty", "nothing to collect after cancel")
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "no duplicate sample")
+    eq(AC_LaboratoryAnalyzer.canPickUp(analyzer), true, "cancel makes the analyzer movable")
+
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, back)
+    MOCK.worldHours = MOCK.worldHours + AC_LaboratoryAnalyzer.CONFIG.processingHours
+    eq(select(2, AC_LaboratoryAnalyzer.cancelAssay(player, analyzer)), "not_processing", "finished assay is not cancellable")
+    check(AC_LaboratoryAnalyzer.collectSample(player, analyzer) ~= nil, "finished assay still collectable")
+
+    local raw = carriedSample(0)
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, raw)
+    local rawBack = AC_LaboratoryAnalyzer.cancelAssay(player, analyzer)
+    eq(rawBack and rawBack.modData.assayRank, 0, "untested sample comes back untested")
+    eq(rawBack and rawBack.name, "Geological Sample", "untested sample name restored")
+
+    -- State carried by an item into a newly placed analyzer
+    local fresh = AC_LaboratoryAnalyzer.initializePlacedData({}, MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer").modData)
+    eq(fresh.labAnalyzerState, "idle", "fresh item places an idle analyzer")
+    eq(fresh.AmmoMakingLaboratoryAnalyzerWorldObject, true, "placed-object flag written")
+    eq(AC_LaboratoryAnalyzer.initializePlacedData({}, nil).labAnalyzerState, "idle", "no item data -> idle")
+
+    local busyItem = MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local droppedBusy = { __class = "IsoWorldInventoryObject", getItem = function() return busyItem end, getSquare = function() return square end }
+    MOCK.worldHours = 1000
+    AC_LaboratoryAnalyzer.startAssay(player, droppedBusy, carriedSample(2))
+    MOCK.worldHours = 1010
+    AC_LaboratoryAnalyzer.getState(droppedBusy)                       -- 10 powered hours on the floor
+    MOCK.worldHours = 1500                                            -- then carried around for a long time
+    local placed = placeAnalyzerObject(square)
+    AC_LaboratoryAnalyzer.initializePlacedData(placed.modData, busyItem.modData)
+    eq(placed.modData.labAnalyzerState, "processing", "running assay carried onto the placed analyzer")
+    eq(placed.modData.stored_sampleX, x, "stored sample carried")
+    eq(placed.modData.labLastUpdateAt, 1500, "clock restarts at placement")
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(placed), AC_LaboratoryAnalyzer.CONFIG.processingHours - 10, "inventory time not counted")
+    MOCK.worldHours = 1500 + AC_LaboratoryAnalyzer.CONFIG.processingHours - 10
+    eq(AC_LaboratoryAnalyzer.getState(placed), "ready", "carried assay completes")
+    local carried = AC_LaboratoryAnalyzer.collectSample(player, placed)
+    check(carried and math.abs(carried.modData.labCopperResult - 64) <= AC_LaboratoryAnalyzer.CONFIG.measurementError, "carried result valid")
+
+    local brokenItemData = { labAnalyzerState = "processing" }            -- no stored sample
+    eq(AC_LaboratoryAnalyzer.initializePlacedData({}, brokenItemData).labAnalyzerState, "idle", "malformed item state repaired on placement")
+
+    -- Save / reload representation (value types only; engine persistence is not tested)
+    local saved = placeAnalyzerObject(square)
+    MOCK.worldHours = 2000
+    AC_LaboratoryAnalyzer.startAssay(player, saved, carriedSample(1))
+    local okCopy, copy = pcall(MOCK.persistCopy, saved.modData, "analyzer")
+    check(okCopy, "analyzer ModData holds only persistable values: " .. tostring(copy))
+    local reloaded = MOCK.newWorldObject({ class = "IsoThumpable", modData = copy })
+    square:AddSpecialObject(reloaded)
+    eq(AC_LaboratoryAnalyzer.getState(reloaded), "processing", "copied state still processing")
+    MOCK.worldHours = 2000 + AC_LaboratoryAnalyzer.CONFIG.processingHours
+    local fromCopy = AC_LaboratoryAnalyzer.collectSample(player, reloaded)
+    check(fromCopy ~= nil and fromCopy.modData.sampleX == x, "copied state yields the stored sample")
+    eq(fromCopy and fromCopy.modData.labCopperResult, saved.modData.labCopperResult, "result rolled at start survives the copy")
+
+    -- Multiplayer guard
+    MOCK.client = true
+    eq(AC_LaboratoryAnalyzer.isPlacementAvailable(), false, "place/pick up disabled on a multiplayer client")
+    MOCK.client = false
+    eq(AC_LaboratoryAnalyzer.isPlacementAvailable(), true, "place/pick up available in single-player")
+
+    MOCK.capturePrint(false)
+    MOCK.worldHours = 0
+end
+
 ------------------------------------------------
 -- ACTION TIME
 ------------------------------------------------

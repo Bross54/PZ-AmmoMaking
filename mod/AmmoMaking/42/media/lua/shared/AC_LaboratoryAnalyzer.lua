@@ -81,6 +81,30 @@ AC_LaboratoryAnalyzer.SAMPLE_FIELDS = {
 
 
 ------------------------------------------------
+-- ANALYZER STATE FIELDS
+------------------------------------------------
+--
+-- Besides these, a stored sample is kept as
+-- "stored_" .. field for every SAMPLE_FIELDS entry.
+------------------------------------------------
+
+AC_LaboratoryAnalyzer.STATE_FIELDS = {
+
+    "labAnalyzerState",
+
+    "storedSample",
+
+    "labStartedAt",
+    "labReadyAt",
+    "labRemainingHours",
+    "labLastUpdateAt",
+
+    "labCopperResult",
+    "labZincResult",
+}
+
+
+------------------------------------------------
 -- HELPERS
 ------------------------------------------------
 
@@ -1347,6 +1371,307 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     return sample, nil
+end
+
+
+------------------------------------------------
+-- CANCEL A RUNNING ASSAY
+------------------------------------------------
+--
+-- Returns the stored sample exactly as it went in
+-- (same assay, no laboratory result, no XP) and
+-- leaves the analyzer idle. The rolled laboratory
+-- result is discarded; it was never shown, so
+-- cancelling cannot be used to re-roll a known
+-- result. A finished assay is collected, not
+-- cancelled.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.cancelAssay(
+    player,
+    worldObject
+)
+
+    if not player then
+
+        return nil,
+            "no_player"
+    end
+
+
+    local analyzerData =
+        AC_LaboratoryAnalyzer.initialize(
+            worldObject
+        )
+
+
+    if not analyzerData then
+
+        return nil,
+            "invalid_analyzer"
+    end
+
+
+    local state =
+        AC_LaboratoryAnalyzer.updateState(
+            worldObject
+        )
+
+
+    if state ~= "processing" then
+
+        return nil,
+            "not_processing"
+    end
+
+
+    local sample =
+        player:getInventory():AddItem(
+            AC_LaboratoryAnalyzer.ITEMS.Sample
+        )
+
+
+    if not sample then
+
+        return nil,
+            "item_creation_failed"
+    end
+
+
+    local sampleData =
+        sample:getModData()
+
+
+    for _,
+        field
+    in ipairs(
+        AC_LaboratoryAnalyzer.SAMPLE_FIELDS
+    )
+    do
+
+        sampleData[field] =
+            analyzerData[
+                "stored_" .. field
+            ]
+    end
+
+
+    sampleData.AmmoMakingGeologicalSample =
+        true
+
+
+    sampleData.labProcessing =
+        false
+
+
+    sample:setCustomName(
+        true
+    )
+
+
+    if (tonumber(sampleData.assayRank) or 0) > 0 then
+
+        sample:setName(
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_SampleTested",
+                "Tested Geological Sample"
+            )
+        )
+
+    else
+
+        sample:setName(
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_Sample",
+                "Geological Sample"
+            )
+        )
+    end
+
+
+    clearStoredSample(
+        analyzerData
+    )
+
+
+    analyzerData.labAnalyzerState =
+        "idle"
+
+
+    updateAnalyzerName(
+        worldObject,
+        "idle"
+    )
+
+
+    print(
+        "[AmmoMaking] Laboratory assay cancelled; sample "
+        .. tostring(
+            sampleData.sampleX
+        )
+        .. ", "
+        .. tostring(
+            sampleData.sampleY
+        )
+        .. " returned"
+    )
+
+
+    return sample, nil
+end
+
+
+------------------------------------------------
+-- PLACE / PICK UP AVAILABILITY
+------------------------------------------------
+--
+-- Placing and picking up change world objects and
+-- inventories on the machine that runs the code. On
+-- a multiplayer client that is not authoritative:
+-- Build 42 runs a build action's create() on the
+-- server, and a client-side pickup would add the
+-- item only locally. Both stay disabled there until
+-- a server command exists, the same rule as mining.
+-- Single-player and local split-screen are fine.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.isPlacementAvailable()
+
+    return
+        not isClient()
+end
+
+
+------------------------------------------------
+-- PICK-UP RULE
+------------------------------------------------
+--
+-- A placed analyzer can be picked up only when it is
+-- idle and empty. A running assay has to be
+-- cancelled (which returns the sample) and a finished
+-- one collected first, so a stored sample and its
+-- progress never have to travel inside an item.
+--
+-- Returns true, or false and a reason:
+--   invalid_analyzer  not a placed analyzer
+--   processing        an assay is running
+--   ready             a finished sample is waiting
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.canPickUp(
+    worldObject
+)
+
+    if not AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+        worldObject
+    ) then
+
+        return false,
+            "invalid_analyzer"
+    end
+
+
+    local state =
+        AC_LaboratoryAnalyzer.updateState(
+            worldObject
+        )
+
+
+    if state == "processing" then
+
+        return false,
+            "processing"
+    end
+
+
+    if state == "ready" then
+
+        return false,
+            "ready"
+    end
+
+
+    if state ~= "idle" then
+
+        return false,
+            "invalid_analyzer"
+    end
+
+
+    return true, nil
+end
+
+
+------------------------------------------------
+-- STATE FOR A NEWLY PLACED ANALYZER
+------------------------------------------------
+--
+-- Called by AC_LaboratoryAnalyzerObject:create() with
+-- the new world object's ModData and the ModData of
+-- the inventory item being placed.
+--
+-- An item only carries state when it was a dropped
+-- analyzer picked up mid-assay (vanilla pickup of a
+-- dropped item cannot be blocked). That state, with
+-- its stored sample, is copied onto the placed object
+-- instead of being lost. Time spent in an inventory
+-- had no power, so a running assay's clock restarts
+-- from now rather than counting it.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.initializePlacedData(
+    objectData,
+    itemData
+)
+
+    if itemData then
+
+        for _,
+            field
+        in ipairs(
+            AC_LaboratoryAnalyzer.STATE_FIELDS
+        )
+        do
+
+            objectData[field] =
+                itemData[field]
+        end
+
+
+        for _,
+            field
+        in ipairs(
+            AC_LaboratoryAnalyzer.SAMPLE_FIELDS
+        )
+        do
+
+            objectData["stored_" .. field] =
+                itemData["stored_" .. field]
+        end
+    end
+
+
+    objectData.AmmoMakingLaboratoryAnalyzer =
+        true
+
+
+    objectData.AmmoMakingLaboratoryAnalyzerWorldObject =
+        true
+
+
+    if objectData.labAnalyzerState == "processing" then
+
+        objectData.labLastUpdateAt =
+            getWorldHours()
+    end
+
+
+    normalizeState(
+        objectData
+    )
+
+
+    return objectData
 end
 
 
