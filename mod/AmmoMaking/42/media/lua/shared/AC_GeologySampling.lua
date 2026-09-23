@@ -55,12 +55,22 @@ AC_GeologySampling.CONFIG = {
     ------------------------------------------------
     -- DIGGING
     ------------------------------------------------
+    --
+    -- digActionTime: timed action length, same base
+    -- as vanilla grave digging.
+    --
+    -- digSound: emitter sound played while digging.
+    -- "Shoveling" is the vanilla ISBuildAction sound
+    -- and is the one that has been heard in-game.
+    ------------------------------------------------
 
-    digActionTime = 180,
+    digActionTime = 150,
 
     shovelWearChance = 10,
 
-    digSound = "DigFurrowWithShovel",
+    digSound = "Shoveling",
+
+    digSoundRadius = 15,
 
 
     ------------------------------------------------

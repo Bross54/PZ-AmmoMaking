@@ -194,16 +194,8 @@ function AC_DigGeologicalSampleAction:update()
 
                 self.craftingSound =
                     emitter:playSound(
-                        "Shoveling"
+                        AC_GeologySampling.CONFIG.digSound
                     )
-
-
-                print(
-                    "[AmmoMaking] Shoveling sound attempt, handle = "
-                    .. tostring(
-                        self.craftingSound
-                    )
-                )
             end
         end
 
@@ -218,8 +210,8 @@ function AC_DigGeologicalSampleAction:update()
             self.character:getX(),
             self.character:getY(),
             self.character:getZ(),
-            15,
-            15
+            AC_GeologySampling.CONFIG.digSoundRadius,
+            AC_GeologySampling.CONFIG.digSoundRadius
         )
     end
 end
@@ -478,11 +470,8 @@ function AC_DigGeologicalSampleAction:getDuration()
     end
 
 
-    ------------------------------------------------
-    -- Same base duration as vanilla grave work.
-    ------------------------------------------------
-
-    return 150
+    return
+        AC_GeologySampling.CONFIG.digActionTime
 end
 
 
