@@ -693,6 +693,19 @@ function AC_Geology.isSurveyableSquare(
 
 
     ------------------------------------------------
+    -- Never inside a mapped room/building,
+    -- regardless of the underlying floor sprite.
+    --
+    -- Sampling, extraction and debug tools all rely
+    -- on this function, so the rule lives here.
+    ------------------------------------------------
+
+    if square:getRoom() ~= nil then
+        return false
+    end
+
+
+    ------------------------------------------------
     -- Floor sprite
     ------------------------------------------------
 
