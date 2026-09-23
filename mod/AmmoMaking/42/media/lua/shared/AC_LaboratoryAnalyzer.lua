@@ -17,6 +17,20 @@ AC_LaboratoryAnalyzer.CONFIG = {
 
     -- Ammo Making XP when a finished sample is collected.
     assayXP = 10,
+
+    -- Temporary vanilla world sprite of the placed
+    -- analyzer (found in 42.20 with the tile object
+    -- inspector); a custom sprite can replace it later
+    -- without touching the analyzer logic.
+    worldSprite = "industry_03_61",
+
+    -- Ticks to place the analyzer. ISBuildAction takes
+    -- 50 off for the Handy trait, so this must stay
+    -- above 50.
+    placeActionTime = 100,
+
+    -- Ticks to pick a placed analyzer up again.
+    pickUpActionTime = 50,
 }
 
 

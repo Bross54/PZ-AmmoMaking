@@ -79,10 +79,32 @@ end
 -- WORLD / TIME
 ------------------------------------------------
 
+-- Squares reachable through getCell():getGridSquare(); tests register
+-- the ones a placement should find.
+MOCK.cellSquares = {}
+MOCK.drag = nil
+
+function MOCK.registerSquare(square)
+    MOCK.cellSquares[square.x .. "," .. square.y .. "," .. square.z] = square
+    return square
+end
+
+MOCK.cell = {
+    getGridSquare = function(_, x, y, z)
+        return MOCK.cellSquares[x .. "," .. y .. "," .. (z or 0)]
+    end,
+    setDrag = function(_, object, playerNum)
+        MOCK.drag = { object = object, player = playerNum }
+    end,
+}
+
+function getCell() return MOCK.cell end
+
 function getWorld()
     return {
         getWorld = function() return MOCK.saveName end,
         isHydroPowerOn = function() return false end,
+        getCell = function() return MOCK.cell end,
     }
 end
 
@@ -281,10 +303,17 @@ local function newInventory()
         return item
     end
     function inv:Remove(item)
+        self.removeCalls = (self.removeCalls or 0) + 1
         for i, it in ipairs(self.items) do
             if it == item then table.remove(self.items, i) break end
         end
         item.container = nil
+    end
+    function inv:contains(item)
+        for _, it in ipairs(self.items) do
+            if it == item then return true end
+        end
+        return false
     end
     function inv:getItemsFromFullType(fullType, recurse)
         local found = {}
@@ -338,6 +367,9 @@ local function newPlayer(opts)
     function player:getInventory() return self.inventory end
     function player:getPrimaryHandItem() return self.primary end
     function player:getSecondaryHandItem() return self.secondary end
+    function player:setPrimaryHandItem(item) self.primary = item end
+    function player:setSecondaryHandItem(item) self.secondary = item end
+    function player:getPlayerNum() return opts.playerNum or 0 end
     function player:getXp()
         local p = self
         return {
@@ -491,6 +523,51 @@ local function newWorldObject(opts)
 end
 
 MOCK.newWorldObject = newWorldObject
+
+------------------------------------------------
+-- PLACEMENT CURSOR BASE AND THUMPABLES
+------------------------------------------------
+
+-- Minimal ISBuildingObject: derive / init / sprite setters and an
+-- isValid() whose answer the test chooses. The real class walks the
+-- player over, runs ISBuildAction and renders the ghost sprite; none of
+-- that is modelled, so tests of create() prove Lua control flow only.
+ISBuildingObject = { Type = "ISBuildingObject" }
+ISBuildingObject.__index = ISBuildingObject
+MOCK.buildingObjectValid = true
+
+function ISBuildingObject:derive(name)
+    local cls = {}
+    setmetatable(cls, self)
+    self.__index = self
+    cls.Type = name
+    return cls
+end
+function ISBuildingObject:init()
+    self.modData = {}
+    self.canBeAlwaysPlaced = false
+    self.isThumpable = true
+end
+function ISBuildingObject:setSprite(s) self.sprite = s end
+function ISBuildingObject:setNorthSprite(s) self.northSprite = s end
+function ISBuildingObject:setEastSprite(s) self.eastSprite = s end
+function ISBuildingObject:setSouthSprite(s) self.southSprite = s end
+function ISBuildingObject:isValid(square) return MOCK.buildingObjectValid end
+
+-- IsoThumpable.new stand-in returning a mock world object.
+IsoThumpable = {}
+MOCK.thumpableFails = false
+
+function IsoThumpable.new(cell, square, sprite, north, luaObject)
+    if MOCK.thumpableFails then return nil end
+    local o = newWorldObject({ class = "IsoThumpable", sprite = sprite })
+    o.north = north
+    o.transmitted = 0
+    function o:setCanBarricade(v) self.canBarricade = v end
+    function o:setIsThumpable(v) self.isThumpable = v end
+    function o:transmitCompleteItemToClients() self.transmitted = self.transmitted + 1 end
+    return o
+end
 
 ------------------------------------------------
 -- MISC GLOBALS USED BY CLIENT FILES
@@ -654,8 +731,8 @@ function MOCK.printLogContains(needle)
     return false
 end
 
--- Loads every mod file in Project Zomboid's order: shared (alphabetical)
--- then client (alphabetical). Prints during load are captured.
+-- Loads every mod file: shared, then client, then server, each
+-- alphabetical. Prints during load are captured.
 function MOCK.loadMod(luaRoot)
     MOCK.capturePrint(true)
     local shared = {
@@ -667,8 +744,12 @@ function MOCK.loadMod(luaRoot)
         "AC_AmmoContextMenu", "AC_DigGeologicalSampleAction", "AC_GeologyDebug",
         "AC_GeologySamplingContextMenu", "AC_MineOreAction", "AC_MiningContextMenu",
     }
+    local server = {
+        "BuildingObjects/AC_LaboratoryAnalyzerObject",
+    }
     for _, name in ipairs(shared) do dofile(luaRoot .. "shared/" .. name .. ".lua") end
     for _, name in ipairs(client) do dofile(luaRoot .. "client/" .. name .. ".lua") end
+    for _, name in ipairs(server) do dofile(luaRoot .. "server/" .. name .. ".lua") end
     MOCK.capturePrint(false)
 end
 
@@ -680,6 +761,7 @@ function MOCK.resetLuaState()
     AC_Geology = nil
     AC_GeologySampling = nil
     AC_LaboratoryAnalyzer = nil
+    AC_LaboratoryAnalyzerObject = nil
     AC_Deposits = nil
     AC_Mining = nil
     AC_Compat = nil

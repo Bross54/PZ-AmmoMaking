@@ -1505,6 +1505,102 @@ do
     MOCK.worldHours = 0
 end
 
+section("Analyzer placement cursor (mocked ISBuildingObject / IsoThumpable)")
+do
+    -- Walking, ISBuildAction, ghost rendering and the real IsoThumpable
+    -- are mocked: these checks cover create() / isValid() control flow
+    -- only. Everything else needs the in-game test.
+    local x, y = 820, 30
+    local square = MOCK.registerSquare(poweredLabSquare(x, y))
+    local player = MOCK.newPlayer({ square = square, playerNum = 0 })
+    local item = player.inventory:AddItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    MOCK.worldHours = 400
+
+    local cursor = AC_LaboratoryAnalyzerObject:new(player, item)
+    eq(cursor.sprite, AC_LaboratoryAnalyzer.CONFIG.worldSprite, "cursor sprite from CONFIG")
+    eq(cursor.northSprite, AC_LaboratoryAnalyzer.CONFIG.worldSprite, "same sprite facing north")
+    eq(cursor.player, 0, "player number stored")
+    eq(cursor.noNeedHammer, true, "no hammer needed")
+    eq(cursor.dragNilAfterPlace, true, "cursor ends after one placement")
+    eq(cursor.ignoreNorth, true, "one thumpable per tile")
+    eq(cursor.maxTime, AC_LaboratoryAnalyzer.CONFIG.placeActionTime, "placement time from CONFIG")
+    check(cursor.maxTime > 50, "placement time survives the Handy trait's -50")
+
+    eq(cursor:isValid(square), true, "valid with the item carried")
+    eq(cursor:isValid(nil), false, "no square -> invalid")
+    MOCK.buildingObjectValid = false
+    eq(cursor:isValid(square), false, "vanilla checks can refuse")
+    MOCK.buildingObjectValid = true
+    eq(AC_LaboratoryAnalyzerObject:new(player, player.inventory:AddItem("Base.Shovel")):isValid(square), false, "only the analyzer item can be placed")
+
+    player.primary = item
+    MOCK.capturePrint(true)
+    cursor:create(x, y, 0, false, cursor.sprite)
+    MOCK.capturePrint(false)
+    local placed = square.specialObjects[1]
+    check(placed ~= nil, "analyzer object added to the square")
+    eq(#square.specialObjects, 1, "exactly one object added")
+    check(AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(placed), "created object is a placed analyzer")
+    eq(placed and placed.name, AC_LaboratoryAnalyzer.OBJECT_NAME, "object name set")
+    eq(placed and placed.isThumpable, false, "zombies cannot thump it")
+    eq(placed and placed.canBarricade, false, "not barricadable")
+    eq(placed and placed.transmitted, 1, "object transmitted once")
+    eq(placed and placed.modData.labAnalyzerState, "idle", "new analyzer idle")
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 0, "item consumed")
+    eq(player.inventory.removeCalls, 1, "item removed exactly once")
+    eq(player.primary, nil, "item unequipped from the hands")
+    eq(cursor.javaObject, placed, "javaObject recorded")
+
+    MOCK.capturePrint(true)
+    cursor:create(x, y, 0, false, cursor.sprite)
+    MOCK.capturePrint(false)
+    eq(#square.specialObjects, 1, "a consumed item cannot place a second analyzer")
+    eq(cursor:isValid(square), false, "cursor invalid once the item is gone")
+
+    local square2 = MOCK.registerSquare(poweredLabSquare(x + 1, y))
+    local item2 = player.inventory:AddItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local cursor2 = AC_LaboratoryAnalyzerObject:new(player, item2)
+    player.inventory:Remove(item2)
+    MOCK.capturePrint(true)
+    cursor2:create(x + 1, y, 0, false, cursor2.sprite)
+    MOCK.capturePrint(false)
+    eq(#square2.specialObjects, 0, "no analyzer when the item left the inventory mid-action")
+
+    local item3 = player.inventory:AddItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local cursor3 = AC_LaboratoryAnalyzerObject:new(player, item3)
+    MOCK.thumpableFails = true
+    MOCK.capturePrint(true)
+    cursor3:create(x + 1, y, 0, false, cursor3.sprite)
+    MOCK.capturePrint(false)
+    MOCK.thumpableFails = false
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 1, "item kept when the object cannot be created")
+    eq(#square2.specialObjects, 0, "nothing added on failure")
+    MOCK.capturePrint(true)
+    cursor3:create(x + 50, y, 0, false, cursor3.sprite)
+    MOCK.capturePrint(false)
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 1, "item kept when the square is missing")
+
+    local busyItem = player.inventory:AddItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local busy = busyItem.modData
+    busy.labAnalyzerState = "processing"
+    busy.storedSample = true
+    busy.stored_sampleX = x
+    busy.stored_trueCopper = 40
+    busy.labRemainingHours = 5
+    busy.labCopperResult = 41
+    busy.labZincResult = 0
+    local square3 = MOCK.registerSquare(poweredLabSquare(x + 2, y))
+    local cursor4 = AC_LaboratoryAnalyzerObject:new(player, busyItem)
+    MOCK.capturePrint(true)
+    cursor4:create(x + 2, y, 0, false, cursor4.sprite)
+    MOCK.capturePrint(false)
+    local placedBusy = square3.specialObjects[1]
+    eq(placedBusy and placedBusy.modData.labAnalyzerState, "processing", "placing an item mid-assay keeps the assay")
+    eq(placedBusy and placedBusy.modData.stored_sampleX, x, "stored sample kept on placement")
+    eq(placedBusy and AC_LaboratoryAnalyzer.getHoursRemaining(placedBusy), 5, "remaining time kept")
+    MOCK.worldHours = 0
+end
+
 ------------------------------------------------
 -- ACTION TIME
 ------------------------------------------------
