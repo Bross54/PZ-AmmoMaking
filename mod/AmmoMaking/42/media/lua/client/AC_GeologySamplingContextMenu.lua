@@ -97,6 +97,65 @@ end
 
 
 ------------------------------------------------
+-- FIND LAB ANALYZER ON A SQUARE
+------------------------------------------------
+--
+-- Placed analyzers are special objects of the
+-- square; dropped analyzers are world items.
+------------------------------------------------
+
+local function findAnalyzerInList(
+    list
+)
+
+    if not list then
+        return nil
+    end
+
+
+    for index = 0,
+        list:size() - 1
+    do
+
+        local object =
+            list:get(
+                index
+            )
+
+
+        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+            object
+        ) then
+
+            return object
+        end
+    end
+
+
+    return nil
+end
+
+
+local function findAnalyzerOnSquare(
+    square
+)
+
+    if not square then
+        return nil
+    end
+
+
+    return
+        findAnalyzerInList(
+            square:getSpecialObjects()
+        )
+        or findAnalyzerInList(
+            square:getWorldObjects()
+        )
+end
+
+
+------------------------------------------------
 -- FIND LAB ANALYZER
 ------------------------------------------------
 
@@ -125,6 +184,10 @@ local function getAnalyzerWorldObject(
     end
 
 
+    local checkedSquares =
+        {}
+
+
     for _,
         object
     in ipairs(
@@ -140,31 +203,22 @@ local function getAnalyzerWorldObject(
                 object:getSquare()
 
 
-            if square then
+            if square
+                and not checkedSquares[square]
+            then
 
-                local worldItems =
-                    square:getWorldObjects()
-
-
-                if worldItems then
-
-                    for index = 0,
-                        worldItems:size() - 1
-                    do
-
-                        local worldItem =
-                            worldItems:get(
-                                index
-                            )
+                checkedSquares[square] =
+                    true
 
 
-                        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
-                            worldItem
-                        ) then
+                local analyzer =
+                    findAnalyzerOnSquare(
+                        square
+                    )
 
-                            return worldItem
-                        end
-                    end
+
+                if analyzer then
+                    return analyzer
                 end
             end
         end
@@ -172,6 +226,58 @@ local function getAnalyzerWorldObject(
 
 
     return nil
+end
+
+
+------------------------------------------------
+-- DISABLED OPTION WITH TOOLTIP
+------------------------------------------------
+
+local function addUnavailableOption(
+    context,
+    name,
+    description
+)
+
+    local option =
+        context:addOption(
+            name
+        )
+
+
+    option.notAvailable =
+        true
+
+
+    if description
+        and ISWorldObjectContextMenu
+        and ISWorldObjectContextMenu.addToolTip
+    then
+
+        local tooltip =
+            ISWorldObjectContextMenu.addToolTip()
+
+
+        tooltip.description =
+            description
+
+
+        option.toolTip =
+            tooltip
+    end
+
+
+    return option
+end
+
+
+local function getMultiplayerText()
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Multiplayer",
+            "Moving the laboratory analyzer is not available in multiplayer yet"
+        )
 end
 
 
@@ -684,6 +790,267 @@ end
 
 
 ------------------------------------------------
+-- CANCEL LAB ASSAY
+------------------------------------------------
+
+local function cancelLaboratoryAssay(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    local sample,
+          errorCode =
+        AC_LaboratoryAnalyzer.cancelAssay(
+            player,
+            analyzerWorldObject
+        )
+
+
+    if not sample then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_CancelFailed",
+                "Could not cancel the laboratory assay"
+            )
+        )
+
+
+        print(
+            "[AmmoMaking] Laboratory assay cancel refused: "
+            .. tostring(
+                errorCode
+            )
+        )
+
+
+        return
+    end
+
+
+    HaloTextHelper.addText(
+        player,
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Cancelled",
+            "Laboratory assay cancelled - sample returned"
+        )
+    )
+end
+
+
+------------------------------------------------
+-- PLACE ANALYZER
+------------------------------------------------
+--
+-- Starts the vanilla placement cursor. The item is
+-- moved into the main inventory first if needed; the
+-- cursor only accepts a square once it is there.
+------------------------------------------------
+
+local function placeLaboratoryAnalyzer(
+    player,
+    analyzerItem
+)
+
+    if not player
+        or not AC_LaboratoryAnalyzer.isAnalyzerItem(
+            analyzerItem
+        )
+    then
+
+        return
+    end
+
+
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+        HaloTextHelper.addText(
+            player,
+            getMultiplayerText()
+        )
+
+
+        return
+    end
+
+
+    ISInventoryPaneContextMenu.transferIfNeeded(
+        player,
+        analyzerItem
+    )
+
+
+    getCell():setDrag(
+        AC_LaboratoryAnalyzerObject:new(
+            player,
+            analyzerItem
+        ),
+        player:getPlayerNum()
+    )
+end
+
+
+------------------------------------------------
+-- PICK UP ANALYZER
+------------------------------------------------
+
+local function pickUpLaboratoryAnalyzer(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+        HaloTextHelper.addText(
+            player,
+            getMultiplayerText()
+        )
+
+
+        return
+    end
+
+
+    local allowed,
+          reason =
+        AC_LaboratoryAnalyzer.canPickUp(
+            analyzerWorldObject
+        )
+
+
+    if not allowed then
+
+        HaloTextHelper.addText(
+            player,
+            AC_PickUpAnalyzerAction.getRefusalText(
+                reason
+            )
+        )
+
+
+        return
+    end
+
+
+    if not luautils.walkAdj(
+        player,
+        analyzerWorldObject:getSquare()
+    ) then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_CannotReach",
+                "Cannot reach the laboratory analyzer"
+            )
+        )
+
+
+        return
+    end
+
+
+    ISTimedActionQueue.add(
+        AC_PickUpAnalyzerAction:new(
+            player,
+            analyzerWorldObject
+        )
+    )
+end
+
+
+------------------------------------------------
+-- PICK-UP OPTION
+------------------------------------------------
+--
+-- Placed analyzers only. Shown disabled, with the
+-- reason, while an assay is running or a result is
+-- waiting, and on multiplayer clients.
+------------------------------------------------
+
+local function addPickUpOption(
+    player,
+    context,
+    analyzerWorldObject
+)
+
+    if not AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+        analyzerWorldObject
+    ) then
+
+        return
+    end
+
+
+    local name =
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_PickUp",
+            "Pick Up Laboratory Assay Analyzer"
+        )
+
+
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+        addUnavailableOption(
+            context,
+            name,
+            getMultiplayerText()
+        )
+
+
+        return
+    end
+
+
+    local allowed,
+          reason =
+        AC_LaboratoryAnalyzer.canPickUp(
+            analyzerWorldObject
+        )
+
+
+    if not allowed then
+
+        addUnavailableOption(
+            context,
+            name,
+            AC_PickUpAnalyzerAction.getRefusalText(
+                reason
+            )
+        )
+
+
+        return
+    end
+
+
+    context:addOption(
+        name,
+        player,
+        pickUpLaboratoryAnalyzer,
+        analyzerWorldObject
+    )
+end
+
+
+------------------------------------------------
 -- ADD ANALYZER OPTIONS
 ------------------------------------------------
 
@@ -726,6 +1093,13 @@ local function addLaboratoryAnalyzerOptions(
             ),
             player,
             showLaboratoryStatus,
+            analyzerWorldObject
+        )
+
+
+        addPickUpOption(
+            player,
+            context,
             analyzerWorldObject
         )
 
@@ -829,7 +1203,9 @@ local function addLaboratoryAnalyzerOptions(
     ------------------------------------------------
     -- PROCESSING
     --
-    -- Only ONE status option now.
+    -- Progress, and an explicit cancel that returns
+    -- the sample; the analyzer cannot be moved until
+    -- the assay is cancelled or collected.
     ------------------------------------------------
 
     if info.state == "processing" then
@@ -841,6 +1217,24 @@ local function addLaboratoryAnalyzerOptions(
             ),
             player,
             showLaboratoryStatus,
+            analyzerWorldObject
+        )
+
+
+        context:addOption(
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Cancel",
+                "Cancel Laboratory Assay"
+            ),
+            player,
+            cancelLaboratoryAssay,
+            analyzerWorldObject
+        )
+
+
+        addPickUpOption(
+            player,
+            context,
             analyzerWorldObject
         )
 
@@ -862,6 +1256,13 @@ local function addLaboratoryAnalyzerOptions(
             ),
             player,
             collectLaboratorySample,
+            analyzerWorldObject
+        )
+
+
+        addPickUpOption(
+            player,
+            context,
             analyzerWorldObject
         )
     end
@@ -988,6 +1389,44 @@ local function onFillInventoryContextMenu(
             getActualItem(
                 entry
             )
+
+
+        ------------------------------------------------
+        -- LABORATORY ANALYZER
+        ------------------------------------------------
+
+        if AC_LaboratoryAnalyzer.isAnalyzerItem(
+            item
+        ) then
+
+            local placeName =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Place",
+                    "Place Laboratory Assay Analyzer"
+                )
+
+
+            if AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+                context:addOption(
+                    placeName,
+                    player,
+                    placeLaboratoryAnalyzer,
+                    item
+                )
+
+            else
+
+                addUnavailableOption(
+                    context,
+                    placeName,
+                    getMultiplayerText()
+                )
+            end
+
+
+            return
+        end
 
 
         if AC_GeologySampling.isSample(

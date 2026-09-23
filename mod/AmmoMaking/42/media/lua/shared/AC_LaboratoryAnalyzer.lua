@@ -1617,6 +1617,38 @@ end
 
 
 ------------------------------------------------
+-- IDLE AND EMPTY (READ-ONLY)
+------------------------------------------------
+--
+-- The stored part of the pick-up rule without
+-- updating or repairing anything, for per-tick checks
+-- such as a timed action's isValid(). canPickUp() is
+-- the authoritative check.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.isIdleAndEmpty(
+    worldObject
+)
+
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
+            worldObject
+        )
+
+
+    if not data then
+        return false
+    end
+
+
+    return
+        (data.labAnalyzerState == nil
+            or data.labAnalyzerState == "idle")
+        and data.storedSample ~= true
+end
+
+
+------------------------------------------------
 -- STATE FOR A NEWLY PLACED ANALYZER
 ------------------------------------------------
 --

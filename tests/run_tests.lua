@@ -1601,6 +1601,186 @@ do
     MOCK.worldHours = 0
 end
 
+section("Analyzer menus: place, pick up, cancel")
+do
+    -- Menus and the pickup timed action against mocks: which options
+    -- appear, what they queue, and that the pick-up rule holds at every
+    -- step. Walking, animation and object removal by the engine are not
+    -- modelled.
+    local x, y = 840, 30
+    local square = poweredLabSquare(x, y)
+    local player = MOCK.newPlayer({ square = square })
+    MOCK.worldHours = 600
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    local function carriedSample()
+        local s = makeSample(x, y, 1, "Good", "None")
+        s.modData.trueCopper = 58
+        s.modData.trueZinc = 0
+        player.inventory:addItem(s)
+        return s
+    end
+
+    -- Place from the inventory
+    local item = player.inventory:AddItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    ISInventoryPaneContextMenu.transfers = {}
+    MOCK.drag = nil
+    local ctx = fillInventoryMenu(player, item)
+    local place = ctx:find("Place Laboratory Assay Analyzer")
+    check(place ~= nil and not place.notAvailable, "place option for the analyzer item")
+    if place then ctx:invoke(place) end
+    check(MOCK.drag ~= nil and getmetatable(MOCK.drag.object) == AC_LaboratoryAnalyzerObject, "placement cursor started")
+    eq(MOCK.drag and MOCK.drag.object.sourceItem, item, "cursor carries the item")
+    eq(MOCK.drag and MOCK.drag.player, 0, "cursor for the right player")
+    eq(ISInventoryPaneContextMenu.transfers[1], item, "item moved to the main inventory if needed")
+    check(ctx:find("View Assay Result") == nil, "no sample options on the analyzer item")
+
+    MOCK.client = true
+    MOCK.drag = nil
+    ctx = fillInventoryMenu(player, item)
+    place = ctx:find("Place Laboratory Assay Analyzer")
+    eq(place and place.notAvailable, true, "place option disabled on a multiplayer client")
+    check(place and place.toolTip and string.find(place.toolTip.description, "multiplayer", 1, true) ~= nil, "multiplayer reason shown")
+    MOCK.client = false
+
+    -- Idle placed analyzer: pick up through the timed action
+    local analyzer = placeAnalyzerObject(square)
+    ctx = fillAnalyzerMenu(player, analyzer)
+    local pick = ctx:find("Pick Up Laboratory Assay Analyzer")
+    check(pick ~= nil and not pick.notAvailable, "pick up offered for an idle analyzer")
+    check(ctx:find("Cancel Laboratory Assay") == nil, "no cancel while idle")
+    ISTimedActionQueue.clear()
+    MOCK.walkAdjResult = false
+    HaloTextHelper.clear()
+    if pick then ctx:invoke(pick) end
+    eq(#ISTimedActionQueue.queue, 0, "nothing queued when the analyzer is unreachable")
+    eq(HaloTextHelper.last(), "Cannot reach the laboratory analyzer", "unreachable message")
+    MOCK.walkAdjResult = true
+    if pick then ctx:invoke(pick) end
+    local action = ISTimedActionQueue.queue[1]
+    check(action ~= nil and getmetatable(action) == AC_PickUpAnalyzerAction, "pickup action queued")
+    eq(action and action.maxTime, AC_LaboratoryAnalyzer.CONFIG.pickUpActionTime, "pickup time from CONFIG")
+    eq(action and action:isValid(), true, "action valid while idle")
+
+    -- An assay started before the action completes blocks the pickup
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, carriedSample())
+    eq(action:isValid(), false, "action invalid once an assay runs")
+    HaloTextHelper.clear()
+    action:perform()
+    eq(#square.specialObjects, 1, "forced perform does not remove a busy analyzer")
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 1, "no analyzer item created")
+    eq(HaloTextHelper.last(), "Cancel the laboratory assay before moving the analyzer", "refusal explained")
+
+    -- Processing: progress, cancel, disabled pick up with the reason
+    ctx = fillAnalyzerMenu(player, analyzer)
+    check(ctx:find("Check Laboratory Progress") ~= nil, "progress while processing")
+    local cancel = ctx:find("Cancel Laboratory Assay")
+    check(cancel ~= nil, "cancel offered while processing")
+    pick = ctx:find("Pick Up Laboratory Assay Analyzer")
+    eq(pick and pick.notAvailable, true, "pick up disabled while processing")
+    eq(pick and pick.toolTip and pick.toolTip.description, "Cancel the laboratory assay before moving the analyzer", "reason in the tooltip")
+    HaloTextHelper.clear()
+    if cancel then ctx:invoke(cancel) end
+    eq(HaloTextHelper.last(), "Laboratory assay cancelled - sample returned", "cancel message")
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "sample back after cancel")
+    eq(#player.xpLog, 0, "no XP from a cancel")
+
+    -- Ready: collect, disabled pick up with the reason
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, player.inventory:getItemsFromFullType("AmmoMaking.GeologicalSample"):get(0))
+    MOCK.worldHours = MOCK.worldHours + AC_LaboratoryAnalyzer.CONFIG.processingHours
+    ctx = fillAnalyzerMenu(player, analyzer)
+    check(ctx:find("Collect Laboratory Sample") ~= nil, "collect when ready")
+    check(ctx:find("Cancel Laboratory Assay") == nil, "no cancel when ready")
+    pick = ctx:find("Pick Up Laboratory Assay Analyzer")
+    eq(pick and pick.notAvailable, true, "pick up disabled while a result waits")
+    eq(pick and pick.toolTip and pick.toolTip.description, "Collect the laboratory sample before moving the analyzer", "ready reason in the tooltip")
+    ctx:invoke(ctx:find("Collect Laboratory Sample"))
+    eq(#player.xpLog, 1, "XP once on collection")
+
+    -- Idle again, unpowered: still movable
+    square.haveElectricity = function() return false end
+    ctx = fillAnalyzerMenu(player, analyzer)
+    pick = ctx:find("Pick Up Laboratory Assay Analyzer")
+    check(pick ~= nil and not pick.notAvailable, "unpowered idle analyzer can still be moved")
+    square.haveElectricity = function() return true end
+
+    -- Two queued pickups: exactly one item
+    ISTimedActionQueue.clear()
+    local a1 = AC_PickUpAnalyzerAction:new(player, analyzer)
+    local a2 = AC_PickUpAnalyzerAction:new(player, analyzer)
+    HaloTextHelper.clear()
+    a1:perform()
+    eq(HaloTextHelper.last(), "Laboratory Assay Analyzer picked up", "pickup message")
+    eq(#square.specialObjects, 0, "analyzer removed from the square")
+    eq(square.transmittedRemovals[1], analyzer, "removal transmitted like vanilla")
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 2, "analyzer item added")
+    eq(a2:isValid(), false, "second action invalid once the analyzer is gone")
+    a2:perform()
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 2, "no second item")
+    eq(select(2, AC_PickUpAnalyzerAction.pickUp(player, analyzer)), "gone", "pickUp reports the analyzer gone")
+
+    -- Item creation failure keeps the analyzer placed
+    local kept = placeAnalyzerObject(square)
+    MOCK.knownScriptItems["AmmoMaking.LaboratoryAssayAnalyzer"] = nil
+    local noItem, errItem = AC_PickUpAnalyzerAction.pickUp(player, kept)
+    MOCK.knownScriptItems["AmmoMaking.LaboratoryAssayAnalyzer"] = true
+    eq(noItem, nil, "no item")
+    eq(errItem, "item_creation_failed", "failure reported")
+    eq(#square.specialObjects, 1, "analyzer stays placed when the item cannot be created")
+
+    -- Placed analyzer found through the square's special objects
+    local floor = { getSquare = function() return square end }
+    MOCK.players = { player }
+    ctx = MOCK.newContext()
+    Events.OnFillWorldObjectContextMenu.fire(0, ctx, { floor }, false)
+    check(ctx:find("Check Laboratory Analyzer") ~= nil, "analyzer found via special objects of the clicked square")
+
+    -- Multiplayer client: pick up disabled with the reason
+    MOCK.client = true
+    ctx = fillAnalyzerMenu(player, kept)
+    pick = ctx:find("Pick Up Laboratory Assay Analyzer")
+    eq(pick and pick.notAvailable, true, "pick up disabled on a multiplayer client")
+    MOCK.client = false
+
+    -- Dropped analyzer: vanilla pickup, but cancel is available
+    local droppedItem = MOCK.newItem("AmmoMaking.LaboratoryAssayAnalyzer")
+    local dropped = { __class = "IsoWorldInventoryObject", getItem = function() return droppedItem end, getSquare = function() return square end }
+    AC_LaboratoryAnalyzer.startAssay(player, dropped, carriedSample())
+    ctx = fillAnalyzerMenu(player, dropped)
+    check(ctx:find("Pick Up Laboratory Assay Analyzer") == nil, "no mod pick-up option for a dropped analyzer")
+    check(ctx:find("Cancel Laboratory Assay") ~= nil, "cancel offered for a dropped analyzer")
+
+    MOCK.capturePrint(false)
+    ISTimedActionQueue.clear()
+    MOCK.worldHours = 0
+end
+
+section("Translation keys used in code exist in IG_UI.json")
+do
+    local handle = io.open(ROOT .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/IG_UI.json", "r")
+    local json = handle:read("*a")
+    handle:close()
+    local defined = {}
+    for key in string.gmatch(json, '"([^"]+)"%s*:') do defined[key] = true end
+
+    local used, missing = 0, {}
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        local file = io.open(LUA .. name .. ".lua", "r")
+        local source = file:read("*a")
+        file:close()
+        -- Literal keys only; a key built with ".." is skipped.
+        for key, after in string.gmatch(source, 'AC_Text%.get%(%s*"([^"]+)"%s*(.)') do
+            if after ~= "." then
+                used = used + 1
+                if not defined[key] then table.insert(missing, key .. " (" .. name .. ")") end
+            end
+        end
+    end
+    check(used > 50, "keys found in code (" .. used .. ")")
+    eq(#missing, 0, "every literal key has an English entry: " .. table.concat(missing, ", "))
+end
+
 ------------------------------------------------
 -- ACTION TIME
 ------------------------------------------------

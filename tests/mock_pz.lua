@@ -379,6 +379,10 @@ local function newPlayer(opts)
             setXPToLevel = function(_, perk, level) end,
         }
     end
+    function player:SetVariable(key, value)
+        self.animVariables = self.animVariables or {}
+        self.animVariables[key] = value
+    end
     function player:setPerkLevelDebug(perk, level) self.perkLevel = level end
     function player:getPerkLevel(perk) return self.perkLevel end
     function player:getX() return self.x end
@@ -586,7 +590,14 @@ end
 function HaloTextHelper.clear() HaloTextHelper.log = {} end
 function HaloTextHelper.last() return HaloTextHelper.log[#HaloTextHelper.log] end
 
-Metabolics = { DiggingSpade = "DiggingSpade" }
+Metabolics = { DiggingSpade = "DiggingSpade", HeavyDomestic = "HeavyDomestic" }
+
+-- Records the items the placement menu asked to move into the main
+-- inventory; the real function queues a transfer action.
+ISInventoryPaneContextMenu = { transfers = {} }
+function ISInventoryPaneContextMenu.transferIfNeeded(player, item)
+    table.insert(ISInventoryPaneContextMenu.transfers, item)
+end
 Perks = { Strength = "Strength", Crafting = "Crafting" }
 
 BuildingHelper = {
@@ -731,25 +742,25 @@ function MOCK.printLogContains(needle)
     return false
 end
 
+-- Mod Lua files the tests load, relative to media/lua/ (UI panels are
+-- mocked instead of loaded).
+MOCK.MOD_FILES = {
+    "shared/AC_AmmoInspection", "shared/AC_AmmoQuality", "shared/AC_Compat",
+    "shared/AC_Deposits", "shared/AC_Geology", "shared/AC_GeologySampling",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Mining", "shared/AC_Text",
+    "shared/AC_WorldData",
+    "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
+    "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
+    "client/AC_MineOreAction", "client/AC_MiningContextMenu",
+    "client/AC_PickUpAnalyzerAction",
+    "server/BuildingObjects/AC_LaboratoryAnalyzerObject",
+}
+
 -- Loads every mod file: shared, then client, then server, each
 -- alphabetical. Prints during load are captured.
 function MOCK.loadMod(luaRoot)
     MOCK.capturePrint(true)
-    local shared = {
-        "AC_AmmoInspection", "AC_AmmoQuality", "AC_Compat", "AC_Deposits",
-        "AC_Geology", "AC_GeologySampling", "AC_LaboratoryAnalyzer",
-        "AC_Mining", "AC_Text", "AC_WorldData",
-    }
-    local client = {
-        "AC_AmmoContextMenu", "AC_DigGeologicalSampleAction", "AC_GeologyDebug",
-        "AC_GeologySamplingContextMenu", "AC_MineOreAction", "AC_MiningContextMenu",
-    }
-    local server = {
-        "BuildingObjects/AC_LaboratoryAnalyzerObject",
-    }
-    for _, name in ipairs(shared) do dofile(luaRoot .. "shared/" .. name .. ".lua") end
-    for _, name in ipairs(client) do dofile(luaRoot .. "client/" .. name .. ".lua") end
-    for _, name in ipairs(server) do dofile(luaRoot .. "server/" .. name .. ".lua") end
+    for _, name in ipairs(MOCK.MOD_FILES) do dofile(luaRoot .. name .. ".lua") end
     MOCK.capturePrint(false)
 end
 
@@ -766,6 +777,7 @@ function MOCK.resetLuaState()
     AC_Mining = nil
     AC_Compat = nil
     AC_MineOreAction = nil
+    AC_PickUpAnalyzerAction = nil
     AC_GeologyDebug = nil
     AmmoInspection = nil
     AmmoQuality = nil
