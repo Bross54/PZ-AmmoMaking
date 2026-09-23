@@ -203,6 +203,25 @@ end
 
 
 ------------------------------------------------
+-- AVAILABILITY
+------------------------------------------------
+--
+-- Extraction changes world state (ore item, global
+-- ModData depletion) on the machine that runs the
+-- timed action. On a multiplayer client that state
+-- is neither authoritative nor shared, so mining is
+-- disabled there until a server command exists.
+-- Single-player and local split-screen are fine.
+------------------------------------------------
+
+function AC_Mining.isAvailable()
+
+    return
+        not isClient()
+end
+
+
+------------------------------------------------
 -- PICKAXE
 ------------------------------------------------
 
@@ -521,8 +540,9 @@ end
 -- Failure returns nil, errorCode:
 --
 --     no_player, no_square, invalid_metal,
---     invalid_surface, no_pickaxe, no_prospect,
---     no_ore, item_creation_failed
+--     multiplayer_unsupported, invalid_surface,
+--     no_pickaxe, no_prospect, no_ore,
+--     item_creation_failed
 ------------------------------------------------
 
 function AC_Mining.extract(
@@ -547,6 +567,11 @@ function AC_Mining.extract(
     ) then
 
         return nil, "invalid_metal"
+    end
+
+
+    if not AC_Mining.isAvailable() then
+        return nil, "multiplayer_unsupported"
     end
 
 

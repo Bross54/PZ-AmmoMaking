@@ -65,14 +65,46 @@ function AC_MineOreAction:isValid()
     end
 
 
-    if isClient() then
+    if isClient()
+        and not self.character:
+            getInventory():
+            containsID(
+                self.item:getID()
+            )
+    then
 
-        return
-            self.character:
-                getInventory():
-                containsID(
-                    self.item:getID()
-                )
+        return false
+    end
+
+
+    ------------------------------------------------
+    -- The assayed sample must still be carried.
+    -- Dropping it mid-action cancels the action
+    -- instead of wasting the full duration.
+    ------------------------------------------------
+
+    if not AC_Mining.findProspect(
+        self.character,
+        self.square,
+        self.metal
+    ) then
+
+        return false
+    end
+
+
+    ------------------------------------------------
+    -- Queued repeat attempts on a tile that is
+    -- already known to be exhausted are dropped.
+    ------------------------------------------------
+
+    if AC_Deposits.isKnownExhausted(
+        self.square:getX(),
+        self.square:getY(),
+        self.metal
+    ) then
+
+        return false
     end
 
 
@@ -260,10 +292,27 @@ function AC_MineOreAction:start()
         and BuildingHelper.getShovelAnim
     then
 
-        animation =
-            BuildingHelper.getShovelAnim(
+        ------------------------------------------------
+        -- The vanilla selector is written for shovels;
+        -- guard it so a pickaxe can never raise a Lua
+        -- error inside the timed action.
+        ------------------------------------------------
+
+        local ok,
+              result =
+            pcall(
+                BuildingHelper.getShovelAnim,
                 self.item
             )
+
+
+        if ok
+            and type(result) == "string"
+        then
+
+            animation =
+                result
+        end
     end
 
 
@@ -429,6 +478,13 @@ local function showResult(
         HaloTextHelper.addText(
             character,
             "Your pickaxe is not usable"
+        )
+
+    elseif errorCode == "multiplayer_unsupported" then
+
+        HaloTextHelper.addText(
+            character,
+            "Ore extraction is not available in multiplayer yet"
         )
 
     else

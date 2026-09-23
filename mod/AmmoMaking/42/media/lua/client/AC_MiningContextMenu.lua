@@ -302,6 +302,25 @@ local function onFillWorldObjectContextMenu(
     end
 
 
+    ------------------------------------------------
+    -- Multiplayer clients get a clear message instead
+    -- of a client-side extraction that would neither
+    -- persist nor be shared with other players.
+    ------------------------------------------------
+
+    if not AC_Mining.isAvailable() then
+
+        addUnavailableOption(
+            context,
+            "Mine Ore",
+            "Ore extraction is not available in multiplayer yet."
+        )
+
+
+        return
+    end
+
+
     local pickaxe =
         AC_Mining.getEquippedPickaxe(
             player
