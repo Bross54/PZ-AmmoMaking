@@ -265,11 +265,13 @@ function AC_MineOreAction:start()
     if self.item then
 
         self.item:setJobType(
-            "Mining "
-            .. AC_Deposits.getMetalName(
-                self.metal
+            AC_Text.get(
+                "IGUI_AmmoMaking_JobMining",
+                "Mining %1 Ore",
+                AC_Deposits.getMetalName(
+                    self.metal
+                )
             )
-            .. " Ore"
         )
 
 
@@ -424,76 +426,88 @@ local function showResult(
         )
 
 
+    local text
+
+
     if result then
-
-        local text =
-            metalName
-            .. " ore extracted"
-
 
         if result.remaining <= 0 then
 
             text =
-                text
-                .. " - the deposit is exhausted"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_OreExtractedExhausted",
+                    "%1 ore extracted - the deposit is exhausted",
+                    metalName
+                )
 
         elseif result.remaining
             <= AC_Mining.CONFIG.thinningThreshold
         then
 
             text =
-                text
-                .. " - the vein is thinning out"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_OreExtractedThinning",
+                    "%1 ore extracted - the vein is thinning out",
+                    metalName
+                )
+
+        else
+
+            text =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_OreExtracted",
+                    "%1 ore extracted",
+                    metalName
+                )
         end
 
+    elseif errorCode == "no_ore" then
 
-        HaloTextHelper.addText(
-            character,
-            text
-        )
-
-
-        return
-    end
-
-
-    if errorCode == "no_ore" then
-
-        HaloTextHelper.addText(
-            character,
-            "No workable "
-            .. string.lower(metalName)
-            .. " ore here"
-        )
+        text =
+            AC_Text.get(
+                "IGUI_AmmoMaking_NoWorkableOre",
+                "No workable ore here (%1)",
+                metalName
+            )
 
     elseif errorCode == "no_prospect" then
 
-        HaloTextHelper.addText(
-            character,
-            "You need an assayed sample of this site"
-        )
+        text =
+            AC_Text.get(
+                "IGUI_AmmoMaking_NeedAssayedSample",
+                "You need an assayed sample of this site"
+            )
 
     elseif errorCode == "no_pickaxe" then
 
-        HaloTextHelper.addText(
-            character,
-            "Your pickaxe is not usable"
-        )
+        text =
+            AC_Text.get(
+                "IGUI_AmmoMaking_PickaxeNotUsable",
+                "Your pickaxe is not usable"
+            )
 
     elseif errorCode == "multiplayer_unsupported" then
 
-        HaloTextHelper.addText(
-            character,
-            "Ore extraction is not available in multiplayer yet"
-        )
+        text =
+            AC_Text.get(
+                "IGUI_AmmoMaking_MiningMultiplayer",
+                "Ore extraction is not available in multiplayer yet"
+            )
 
     else
 
-        HaloTextHelper.addText(
-            character,
-            "Could not extract ore"
-        )
+        text =
+            AC_Text.get(
+                "IGUI_AmmoMaking_CouldNotExtract",
+                "Could not extract ore"
+            )
     end
+
+
+    HaloTextHelper.addText(
+        character,
+        text
+    )
 end
 
 

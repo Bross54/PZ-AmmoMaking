@@ -21,43 +21,48 @@ local function getRange(value, margin)
 end
 
 
+local function text(key, fallback, ...)
+    return AC_Text.get(key, fallback, ...)
+end
+
+
 local function getPowderLabel(powderLoad)
     if powderLoad < 0.85 then
-        return "Very Low"
+        return text("IGUI_AmmoMaking_Powder_VeryLow", "Very Low")
     elseif powderLoad < 0.95 then
-        return "Low"
+        return text("IGUI_AmmoMaking_Powder_Low", "Low")
     elseif powderLoad <= 1.05 then
-        return "Standard"
+        return text("IGUI_AmmoMaking_Powder_Standard", "Standard")
     elseif powderLoad <= 1.15 then
-        return "Hot"
+        return text("IGUI_AmmoMaking_Powder_Hot", "Hot")
     else
-        return "Dangerously Hot"
+        return text("IGUI_AmmoMaking_Powder_DangerouslyHot", "Dangerously Hot")
     end
 end
 
 
 local function getConditionLabel(value)
     if value >= 70 then
-        return "Looks Good"
+        return text("IGUI_AmmoMaking_Condition_Good", "Looks Good")
     elseif value >= 50 then
-        return "Looks Average"
+        return text("IGUI_AmmoMaking_Condition_Average", "Looks Average")
     else
-        return "Looks Poor"
+        return text("IGUI_AmmoMaking_Condition_Poor", "Looks Poor")
     end
 end
 
 
 local function getReliabilityLabel(failureChance)
     if failureChance < 1 then
-        return "Very High"
+        return text("IGUI_AmmoMaking_Reliability_VeryHigh", "Very High")
     elseif failureChance < 3 then
-        return "High"
+        return text("IGUI_AmmoMaking_Reliability_High", "High")
     elseif failureChance < 8 then
-        return "Moderate"
+        return text("IGUI_AmmoMaking_Reliability_Moderate", "Moderate")
     elseif failureChance < 15 then
-        return "Low"
+        return text("IGUI_AmmoMaking_Reliability_Low", "Low")
     else
-        return "Very Low"
+        return text("IGUI_AmmoMaking_Reliability_VeryLow", "Very Low")
     end
 end
 
@@ -77,15 +82,16 @@ function AmmoInspection.inspect(player, item)
     local level = AmmoMakingSkill.getLevel(player)
     local data = item:getModData()
 
+    ------------------------------------------------
+    -- result.title is drawn by the UI itself; lines
+    -- hold only the body so no filtering is needed.
+    ------------------------------------------------
+
     local result = {
         level = level,
+        title = text("IGUI_AmmoMaking_Insp_Title", "Ammo Inspection"),
         lines = {}
     }
-
-    table.insert(
-        result.lines,
-        "Ammo Inspection"
-    )
 
 
     ------------------------------------------------
@@ -96,7 +102,10 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            "You do not know enough about ammunition to judge this cartridge."
+            text(
+                "IGUI_AmmoMaking_Insp_NoKnowledge",
+                "You do not know enough about ammunition to judge this cartridge."
+            )
         )
 
         return result
@@ -112,67 +121,56 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            "Overall Quality: "
-            .. round(data.overallQuality)
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_OverallQualityPct", "Overall Quality: %1%",
+                round(data.overallQuality))
         )
 
         table.insert(
             result.lines,
-            "Casing Quality: "
-            .. round(data.casingQuality)
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_CasingQualityPct", "Casing Quality: %1%",
+                round(data.casingQuality))
         )
 
         table.insert(
             result.lines,
-            "Primer Quality: "
-            .. round(data.primerQuality)
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_PrimerQualityPct", "Primer Quality: %1%",
+                round(data.primerQuality))
         )
 
         table.insert(
             result.lines,
-            "Projectile Quality: "
-            .. round(data.projectileQuality)
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_ProjectileQualityPct", "Projectile Quality: %1%",
+                round(data.projectileQuality))
         )
 
         table.insert(
             result.lines,
-            "Assembly Quality: "
-            .. round(data.assemblyQuality)
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_AssemblyQualityPct", "Assembly Quality: %1%",
+                round(data.assemblyQuality))
         )
 
         table.insert(
             result.lines,
-            "Casing Reload Count: "
-            .. tostring(data.reloadCount)
+            text("IGUI_AmmoMaking_Insp_ReloadCount", "Casing Reload Count: %1",
+                tostring(data.reloadCount))
         )
 
         table.insert(
             result.lines,
-            string.format(
-                "Powder Load: %.2fx",
-                data.powderLoad
-            )
+            text("IGUI_AmmoMaking_Insp_PowderLoadExact", "Powder Load: %1x",
+                string.format("%.2f", data.powderLoad))
         )
 
         table.insert(
             result.lines,
-            string.format(
-                "Failure Chance: %.2f%%",
-                data.failureChance
-            )
+            text("IGUI_AmmoMaking_Insp_FailureChance", "Failure Chance: %1%",
+                string.format("%.2f", data.failureChance))
         )
 
         table.insert(
             result.lines,
-            string.format(
-                "Catastrophic Failure Chance: %.2f%%",
-                data.catastrophicFailureChance
-            )
+            text("IGUI_AmmoMaking_Insp_CatastrophicChance", "Catastrophic Failure Chance: %1%",
+                string.format("%.2f", data.catastrophicFailureChance))
         )
 
         return result
@@ -185,8 +183,8 @@ function AmmoInspection.inspect(player, item)
 
     table.insert(
         result.lines,
-        "Overall Quality: "
-        .. AmmoQuality.getQualityLabel(item)
+        text("IGUI_AmmoMaking_Insp_OverallQuality", "Overall Quality: %1",
+            AmmoQuality.getQualityLabel(item))
     )
 
 
@@ -201,8 +199,8 @@ function AmmoInspection.inspect(player, item)
 
     table.insert(
         result.lines,
-        "Casing: "
-        .. getConditionLabel(data.casingQuality)
+        text("IGUI_AmmoMaking_Insp_Casing", "Casing: %1",
+            getConditionLabel(data.casingQuality))
     )
 
 
@@ -217,8 +215,8 @@ function AmmoInspection.inspect(player, item)
 
     table.insert(
         result.lines,
-        "Projectile: "
-        .. getConditionLabel(data.projectileQuality)
+        text("IGUI_AmmoMaking_Insp_Projectile", "Projectile: %1",
+            getConditionLabel(data.projectileQuality))
     )
 
 
@@ -233,8 +231,8 @@ function AmmoInspection.inspect(player, item)
 
     table.insert(
         result.lines,
-        "Powder Load: "
-        .. getPowderLabel(data.powderLoad)
+        text("IGUI_AmmoMaking_Insp_PowderLoad", "Powder Load: %1",
+            getPowderLabel(data.powderLoad))
     )
 
 
@@ -249,14 +247,14 @@ function AmmoInspection.inspect(player, item)
 
     table.insert(
         result.lines,
-        "Primer: "
-        .. getConditionLabel(data.primerQuality)
+        text("IGUI_AmmoMaking_Insp_Primer", "Primer: %1",
+            getConditionLabel(data.primerQuality))
     )
 
     table.insert(
         result.lines,
-        "Estimated Reliability: "
-        .. getReliabilityLabel(data.failureChance)
+        text("IGUI_AmmoMaking_Insp_Reliability", "Estimated Reliability: %1",
+            getReliabilityLabel(data.failureChance))
     )
 
 
@@ -275,11 +273,8 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            "Estimated Quality: "
-            .. minQuality
-            .. "-"
-            .. maxQuality
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_EstimatedQuality", "Estimated Quality: %1-%2%",
+                minQuality, maxQuality)
         )
     end
 
@@ -302,20 +297,14 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            "Casing Quality: "
-            .. minCasing
-            .. "-"
-            .. maxCasing
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_CasingRange", "Casing Quality: %1-%2%",
+                minCasing, maxCasing)
         )
 
         table.insert(
             result.lines,
-            "Projectile Quality: "
-            .. minProjectile
-            .. "-"
-            .. maxProjectile
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_ProjectileRange", "Projectile Quality: %1-%2%",
+                minProjectile, maxProjectile)
         )
     end
 
@@ -324,7 +313,8 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            "WARNING: Possible catastrophic ammunition failure."
+            text("IGUI_AmmoMaking_Insp_Warning",
+                "WARNING: Possible catastrophic ammunition failure.")
         )
     end
 
@@ -347,20 +337,14 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            "Primer Quality: "
-            .. minPrimer
-            .. "-"
-            .. maxPrimer
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_PrimerRange", "Primer Quality: %1-%2%",
+                minPrimer, maxPrimer)
         )
 
         table.insert(
             result.lines,
-            "Assembly Quality: "
-            .. minAssembly
-            .. "-"
-            .. maxAssembly
-            .. "%"
+            text("IGUI_AmmoMaking_Insp_AssemblyRange", "Assembly Quality: %1-%2%",
+                minAssembly, maxAssembly)
         )
     end
 
@@ -389,17 +373,15 @@ function AmmoInspection.inspect(player, item)
 
         table.insert(
             result.lines,
-            string.format(
-                "Estimated Failure Chance: %.1f-%.1f%%",
-                minFailure,
-                maxFailure
-            )
+            text("IGUI_AmmoMaking_Insp_FailureRange", "Estimated Failure Chance: %1-%2%",
+                string.format("%.1f", minFailure),
+                string.format("%.1f", maxFailure))
         )
 
         table.insert(
             result.lines,
-            "Casing Reload Count: "
-            .. tostring(data.reloadCount)
+            text("IGUI_AmmoMaking_Insp_ReloadCount", "Casing Reload Count: %1",
+                tostring(data.reloadCount))
         )
     end
 

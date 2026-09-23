@@ -615,6 +615,54 @@ end
 
 
 ------------------------------------------------
+-- GRADE DISPLAY NAME
+------------------------------------------------
+--
+-- Grades are stored and compared as the English
+-- identifiers returned by getGrade(). Only the
+-- display goes through the translation system.
+------------------------------------------------
+
+AC_Geology.GRADE_KEYS = {
+
+    ["None"] = "IGUI_AmmoMaking_Grade_None",
+
+    ["Trace"] = "IGUI_AmmoMaking_Grade_Trace",
+
+    ["Poor"] = "IGUI_AmmoMaking_Grade_Poor",
+
+    ["Moderate"] = "IGUI_AmmoMaking_Grade_Moderate",
+
+    ["Good"] = "IGUI_AmmoMaking_Grade_Good",
+
+    ["Rich"] = "IGUI_AmmoMaking_Grade_Rich",
+
+    ["Very Rich"] = "IGUI_AmmoMaking_Grade_VeryRich",
+}
+
+
+function AC_Geology.getGradeName(
+    grade
+)
+
+    local key =
+        AC_Geology.GRADE_KEYS[grade]
+
+
+    if not key then
+        return tostring(grade)
+    end
+
+
+    return
+        AC_Text.get(
+            key,
+            grade
+        )
+end
+
+
+------------------------------------------------
 -- FLOOR SPRITE NAME
 ------------------------------------------------
 

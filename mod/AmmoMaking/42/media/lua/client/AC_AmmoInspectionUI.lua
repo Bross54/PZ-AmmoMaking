@@ -15,11 +15,7 @@ local function calculatePanelHeight(inspection)
     local lineCount = 0
 
     if inspection and inspection.lines then
-        for _, line in ipairs(inspection.lines) do
-            if line ~= "Ammo Inspection" then
-                lineCount = lineCount + 1
-            end
-        end
+        lineCount = #inspection.lines
     end
 
     local titleArea = 65
@@ -121,7 +117,10 @@ function AC_AmmoInspectionUI:createChildren()
         self.height - 40,
         buttonWidth,
         buttonHeight,
-        "Close",
+        AC_Text.get(
+            "IGUI_AmmoMaking_UI_Close",
+            "Close"
+        ),
         self,
         AC_AmmoInspectionUI.onClose
     )
@@ -141,7 +140,10 @@ function AC_AmmoInspectionUI:prerender()
     ISPanel.prerender(self)
 
     self:drawText(
-        "AMMUNITION INSPECTION",
+        AC_Text.get(
+            "IGUI_AmmoMaking_UI_InspectionTitle",
+            "AMMUNITION INSPECTION"
+        ),
         20,
         15,
         1,
@@ -186,22 +188,18 @@ function AC_AmmoInspectionUI:render()
 
     for _, line in ipairs(self.inspection.lines) do
 
-        -- We draw our own title already
-        if line ~= "Ammo Inspection" then
+        self:drawText(
+            tostring(line),
+            25,
+            y,
+            1,
+            1,
+            1,
+            1,
+            UIFont.Small
+        )
 
-            self:drawText(
-                tostring(line),
-                25,
-                y,
-                1,
-                1,
-                1,
-                1,
-                UIFont.Small
-            )
-
-            y = y + lineHeight
-        end
+        y = y + lineHeight
     end
 
 
@@ -213,8 +211,11 @@ function AC_AmmoInspectionUI:render()
         self.height - 75
 
     self:drawText(
-        "Ammo Making Level: "
-        .. tostring(self.inspection.level or 0),
+        AC_Text.get(
+            "IGUI_AmmoMaking_UI_SkillLevel",
+            "Ammo Making Level: %1",
+            self.inspection.level or 0
+        ),
         25,
         footerY,
         0.7,

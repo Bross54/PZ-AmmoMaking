@@ -433,9 +433,11 @@ print = function(...)
 end
 
 local function loadMod()
+    dofile(LUA .. "shared/AC_Text.lua")
     dofile(LUA .. "shared/AC_WorldData.lua")
     dofile(LUA .. "shared/AC_Geology.lua")
     dofile(LUA .. "shared/AC_GeologySampling.lua")
+    dofile(LUA .. "shared/AC_LaboratoryAnalyzer.lua")
     dofile(LUA .. "shared/AC_Deposits.lua")
     dofile(LUA .. "shared/AC_Mining.lua")
     dofile(LUA .. "client/AC_MineOreAction.lua")
@@ -444,8 +446,10 @@ end
 
 -- Simulates PZ reloading Lua state for a fresh game session.
 local function resetLuaState()
+    AC_Text = nil
     AC_WorldData = nil
     AC_Geology = nil
+    AC_LaboratoryAnalyzer = nil
     AC_GeologySampling = nil
     AC_Deposits = nil
     AC_Mining = nil

@@ -237,19 +237,28 @@ local function updateAnalyzerName(
     if state == "processing" then
 
         item:setName(
-            "Laboratory Assay Analyzer (Processing)"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_AnalyzerProcessing",
+                "Laboratory Assay Analyzer (Processing)"
+            )
         )
 
     elseif state == "ready" then
 
         item:setName(
-            "Laboratory Assay Analyzer (Result Ready)"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_AnalyzerReady",
+                "Laboratory Assay Analyzer (Result Ready)"
+            )
         )
 
     else
 
         item:setName(
-            "Laboratory Assay Analyzer"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_Analyzer",
+                "Laboratory Assay Analyzer"
+            )
         )
     end
 end
@@ -1042,7 +1051,10 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     sample:setName(
-        "Laboratory Tested Geological Sample"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Item_SampleLab",
+            "Laboratory Tested Geological Sample"
+        )
     )
 
 

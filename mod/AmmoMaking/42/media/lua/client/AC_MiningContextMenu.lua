@@ -117,7 +117,10 @@ local function mineOre(
 
         HaloTextHelper.addText(
             player,
-            "Equip a usable pickaxe first"
+            AC_Text.get(
+                "IGUI_AmmoMaking_EquipPickaxe",
+                "Equip a usable pickaxe first"
+            )
         )
 
 
@@ -132,7 +135,10 @@ local function mineOre(
 
         HaloTextHelper.addText(
             player,
-            "Cannot reach mining location"
+            AC_Text.get(
+                "IGUI_AmmoMaking_CannotReachMining",
+                "Cannot reach mining location"
+            )
         )
 
 
@@ -189,11 +195,14 @@ local function addMetalOption(
 
 
     local optionName =
-        "Mine "
-        .. metalName
-        .. " Ore (Assay: "
-        .. tostring(reportedGrade)
-        .. ")"
+        AC_Text.get(
+            "IGUI_AmmoMaking_MineOreOption",
+            "Mine %1 Ore (Assay: %2)",
+            metalName,
+            AC_Geology.getGradeName(
+                reportedGrade
+            )
+        )
 
 
     ------------------------------------------------
@@ -209,12 +218,16 @@ local function addMetalOption(
 
         addUnavailableOption(
             context,
-            "Mine "
-            .. metalName
-            .. " Ore (Exhausted)",
-            "No workable "
-            .. string.lower(metalName)
-            .. " ore is left on this spot."
+            AC_Text.get(
+                "IGUI_AmmoMaking_MineOreExhausted",
+                "Mine %1 Ore (Exhausted)",
+                metalName
+            ),
+            AC_Text.get(
+                "IGUI_AmmoMaking_Tooltip_Exhausted",
+                "No workable %1 ore is left on this spot.",
+                string.lower(metalName)
+            )
         )
 
 
@@ -227,7 +240,10 @@ local function addMetalOption(
         addUnavailableOption(
             context,
             optionName,
-            "Requires an equipped pickaxe."
+            AC_Text.get(
+                "IGUI_AmmoMaking_Tooltip_NeedPickaxe",
+                "Requires an equipped pickaxe."
+            )
         )
 
 
@@ -242,7 +258,10 @@ local function addMetalOption(
         addUnavailableOption(
             context,
             optionName,
-            "Your pickaxe is broken."
+            AC_Text.get(
+                "IGUI_AmmoMaking_Tooltip_PickaxeBroken",
+                "Your pickaxe is broken."
+            )
         )
 
 
@@ -312,8 +331,14 @@ local function onFillWorldObjectContextMenu(
 
         addUnavailableOption(
             context,
-            "Mine Ore",
-            "Ore extraction is not available in multiplayer yet."
+            AC_Text.get(
+                "IGUI_AmmoMaking_MineOre",
+                "Mine Ore"
+            ),
+            AC_Text.get(
+                "IGUI_AmmoMaking_Tooltip_Multiplayer",
+                "Ore extraction is not available in multiplayer yet."
+            )
         )
 
 

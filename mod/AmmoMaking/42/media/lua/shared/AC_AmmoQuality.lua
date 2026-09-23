@@ -140,27 +140,27 @@ function AmmoQuality.calculateReliability(item)
     data.catastrophicFailureChance = clamp(catastrophic, 0, 100)
 end
 
--- Returns a simple quality label
+-- Returns a simple quality label (translated for display)
 function AmmoQuality.getQualityLabel(item)
     if not item then
-        return "Unknown"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_Unknown", "Unknown")
     end
 
     local quality = AmmoQuality.calculateOverall(item)
 
     if quality >= 90 then
-        return "Excellent"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_Excellent", "Excellent")
     elseif quality >= 80 then
-        return "Very Good"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_VeryGood", "Very Good")
     elseif quality >= 70 then
-        return "Good"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_Good", "Good")
     elseif quality >= 60 then
-        return "Average"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_Average", "Average")
     elseif quality >= 50 then
-        return "Poor"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_Poor", "Poor")
     elseif quality >= 30 then
-        return "Very Poor"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_VeryPoor", "Very Poor")
     else
-        return "Dangerous"
+        return AC_Text.get("IGUI_AmmoMaking_Quality_Dangerous", "Dangerous")
     end
 end

@@ -198,7 +198,10 @@ local function digSample(
 
         HaloTextHelper.addText(
             player,
-            "Requires outdoor natural ground"
+            AC_Text.get(
+                "IGUI_AmmoMaking_RequiresNaturalGround",
+                "Requires outdoor natural ground"
+            )
         )
 
 
@@ -216,7 +219,10 @@ local function digSample(
 
         HaloTextHelper.addText(
             player,
-            "Equip a shovel first"
+            AC_Text.get(
+                "IGUI_AmmoMaking_EquipShovel",
+                "Equip a shovel first"
+            )
         )
 
 
@@ -231,7 +237,10 @@ local function digSample(
 
         HaloTextHelper.addText(
             player,
-            "Cannot reach sampling location"
+            AC_Text.get(
+                "IGUI_AmmoMaking_CannotReachSampling",
+                "Cannot reach sampling location"
+            )
         )
 
 
@@ -306,7 +315,10 @@ local function analyzeSample(
 
             HaloTextHelper.addText(
                 player,
-                "Assay kit is empty"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_KitEmpty",
+                    "Assay kit is empty"
+                )
             )
 
         elseif errorCode
@@ -315,7 +327,10 @@ local function analyzeSample(
 
             HaloTextHelper.addText(
                 player,
-                "Sample already has an equal or better assay"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_AlreadyAnalyzed",
+                    "Sample already has an equal or better assay"
+                )
             )
 
         elseif errorCode
@@ -324,14 +339,20 @@ local function analyzeSample(
 
             HaloTextHelper.addText(
                 player,
-                "Sample is currently being analyzed"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_SampleProcessing",
+                    "Sample is currently being analyzed"
+                )
             )
 
         else
 
             HaloTextHelper.addText(
                 player,
-                "Analysis failed"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_AnalysisFailed",
+                    "Analysis failed"
+                )
             )
         end
 
@@ -342,7 +363,10 @@ local function analyzeSample(
 
     HaloTextHelper.addText(
         player,
-        "Sample analyzed"
+        AC_Text.get(
+            "IGUI_AmmoMaking_SampleAnalyzed",
+            "Sample analyzed"
+        )
     )
 
 
@@ -388,7 +412,10 @@ local function showLaboratoryStatus(
 
         HaloTextHelper.addText(
             player,
-            "Invalid laboratory analyzer"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Invalid",
+                "Invalid laboratory analyzer"
+            )
         )
 
 
@@ -402,14 +429,20 @@ local function showLaboratoryStatus(
 
             HaloTextHelper.addText(
                 player,
-                "Laboratory analyzer ready"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Ready",
+                    "Laboratory analyzer ready"
+                )
             )
 
         else
 
             HaloTextHelper.addText(
                 player,
-                "Laboratory analyzer has no power"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_NoPower",
+                    "Laboratory analyzer has no power"
+                )
             )
         end
 
@@ -420,26 +453,37 @@ local function showLaboratoryStatus(
 
     if info.state == "processing" then
 
-        local prefix =
-            "Processing"
-
-
-        if not info.powered then
-
-            prefix =
-                "Processing paused - no power"
-        end
-
-
-        local text =
+        local hours =
             string.format(
-                "%s - %.1f hours remaining",
-                prefix,
+                "%.1f",
                 tonumber(
                     info.hoursRemaining
                 )
                 or 0
             )
+
+
+        local text
+
+
+        if info.powered then
+
+            text =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Processing",
+                    "Processing - %1 hours remaining",
+                    hours
+                )
+
+        else
+
+            text =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_ProcessingPaused",
+                    "Processing paused (no power) - %1 hours remaining",
+                    hours
+                )
+        end
 
 
         HaloTextHelper.addText(
@@ -456,7 +500,10 @@ local function showLaboratoryStatus(
 
         HaloTextHelper.addText(
             player,
-            "Laboratory assay complete - result ready"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Complete",
+                "Laboratory assay complete - result ready"
+            )
         )
     end
 end
@@ -496,14 +543,20 @@ local function startLaboratoryAssay(
 
             HaloTextHelper.addText(
                 player,
-                "Laboratory analyzer requires electricity"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_RequiresElectricity",
+                    "Laboratory analyzer requires electricity"
+                )
             )
 
         elseif errorCode == "busy" then
 
             HaloTextHelper.addText(
                 player,
-                "Laboratory analyzer is already occupied"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Busy",
+                    "Laboratory analyzer is already occupied"
+                )
             )
 
         elseif errorCode
@@ -512,14 +565,20 @@ local function startLaboratoryAssay(
 
             HaloTextHelper.addText(
                 player,
-                "This sample cannot be analyzed"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_InvalidSample",
+                    "This sample cannot be analyzed"
+                )
             )
 
         else
 
             HaloTextHelper.addText(
                 player,
-                "Could not start laboratory assay"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_StartFailed",
+                    "Could not start laboratory assay"
+                )
             )
         end
 
@@ -530,7 +589,11 @@ local function startLaboratoryAssay(
 
     HaloTextHelper.addText(
         player,
-        "Laboratory assay started - 24 hours"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Started",
+            "Laboratory assay started - %1 hours",
+            AC_LaboratoryAnalyzer.CONFIG.processingHours
+        )
     )
 end
 
@@ -566,21 +629,30 @@ local function collectLaboratorySample(
 
             HaloTextHelper.addText(
                 player,
-                "Laboratory assay is still processing"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_StillProcessing",
+                    "Laboratory assay is still processing"
+                )
             )
 
         elseif errorCode == "empty" then
 
             HaloTextHelper.addText(
                 player,
-                "Laboratory analyzer is empty"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Empty",
+                    "Laboratory analyzer is empty"
+                )
             )
 
         else
 
             HaloTextHelper.addText(
                 player,
-                "Could not collect laboratory sample"
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_CollectFailed",
+                    "Could not collect laboratory sample"
+                )
             )
         end
 
@@ -591,7 +663,10 @@ local function collectLaboratorySample(
 
     HaloTextHelper.addText(
         player,
-        "Laboratory tested sample collected"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Collected",
+            "Laboratory tested sample collected"
+        )
     )
 
 
@@ -645,7 +720,10 @@ local function addLaboratoryAnalyzerOptions(
     if info.state == "idle" then
 
         context:addOption(
-            "Check Laboratory Analyzer",
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Check",
+                "Check Laboratory Analyzer"
+            ),
             player,
             showLaboratoryStatus,
             analyzerWorldObject
@@ -656,7 +734,10 @@ local function addLaboratoryAnalyzerOptions(
 
             local option =
                 context:addOption(
-                    "Laboratory Analyzer - Requires Electricity"
+                    AC_Text.get(
+                "IGUI_AmmoMaking_Lab_OptionNoPower",
+                "Laboratory Analyzer - Requires Electricity"
+            )
                 )
 
 
@@ -705,12 +786,10 @@ local function addLaboratoryAnalyzerOptions(
 
 
                     local optionName =
-                        "Start Lab Assay: Sample "
-                        .. tostring(
-                            data.sampleX
-                        )
-                        .. ", "
-                        .. tostring(
+                        AC_Text.get(
+                            "IGUI_AmmoMaking_Lab_StartOption",
+                            "Start Lab Assay: Sample %1, %2",
+                            data.sampleX,
                             data.sampleY
                         )
 
@@ -731,7 +810,10 @@ local function addLaboratoryAnalyzerOptions(
 
             local option =
                 context:addOption(
-                    "No Geological Samples Available"
+                    AC_Text.get(
+                "IGUI_AmmoMaking_Lab_NoSamples",
+                "No Geological Samples Available"
+            )
                 )
 
 
@@ -753,7 +835,10 @@ local function addLaboratoryAnalyzerOptions(
     if info.state == "processing" then
 
         context:addOption(
-            "Check Laboratory Progress",
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_CheckProgress",
+                "Check Laboratory Progress"
+            ),
             player,
             showLaboratoryStatus,
             analyzerWorldObject
@@ -771,7 +856,10 @@ local function addLaboratoryAnalyzerOptions(
     if info.state == "ready" then
 
         context:addOption(
-            "Collect Laboratory Sample",
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Collect",
+                "Collect Laboratory Sample"
+            ),
             player,
             collectLaboratorySample,
             analyzerWorldObject
@@ -857,7 +945,10 @@ local function onFillWorldObjectContextMenu(
 
 
     context:addOption(
-        "Dig Geological Sample",
+        AC_Text.get(
+                "IGUI_AmmoMaking_DigSample",
+                "Dig Geological Sample"
+            ),
         player,
         digSample,
         square
@@ -917,7 +1008,10 @@ local function onFillInventoryContextMenu(
             if assayRank > 0 then
 
                 context:addOption(
-                    "View Assay Result",
+                    AC_Text.get(
+                "IGUI_AmmoMaking_ViewAssay",
+                "View Assay Result"
+            ),
                     player,
                     viewAssay,
                     item
@@ -937,7 +1031,10 @@ local function onFillInventoryContextMenu(
                 if fieldKit then
 
                     context:addOption(
-                        "Analyze with Field Assay Kit",
+                        AC_Text.get(
+                "IGUI_AmmoMaking_AnalyzeField",
+                "Analyze with Field Assay Kit"
+            ),
                         player,
                         analyzeSample,
                         item,
@@ -959,13 +1056,19 @@ local function onFillInventoryContextMenu(
                 if advancedKit then
 
                     local optionName =
-                        "Analyze with Advanced Field Assay Kit"
+                        AC_Text.get(
+                            "IGUI_AmmoMaking_AnalyzeAdvanced",
+                            "Analyze with Advanced Field Assay Kit"
+                        )
 
 
                     if assayRank == 1 then
 
                         optionName =
-                            "Re-analyze with Advanced Field Assay Kit"
+                            AC_Text.get(
+                                "IGUI_AmmoMaking_ReanalyzeAdvanced",
+                                "Re-analyze with Advanced Field Assay Kit"
+                            )
                     end
 
 

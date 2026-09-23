@@ -88,13 +88,29 @@ function AC_Deposits.isMetal(
 end
 
 
+------------------------------------------------
+-- Player-facing metal name (translated).
+-- METAL_NAMES keeps the English fallback.
+------------------------------------------------
+
 function AC_Deposits.getMetalName(
     metal
 )
 
-    return
+    local fallback =
         AC_Deposits.METAL_NAMES[metal]
-        or tostring(metal)
+
+
+    if not fallback then
+        return tostring(metal)
+    end
+
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_Metal_" .. fallback,
+            fallback
+        )
 end
 
 

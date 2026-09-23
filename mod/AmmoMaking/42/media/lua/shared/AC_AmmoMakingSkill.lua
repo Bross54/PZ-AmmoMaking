@@ -32,10 +32,19 @@ PerkFactory.AddPerk(
 PerkFactory.initTranslations()
 
 -- Debug output
+--
+-- The perk name key has no space ("IGUI_perks_AmmoMaking"). The level
+-- description keys in IG_UI.json are written with a space
+-- ("IGUI_perks_Ammo Making_Description1") because the vanilla skill
+-- panel builds them from the translated perk name. Which spelling the
+-- engine actually resolves is reported by AC_Compat at startup rather
+-- than assumed here; getTextOrNull never prints a raw key.
 print("[AmmoMaking] Ammo Making skill registered")
-print("[AmmoMaking] Translation test = " .. getText("IGUI_perks_AmmoMaking"))
 print("[AmmoMaking] Perk name = " .. tostring(AmmoMakingSkill.perk:getName()))
-print("[AmmoMaking] Description translation = " .. getText("IGUI_perks_AmmoMaking_Description"))
+print(
+    "[AmmoMaking] Perk name translation = "
+    .. tostring(getTextOrNull("IGUI_perks_AmmoMaking"))
+)
 
 -- Add Ammo Making XP
 function AmmoMakingSkill.addXP(player, amount)

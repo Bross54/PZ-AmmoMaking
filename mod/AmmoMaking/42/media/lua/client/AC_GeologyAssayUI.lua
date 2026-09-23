@@ -147,7 +147,10 @@ function AC_GeologyAssayUI:createChildren()
             self.height - 40,
             buttonWidth,
             buttonHeight,
-            "Close",
+            AC_Text.get(
+                "IGUI_AmmoMaking_UI_Close",
+                "Close"
+            ),
             self,
             AC_GeologyAssayUI.onClose
         )
@@ -175,7 +178,10 @@ function AC_GeologyAssayUI:prerender()
 
 
     self:drawText(
-        "GEOLOGICAL ASSAY",
+        AC_Text.get(
+            "IGUI_AmmoMaking_UI_AssayTitle",
+            "GEOLOGICAL ASSAY"
+        ),
         20,
         15,
         1,

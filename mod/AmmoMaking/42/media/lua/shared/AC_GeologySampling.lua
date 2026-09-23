@@ -515,7 +515,10 @@ function AC_GeologySampling.createSample(
 
 
     sample:setName(
-        "Geological Sample"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Item_Sample",
+            "Geological Sample"
+        )
     )
 
 
@@ -746,22 +749,24 @@ function AC_GeologySampling.updateKitName(
     if kitType == "field" then
 
         kit:setName(
-            "Field Assay Kit ("
-            .. tostring(uses)
-            .. "/"
-            .. tostring(maximum)
-            .. ")"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_FieldKit",
+                "Field Assay Kit (%1/%2)",
+                uses,
+                maximum
+            )
         )
 
 
     elseif kitType == "advanced" then
 
         kit:setName(
-            "Advanced Field Assay Kit ("
-            .. tostring(uses)
-            .. "/"
-            .. tostring(maximum)
-            .. ")"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Item_AdvancedKit",
+                "Advanced Field Assay Kit (%1/%2)",
+                uses,
+                maximum
+            )
         )
     end
 end
@@ -1079,7 +1084,10 @@ function AC_GeologySampling.analyzeSample(
 
 
     sample:setName(
-        "Tested Geological Sample"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Item_SampleTested",
+            "Tested Geological Sample"
+        )
     )
 
 
@@ -1182,14 +1190,23 @@ function AC_GeologySampling.getResultLines(
     local lines = {}
 
 
+    local copperName =
+        AC_Deposits.getMetalName(
+            "copper"
+        )
+
+    local zincName =
+        AC_Deposits.getMetalName(
+            "zinc"
+        )
+
+
     table.insert(
         lines,
-        "Sample Location: "
-        .. tostring(
-            data.sampleX
-        )
-        .. ", "
-        .. tostring(
+        AC_Text.get(
+            "IGUI_AmmoMaking_Result_Location",
+            "Sample Location: %1, %2",
+            data.sampleX,
             data.sampleY
         )
     )
@@ -1203,7 +1220,10 @@ function AC_GeologySampling.getResultLines(
 
         table.insert(
             lines,
-            "Status: Untested"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_Untested",
+                "Status: Untested"
+            )
         )
 
 
@@ -1219,24 +1239,35 @@ function AC_GeologySampling.getResultLines(
 
         table.insert(
             lines,
-            "Analysis: Field Assay"
-        )
-
-
-        table.insert(
-            lines,
-            "Copper: "
-            .. tostring(
-                data.copperGrade
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_FieldAssay",
+                "Analysis: Field Assay"
             )
         )
 
 
         table.insert(
             lines,
-            "Zinc: "
-            .. tostring(
-                data.zincGrade
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_Grade",
+                "%1: %2",
+                copperName,
+                AC_Geology.getGradeName(
+                    data.copperGrade
+                )
+            )
+        )
+
+
+        table.insert(
+            lines,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_Grade",
+                "%1: %2",
+                zincName,
+                AC_Geology.getGradeName(
+                    data.zincGrade
+                )
             )
         )
 
@@ -1253,51 +1284,50 @@ function AC_GeologySampling.getResultLines(
 
         table.insert(
             lines,
-            "Analysis: Advanced Field Assay"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_AdvancedAssay",
+                "Analysis: Advanced Field Assay"
+            )
         )
 
 
         table.insert(
             lines,
-            "Copper: "
-            .. tostring(
-                data.copperMin
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_Range",
+                "%1: %2-%3% (%4)",
+                copperName,
+                data.copperMin,
+                data.copperMax,
+                AC_Geology.getGradeName(
+                    data.copperGrade
+                )
             )
-            .. "-"
-            .. tostring(
-                data.copperMax
-            )
-            .. "%"
-            .. " ("
-            .. tostring(
-                data.copperGrade
-            )
-            .. ")"
         )
 
 
         table.insert(
             lines,
-            "Zinc: "
-            .. tostring(
-                data.zincMin
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_Range",
+                "%1: %2-%3% (%4)",
+                zincName,
+                data.zincMin,
+                data.zincMax,
+                AC_Geology.getGradeName(
+                    data.zincGrade
+                )
             )
-            .. "-"
-            .. tostring(
-                data.zincMax
-            )
-            .. "%"
-            .. " ("
-            .. tostring(
-                data.zincGrade
-            )
-            .. ")"
         )
 
 
         table.insert(
             lines,
-            "Estimated Accuracy: +/-10%"
+            AC_Text.get(
+                "IGUI_AmmoMaking_Result_Accuracy",
+                "Estimated Accuracy: +/-%1%",
+                AC_GeologySampling.CONFIG.advancedRangeHalfWidth
+            )
         )
 
 
@@ -1311,43 +1341,48 @@ function AC_GeologySampling.getResultLines(
 
     table.insert(
         lines,
-        "Analysis: Laboratory Assay"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Result_LabAssay",
+            "Analysis: Laboratory Assay"
+        )
     )
 
 
     table.insert(
         lines,
-        "Copper: "
-        .. tostring(
-            data.labCopperResult
+        AC_Text.get(
+            "IGUI_AmmoMaking_Result_Exact",
+            "%1: %2% (%3)",
+            copperName,
+            data.labCopperResult,
+            AC_Geology.getGradeName(
+                data.copperGrade
+            )
         )
-        .. "%"
-        .. " ("
-        .. tostring(
-            data.copperGrade
-        )
-        .. ")"
     )
 
 
     table.insert(
         lines,
-        "Zinc: "
-        .. tostring(
-            data.labZincResult
+        AC_Text.get(
+            "IGUI_AmmoMaking_Result_Exact",
+            "%1: %2% (%3)",
+            zincName,
+            data.labZincResult,
+            AC_Geology.getGradeName(
+                data.zincGrade
+            )
         )
-        .. "%"
-        .. " ("
-        .. tostring(
-            data.zincGrade
-        )
-        .. ")"
     )
 
 
     table.insert(
         lines,
-        "Instrument Tolerance: +/-2%"
+        AC_Text.get(
+            "IGUI_AmmoMaking_Result_Tolerance",
+            "Instrument Tolerance: +/-%1%",
+            AC_LaboratoryAnalyzer.CONFIG.measurementError
+        )
     )
 
 

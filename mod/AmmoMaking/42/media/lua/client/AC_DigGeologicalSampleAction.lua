@@ -420,7 +420,10 @@ function AC_DigGeologicalSampleAction:perform()
 
         HaloTextHelper.addText(
             self.character,
-            "Geological sample collected"
+            AC_Text.get(
+                "IGUI_AmmoMaking_SampleCollected",
+                "Geological sample collected"
+            )
         )
 
 
@@ -439,7 +442,10 @@ function AC_DigGeologicalSampleAction:perform()
 
         HaloTextHelper.addText(
             self.character,
-            "Could not collect geological sample"
+            AC_Text.get(
+                "IGUI_AmmoMaking_SampleFailed",
+                "Could not collect geological sample"
+            )
         )
 
 

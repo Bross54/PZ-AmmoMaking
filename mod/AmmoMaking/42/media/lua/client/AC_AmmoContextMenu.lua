@@ -385,7 +385,10 @@ local function onFillInventoryContextMenu(
             ------------------------------------------------
 
             context:addOption(
-                "Inspect Ammunition",
+                AC_Text.get(
+                    "IGUI_AmmoMaking_InspectAmmo",
+                    "Inspect Ammunition"
+                ),
                 player,
                 onInspectAmmo,
                 item
