@@ -105,9 +105,31 @@ These are enforced by the code and asserted by `tests/run_tests.lua`.
 - `perform()` clears the job delta, stops the sound, does the work, shows the
   result, then calls `ISBaseTimedAction.perform(self)` last.
 
-Placeholders that still need the game: the pickaxe action uses
-`BuildingHelper.getShovelAnim` (pcall-guarded, falls back to `DigShovel`) and the
-`Shoveling` sound. **REQUIRES IN-GAME VERIFICATION.**
+Placeholders that still need the game: the pickaxe action calls
+`BuildingHelper.getShovelAnim` directly, as the dig action does; on 42.20.4 it
+returns `CharacterActionAnims.DigPickAxe` for a pickaxe. That animation and the
+`Shoveling` sound with a pickaxe are **REQUIRES IN-GAME VERIFICATION.**
+
+### Kahlua hazard: "No implementation found" on an overloaded Java method
+
+Confirmed on 42.20.4 from the installed `projectzomboid.jar` (javap) and the
+game's `console.txt`. When Lua calls an overloaded Java method with arguments no
+overload accepts, `MultiLuaJavaInvoker.call` returns its pooled
+`MethodArguments` object to the pool twice before raising "No implementation
+found for function". The pool then hands the same object to two calls at once.
+The next Java call that runs Lua which in turn calls Java with the same number of
+parameters - `IsoGameCharacter:StartAction(action)` running the action's
+`start()` - has its return values cleared underneath it and throws
+`NullPointerException: Cannot assign field "callFrame" because "a" is null` at
+`ReturnValues.put`, after `start()` has already run. A `pcall` around the bad
+call does not help: the pool is already damaged.
+
+This is what broke mining: `item:hasTag("Shovel")` (only `hasTag(ItemTag)` and
+`hasTag(ItemTag...)` exist) failed on every right-click with a pickaxe in hand,
+and the next "Mine ... Ore" then failed in `ISBaseTimedAction.begin`. Every
+such NPE in the log follows a `hasTag` failure. Rule: never pass a guessed
+argument type to a Java method; use only signatures seen in vanilla Lua or the
+jar.
 
 `AC_PickUpAnalyzerAction` follows the same conventions (read-only `isValid()`,
 work in `perform()`), as vanilla `ISBuildAction` does in single-player.
@@ -241,7 +263,14 @@ Python's `lupa` package ships one: `lupa.lua51.LuaRuntime().execute(...)` with
   every land tile.
 - Player-built floors on grass: whether `square:getFloor()` returns the built
   floor or the original grass.
-- The shovel animation and `Shoveling` sound with a pickaxe.
+- Mining starts and completes with a pickaxe after a world right-click with the
+  pickaxe in hand (the `hasTag` / `StartAction` failure), with the
+  `DigPickAxe` animation and the `Shoveling` sound.
+- Shovel detection now uses only `Base.Shovel`, `Base.Shovel2` and
+  `Base.HandShovel`. Other vanilla digging tools (`EntrenchingTool`,
+  `SpadeForged`, `SpadeWood`) are not accepted; vanilla's own check is
+  `item:hasTag(ItemTag.DIG_GRAVE)` in `client/Mining/DiggingUtil.lua` if they
+  should be.
 - Whether the JSON translation file is loaded and which perk-description key
   spelling the skill panel uses.
 - The placed laboratory analyzer: the placement cursor (ghost sprite, walking,
