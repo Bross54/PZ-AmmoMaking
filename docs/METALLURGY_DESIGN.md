@@ -11,6 +11,30 @@ custom furnace world object, no custom fuel, heat, timer or persistence for
 smelting. The mod contributes items, recipes attached to vanilla stations, and
 a thin Lua layer for brass quality and skill.
 
+## M0 status (2026-09-23)
+
+`docs/VANILLA_METALLURGY_RESEARCH.md` holds the partial M0 result from
+accessible sources, with evidence levels and the PowerShell commands that
+finish it locally. Four findings already change this document (all STRONG
+INDICATION, pending the local grep):
+
+1. Vanilla's ore convention is **ore → furnace → scrap**, not ore → ingot:
+   `Base.CopperOre` ×1 + charcoal ×4 → `Base.CopperScrap` ×10 at the Primitive
+   Furnace. Zinc mirrors this. **No crushing or other preparation step.**
+2. **`Base.CopperIngot` has no vanilla recipe.** The mod adds "scrap → ingot"
+   casting for copper and zinc, using vanilla's own casting inputs (charcoal,
+   crucible, tongs, ingot mold at a furnace).
+3. **`Base.BrassIngot` and `Base.BrassScrap` already exist in 42.20.0** with
+   no recipes. The mod reuses them; `AmmoMaking.BrassIngot` is dropped.
+4. Recipes attach to a vanilla station through the station's crafting-bench
+   tag in the recipe's `Tags` line (`Furnace` is the documented tag). Which
+   tag each furnace tier declares is still unverified.
+
+Owner decisions applied: first brass recipe is 7 copper + 3 zinc only; Ammo
+Making is the only skill in `SkillRequired` / `xpAward` (vanilla smelting has
+no Blacksmith gate, so none is added); brass quality is deferred; no
+preparation step.
+
 ---
 
 ## 1. What exists today and what this stage must fit
@@ -34,16 +58,20 @@ vanilla icons, `IGUI_AmmoMaking_*` translation keys with English fallbacks.
 ## 2. The first metallurgy loop
 
 ```text
-Base.CopperOre          AmmoMaking.ZincOre
-      │                        │
-      ▼  (ore preparation only if vanilla convention or the chunk weight requires it, see §6)
-      │                        │
-      ▼  vanilla furnace recipe (mod-defined craftRecipe at a vanilla station)
-Base.CopperIngot        AmmoMaking.ZincIngot
-      └──────────┬─────────────┘
-                 ▼  vanilla furnace alloy recipe(s) (mod-defined, fixed ratios)
-        AmmoMaking.BrassIngot   (brassQuality set by a Lua callback if the
-                                 recipe system exposes one, see §7)
+Base.CopperOre                       AmmoMaking.ZincOre
+      │  vanilla "Smelt Copper Ore"         │  mod "Smelt Zinc Ore" (mirror)
+      │  charcoal ×4, Primitive Furnace     │  charcoal ×4, same furnace tag
+      ▼                                     ▼
+Base.CopperScrap ×10                 AmmoMaking.ZincScrap ×10
+      │  mod "Cast Copper Ingot"            │  mod "Cast Zinc Ingot"
+      │  scrap ×10 + charcoal + crucible,   │  same inputs
+      │  tongs, ingot mold (kept)           │
+      ▼                                     ▼
+Base.CopperIngot                     AmmoMaking.ZincIngot
+      └──────────────┬────────────────────┘
+                     ▼  mod "Cast Cartridge Brass": 7 Cu + 3 Zn ingots + charcoal,
+                        crucible, tongs, ingot mold (kept), furnace tag
+              Base.BrassIngot ×10   (vanilla item, no vanilla recipe)
 ```
 
 The player experience is the vanilla one: build or find a furnace, fuel and
@@ -55,21 +83,24 @@ the zinc / brass items. Nothing about the furnace itself is ours.
 
 | Step | Player action | Station / tool | Input | Output | Time | Ammo Making XP | Failure | Quality | Persistent state (ours) |
 |---|---|---|---|---|---|---|---|---|---|
-| Prepare ore (**conditional**, §6) | vanilla recipe or, only if the chunk cannot be carried, a ground timed action | hammer / sledgehammer (vanilla ids from M0) | 1 ore chunk | prepared ore ×k | recipe time | small | none | none | none |
-| Smelt copper | vanilla crafting UI at a lit vanilla furnace | vanilla furnace (ids from M0), vanilla fuel | ore (or prepared ore) | `Base.CopperIngot` | recipe time; skill reduction only if the recipe system supports it | per recipe `xpAward` | vanilla only (unlit, no fuel) | none | none |
-| Smelt zinc | same | same | `AmmoMaking.ZincOre` (or prepared) | `AmmoMaking.ZincIngot` | same | same | same | none | none |
-| Alloy brass | same, choosing one of the brass recipes | same | N `Base.CopperIngot` + M `AmmoMaking.ZincIngot` in the recipe's fixed ratio | N + M `AmmoMaking.BrassIngot` | same | per recipe | vanilla only | `brassQuality` on each ingot via callback, or discrete tiers (§7) | none |
+| Smelt copper ore | vanilla crafting UI at a vanilla furnace; **vanilla recipe, untouched** | Primitive Furnace (or higher), charcoal-tag ×4 | `Base.CopperOre` ×1 | `Base.CopperScrap` ×10 | vanilla | vanilla (0) | vanilla | none | none |
+| Smelt zinc ore | same UI; mod recipe mirroring "Smelt Copper Ore" | same | `AmmoMaking.ZincOre` ×1 | `AmmoMaking.ZincScrap` ×10 | copy vanilla | `xpAward = AmmoMaking:n` | vanilla | none | none |
+| Cast copper / zinc ingot | same UI; mod recipe modelled on vanilla "Cast Iron Ingot" | furnace tag from M0 (vanilla casts at the Simple Furnace); charcoal, crucible (keep), tongs (keep, may degrade), ingot mold (keep) | scrap ×10 of one metal | `Base.CopperIngot` ×1 / `AmmoMaking.ZincIngot` ×1 | copy vanilla casting time | `AmmoMaking:n` | vanilla | none | none |
+| Cast cartridge brass | same UI; mod recipe | same tools | 7 `Base.CopperIngot` + 3 `AmmoMaking.ZincIngot` | `Base.BrassIngot` ×10 | copy vanilla casting time | `AmmoMaking:n` | vanilla | deferred | none |
 
 There is no slag, no fuel accounting, no pause / resume and no collect step of
-ours. If vanilla furnaces model any of those, the player gets them for free.
+ours. Charcoal is an ordinary consumed input, as in every vanilla furnace
+recipe. Whether a furnace must additionally be lit is unverified (research §3).
 
 ---
 
 ## 3. Vanilla Build 42 integration research
 
-Nothing in this section could be checked from this environment (no game files,
-wiki blocked). Classification is honest and M0 exists to replace every LIKELY
-and VERIFY line with a fact.
+This section was written before the source research. The current state of
+each line, with evidence levels and sources, is in
+`docs/VANILLA_METALLURGY_RESEARCH.md`; the local PowerShell commands there
+replace every remaining LIKELY / VERIFY line with a fact. The lists below are
+kept as the original question set.
 
 ### CONFIRMED (this repository and APIs the mod already uses)
 
@@ -127,19 +158,18 @@ M0 is done when every row has an answer with the file path it came from.
 ## 4. Copper strategy
 
 - Ore: `Base.CopperOre`, as mining already drops it. Unchanged.
-- Ingot: `Base.CopperIngot`, produced by a mod-defined recipe at the vanilla
-  furnace, **or**, if V1/V4 show vanilla already smelts copper ore, by the
-  vanilla recipe itself with no mod recipe at all.
-- No `AmmoMaking.Copper*` items. The only acceptable reason to add one would be
-  a vanilla `Base.CopperIngot` that vanilla recipes turn into something with
-  **more** metal than went in; V1 will show whether any such recipe exists.
+- Scrap: `Base.CopperScrap`, from the **vanilla** "Smelt Copper Ore" recipe.
+  The mod does not redefine or replace that recipe.
+- Ingot: `Base.CopperIngot`, from the mod's "Cast Copper Ingot" (scrap ×10 +
+  charcoal + crucible + tongs + ingot mold, kept tools). Vanilla has no recipe
+  for this item, so the mod is adding, not overriding.
+- No `AmmoMaking.Copper*` items. Vanilla's other use of copper scrap (4 scrap
+  → 1 copper sheet at a forge) never returns scrap from an ingot, so no loop.
 
-If the 40 weight holds (V1):
-
-- Whether the player can carry a chunk to a furnace is a vanilla problem with
-  vanilla answers (vehicles, furnaces near the site). We do not solve it with a
-  custom item unless V10 shows the crafting UI cannot use a chunk lying next to
-  the player and V4 shows vanilla has no preparation step. See §6.
+The 40 weight (STRONG INDICATION: `Weight = 40.0`,
+`RequiresEquippedBothHands = true`, tag `base:heavyitem`) is the vanilla
+experience for iron ore too. The player carries one chunk two-handed to the
+furnace, exactly as vanilla intends; the mod adds nothing for transport.
 
 ---
 
@@ -150,38 +180,25 @@ made yet):
 
 | Item | Now | Recommended | Why |
 |---|---|---|---|
-| `AmmoMaking.ZincOre` | Weight 0.5 | Copy the verified `Base.CopperOre` weight and any `Tags` vanilla ore carries | Zinc must be "an ore" to the vanilla system in every way copper is, including whatever tag vanilla smelting recipes match on. Parity keeps one rule. |
-| `AmmoMaking.ZincIngot` | Weight 1.0 | Copy the verified `Base.CopperIngot` weight and tags | Ingots are counted, not weighed, but vanilla may use ingot tags for later recipes. |
-| prepared zinc | — | Only if §6 concludes preparation exists, and then named after the vanilla convention (e.g. if vanilla uses "Crushed X Ore", we add `AmmoMaking.CrushedZincOre`) | Never invent a convention vanilla does not have. |
-| `AmmoMaking.BrassIngot` | — | New. Same weight as `Base.CopperIngot`. Icon: a vanilla ingot icon until custom art exists | The stage's product. |
-| `AmmoMaking.BrassScrap` | — | **Not in this version.** With fixed-ratio recipes an off-spec batch cannot happen. Scrap returns with case recycling. | Fewer items. |
+| `AmmoMaking.ZincOre` | Weight 0.5 | Copy `Base.CopperOre`: Weight 40.0, `RequiresEquippedBothHands = true`, `Tags = base:hasmetal;base:heavyitem;base:zincore;base:zincsource` (tag prefix form to confirm locally) | Zinc must be "an ore" to the vanilla system in every way copper is. |
+| `AmmoMaking.ZincScrap` | — | New. Copy `Base.CopperScrap`: Weight 0.5, `Tags = base:hasmetal` | The vanilla furnace convention is ore → scrap ×10. |
+| `AmmoMaking.ZincIngot` | Weight 1.0 | Copy `Base.CopperIngot`: Weight 6.0, `Tags = base:hasmetal;base:ingot`, icon `Ingot_Silver` until a zinc icon exists | Same unit as every vanilla ingot. |
+| `AmmoMaking.BrassIngot` | planned earlier | **Dropped.** Use vanilla `Base.BrassIngot` (Weight 5.0, icon `Ingot_Brass`, tags `base:hasmetal;base:ingot`) | Vanilla reserved the item with no recipe; the mod supplies the recipe. |
+| `AmmoMaking.BrassScrap` | planned earlier | **Dropped.** Vanilla `Base.BrassScrap` (0.5) exists for the later recycling stage. | Fewer items, vanilla names. |
 
 ---
 
-## 6. Ore preparation: only if justified
+## 6. Ore preparation: not needed
 
-The previous design kept a crushing step for transport and skill reasons. Under
-vanilla-first rules it is decided by M0, in this order:
+Resolved by M0 (research §1, §6): vanilla's preparation step **is the
+furnace**. Every vanilla ore goes ore → Primitive Furnace → intermediate (copper
+scrap, iron bloom), and the 40-weight chunk is carried two-handed like iron
+ore. There is no crushing, washing or dust convention to follow, and no reason
+to invent one. The previous crushing design and the `AC_CrushOreAction`
+fallback are withdrawn.
 
-1. **Vanilla smelts raw ore directly** (V4 shows `*Ore → *Ingot` with no
-   intermediate): **no preparation step.** Copper ore goes into the furnace as
-   is; zinc ore does the same. Transport of a heavy chunk is the vanilla
-   experience.
-2. **Vanilla has a preparation convention** (V4 shows crushed / washed / bloom
-   items or a tool-and-recipe step before smelting): **follow it exactly**, with
-   our zinc items named and tagged after the vanilla pattern, and our recipes
-   mirroring the vanilla ones.
-3. **Vanilla has neither** and the chunk is too heavy to carry and the crafting
-   UI cannot use floor items (V1 + V10): add the **smallest** preparation step:
-   a `craftRecipe` "Break up ore" requiring a hammer (`mode:keep`) that turns
-   one chunk into k light pieces, and one smelting recipe that takes k pieces.
-   Prefer this over a custom timed action. Only if V10 proves the crafting UI
-   cannot reach a chunk on the ground does a custom ground timed action come
-   back, built exactly like `AC_MineOreAction` with the same multiplayer guard.
-
-Whatever the outcome, one chunk yields at most one ingot-equivalent (§9).
-
----
+Whatever the local check finds, one chunk yields at most one ingot-equivalent
+(§9): 1 ore → 10 scrap → 1 ingot.
 
 ## 7. Brass on top of vanilla crafting
 
@@ -191,21 +208,21 @@ of recipe**:
 
 | Recipe (display name) | Inputs | Output | Zinc fraction | Note |
 |---|---|---|---|---|
-| Cartridge brass, full batch | 7 Cu ingot + 3 Zn ingot | 10 brass | 30.0 % | reference quality |
-| Cartridge brass, small batch | 2 Cu + 1 Zn | 3 brass | 33.3 % | early game, lower quality |
-| Cartridge brass, medium batch | 5 Cu + 2 Zn | 7 brass | 28.6 % | in between |
+| Cast Cartridge Brass | 7 `Base.CopperIngot` + 3 `AmmoMaking.ZincIngot` (+ charcoal; crucible, tongs, ingot mold kept) | 10 `Base.BrassIngot` | 30.0 % | **the first and only brass recipe** (owner decision) |
+| Cartridge brass, small batch (2 + 1 → 3) and medium batch (5 + 2 → 7) | — | — | 33.3 % / 28.6 % | candidates for a later balance pass, not the first version |
 
-Only correct-enough ratios exist as recipes, so a player cannot waste metal by
-mistake; the decision is between batch size and quality, and between spending
-ingots now or saving for a full batch. Wrong-ratio scrap is dropped from this
-version.
+With one fixed recipe a player cannot waste metal by mistake; the only decision
+is saving ten ingots for a batch. Wrong-ratio scrap does not exist.
 
-Quality, in order of preference depending on V7:
+Quality is **deferred** to cartridge-case manufacturing (owner decision). The
+mechanism below is recorded for that later stage; nothing of it is built now.
+Order of preference depending on V7:
 
-- **V7 confirms a creation callback with access to the output items:** one
-  `AmmoMaking.BrassIngot` item; the callback (in `AC_Materials`) sets
-  `brassQuality` on each ingot from the recipe's zinc fraction and the player's
-  Ammo Making level:
+- **V7 confirms a creation callback with access to the output items** (the
+  42.20.4 API docs document `OnCreate(craftRecipeData, character)` with
+  `getAllCreatedItems()`): the callback (in `AC_Materials`) sets
+  `brassQuality` on each `Base.BrassIngot` from the recipe's zinc fraction and
+  the player's Ammo Making level:
 
   ```text
   closeness    = 1 - |f - 0.30| / alloyTolerance        (0..1)
@@ -217,12 +234,12 @@ Quality, in order of preference depending on V7:
   lookup in a table in `AC_Materials`, so no numbers live in the script file).
 - **V7 shows no callback but ModData survives on outputs some other way:**
   same, wired through whatever hook exists (documented in M0).
-- **V7 shows outputs cannot carry ModData:** discrete tiers as separate items
-  (`AmmoMaking.BrassIngotRough`, `AmmoMaking.BrassIngot`,
-  `AmmoMaking.BrassIngotFine`), chosen per recipe by `SkillRequired` gating
-  (e.g. full batch at level ≥ 4 yields Fine). Quality becomes a per-item
-  constant looked up in `AC_Materials`. Cases later read the tier the same way
-  they would read the number.
+- **V7 shows outputs cannot carry ModData reliably:** discrete tiers as
+  separate mod items around the vanilla one (`AmmoMaking.BrassIngotRough`,
+  `Base.BrassIngot`, `AmmoMaking.BrassIngotFine`), chosen per recipe by
+  `SkillRequired` gating. Quality becomes a per-item constant looked up in
+  `AC_Materials`. Cases later read the tier the same way they would read the
+  number.
 
 The smallest extension needed in every case is: mod-defined `craftRecipe`
 blocks, one Lua table of recipe → fraction, and one callback. No custom station.
@@ -239,7 +256,7 @@ Skill never creates metal. With vanilla recipes the available levers are:
 | XP | `xpAward = AmmoMaking:x` per recipe; all inputs are finite ore so XP cannot be farmed | per-recipe values mirrored in `AC_Materials.CONFIG` for tests |
 | Quality | `skillQualityFloor` in the callback | `skillQualityFloor`, `alloyTolerance` |
 | Time | Only if V6 shows recipe time can depend on skill; otherwise recipe time is fixed and the lever is dropped rather than re-implemented | — |
-| Blacksmith interplay | Decision for the owner (§17): require only Ammo Making, or also a vanilla `Blacksmith` level for furnace recipes to match vanilla progression | — |
+| Blacksmith interplay | **Ammo Making only.** Vanilla furnace recipes show no skill requirement and 0 XP, so requiring Blacksmith would be stricter than vanilla for the same station. | — |
 
 No yield or slag levers: vanilla recipes are deterministic and we do not add a
 scheduler to make them otherwise.
@@ -254,8 +271,8 @@ Unit: **1 metal unit = 1 ingot**. One ore chunk contains at most 1 unit.
    `AC_Materials` lists every metal-bearing item with its unit value; a test
    walks every recipe the mod defines (read from a Lua mirror of
    `AC_Recipes.txt`, see §14) and checks the inequality.
-2. Preparation (if any): 1 chunk → k pieces, smelt takes exactly k pieces → 1
-   ingot. Never fewer pieces per ingot than the chunk yields.
+2. 1 ore chunk → 10 scrap (vanilla) and the mod's casting takes exactly 10
+   scrap → 1 ingot. Never fewer scrap per ingot than a chunk yields.
 3. Alloy recipes: `N + M` in → `N + M` out. Exactly.
 4. No mod recipe converts a product back into more metal than it contains.
    Recycling (later stage) is strictly lossy.
@@ -308,7 +325,7 @@ custom persistent state of this stage is **zero**. What remains:
 |---|---|
 | Recipe execution, input consumption, output creation, station state, fuel, timers | vanilla; nothing to guard |
 | Brass quality callback | M0 must record **where** the callback runs (client, server or both). If server-side, ModData set there is replicated; if client-side, the value must be set in a way vanilla syncs (V7). Until known, the callback must be idempotent and tolerant of running twice. |
-| Ore preparation as a custom timed action (only if §6 case 3 ends there) | same guard as mining: disabled on multiplayer clients until a server command exists; it consumes and creates nothing on a client |
+| Custom timed actions | none in this stage (ore preparation was withdrawn), so nothing needs the mining-style client guard |
 | Ledger / debug | client-only, read-only |
 
 Retrofit risk is now limited to one callback and, at worst, one timed action.
@@ -318,16 +335,14 @@ Retrofit risk is now limited to one callback and, at worst, one timed action.
 ## 13. Proposed file architecture
 
 ```text
-scripts/AC_Recipes.txt        craftRecipe blocks: smelt copper (if vanilla lacks it),
-                              smelt zinc, brass full / medium / small, optional
-                              ore preparation. Fields exactly as V6 documents.
+scripts/AC_Recipes.txt        craftRecipe blocks: Smelt Zinc Ore, Cast Copper Ingot,
+                              Cast Zinc Ingot, Cast Cartridge Brass. Fields copied from
+                              the vanilla blocks found by research §9 command 3.
 shared/AC_Materials.lua       item ids and units, recipe → zinc-fraction table,
                               brass quality maths (pure), the recipe callback(s),
                               the conservation table, the debug ledger.
-client/AC_CrushOreAction.lua  ONLY if §6 case 3 ends in a ground timed action;
-                              otherwise this file does not exist.
-scripts/AC_Items.txt          + BrassIngot (and tier variants or prepared-ore
-                              items only if M0 requires them); zinc weight/tag changes
+scripts/AC_Items.txt          + ZincScrap; ZincOre and ZincIngot weight/tag changes.
+                              No brass items (vanilla Base.BrassIngot is used).
 Translate/EN/IG_UI.json       + item names, recipe display names (key convention from V9)
 shared/AC_Compat.lua          + new item ids, vanilla station and tool ids, and a
                               probe that the mod's recipes are known to the script manager
@@ -338,7 +353,8 @@ docs/METALLURGY_DESIGN.md     this file; §3 filled in by M0
 ```
 
 One shared module and one script file are the whole feature. `AC_Metallurgy.lua`
-from the previous design is gone with the furnace it managed.
+and `AC_CrushOreAction.lua` from earlier drafts are gone with the mechanisms
+they served.
 
 ---
 
@@ -361,8 +377,8 @@ Offline (extend `tests/run_tests.lua`):
   `AC_Items.txt` or is on the vanilla list probed by `AC_Compat` (parser test).
 - **Zinc parity:** the mirrored item definitions for zinc ore / ingot carry the
   same weight and tags as the recorded copper values (numbers filled by M0).
-- **Ore preparation (only if it exists):** k pieces per chunk, smelt takes k,
-  timed action cancellation consumes nothing, multiplayer guard.
+- **Scrap arithmetic:** the mirrored zinc recipe yields 10 scrap per ore and
+  each casting recipe consumes exactly 10 scrap, matching vanilla copper.
 - **Hidden information / localization / debug gating:** as for mining.
 
 Only in Project Zomboid:
@@ -384,9 +400,9 @@ Only in Project Zomboid:
 |---|---|---|---|---|---|---|
 | M0 | Inspect and verify vanilla B42.20 metallurgy | this document (§3 filled in with file paths) | none | none | mining loop passed | answer V1–V12; one throwaway dummy recipe at the vanilla furnace to prove V12 |
 | M1 | Zinc and material definitions | `AC_Items.txt`, `AC_Materials.lua` (ids, units, conservation table), `IG_UI.json`, `AC_Compat.lua`, tests | zinc ore / ingot match vanilla ore / ingot weight and tags; brass ingot exists; ledger works | conservation table, parser tests, ids probed | M0 | debug spawn of every item; compat all OK |
-| M2 | Ore preparation, only if §6 requires it | `AC_Recipes.txt` (prep recipe) or `AC_CrushOreAction.lua` + menu, items, tests | chunk → pieces | k per chunk, cancellation, MP guard | M1 | recipe visible / action works on a ground chunk |
-| M3 | Copper and zinc smelting at the vanilla furnace | `AC_Recipes.txt` (smelt recipes), `AC_Compat.lua` (recipe probe), tests | ore → `Base.CopperIngot` / `AmmoMaking.ZincIngot` at a lit vanilla furnace | recipe mirror = script, conservation | M1 (M2 if it exists) | recipes appear at the furnace, require lit, consume / produce correctly |
-| M4 | Brass alloying at the vanilla furnace | `AC_Recipes.txt` (3 brass recipes), `AC_Materials.lua` (fraction table), tests | ingots → brass in three batch sizes | equality conservation, fraction table | M3 | recipes appear, outputs correct |
+| M2 | Ore preparation | **Withdrawn** (research §1): vanilla has no preparation step and the furnace itself turns ore into scrap. Nothing to build. | — | — | — | — |
+| M3 | Copper and zinc smelting at the vanilla furnace | `AC_Recipes.txt` ("Smelt Zinc Ore", "Cast Copper Ingot", "Cast Zinc Ingot"), `AC_Compat.lua` (recipe probe), tests | ore → scrap (vanilla + mirror) → `Base.CopperIngot` / `AmmoMaking.ZincIngot` at a vanilla furnace | recipe mirror = script, conservation (10 scrap per ingot) | M1 | recipes appear at the furnace, consume / produce correctly, any lit requirement |
+| M4 | Brass alloying at the vanilla furnace | `AC_Recipes.txt` ("Cast Cartridge Brass"), `AC_Materials.lua` (units), tests | 7 Cu + 3 Zn → 10 `Base.BrassIngot` | equality conservation | M3 | recipe appears, output is the vanilla brass item |
 | M5 | Quality and skill integration | `AC_Materials.lua` (callback, quality maths), items (tier variants if needed), recipes (`SkillRequired`, `xpAward`), tests | brass carries quality; skill gates the full batch; XP awarded | callback tests, monotonicity, idempotence | M4, V7/V8 answers | callback runs, ModData survives, XP shows in the skill panel |
 | M6 | Balance, multiplayer and polish | all `CONFIG`, README, `docs/DEVELOPMENT.md`, debug ledger, (server handler only if a custom action exists) | tuned batch sizes and times; documented | XP once per event | M5 | full site run; multiplayer smoke test of a recipe |
 
@@ -414,18 +430,17 @@ M3 is the first milestone that produces metal; M4 completes the stage.
 
 ---
 
-## 17. Decisions requested from the project owner
+## 17. Decisions
 
-1. **Brass as three fixed-ratio recipes** (recommended) versus one 7 + 3 recipe
-   only. Three gives an early-game path; one is simplest.
-2. **Furnace recipes gated on Ammo Making only** (recommended for the first
-   version) versus also requiring a vanilla `Blacksmith` level to match vanilla
-   metalworking progression.
-3. **Brass quality now** (callback if V7 allows, tiers otherwise; recommended)
-   versus deferring quality to case making.
-4. **If §6 ends in case 3:** a preparation `craftRecipe` (recommended) versus a
-   custom ground timed action, given the trade-off that the recipe needs the
-   chunk in reach of the crafting UI.
+Decided by the project owner (2026-09-23):
 
-Everything else is an implementation default tied to a config value or to an
-M0 answer.
+1. First brass recipe: 7 copper + 3 zinc only. Smaller batches are a later
+   balance question.
+2. Ammo Making is the only skill in `SkillRequired` / `xpAward`; no Blacksmith
+   gate, matching vanilla smelting which has none.
+3. Brass quality deferred to cartridge-case manufacturing.
+4. No ore preparation (vanilla has none).
+
+Still open, and answered by the local M0 commands rather than by the owner:
+which furnace tier tag(s) the recipes carry, whether a lit state is required,
+and the exact vanilla casting block to copy for time, tools and animation.
