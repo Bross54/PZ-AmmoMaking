@@ -277,11 +277,6 @@ local function viewAssay(
     end
 
 
-    AC_GeologySampling.updateLaboratoryAssay(
-        sample
-    )
-
-
     AC_GeologyAssayUI.open(
         player,
         sample
@@ -918,11 +913,6 @@ local function onFillInventoryContextMenu(
         if AC_GeologySampling.isSample(
             item
         ) then
-
-            AC_GeologySampling.updateLaboratoryAssay(
-                item
-            )
-
 
             local data =
                 item:getModData()
