@@ -330,7 +330,7 @@ lua5.1 tests/run_tests.lua
 
 `tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 500+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour.
 
-Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Next stage design: `docs/METALLURGY_DESIGN.md` (ore processing and metallurgy, design only).
+Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Next stage design: `docs/METALLURGY_DESIGN.md` (ore processing and metallurgy, design only) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42 provides, with evidence levels and the local verification commands).
 
 ---
 
@@ -643,7 +643,8 @@ PZ-AmmoMaking
 ├── docs
 │   ├── DEVELOPMENT.md
 │   ├── METALLURGY_DESIGN.md
-│   └── MULTIPLAYER_MINING.md
+│   ├── MULTIPLAYER_MINING.md
+│   └── VANILLA_METALLURGY_RESEARCH.md
 ├── tests
 │   ├── mock_pz.lua
 │   └── run_tests.lua
