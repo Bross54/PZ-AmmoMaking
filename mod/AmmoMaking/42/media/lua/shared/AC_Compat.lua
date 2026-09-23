@@ -426,7 +426,9 @@ local function checkSquareMethods(
 
 
     ------------------------------------------------
-    -- Water detection: either API is enough.
+    -- Water detection: hasWater() only. The old
+    -- square:Is(IsoFlagType.water) fallback does not
+    -- exist on 42.20.4 and is no longer used.
     ------------------------------------------------
 
     if hasMethod(square, "hasWater") == true then
@@ -435,17 +437,6 @@ local function checkSquareMethods(
             results,
             "OK",
             "water detection (hasWater)"
-        )
-
-    elseif IsoFlagType
-        and IsoFlagType.water
-        and hasMethod(square, "Is") == true
-    then
-
-        addResult(
-            results,
-            "OK",
-            "water detection (Is(IsoFlagType.water))"
         )
 
     else

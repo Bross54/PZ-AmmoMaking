@@ -739,10 +739,19 @@ end
 -- WATER
 ------------------------------------------------
 --
--- Build 42 exposes IsoGridSquare:hasWater(); older
--- builds use the "water" flag on the square. Both
--- calls are guarded so a missing method can never
--- raise a runtime error in a context menu.
+-- IsoGridSquare:hasWater() is the only water check.
+-- It is confirmed on Build 42.20.4 by the runtime
+-- compatibility check.
+--
+-- The former square:Is(IsoFlagType.water) fallback
+-- is gone: Is() does not exist on 42.20.4, and the
+-- call raised "Tried to call nil" on every land tile
+-- (each right-click, each tick of the dig action).
+--
+-- The method is looked up before it is called, all
+-- inside pcall, so a build without hasWater() treats
+-- every square as dry instead of raising; the
+-- compatibility check reports that case as a WARNING.
 ------------------------------------------------
 
 function AC_Geology.isWaterSquare(
@@ -759,47 +768,20 @@ function AC_Geology.isWaterSquare(
         pcall(
             function()
 
+                if square.hasWater == nil then
+                    return false
+                end
+
+
                 return
                     square:hasWater()
             end
         )
 
 
-    if ok
+    return
+        ok
         and result == true
-    then
-
-        return true
-    end
-
-
-    if IsoFlagType
-        and IsoFlagType.water
-    then
-
-        ok,
-        result =
-            pcall(
-                function()
-
-                    return
-                        square:Is(
-                            IsoFlagType.water
-                        )
-                end
-            )
-
-
-        if ok
-            and result == true
-        then
-
-            return true
-        end
-    end
-
-
-    return false
 end
 
 

@@ -421,12 +421,43 @@ do
     eq(ok("blends_natural_02_0", { water = true }), false, "water square rejected via hasWater")
     eq(AC_Mining.isMineableSquare(nil), false, "nil square rejected")
 
-    -- Water detection through the flag API only (older builds)
-    local sq = MOCK.newSquare(1, 1, 0, GRASS, { water = true })
-    sq.hasWater = nil
-    eq(AC_Geology.isWaterSquare(sq), true, "water detected through Is(IsoFlagType.water)")
-    sq.Is = nil
-    eq(AC_Geology.isWaterSquare(sq), false, "no water API -> not water, no error")
+    -- Water detection uses hasWater() only. square:Is() does not exist on
+    -- Build 42.20.4; the mock square has none, and a tripwire Is() proves
+    -- it is never called.
+    local isCalls = 0
+    local function tripwire(sq)
+        sq.Is = function()
+            isCalls = isCalls + 1
+            error("square:Is does not exist on 42.20.4")
+        end
+        return sq
+    end
+
+    local dry = MOCK.newSquare(1, 1, 0, GRASS)
+    eq(dry.Is, nil, "mock square has no Is(), like 42.20.4")
+    eq(AC_Geology.isWaterSquare(dry), false, "land without Is(): not water, no error")
+    eq(AC_Geology.isSurveyableSquare(dry), true, "land without Is(): still surveyable")
+    local wet = MOCK.newSquare(1, 1, 0, GRASS, { water = true })
+    eq(AC_Geology.isWaterSquare(wet), true, "water without Is(): detected through hasWater")
+    eq(AC_Geology.isSurveyableSquare(wet), false, "water without Is(): not surveyable")
+
+    eq(AC_Geology.isWaterSquare(tripwire(MOCK.newSquare(1, 1, 0, GRASS))), false, "land: hasWater false")
+    eq(AC_Geology.isSurveyableSquare(tripwire(MOCK.newSquare(1, 1, 0, GRASS))), true, "land: surveyable")
+    eq(AC_Geology.isWaterSquare(tripwire(MOCK.newSquare(1, 1, 0, GRASS, { water = true }))), true, "water: hasWater true")
+    eq(AC_Mining.isMineableSquare(tripwire(MOCK.newSquare(1, 1, 0, GRASS))), true, "mining check on land")
+
+    local noMethod = tripwire(MOCK.newSquare(1, 1, 0, GRASS, { water = true }))
+    noMethod.hasWater = nil
+    local okNo, resultNo = pcall(AC_Geology.isWaterSquare, noMethod)
+    check(okNo, "no hasWater(): no error")
+    eq(resultNo, false, "no hasWater(): treated as dry, Is() not used instead")
+
+    local throwing = tripwire(MOCK.newSquare(1, 1, 0, GRASS))
+    throwing.hasWater = function() error("engine failure") end
+    local okThrow, resultThrow = pcall(AC_Geology.isWaterSquare, throwing)
+    check(okThrow, "hasWater() raising is contained")
+    eq(resultThrow, false, "hasWater() raising -> not water")
+    eq(isCalls, 0, "square:Is() never called")
     eq(AC_Geology.isWaterSquare(nil), false, "nil square is not water")
 
     -- Sampling and mining share the same verdict
@@ -1083,6 +1114,11 @@ do
     equipShovel(player, 10)
     local ctx = fillWorldMenu(player, square)
     check(ctx:find("Dig Geological Sample") ~= nil, "dig option with shovel on grass")
+    local digEntries = 0
+    for _, name in ipairs(ctx:names()) do
+        if name == "Dig Geological Sample" then digEntries = digEntries + 1 end
+    end
+    eq(digEntries, 1, "exactly one dig entry per right-click")
     ctx = fillWorldMenu(player, MOCK.newSquare(x, y, 0, GRASS, { water = true }))
     check(ctx:find("Dig Geological Sample") == nil, "no dig option on water")
     player.primary = nil
@@ -2058,6 +2094,19 @@ do
     getSprite = realGetSprite
     eq(s5.warnings, 0, "no getSprite is not a warning")
     check(s5.unverified >= 1, "no getSprite reported as unverified")
+
+    local noWaterSquare = MOCK.newSquare(1, 1, 0, GRASS)
+    noWaterSquare.hasWater = nil
+    noWaterSquare.Is = function() return false end
+    MOCK.players = { MOCK.newPlayer({ square = noWaterSquare }) }
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local rW, sW = AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.players = { player }
+    eq(sW.warnings, 1, "missing hasWater is one WARNING")
+    check(MOCK.printLogContains("WARNING: water detection unavailable"), "square:Is() no longer counts as water detection")
+    check(not MOCK.printLogContains("Is(IsoFlagType.water)"), "Is() fallback not reported")
 
     local bareSquare = MOCK.newSquare(1, 1, 0, GRASS)
     bareSquare.AddSpecialObject = nil

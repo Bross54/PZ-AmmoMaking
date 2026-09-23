@@ -480,11 +480,9 @@ local function newSquare(x, y, z, spriteName, opts)
         object.square = nil
     end
     function square:RecalcAllWithNeighbours() end
+    -- No square:Is(): it does not exist on Build 42.20.4 (calling it
+    -- raised "Tried to call nil" in game).
     function square:hasWater() return self.water end
-    function square:Is(flag)
-        if flag == "water" then return self.water end
-        return false
-    end
     function square:haveElectricity() return false end
     function square:hasGridPower() return opts.gridPower == true end
     return square

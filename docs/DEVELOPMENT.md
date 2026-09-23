@@ -161,7 +161,9 @@ Rules, all in `AC_LaboratoryAnalyzer` and covered by the offline tests:
   and collecting also change client-local state today; sample ownership and
   server-side validation belong to a future multiplayer design.
 
-Build 42 evidence, checked against the installed 42.20.2 Lua and jar:
+Build 42 evidence, checked against the installed game's Lua and jar. That
+install is 42.20.4 (Steam update of 2026-09-03; the 42.20.4 runtime ran from the
+same unchanged files). An earlier note said 42.20.2, read from a stale log.
 
 | Assumption | Evidence |
 |---|---|
@@ -231,7 +233,12 @@ Python's `lupa` package ships one: `lupa.lua51.LuaRuntime().execute(...)` with
 - `instanceItem` vs `InventoryItemFactory.CreateItem` on 42.20 (either works).
 - `IsoGridSquare:AddWorldInventoryItem` placing the ore where the player can see
   and pick it up.
-- Water detection: `IsoGridSquare:hasWater()` or `Is(IsoFlagType.water)`.
+- Water detection: `IsoGridSquare:hasWater()` only. Its presence is confirmed on
+  42.20.4 by the compatibility check; that it returns true on lake and river
+  tiles still needs a look in game. The old `square:Is(IsoFlagType.water)`
+  fallback was removed: `Is()` does not exist on 42.20.4 (vanilla now uses
+  `square:has(IsoFlagType...)`), and calling it raised "Tried to call nil" on
+  every land tile.
 - Player-built floors on grass: whether `square:getFloor()` returns the built
   floor or the original grass.
 - The shovel animation and `Shoveling` sound with a pickaxe.
