@@ -97,135 +97,21 @@ end
 
 
 ------------------------------------------------
--- FIND LAB ANALYZER ON A SQUARE
+-- FIND LAB ANALYZER
 ------------------------------------------------
 --
--- Placed analyzers are special objects of the
--- square; dropped analyzers are world items.
-------------------------------------------------
-
-local function findAnalyzerInList(
-    list
-)
-
-    if not list then
-        return nil
-    end
-
-
-    for index = 0,
-        list:size() - 1
-    do
-
-        local object =
-            list:get(
-                index
-            )
-
-
-        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
-            object
-        ) then
-
-            return object
-        end
-    end
-
-
-    return nil
-end
-
-
-local function findAnalyzerOnSquare(
-    square
-)
-
-    if not square then
-        return nil
-    end
-
-
-    return
-        findAnalyzerInList(
-            square:getSpecialObjects()
-        )
-        or findAnalyzerInList(
-            square:getWorldObjects()
-        )
-end
-
-
-------------------------------------------------
--- FIND LAB ANALYZER
+-- Clicked analyzer, or one on a clicked square;
+-- shared with the debug tools.
 ------------------------------------------------
 
 local function getAnalyzerWorldObject(
     worldObjects
 )
 
-    if not worldObjects then
-        return nil
-    end
-
-
-    for _,
-        object
-    in ipairs(
-        worldObjects
-    )
-    do
-
-        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
-            object
-        ) then
-
-            return object
-        end
-    end
-
-
-    local checkedSquares =
-        {}
-
-
-    for _,
-        object
-    in ipairs(
-        worldObjects
-    )
-    do
-
-        if object
-            and object.getSquare
-        then
-
-            local square =
-                object:getSquare()
-
-
-            if square
-                and not checkedSquares[square]
-            then
-
-                checkedSquares[square] =
-                    true
-
-
-                local analyzer =
-                    findAnalyzerOnSquare(
-                        square
-                    )
-
-
-                if analyzer then
-                    return analyzer
-                end
-            end
-        end
-    end
-
-
-    return nil
+    return
+        AC_LaboratoryAnalyzer.findInWorldObjects(
+            worldObjects
+        )
 end
 
 
@@ -645,6 +531,14 @@ local function startLaboratoryAssay(
 
     if not success then
 
+        print(
+            "[AmmoMaking] Laboratory assay start refused: "
+            .. tostring(
+                errorCode
+            )
+        )
+
+
         if errorCode == "no_power" then
 
             HaloTextHelper.addText(
@@ -731,6 +625,14 @@ local function collectLaboratorySample(
 
     if not sample then
 
+        print(
+            "[AmmoMaking] Laboratory sample collection refused: "
+            .. tostring(
+                errorCode
+            )
+        )
+
+
         if errorCode == "not_ready" then
 
             HaloTextHelper.addText(
@@ -767,18 +669,45 @@ local function collectLaboratorySample(
     end
 
 
-    HaloTextHelper.addText(
-        player,
+    ------------------------------------------------
+    -- The only place laboratory XP is granted: once,
+    -- after a successful collection. One message with
+    -- the gain, as for mining.
+    ------------------------------------------------
+
+    local xp =
+        AmmoMakingSkill.awardXP(
+            player,
+            AC_LaboratoryAnalyzer.CONFIG.assayXP,
+            "Laboratory"
+        )
+
+
+    local text =
         AC_Text.get(
             "IGUI_AmmoMaking_Lab_Collected",
             "Laboratory tested sample collected"
         )
-    )
 
 
-    AmmoMakingSkill.addXP(
+    if xp > 0 then
+
+        text =
+            text
+            .. " - "
+            .. AC_Text.get(
+                "IGUI_AmmoMaking_ResultXP",
+                "+%1 Ammo Making XP",
+                AmmoMakingSkill.formatXP(
+                    xp
+                )
+            )
+    end
+
+
+    HaloTextHelper.addText(
         player,
-        AC_LaboratoryAnalyzer.CONFIG.assayXP
+        text
     )
 
 
@@ -936,6 +865,14 @@ local function pickUpLaboratoryAnalyzer(
 
 
     if not allowed then
+
+        print(
+            "[AmmoMaking] Analyzer pickup refused: "
+            .. tostring(
+                reason
+            )
+        )
+
 
         HaloTextHelper.addText(
             player,

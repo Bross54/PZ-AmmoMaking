@@ -317,6 +317,144 @@ end
 
 
 ------------------------------------------------
+-- FIND LAB ANALYZER ON A SQUARE
+------------------------------------------------
+--
+-- Placed analyzers are special objects of the
+-- square; dropped analyzers are world items.
+------------------------------------------------
+
+local function findAnalyzerInList(
+    list
+)
+
+    if not list then
+        return nil
+    end
+
+
+    for index = 0,
+        list:size() - 1
+    do
+
+        local object =
+            list:get(
+                index
+            )
+
+
+        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+            object
+        ) then
+
+            return object
+        end
+    end
+
+
+    return nil
+end
+
+
+function AC_LaboratoryAnalyzer.findOnSquare(
+    square
+)
+
+    if not square then
+        return nil
+    end
+
+
+    return
+        findAnalyzerInList(
+            square:getSpecialObjects()
+        )
+        or findAnalyzerInList(
+            square:getWorldObjects()
+        )
+end
+
+
+------------------------------------------------
+-- FIND LAB ANALYZER IN CLICKED OBJECTS
+------------------------------------------------
+--
+-- A clicked analyzer, else the first analyzer on
+-- any clicked square. Used by the analyzer menu and
+-- the debug tools.
+------------------------------------------------
+
+function AC_LaboratoryAnalyzer.findInWorldObjects(
+    worldObjects
+)
+
+    if not worldObjects then
+        return nil
+    end
+
+
+    for _,
+        object
+    in ipairs(
+        worldObjects
+    )
+    do
+
+        if AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+            object
+        ) then
+
+            return object
+        end
+    end
+
+
+    local checkedSquares =
+        {}
+
+
+    for _,
+        object
+    in ipairs(
+        worldObjects
+    )
+    do
+
+        if object
+            and object.getSquare
+        then
+
+            local square =
+                object:getSquare()
+
+
+            if square
+                and not checkedSquares[square]
+            then
+
+                checkedSquares[square] =
+                    true
+
+
+                local analyzer =
+                    AC_LaboratoryAnalyzer.findOnSquare(
+                        square
+                    )
+
+
+                if analyzer then
+                    return analyzer
+                end
+            end
+        end
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
 -- GET ANALYZER ITEM
 ------------------------------------------------
 --
@@ -819,11 +957,23 @@ function AC_LaboratoryAnalyzer.updateState(
 
     ------------------------------------------------
     -- Only consume processing time while powered.
+    --
+    -- LIMITATION (lazy accounting): the whole interval
+    -- since the last check is credited, or not, by the
+    -- power state at this check. Power that came back
+    -- just before this check credits the unpowered
+    -- time too; power that failed just before it
+    -- loses the powered time. Checking again credits
+    -- nothing extra: the interval restarts here.
     ------------------------------------------------
 
-    if AC_LaboratoryAnalyzer.hasPower(
-        worldObject
-    ) then
+    local powered =
+        AC_LaboratoryAnalyzer.hasPower(
+            worldObject
+        )
+
+
+    if powered then
 
         data.labRemainingHours =
             math.max(
@@ -833,6 +983,29 @@ function AC_LaboratoryAnalyzer.updateState(
                 )
                 - elapsed
             )
+    end
+
+
+    ------------------------------------------------
+    -- One line per check that saw time pass; this
+    -- only runs on player interaction, never per
+    -- tick.
+    ------------------------------------------------
+
+    if elapsed > 0 then
+
+        print(
+            string.format(
+                "[AmmoMaking] Laboratory analyzer %s: %.2f h since last check %s; %.2f h remaining",
+                powered and "powered" or "UNPOWERED",
+                elapsed,
+                powered and "credited" or "not credited (paused)",
+                tonumber(
+                    data.labRemainingHours
+                )
+                or 0
+            )
+        )
     end
 
 
@@ -1390,7 +1563,15 @@ function AC_LaboratoryAnalyzer.collectSample(
 
 
     print(
-        "[AmmoMaking] Laboratory tested sample collected"
+        "[AmmoMaking] Laboratory tested sample collected: sample "
+        .. tostring(
+            sampleData.sampleX
+        )
+        .. ", "
+        .. tostring(
+            sampleData.sampleY
+        )
+        .. "; analyzer idle"
     )
 
 

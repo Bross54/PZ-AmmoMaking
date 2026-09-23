@@ -2002,6 +2002,182 @@ do
     MOCK.worldHours = 0
 end
 
+section("Analyzer test loop: start, busy, complete, collect once, pick up (mocked placed object)")
+do
+    -- The loop the next in-game test follows, driven through the menus.
+    -- Lua state and messages only; the placed object is a mock.
+    local x, y = 880, 30
+    local square = poweredLabSquare(x, y)
+    local player = MOCK.newPlayer({ square = square })
+    local xp = AC_LaboratoryAnalyzer.CONFIG.assayXP
+    MOCK.worldHours = 3000
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    local function carried(sx)
+        local s = makeSample(sx, y, 1, "Good", "None")
+        s.modData.trueCopper = 61
+        s.modData.trueZinc = 3
+        player.inventory:addItem(s)
+        return s
+    end
+    carried(x)
+    carried(x + 1)
+    local function firstSample()
+        return player.inventory:getItemsFromFullType("AmmoMaking.GeologicalSample"):get(0)
+    end
+
+    -- Unpowered: no start option, and a direct start is refused and logged
+    local analyzer = placeAnalyzerObject(square)
+    square.haveElectricity = function() return false end
+    local ctx = fillAnalyzerMenu(player, analyzer)
+    check(ctx:find("Laboratory Analyzer - Requires Electricity") ~= nil, "no-power option while unpowered")
+    check(ctx:find("Start Lab Assay: Sample " .. x .. ", " .. y) == nil, "no start option while unpowered")
+    square.haveElectricity = function() return true end
+
+    -- Start: exactly one of two samples stored, processing, no XP
+    ctx = fillAnalyzerMenu(player, analyzer)
+    local start = ctx:find("Start Lab Assay: Sample " .. x .. ", " .. y)
+    square.haveElectricity = function() return false end
+    ctx:invoke(start)
+    check(MOCK.printLogContains("Laboratory assay start refused: no_power"), "refused start logged")
+    eq(analyzer.modData.labAnalyzerState, "idle", "refused start leaves the analyzer idle")
+    square.haveElectricity = function() return true end
+    ctx:invoke(start)
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "only the chosen sample went in")
+    eq(analyzer.modData.storedSample, true, "one sample stored")
+    eq(analyzer.modData.stored_sampleX, x, "the chosen sample is stored")
+    eq(analyzer.modData.labAnalyzerState, "processing", "processing after start")
+    eq(#player.xpLog, 0, "no XP at start")
+    check(MOCK.printLogContains("Laboratory assay started for sample " .. x), "start logged")
+
+    -- Busy: no second sample, no pickup, no second analyzer, cancel offered
+    ctx = fillAnalyzerMenu(player, analyzer)
+    check(ctx:find("Start Lab Assay: Sample " .. (x + 1) .. ", " .. y) == nil, "no start option while busy")
+    check(ctx:find("Cancel Laboratory Assay") ~= nil, "cancel offered while busy")
+    eq(select(2, AC_LaboratoryAnalyzer.startAssay(player, analyzer, firstSample())), "busy", "direct start refused while busy")
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 1, "refused start keeps the sample")
+    eq(analyzer.modData.stored_sampleX, x, "refused start does not replace the stored sample")
+    eq(select(2, AC_PickUpAnalyzerAction.pickUp(player, analyzer)), "processing", "pickup refused while busy")
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 0, "no analyzer item created while busy")
+    eq(#square.specialObjects, 1, "analyzer still placed")
+
+    -- Cancel reveals nothing and grants nothing
+    HaloTextHelper.clear()
+    ctx:invoke(ctx:find("Cancel Laboratory Assay"))
+    check(not hasDigit(HaloTextHelper.last()), "cancel message reveals no result: " .. tostring(HaloTextHelper.last()))
+    check(MOCK.printLogContains("Laboratory assay cancelled; sample " .. x), "cancel logged")
+    eq(#player.xpLog, 0, "no XP from cancel")
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 2, "both samples carried again")
+
+    -- Complete: ready, sample still stored, no XP until collection
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, firstSample())
+    local storedX = analyzer.modData.stored_sampleX
+    MOCK.worldHours = MOCK.worldHours + AC_LaboratoryAnalyzer.CONFIG.processingHours
+    eq(AC_LaboratoryAnalyzer.getState(analyzer), "ready", "ready after the processing time")
+    eq(analyzer.modData.storedSample, true, "sample still stored when ready")
+    eq(analyzer.modData.stored_sampleX, storedX, "same sample stored")
+    eq(#player.xpLog, 0, "no XP on completion")
+    check(MOCK.printLogContains("Laboratory analyzer completed sample " .. storedX), "completion logged")
+
+    -- Collect: one sample, XP once, one message with the gain, idle
+    HaloTextHelper.clear()
+    MOCK.clearPrintLog()
+    ctx = fillAnalyzerMenu(player, analyzer)
+    ctx:invoke(ctx:find("Collect Laboratory Sample"))
+    eq(player.inventory:count("AmmoMaking.GeologicalSample"), 2, "exactly one sample returned")
+    eq(#player.xpLog, 1, "laboratory XP granted once")
+    eq(player.xpLog[1], xp, "laboratory XP value unchanged")
+    eq(#HaloTextHelper.log, 1, "one message on collection")
+    eq(HaloTextHelper.last(), "Laboratory tested sample collected - +" .. xp .. " Ammo Making XP", "collect message shows the XP")
+    check(MOCK.printLogContains("[AmmoMaking] Laboratory: +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), "laboratory XP logged")
+    check(MOCK.printLogContains("Laboratory tested sample collected: sample " .. storedX), "collection logged")
+    eq(analyzer.modData.labAnalyzerState, "idle", "idle after collection")
+    AC_LaboratoryAnalyzer.collectSample(player, analyzer)
+    eq(#player.xpLog, 1, "second collect grants nothing")
+
+    -- Pick up: idle and empty -> exactly one analyzer item, logged
+    ctx = fillAnalyzerMenu(player, analyzer)
+    local pick = ctx:find("Pick Up Laboratory Assay Analyzer")
+    check(pick ~= nil and not pick.notAvailable, "pick up offered once idle and empty")
+    ISTimedActionQueue.clear()
+    MOCK.walkAdjResult = true
+    if pick then ctx:invoke(pick) end
+    local action = ISTimedActionQueue.queue[1]
+    if action then action:perform() end
+    eq(player.inventory:count("AmmoMaking.LaboratoryAssayAnalyzer"), 1, "exactly one analyzer item")
+    eq(#square.specialObjects, 0, "placed analyzer removed")
+    check(MOCK.printLogContains("Laboratory Assay Analyzer picked up at " .. x), "pickup logged")
+    eq(#player.xpLog, 1, "no XP from cancel or pickup")
+
+    MOCK.capturePrint(false)
+    ISTimedActionQueue.clear()
+    MOCK.worldHours = 0
+end
+
+section("Laboratory analyzer power accounting (lazy, on interaction; mocked power)")
+do
+    local x, y = 900, 30
+    local square = poweredLabSquare(x, y)
+    local power = true
+    square.haveElectricity = function() return power end
+    local player = MOCK.newPlayer({ square = square })
+    local analyzer = placeAnalyzerObject(square)
+    local total = AC_LaboratoryAnalyzer.CONFIG.processingHours
+    local s = makeSample(x, y, 1, "Good", "None")
+    s.modData.trueCopper = 50
+    s.modData.trueZinc = 0
+    player.inventory:addItem(s)
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    MOCK.worldHours = 4000
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, s)
+    MOCK.worldHours = 4005
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 5, "powered hours are credited")
+    check(MOCK.printLogContains("Laboratory analyzer powered: 5.00 h since last check credited"), "credited hours logged")
+
+    power = false
+    MOCK.worldHours = 4010
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 5, "unpowered processing does not advance")
+    check(MOCK.printLogContains("Laboratory analyzer UNPOWERED: 5.00 h since last check not credited (paused)"), "paused hours logged")
+    MOCK.worldHours = 4030
+    eq(AC_LaboratoryAnalyzer.getState(analyzer), "processing", "still processing after a long outage")
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 5, "still no progress without power")
+
+    power = true
+    MOCK.worldHours = 4032
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 7, "restored power resumes processing from the last check")
+
+    MOCK.clearPrintLog()
+    for i = 1, 20 do
+        fillAnalyzerMenu(player, analyzer)
+        AC_LaboratoryAnalyzer.getStatusInfo(analyzer)
+        AC_LaboratoryAnalyzer.canPickUp(analyzer)
+    end
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 7, "opening the menu repeatedly creates no progress")
+    check(not MOCK.printLogContains("since last check"), "no log lines when no time passed")
+
+    -- Documented limitation: an outage nobody observed, which ended
+    -- before the next check, is credited as powered time.
+    MOCK.worldHours = 4040
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 15, "LIMITATION: unobserved outage counted as powered")
+
+    -- Documented limitation, other direction: power lost just before a
+    -- check discards the powered hours since the previous check.
+    MOCK.worldHours = 4044
+    power = false
+    eq(AC_LaboratoryAnalyzer.getHoursRemaining(analyzer), total - 15, "LIMITATION: powered hours lost when power fails before the check")
+    power = true
+
+    MOCK.worldHours = 4044 + (total - 15)
+    eq(AC_LaboratoryAnalyzer.getState(analyzer), "ready", "completes once enough powered time is credited")
+    eq(#player.xpLog, 0, "no XP from processing")
+
+    MOCK.capturePrint(false)
+    MOCK.worldHours = 0
+end
+
 section("Laboratory analyzer power rule")
 do
     -- Mirrors vanilla 42.20's car battery charger check:
