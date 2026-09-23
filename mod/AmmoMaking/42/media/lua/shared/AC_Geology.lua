@@ -671,6 +671,74 @@ end
 
 
 ------------------------------------------------
+-- WATER
+------------------------------------------------
+--
+-- Build 42 exposes IsoGridSquare:hasWater(); older
+-- builds use the "water" flag on the square. Both
+-- calls are guarded so a missing method can never
+-- raise a runtime error in a context menu.
+------------------------------------------------
+
+function AC_Geology.isWaterSquare(
+    square
+)
+
+    if not square then
+        return false
+    end
+
+
+    local ok,
+          result =
+        pcall(
+            function()
+
+                return
+                    square:hasWater()
+            end
+        )
+
+
+    if ok
+        and result == true
+    then
+
+        return true
+    end
+
+
+    if IsoFlagType
+        and IsoFlagType.water
+    then
+
+        ok,
+        result =
+            pcall(
+                function()
+
+                    return
+                        square:Is(
+                            IsoFlagType.water
+                        )
+                end
+            )
+
+
+        if ok
+            and result == true
+        then
+
+            return true
+        end
+    end
+
+
+    return false
+end
+
+
+------------------------------------------------
 -- SURVEYABLE SURFACE
 ------------------------------------------------
 
@@ -701,6 +769,20 @@ function AC_Geology.isSurveyableSquare(
     ------------------------------------------------
 
     if square:getRoom() ~= nil then
+        return false
+    end
+
+
+    ------------------------------------------------
+    -- Never on water. Vanilla water tiles live on
+    -- natural blend sheets, so the sprite-name rules
+    -- below would otherwise accept a lake or river.
+    ------------------------------------------------
+
+    if AC_Geology.isWaterSquare(
+        square
+    ) then
+
         return false
     end
 
