@@ -1203,6 +1203,73 @@ do
     square.room = nil
 end
 
+-- Mocked ISBaseTimedAction and BuildingHelper. Covers the Lua side of
+-- the lifecycle only. Vanilla begin() -> create() -> LuaTimedActionNew
+-- -> IsoGameCharacter:StartAction() -> start() is Java and is not run
+-- here; that mining actually starts needs the in-game check.
+section("Mining action lifecycle matches the working dig action (mocked timed-action base)")
+do
+    local LIFECYCLE = { "new", "isValid", "waitToStart", "start", "update", "stop", "perform", "getDuration" }
+    for _, name in ipairs(LIFECYCLE) do
+        eq(type(rawget(AC_MineOreAction, name)), type(rawget(AC_DigGeologicalSampleAction, name)),
+            "mining and dig both define " .. name)
+    end
+    for _, name in ipairs({ "begin", "create", "adjustMaxTime", "complete" }) do
+        eq(rawget(AC_MineOreAction, name), nil, "mining leaves vanilla " .. name .. " alone")
+        eq(rawget(AC_DigGeologicalSampleAction, name), nil, "dig leaves vanilla " .. name .. " alone")
+    end
+
+    MOCK.clearModData()
+    local x, y = findTile("zinc", 3)
+    local player, square, pick = miningSetup(x, y, "None", "Good")
+    local digSquare = MOCK.newSquare(x, y, 0, GRASS)
+    local digPlayer = MOCK.newPlayer({ square = digSquare })
+    local shovel = equipShovel(digPlayer, 10)
+
+    local mine = AC_MineOreAction:new(player, square, "zinc", pick)
+    local dig = AC_DigGeologicalSampleAction:new(digPlayer, digSquare, shovel)
+    for _, field in ipairs({ "stopOnWalk", "stopOnRun", "stopOnAim" }) do
+        eq(mine[field], dig[field], "constructor " .. field .. " matches dig")
+    end
+    eq(mine.character, player, "character set")
+    eq(mine.item, pick, "pickaxe stored as item, like dig's shovel")
+    eq(type(mine.maxTime), "number", "maxTime is a number")
+    check(mine.maxTime > 0, "maxTime positive")
+    eq(mine.maxTime, mine:getDuration(), "maxTime comes from getDuration()")
+    eq(mine.caloriesModifier, dig.caloriesModifier, "caloriesModifier matches dig")
+
+    -- Vanilla order: isValid, waitToStart, start, then update/isValid ticks.
+    MOCK.invalidHasTagCalls = 0
+    eq(mine:isValid(), true, "valid before start")
+    eq(mine:waitToStart(), false, "no turning wait in the mock")
+    eq(mine:start(), nil, "start() returns nothing, like dig")
+    eq(dig:start(), nil, "dig start() returns nothing")
+    eq(mine.anim, CharacterActionAnims.DigPickAxe,
+        "pickaxe gets vanilla getShovelAnim's DigPickAxe (enum), not a string fallback")
+    eq(dig.anim, CharacterActionAnims.DigShovel, "shovel still gets DigShovel")
+    check(mine.item.jobType ~= nil, "job type set on the pickaxe")
+    mine:update()
+    eq(mine:isValid(), true, "still valid after an update tick")
+    eq(MOCK.invalidHasTagCalls, 0, "no hasTag(string) call anywhere in the mining lifecycle")
+
+    local before = AC_Deposits.getRemaining(x, y, "zinc")
+    mine:stop()
+    eq(AC_Deposits.getRemaining(x, y, "zinc"), before, "stop() extracts nothing")
+
+    mine = AC_MineOreAction:new(player, square, "zinc", pick)
+    mine:start()
+    mine:perform()
+    eq(AC_Deposits.getRemaining(x, y, "zinc"), before - 1, "perform() extracts exactly once")
+    eq(mine.completed, true, "perform() ends with ISBaseTimedAction.perform")
+
+    -- An error in the anim selector is no longer swallowed by a pcall.
+    local saved = BuildingHelper.getShovelAnim
+    BuildingHelper.getShovelAnim = function() error("anim selector failed") end
+    local okStart = pcall(function() AC_MineOreAction:new(player, square, "zinc", pick):start() end)
+    BuildingHelper.getShovelAnim = saved
+    eq(okStart, false, "start() does not hide anim-selector errors")
+end
+
 section("Portable assays: kit uses and XP exactly once")
 do
     local player = MOCK.newPlayer()

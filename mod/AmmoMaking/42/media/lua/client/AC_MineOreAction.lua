@@ -282,45 +282,35 @@ function AC_MineOreAction:start()
 
 
     ------------------------------------------------
-    -- Placeholder animation: the vanilla shovel
-    -- digging animation selector, which is already
-    -- used by the sample digging action.
+    -- Same call as the sample digging action and
+    -- vanilla ISPlowAction / ISFillGrave. On 42.20.4
+    -- BuildingHelper.getShovelAnim maps a PickAxe
+    -- (getDigType() or getType() == "PickAxe") to
+    -- CharacterActionAnims.DigPickAxe, a Java enum,
+    -- which setActionAnim accepts directly.
+    --
+    -- No pcall here: the old guarded call threw the
+    -- enum away (it is not a Lua string) and hid
+    -- errors. Whether DigPickAxe looks right is
+    -- REQUIRES IN-GAME VERIFICATION.
     ------------------------------------------------
 
-    local animation = nil
+    local animation =
+        BuildingHelper.getShovelAnim(
+            self.item
+        )
 
 
-    if BuildingHelper
-        and BuildingHelper.getShovelAnim
-    then
-
-        ------------------------------------------------
-        -- The vanilla selector is written for shovels;
-        -- guard it so a pickaxe can never raise a Lua
-        -- error inside the timed action.
-        ------------------------------------------------
-
-        local ok,
-              result =
-            pcall(
-                BuildingHelper.getShovelAnim,
-                self.item
-            )
-
-
-        if ok
-            and type(result) == "string"
-        then
-
-            animation =
-                result
-        end
-    end
+    print(
+        "[AmmoMaking] Mining animation: "
+        .. tostring(
+            animation
+        )
+    )
 
 
     self:setActionAnim(
         animation
-        or "DigShovel"
     )
 
 

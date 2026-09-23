@@ -232,6 +232,8 @@ local function newItem(fullType, opts)
     }
     nextItemId = nextItemId + 1
     function item:getFullType() return self.fullType end
+    function item:getType() return (string.match(self.fullType, "%.(.+)$")) or self.fullType end
+    function item:getDigType() return opts.digType end
     function item:getID() return self.id end
     function item:getModData() return self.modData end
     function item:getCondition() return self.condition end
@@ -621,8 +623,29 @@ function ISInventoryPaneContextMenu.transferIfNeeded(player, item)
 end
 Perks = { Strength = "Strength", Crafting = "Crafting" }
 
+-- Same branches as vanilla BuildingHelper.getShovelAnim in the installed
+-- 42.20.4 shared/Util/BuildingHelper.lua. In game the results are
+-- CharacterActionAnims enum values (Java), not strings; the mock uses
+-- tagged tables so a test can tell them apart from plain strings.
+CharacterActionAnims = {}
+for _, name in ipairs({ "Dig", "DigShovel", "DigHoe", "DigPickAxe", "DigTrowel" }) do
+    CharacterActionAnims[name] = { enum = "CharacterActionAnims", name = name }
+end
+
 BuildingHelper = {
-    getShovelAnim = function(item) return "DigShovel" end,
+    getShovelAnim = function(item)
+        if not item then
+            return CharacterActionAnims.Dig
+        end
+        if item:getDigType() == "Trowel" or item:getType() == "HandShovel" or item:getType() == "HandFork" or item:getType() == "EntrenchingTool" then
+            return CharacterActionAnims.DigTrowel
+        elseif item:getDigType() == "Hoe" or item:getType() == "GardenHoe" then
+            return CharacterActionAnims.DigHoe
+        elseif item:getDigType() == "PickAxe" or item:getType() == "PickAxe" then
+            return CharacterActionAnims.DigPickAxe
+        end
+        return CharacterActionAnims.DigShovel
+    end,
 }
 
 luautils = {
