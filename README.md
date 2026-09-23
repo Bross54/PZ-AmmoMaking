@@ -300,15 +300,24 @@ Rules:
 - each extraction removes one unit and drops one ore (`Base.CopperOre` or `AmmoMaking.ZincOre`)
 - depletion is persistent; only worked tiles are stored in save data (global ModData)
 - a tile is only shown as exhausted after someone has worked it
-- same terrain rules as sampling: outdoor natural ground, ground level only
+- same terrain rules as sampling: outdoor natural ground, ground level only, never water, never inside a building
+- dropping the assayed sample, unequipping the pickaxe or breaking it cancels a running extraction
 - Ammo Making level reduces extraction time (up to 40% at level 10)
 - Ammo Making XP is granted per extracted ore and per completed assay
 - accepted tools: `Base.PickAxe`, `Base.PickAxeForged`
 
 Current limitations:
 
-- single-player only (multiplayer synchronization is planned)
+- single-player only; on a multiplayer client the mining option is shown disabled until server-side extraction exists
 - the pickaxe action uses the vanilla shovel animation and sound as placeholders
+
+Offline checks (no game required):
+
+```text
+lua5.1 tests/run_tests.lua
+```
+
+`tests/run_tests.lua` mocks the small part of the Project Zomboid API the shared modules use and exercises reserves, depletion, save/reload persistence, terrain validation and the mining action flow. It cannot verify vanilla item ids, animations or sounds; those still need an in-game test.
 
 ---
 
