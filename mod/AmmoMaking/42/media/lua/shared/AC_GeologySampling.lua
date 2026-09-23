@@ -80,6 +80,20 @@ AC_GeologySampling.CONFIG = {
     shovelWearChance = 10,
 
     digSound = "DigFurrowWithShovel",
+
+
+    ------------------------------------------------
+    -- AMMO MAKING XP
+    ------------------------------------------------
+    --
+    -- Granted per successful portable assay. Kit uses
+    -- are limited, so this cannot be farmed.
+    -- Digging samples gives no XP for that reason.
+    ------------------------------------------------
+
+    fieldAssayXP = 3,
+
+    advancedAssayXP = 6,
 }
 
 
@@ -598,6 +612,38 @@ function AC_GeologySampling.getKitRank(
 
     if kitType == "advanced" then
         return 2
+    end
+
+
+    return 0
+end
+
+
+------------------------------------------------
+-- KIT XP
+------------------------------------------------
+
+function AC_GeologySampling.getAssayXP(
+    kit
+)
+
+    local kitRank =
+        AC_GeologySampling.getKitRank(
+            kit
+        )
+
+
+    if kitRank == 1 then
+
+        return
+            AC_GeologySampling.CONFIG.fieldAssayXP
+    end
+
+
+    if kitRank == 2 then
+
+        return
+            AC_GeologySampling.CONFIG.advancedAssayXP
     end
 
 

@@ -362,6 +362,14 @@ local function analyzeSample(
     )
 
 
+    AmmoMakingSkill.addXP(
+        player,
+        AC_GeologySampling.getAssayXP(
+            kit
+        )
+    )
+
+
     AC_GeologyAssayUI.open(
         player,
         sample
@@ -600,6 +608,12 @@ local function collectLaboratorySample(
     HaloTextHelper.addText(
         player,
         "Laboratory tested sample collected"
+    )
+
+
+    AmmoMakingSkill.addXP(
+        player,
+        AC_LaboratoryAnalyzer.CONFIG.assayXP
     )
 
 

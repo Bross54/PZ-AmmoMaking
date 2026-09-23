@@ -14,6 +14,9 @@ AC_LaboratoryAnalyzer.CONFIG = {
     processingHours = 24,
 
     measurementError = 2,
+
+    -- Ammo Making XP when a finished sample is collected.
+    assayXP = 10,
 }
 
 
