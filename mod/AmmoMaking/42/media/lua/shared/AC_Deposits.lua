@@ -146,7 +146,23 @@ local function getStore()
     end
 
 
-    if not store.tiles then
+    ------------------------------------------------
+    -- A corrupted or hand-edited save must never
+    -- turn every context menu into a Lua error.
+    ------------------------------------------------
+
+    if type(store.tiles) ~= "table" then
+
+        if store.tiles ~= nil then
+
+            print(
+                "[AmmoMaking] WARNING: deposit store 'tiles' was "
+                .. type(store.tiles)
+                .. "; resetting"
+            )
+        end
+
+
         store.tiles = {}
     end
 
@@ -174,6 +190,19 @@ local function getRecord(
 
     local record =
         store.tiles[key]
+
+
+    if record ~= nil
+        and type(record) ~= "table"
+    then
+
+        ------------------------------------------------
+        -- Malformed entry: treat as unworked. It is
+        -- replaced only when a write is requested.
+        ------------------------------------------------
+
+        record = nil
+    end
 
 
     if not record

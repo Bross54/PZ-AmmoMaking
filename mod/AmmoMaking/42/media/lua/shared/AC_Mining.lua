@@ -151,19 +151,42 @@ local function createItem(
     -- as a fallback.
     ------------------------------------------------
 
-    if instanceItem then
+    local factory =
+        instanceItem
+        or (
+            InventoryItemFactory
+            and InventoryItemFactory.CreateItem
+        )
 
-        return
-            instanceItem(
-                fullType
-            )
+
+    if not factory then
+        return nil
     end
 
 
-    return
-        InventoryItemFactory.CreateItem(
+    local ok,
+          item =
+        pcall(
+            factory,
             fullType
         )
+
+
+    if not ok then
+
+        print(
+            "[AmmoMaking] ERROR: item factory failed for "
+            .. tostring(fullType)
+            .. ": "
+            .. tostring(item)
+        )
+
+
+        return nil
+    end
+
+
+    return item
 end
 
 
@@ -542,7 +565,7 @@ end
 --     no_player, no_square, invalid_metal,
 --     multiplayer_unsupported, invalid_surface,
 --     no_pickaxe, no_prospect, no_ore,
---     item_creation_failed
+--     item_creation_failed, spawn_failed
 ------------------------------------------------
 
 function AC_Mining.extract(
@@ -697,12 +720,40 @@ function AC_Mining.extract(
     end
 
 
-    square:AddWorldInventoryItem(
-        item,
-        ZombRandFloat(0.2, 0.8),
-        ZombRandFloat(0.2, 0.8),
-        0
-    )
+    ------------------------------------------------
+    -- Spawn before any persistent change. If the
+    -- engine call throws, nothing has been consumed:
+    -- no reserve decrement, no XP, no wear.
+    ------------------------------------------------
+
+    local spawned,
+          spawnError =
+        pcall(
+            function()
+
+                return
+                    square:AddWorldInventoryItem(
+                        item,
+                        ZombRandFloat(0.2, 0.8),
+                        ZombRandFloat(0.2, 0.8),
+                        0
+                    )
+            end
+        )
+
+
+    if not spawned then
+
+        print(
+            "[AmmoMaking] ERROR: Mining could not place "
+            .. tostring(itemType)
+            .. " on the ground: "
+            .. tostring(spawnError)
+        )
+
+
+        return nil, "spawn_failed"
+    end
 
 
     ------------------------------------------------
