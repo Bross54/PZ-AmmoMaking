@@ -241,13 +241,164 @@ local function printTileGeology(
     )
 
 
+    ------------------------------------------------
+    -- Mining reserves
+    ------------------------------------------------
+
+    local reserves =
+        AC_Deposits.getTileInfo(
+            x,
+            y
+        )
+
+
+    for _,
+        metal
+    in ipairs(
+        AC_Deposits.METALS
+    )
+    do
+
+        local info =
+            reserves[metal]
+
+
+        print(
+            "[AmmoMaking] "
+            .. AC_Deposits.getMetalName(metal)
+            .. " reserve: "
+            .. tostring(info.remaining)
+            .. "/"
+            .. tostring(info.initial)
+            .. " (extracted "
+            .. tostring(info.extracted)
+            .. ", worked "
+            .. tostring(info.worked)
+            .. ")"
+        )
+    end
+
+
     HaloTextHelper.addText(
         player,
         "Tile: Cu "
         .. tostring(copper)
-        .. "% | Zn "
+        .. "% ("
+        .. tostring(reserves.copper.remaining)
+        .. "/"
+        .. tostring(reserves.copper.initial)
+        .. ") | Zn "
         .. tostring(zinc)
-        .. "%"
+        .. "% ("
+        .. tostring(reserves.zinc.remaining)
+        .. "/"
+        .. tostring(reserves.zinc.initial)
+        .. ")"
+    )
+end
+
+
+------------------------------------------------
+-- RESET MINING DEPLETION (3x3)
+------------------------------------------------
+
+local function resetAreaDepletion(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local x =
+        math.floor(
+            player:getX()
+        )
+
+    local y =
+        math.floor(
+            player:getY()
+        )
+
+
+    for offsetX = -1, 1 do
+
+        for offsetY = -1, 1 do
+
+            AC_Deposits.resetTile(
+                x + offsetX,
+                y + offsetY
+            )
+        end
+    end
+
+
+    print(
+        "[AmmoMaking] Mining depletion reset around "
+        .. tostring(x)
+        .. ", "
+        .. tostring(y)
+        .. "; worked tiles in save: "
+        .. tostring(
+            AC_Deposits.getWorkedTileCount()
+        )
+    )
+
+
+    HaloTextHelper.addText(
+        player,
+        "Mining depletion reset (3x3)"
+    )
+end
+
+
+------------------------------------------------
+-- SPAWN MINING TEST ITEMS
+------------------------------------------------
+
+local function spawnMiningTestItems(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local itemTypes = {
+        "Base.Shovel",
+        "Base.PickAxe",
+        AC_GeologySampling.ITEMS.FieldKit,
+        AC_GeologySampling.ITEMS.AdvancedFieldKit,
+    }
+
+
+    for _,
+        itemType
+    in ipairs(
+        itemTypes
+    )
+    do
+
+        local item =
+            player:getInventory():AddItem(
+                itemType
+            )
+
+
+        print(
+            "[AmmoMaking] Debug spawn "
+            .. tostring(itemType)
+            .. ": "
+            .. (item and "OK" or "FAILED")
+        )
+    end
+
+
+    HaloTextHelper.addText(
+        player,
+        "Mining test items added"
     )
 end
 
@@ -510,6 +661,24 @@ local function onFillWorldObjectContextMenu(
         "Show Geology Seed",
         player,
         printGeologySeed
+    )
+
+
+    ------------------------------------------------
+    -- MINING
+    ------------------------------------------------
+
+    geologyMenu:addOption(
+        "Reset Mining Depletion (3x3)",
+        player,
+        resetAreaDepletion
+    )
+
+
+    geologyMenu:addOption(
+        "Spawn Mining Test Items",
+        player,
+        spawnMiningTestItems
     )
 end
 

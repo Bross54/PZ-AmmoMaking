@@ -272,23 +272,43 @@ Copper and zinc will eventually be combined to create different grades of brass.
 
 ---
 
-# Planned Mining System
+# Ore Extraction (first version)
 
-The geology system will eventually feed into a finite deposit system.
+Geology now feeds a finite, per-tile deposit system. A pickaxe alone is not enough to mine.
 
-Deposits will have limited reserves rather than producing unlimited resources.
+Gameplay loop:
 
-Planned mechanics include:
+```text
+Dig geological sample (shovel, 3×3 area)
+        ↓
+Assay the sample (field / advanced / laboratory)
+        ↓
+Carry the assayed sample to the site
+        ↓
+Right-click ground inside the sampled 3×3 area with a pickaxe equipped
+        ↓
+"Mine Copper Ore" / "Mine Zinc Ore"
+        ↓
+Ore is dropped on the mined tile
+```
 
-- finite copper reserves
-- finite zinc reserves
-- deposit depletion
-- concentration affecting mining output
-- deterministic initial reserves
-- persistent depletion
-- only modified deposits stored in save data
+Rules:
 
-This approach is intended to keep the system scalable without storing data for every tile in the game.
+- mining is only offered for metals the assay reports above `None`
+- the assay only decides what the player **knows**; the ore actually extracted always comes from the tile's true geology
+- each tile has a deterministic reserve derived from its concentration grade (`Poor`/`Moderate` 1, `Good` 2, `Rich` 3, `Very Rich` 4, `Trace` 0)
+- each extraction removes one unit and drops one ore (`Base.CopperOre` or `AmmoMaking.ZincOre`)
+- depletion is persistent; only worked tiles are stored in save data (global ModData)
+- a tile is only shown as exhausted after someone has worked it
+- same terrain rules as sampling: outdoor natural ground, ground level only
+- Ammo Making level reduces extraction time (up to 40% at level 10)
+- Ammo Making XP is granted per extracted ore and per completed assay
+- accepted tools: `Base.PickAxe`, `Base.PickAxeForged`
+
+Current limitations:
+
+- single-player only (multiplayer synchronization is planned)
+- the pickaxe action uses the vanilla shovel animation and sound as placeholders
 
 ---
 
@@ -477,13 +497,15 @@ The mod is currently in active development.
 ✅ Laboratory ±2% instrument tolerance  
 ✅ Zinc ore  
 ✅ Zinc ingot  
+✅ Finite per-tile ore deposits  
+✅ Persistent deposit depletion  
+✅ Pickaxe ore extraction tied to assayed samples  
+✅ Ammo Making XP from assays and extraction  
 
 ## 🚧 In Development
 
 🔄 Final Laboratory Analyzer visuals  
 🔄 Laboratory Analyzer directional sprites / visual rotation  
-🔄 Finite ore deposits  
-🔄 Deposit depletion  
 🔄 Mining machine  
 🔄 Mining fuel consumption  
 🔄 Mining component wear  
@@ -598,7 +620,9 @@ PZ-AmmoMaking
                     │   ├── AC_GeologyDebug.lua
                     │   ├── AC_GeologyAssayUI.lua
                     │   ├── AC_GeologySamplingContextMenu.lua
-                    │   └── AC_DigGeologicalSampleAction.lua
+                    │   ├── AC_DigGeologicalSampleAction.lua
+                    │   ├── AC_MiningContextMenu.lua
+                    │   └── AC_MineOreAction.lua
                     │
                     ├── server
                     │   └── BuildingObjects
@@ -611,7 +635,9 @@ PZ-AmmoMaking
                         ├── AC_WorldData.lua
                         ├── AC_Geology.lua
                         ├── AC_GeologySampling.lua
-                        └── AC_LaboratoryAnalyzer.lua
+                        ├── AC_LaboratoryAnalyzer.lua
+                        ├── AC_Deposits.lua
+                        └── AC_Mining.lua
 ```
 
 The repository structure may change as additional systems are implemented.
