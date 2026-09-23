@@ -680,6 +680,242 @@ end
 
 
 ------------------------------------------------
+-- INSPECT CLICKED TILE OBJECTS
+------------------------------------------------
+--
+-- Lists every object, special object and world item
+-- on the clicked square with its sprite name, to pick
+-- vanilla sprites (the analyzer's world sprite was
+-- found this way) and to check placed analyzers: an
+-- analyzer also prints its stored state, read without
+-- updating it. Recovered from the standalone
+-- AC_SpriteInspector of the local branch.
+------------------------------------------------
+
+local function safeCall(
+    object,
+    methodName
+)
+
+    if not object
+        or not object[methodName]
+    then
+
+        return nil
+    end
+
+
+    local ok,
+          result =
+        pcall(
+            object[methodName],
+            object
+        )
+
+
+    if ok then
+        return result
+    end
+
+
+    return nil
+end
+
+
+local function getSpriteName(
+    object
+)
+
+    local textureName =
+        safeCall(
+            object,
+            "getTextureName"
+        )
+
+
+    if textureName
+        and textureName ~= ""
+    then
+
+        return textureName
+    end
+
+
+    return
+        safeCall(
+            safeCall(
+                object,
+                "getSprite"
+            ),
+            "getName"
+        )
+end
+
+
+local function describeAnalyzer(
+    object
+)
+
+    if not AC_LaboratoryAnalyzer.isAnalyzerWorldObject(
+        object
+    ) then
+
+        return ""
+    end
+
+
+    local data =
+        AC_LaboratoryAnalyzer.getAnalyzerData(
+            object
+        )
+        or {}
+
+
+    local kind =
+        AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+            object
+        )
+        and "placed"
+        or "dropped"
+
+
+    return
+        " | analyzer (" .. kind .. ")"
+        .. " state=" .. tostring(data.labAnalyzerState)
+        .. " remaining=" .. tostring(data.labRemainingHours)
+        .. " lastUpdate=" .. tostring(data.labLastUpdateAt)
+        .. " sample=" .. tostring(data.storedSample == true)
+        .. " at " .. tostring(data.stored_sampleX)
+        .. "," .. tostring(data.stored_sampleY)
+end
+
+
+local function logObjectList(
+    label,
+    list
+)
+
+    if not list then
+        return
+    end
+
+
+    log(
+        label
+        .. ": "
+        .. list:size()
+    )
+
+
+    for index = 0,
+        list:size() - 1
+    do
+
+        local object =
+            list:get(
+                index
+            )
+
+
+        log(
+            label
+            .. " #"
+            .. index
+            .. " | objectName="
+            .. tostring(
+                safeCall(
+                    object,
+                    "getObjectName"
+                )
+            )
+            .. " | name="
+            .. tostring(
+                safeCall(
+                    object,
+                    "getName"
+                )
+            )
+            .. " | sprite="
+            .. tostring(
+                getSpriteName(
+                    object
+                )
+            )
+            .. describeAnalyzer(
+                object
+            )
+        )
+    end
+end
+
+
+local function inspectTileObjects(
+    player,
+    square
+)
+
+    if not player then
+        return
+    end
+
+
+    if not square then
+
+        halo(
+            player,
+            "No tile to inspect"
+        )
+
+
+        return
+    end
+
+
+    log(
+        "TILE OBJECTS "
+        .. tostring(square:getX())
+        .. ", "
+        .. tostring(square:getY())
+        .. ", "
+        .. tostring(square:getZ())
+    )
+
+
+    logObjectList(
+        "Object",
+        safeCall(
+            square,
+            "getObjects"
+        )
+    )
+
+
+    logObjectList(
+        "SpecialObject",
+        safeCall(
+            square,
+            "getSpecialObjects"
+        )
+    )
+
+
+    logObjectList(
+        "WorldObject",
+        safeCall(
+            square,
+            "getWorldObjects"
+        )
+    )
+
+
+    halo(
+        player,
+        "Tile objects written to console"
+    )
+end
+
+
+------------------------------------------------
 -- SKILL LEVEL
 ------------------------------------------------
 
@@ -877,6 +1113,48 @@ AC_GeologyDebug.spawnAssayedSample =
 AC_GeologyDebug.compat =
     runCompatibilityCheck
 
+AC_GeologyDebug.objects =
+    inspectTileObjects
+
+
+------------------------------------------------
+-- CLICKED SQUARE
+------------------------------------------------
+
+local function getClickedSquare(
+    worldObjects
+)
+
+    if not worldObjects then
+        return nil
+    end
+
+
+    for _,
+        object
+    in ipairs(
+        worldObjects
+    )
+    do
+
+        if object
+            and object.getSquare
+        then
+
+            local square =
+                object:getSquare()
+
+
+            if square then
+                return square
+            end
+        end
+    end
+
+
+    return nil
+end
+
 
 ------------------------------------------------
 -- WORLD CONTEXT MENU
@@ -942,6 +1220,18 @@ local function onFillWorldObjectContextMenu(
     menu:addOption("Survey Current Area (3x3)", player, surveyArea)
 
     menu:addOption("Show Geology Seed", player, showSeed)
+
+
+    local clickedSquare =
+        getClickedSquare(
+            worldObjects
+        )
+
+
+    if clickedSquare then
+
+        menu:addOption("Inspect Clicked Tile Objects (sprites, analyzer state)", player, inspectTileObjects, clickedSquare)
+    end
 
 
     ------------------------------------------------

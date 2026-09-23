@@ -1856,6 +1856,7 @@ do
     check(root ~= nil and root.submenu ~= nil, "debug submenu in debug mode")
     local expected = {
         "Inspect Current Tile", "Survey Current Area (3x3)", "Show Geology Seed",
+        "Inspect Clicked Tile Objects (sprites, analyzer state)",
         "Reset Depletion: Current Tile", "Reset Depletion: 3x3 Area",
         "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
         "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
@@ -1934,6 +1935,32 @@ do
     local okCompat = pcall(AC_GeologyDebug.compat, player)
     MOCK.capturePrint(false)
     check(okCompat, "compat tool runs")
+
+    -- Tile object inspector (recovered sprite inspector)
+    local labSquare = poweredLabSquare(x + 5, y)
+    local wall = MOCK.newWorldObject({ name = "wall", sprite = "walls_exterior_house_01_0" })
+    labSquare:AddSpecialObject(wall)
+    local analyzer = placeAnalyzerObject(labSquare)
+    local s = makeSample(x + 5, y, 1, "Good", "None")
+    s.modData.trueCopper = 60
+    s.modData.trueZinc = 0
+    player.inventory:addItem(s)
+    MOCK.worldHours = 900
+    AC_LaboratoryAnalyzer.startAssay(player, analyzer, s)
+    local stateBefore = analyzer.modData.labLastUpdateAt
+    MOCK.worldHours = 905
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local okObjects = pcall(AC_GeologyDebug.objects, player, labSquare)
+    MOCK.capturePrint(false)
+    check(okObjects, "tile object inspector runs")
+    check(MOCK.printLogContains("sprite=walls_exterior_house_01_0"), "sprite names listed")
+    check(MOCK.printLogContains("analyzer (placed) state=processing"), "placed analyzer state listed")
+    eq(analyzer.modData.labLastUpdateAt, stateBefore, "inspector does not advance the analyzer")
+    eq(wall:hasModData(), false, "inspector creates no ModData on ordinary objects")
+    check(pcall(AC_GeologyDebug.objects, player, nil), "inspector tolerates a missing square")
+    check(pcall(AC_GeologyDebug.objects, player, { getX = function() return 1 end, getY = function() return 1 end, getZ = function() return 0 end }), "inspector tolerates a square without object lists")
+    MOCK.worldHours = 0
     MOCK.debug = false
 end
 
