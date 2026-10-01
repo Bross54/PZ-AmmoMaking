@@ -267,6 +267,133 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    /* Rifle components. Same model as the pistol ones; the rifle primers are
+       their own families and are not interchangeable with pistol primers. */
+
+    item SmallRiflePrimer
+    {
+        DisplayName = Small Rifle Primer,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.001,
+        Icon = SnapCap,
+        WorldStaticModel = CapGunCap,
+        Tags = base:hasmetal,
+    }
+
+    item LargeRiflePrimer
+    {
+        DisplayName = Large Rifle Primer,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.002,
+        Icon = SnapCap,
+        WorldStaticModel = CapGunCap,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet556NATO
+    {
+        DisplayName = 5.56 Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case556NATO
+    {
+        DisplayName = Empty 5.56 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.008,
+        Icon = RifleAmmo308loose,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet556NATO
+    {
+        DisplayName = 5.56 Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet3030Win
+    {
+        DisplayName = .30-30 Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case3030Win
+    {
+        DisplayName = Empty .30-30 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = RifleAmmo308loose,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet3030Win
+    {
+        DisplayName = .30-30 Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet308Win
+    {
+        DisplayName = .308 Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case308Win
+    {
+        DisplayName = Empty .308 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = RifleAmmo308loose,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet308Win
+    {
+        DisplayName = .308 Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

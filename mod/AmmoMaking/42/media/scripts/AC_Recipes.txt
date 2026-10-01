@@ -261,6 +261,86 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_MakeSmallRiflePrimersFromCaps
+    {
+        time = 150,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onMakeSmallRiflePrimersFromCaps,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 15 [Base.CapGunCap],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 10 AmmoMaking.SmallRiflePrimer,
+        }
+    }
+
+    craftRecipe AmmoMaking_MakeSmallRiflePrimersFromMatches
+    {
+        time = 150,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onMakeSmallRiflePrimersFromMatches,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 30 [Base.Matches;Base.Matchbox],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 10 AmmoMaking.SmallRiflePrimer,
+        }
+    }
+
+    craftRecipe AmmoMaking_MakeLargeRiflePrimersFromCaps
+    {
+        time = 150,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onMakeLargeRiflePrimersFromCaps,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 15 [Base.CapGunCap],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.LargeRiflePrimer,
+        }
+    }
+
+    craftRecipe AmmoMaking_MakeLargeRiflePrimersFromMatches
+    {
+        time = 150,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onMakeLargeRiflePrimersFromMatches,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 30 [Base.Matches;Base.Matchbox],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.LargeRiflePrimer,
+        }
+    }
+
     craftRecipe AmmoMaking_ForgeDieSet9mm
     {
         time = 300,
@@ -658,6 +738,246 @@ module Base
         outputs
         {
             item 1 Base.Bullets44,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet556NATO
+    {
+        time = 400,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet556NATO,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase556NATO
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase556NATO,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets556NATO
+    {
+        time = 120,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets556NATO,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound556NATO
+    {
+        time = 80,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound556NATO,
+        inputs
+        {
+            item 1 [AmmoMaking.Case556NATO],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.Bullet556NATO],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.556Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet3030Win
+    {
+        time = 400,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet3030Win,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase3030Win
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase3030Win,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets3030Win
+    {
+        time = 120,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets3030Win,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound3030Win
+    {
+        time = 80,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound3030Win,
+        inputs
+        {
+            item 1 [AmmoMaking.Case3030Win],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet3030Win],
+            item 4 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.3030Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet308Win
+    {
+        time = 400,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet308Win,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase308Win
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase308Win,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets308Win
+    {
+        time = 120,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets308Win,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound308Win
+    {
+        time = 80,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound308Win,
+        inputs
+        {
+            item 1 [AmmoMaking.Case308Win],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet308Win],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.308Bullets,
         }
     }
 }

@@ -124,18 +124,27 @@ AC_Calibres.COMPOUND_SOURCES = {
 --
 --   SmallPistol  9mm, .38 Special, .357 Magnum
 --   LargePistol  .45 ACP, .44 Magnum
+--   SmallRifle   5.56
+--   LargeRifle   .308, .30-30
 --
--- Both are made the same way from the same inputs: one
--- small brass sheet and the same priming charge. A large
--- primer holds twice the brass and twice the compound,
--- so the sheet yields half as many. Neither family is
--- cheaper per unit of material than the other.
+-- All are made the same way: one small brass sheet and a
+-- priming charge of toy caps or match heads. A large
+-- primer holds twice the brass and twice the compound of
+-- the small one, so the sheet yields half as many. A
+-- rifle primer is the pistol primer of its size with half
+-- as much compound again. No family is cheaper per unit
+-- of material than another, and no recipe accepts another
+-- family's primer. "class" ties a family to pistol or
+-- rifle calibres: a rifle round may not name a pistol
+-- primer family, nor the other way round.
 ------------------------------------------------
 
 AC_Calibres.PRIMERS = {
 
     {
         id = "SmallPistol",
+
+        class = "pistol",
 
         item = "AmmoMaking.SmallPistolPrimer",
 
@@ -158,6 +167,8 @@ AC_Calibres.PRIMERS = {
     {
         id = "LargePistol",
 
+        class = "pistol",
+
         item = "AmmoMaking.LargePistolPrimer",
 
         brassUnits = 2,
@@ -172,6 +183,46 @@ AC_Calibres.PRIMERS = {
 
         time = 120,
     },
+
+    {
+        id = "SmallRifle",
+
+        class = "rifle",
+
+        item = "AmmoMaking.SmallRiflePrimer",
+
+        brassUnits = 1,
+
+        compoundUnits = 3,
+
+        perSheet = 10,
+
+        requiredLevel = 4,
+
+        xp = 3,
+
+        time = 150,
+    },
+
+    {
+        id = "LargeRifle",
+
+        class = "rifle",
+
+        item = "AmmoMaking.LargeRiflePrimer",
+
+        brassUnits = 2,
+
+        compoundUnits = 6,
+
+        perSheet = 5,
+
+        requiredLevel = 4,
+
+        xp = 3,
+
+        time = 150,
+    },
 }
 
 
@@ -180,6 +231,9 @@ AC_Calibres.PRIMERS = {
 ------------------------------------------------
 --
 -- id       shown in debug labels and logs
+-- class    "pistol" (default) or "rifle": which CLASSES
+--          entry supplies the values a definition leaves
+--          out. Nothing else branches on it.
 -- suffix   used in item and recipe ids (letters and
 --          digits only)
 -- round    the vanilla cartridge item the assembly makes
@@ -206,8 +260,9 @@ AC_Calibres.PRIMERS = {
 --          "levels" may still override any single step.
 -- xp, time per step
 --
--- Anything a definition leaves out comes from DEFAULTS,
--- so a new calibre states only what makes it different.
+-- Anything a definition leaves out comes from its class,
+-- then from DEFAULTS, so a new calibre states only what
+-- makes it different.
 --
 -- MATERIAL SCALE (gameplay units, not grains; tunable).
 -- The standard pistol round is the baseline: one cup of
@@ -221,6 +276,20 @@ AC_Calibres.PRIMERS = {
 --   .45 ACP      1        1            1     large
 --   .357 Magnum  1        2            2     small
 --   .44 Magnum   2        1            3     large
+--
+-- Rifle rounds are the next tier: bottleneck cases take
+-- two or three cups, and the powder scale is compressed
+-- (a literal .308 charge would be nine uses, nearly a
+-- jar per round):
+--
+--   5.56         2        2            3     small rifle
+--   .30-30       2        1            4     large rifle
+--   .308         3        1            5     large rifle
+--
+-- Rifles are made by hand with the same kind of die set
+-- as pistols; what sets them apart is level, time,
+-- material and powder, not a quality penalty. A future
+-- press takes the same die sets.
 ------------------------------------------------
 
 AC_Calibres.DEFAULTS = {
@@ -247,6 +316,44 @@ AC_Calibres.DEFAULTS = {
         case = 80,
         bullet = 80,
         assemble = 40,
+    },
+}
+
+
+------------------------------------------------
+-- Per-class values that differ from DEFAULTS. A rifle
+-- round unlocks at the top of the pistol ladder, takes
+-- about twice as long at every step, and its larger
+-- components are worth a little more XP.
+------------------------------------------------
+
+AC_Calibres.CLASSES = {
+
+    pistol = {},
+
+    rifle = {
+
+        primerFamily = "LargeRifle",
+
+        cupsPerCase = 2,
+
+        bulletsPerScrap = 1,
+
+        powderUses = 4,
+
+        assembleLevel = 5,
+
+        xp = {
+            case = 2,
+            assemble = 4,
+        },
+
+        time = {
+            dieSet = 400,
+            case = 160,
+            bullet = 120,
+            assemble = 80,
+        },
     },
 }
 
@@ -328,6 +435,16 @@ function AC_Calibres.define(
         )
 
 
+    calibre.class =
+        calibre.class or "pistol"
+
+
+    -- An unknown class is reported by validate(); here it
+    -- simply contributes nothing.
+    local class =
+        AC_Calibres.CLASSES[calibre.class] or {}
+
+
     calibre.case =
         calibre.case or ("AmmoMaking.Case" .. calibre.suffix)
 
@@ -344,6 +461,11 @@ function AC_Calibres.define(
         { "primerFamily", "cupsPerCase", "bulletsPerScrap", "powderUses", "assembleLevel" }
     )
     do
+
+        if calibre[key] == nil then
+            calibre[key] = class[key]
+        end
+
 
         if calibre[key] == nil then
             calibre[key] = defaults[key]
@@ -364,6 +486,7 @@ function AC_Calibres.define(
     }
 
 
+    -- DEFAULTS, then the class, then the definition.
     for key,
         base
     in pairs(
@@ -377,14 +500,22 @@ function AC_Calibres.define(
             )
 
 
-        for step,
-            value
-        in pairs(
-            definition[key] or {}
+        for _,
+            overrides
+        in ipairs(
+            { class[key] or {}, definition[key] or {} }
         )
         do
 
-            merged[step] = value
+            for step,
+                value
+            in pairs(
+                overrides
+            )
+            do
+
+                merged[step] = value
+            end
         end
 
 
@@ -477,6 +608,61 @@ AC_Calibres.LIST = {
         assembleLevel = 5,
 
         xp = { case = 2, assemble = 4 },
+    }),
+
+    ------------------------------------------------
+    -- Rifle calibres (docs/RIFLE_AMMUNITION_RESEARCH.md)
+    ------------------------------------------------
+
+    AC_Calibres.define({
+
+        id = "5.56",
+
+        class = "rifle",
+
+        suffix = "556NATO",
+
+        round = "Base.556Bullets",
+
+        ammoType = "base:bullets_556",
+
+        primerFamily = "SmallRifle",
+
+        bulletsPerScrap = 2,
+
+        powderUses = 3,
+    }),
+
+    AC_Calibres.define({
+
+        id = ".30-30",
+
+        class = "rifle",
+
+        suffix = "3030Win",
+
+        round = "Base.3030Bullets",
+
+        ammoType = "base:bullets_3030",
+    }),
+
+    AC_Calibres.define({
+
+        id = ".308",
+
+        class = "rifle",
+
+        suffix = "308Win",
+
+        round = "Base.308Bullets",
+
+        ammoType = "base:bullets_308",
+
+        cupsPerCase = 3,
+
+        powderUses = 5,
+
+        xp = { case = 3, assemble = 5 },
     }),
 }
 
@@ -608,6 +794,11 @@ function AC_Calibres.validate(
         then
             problem(name, "invalid level")
         end
+
+
+        if not AC_Calibres.CLASSES[primer.class] then
+            problem(name, "unknown class " .. tostring(primer.class))
+        end
     end
 
 
@@ -641,6 +832,11 @@ function AC_Calibres.validate(
 
 
         ids[name] = true
+
+
+        if not AC_Calibres.CLASSES[calibre.class] then
+            problem(name, "unknown class " .. tostring(calibre.class))
+        end
 
 
         if type(calibre.suffix) ~= "string"
@@ -699,6 +895,8 @@ function AC_Calibres.validate(
 
         if not primer then
             problem(name, "unknown primer family " .. tostring(calibre.primerFamily))
+        elseif primer.class ~= calibre.class then
+            problem(name, "a " .. tostring(calibre.class) .. " calibre cannot take the " .. tostring(primer.class) .. " primer family " .. tostring(primer.id))
         end
 
 

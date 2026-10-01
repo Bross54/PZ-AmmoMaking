@@ -796,7 +796,9 @@ local function printCalibreDefinitions(
 
         log(
             calibre.id
-            .. " -> "
+            .. " ["
+            .. tostring(calibre.class)
+            .. "] -> "
             .. tostring(calibre.round)
             .. " | case "
             .. tostring(calibre.case)

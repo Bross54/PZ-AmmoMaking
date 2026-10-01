@@ -29,5 +29,21 @@
     "AmmoMaking_ForgeDieSet44Magnum": "Forge .44 Magnum Handloading Die Set",
     "AmmoMaking_FormCase44Magnum": "Form .44 Magnum Case",
     "AmmoMaking_SwageBullets44Magnum": "Swage .44 Magnum Copper Bullets",
-    "AmmoMaking_AssembleRound44Magnum": "Assemble .44 Magnum Round"
+    "AmmoMaking_AssembleRound44Magnum": "Assemble .44 Magnum Round",
+    "AmmoMaking_MakeSmallRiflePrimersFromCaps": "Make Small Rifle Primers (Toy Caps)",
+    "AmmoMaking_MakeSmallRiflePrimersFromMatches": "Make Small Rifle Primers (Match Heads)",
+    "AmmoMaking_MakeLargeRiflePrimersFromCaps": "Make Large Rifle Primers (Toy Caps)",
+    "AmmoMaking_MakeLargeRiflePrimersFromMatches": "Make Large Rifle Primers (Match Heads)",
+    "AmmoMaking_ForgeDieSet556NATO": "Forge 5.56 Handloading Die Set",
+    "AmmoMaking_FormCase556NATO": "Form 5.56 Case",
+    "AmmoMaking_SwageBullets556NATO": "Swage 5.56 Copper Bullets",
+    "AmmoMaking_AssembleRound556NATO": "Assemble 5.56 Round",
+    "AmmoMaking_ForgeDieSet3030Win": "Forge .30-30 Handloading Die Set",
+    "AmmoMaking_FormCase3030Win": "Form .30-30 Case",
+    "AmmoMaking_SwageBullets3030Win": "Swage .30-30 Copper Bullets",
+    "AmmoMaking_AssembleRound3030Win": "Assemble .30-30 Round",
+    "AmmoMaking_ForgeDieSet308Win": "Forge .308 Handloading Die Set",
+    "AmmoMaking_FormCase308Win": "Form .308 Case",
+    "AmmoMaking_SwageBullets308Win": "Swage .308 Copper Bullets",
+    "AmmoMaking_AssembleRound308Win": "Assemble .308 Round"
 }
