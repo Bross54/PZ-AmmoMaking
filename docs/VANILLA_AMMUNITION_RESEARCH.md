@@ -5,127 +5,208 @@ Status: read on 2026-10-02 from the installed game at
 relative to `media/`. Nothing here was observed in a running game.
 
 Evidence levels as in `VANILLA_METALLURGY_RESEARCH.md`: **FILE** (installed
-script / Lua / translation), **JAR** (`projectzomboid.jar`).
+script / Lua / translation), **JAR** (`projectzomboid.jar`, `javap -p -c`).
 
-## 1. What vanilla has
+"None" below means the item ids in `scripts/generated/items/*.txt`, every
+script file, `lua/` and `Translate/EN/ItemName.json` were searched for the
+words listed and nothing matched.
 
-### Finished ammunition (FILE: `scripts/generated/items/normal.txt`)
+## 1. Finished ammunition
 
-| Item | Name | Weight | `count` | Weapon `AmmoType` |
-|---|---|---|---|---|
-| `Base.Bullets9mm` | 9x19mm Round | 0.02 | 5 | `base:bullets_9mm` |
-| `Base.Bullets45` | .45 ACP Round | 0.025 | 5 | `base:bullets_45` |
-| `Base.Bullets38` | .38 Special Round | 0.015 | 5 | `base:bullets_38` |
-| `Base.Bullets357` | .357 Magnum Round | 0.02 | 5 | `base:bullets_357` |
-| `Base.Bullets44` | .44 Magnum Round | 0.03 | 3 | `base:bullets_44` |
-| `Base.308Bullets` | 7.62x51mm Round | 0.04 | 5 | `base:bullets_308` |
-| `Base.556Bullets` | 5.56x45mm Round | 0.035 | 5 | `base:bullets_556` |
-| `Base.3030Bullets` | .30-30 Round | 0.05 | 5 | `base:bullets_3030` |
-| `Base.ShotgunShells` | 12g Round | 0.06 | 6 | `base:shotgun_shells` |
+FILE: `scripts/generated/items/normal.txt`, `weapon.txt`.
 
-All are `DisplayCategory = Ammo`, `ItemType = base:normal`, `Tags = base:ammo`
-(shells also `base:shotgunshell`), `MetalValue = 1.0`. Each has a box and a
-carton item. Weapons name their ammunition through `AmmoType = base:bullets_…`,
-a registry id (`Registries.AMMO_TYPE`, JAR); a new calibre would have to be
-registered from `media/registries.lua`. **The mod should produce the vanilla
-round items**, so every vanilla firearm accepts them unchanged.
+| Round | Name | Weight | `count` | Box / carton | Weapon `AmmoType` |
+|---|---|---|---|---|---|
+| `Base.Bullets9mm` | 9x19mm Round | 0.02 | 5 | `Bullets9mmBox` (50) / `Bullets9mmCarton` | `base:bullets_9mm` |
+| `Base.Bullets45` | .45 ACP Round | 0.025 | 5 | `Bullets45Box` (50) | `base:bullets_45` |
+| `Base.Bullets38` | .38 Special Round | 0.015 | 5 | `Bullets38Box` (50) | `base:bullets_38` |
+| `Base.Bullets357` | .357 Magnum Round | 0.02 | 5 | `Bullets357Box` (50) | `base:bullets_357` |
+| `Base.Bullets44` | .44 Magnum Round | 0.03 | 3 | `Bullets44Box` (20) | `base:bullets_44` |
+| `Base.308Bullets` | 7.62x51mm Round | 0.04 | 5 | `308Box` (20) | `base:bullets_308` |
+| `Base.556Bullets` | 5.56x45mm Round | 0.035 | 5 | `556Box` (20) | `base:bullets_556` |
+| `Base.3030Bullets` | .30-30 Round | 0.05 | 5 | `3030Box` (20) | `base:bullets_3030` |
+| `Base.ShotgunShells` | 12g Round | 0.06 | 6 | `ShotgunShellsBox` (25) | `base:shotgun_shells` |
 
-### Recipes (FILE: `scripts/generated/recipes/recipes_ammunition.txt`, the whole file)
+- All: `DisplayCategory = Ammo`, `ItemType = base:normal`, `Tags = base:ammo`,
+  `MetalValue = 1.0`. **One item is one cartridge.** A box is a separate item
+  that `OpenBoxOfBullets50` turns into 50 loose rounds.
+- The 9 mm pistol: `item Pistol { AmmoType = base:bullets_9mm, MagazineType =
+  Base.9mmClip, AmmoBox = Base.Bullets9mmBox }`; `item 9mmClip { AmmoType =
+  base:bullets_9mm, MaxAmmo = 15 }`. `AmmoType` is a registry id
+  (`Registries.AMMO_TYPE`, JAR), so a mod calibre would need
+  `media/registries.lua`. Producing the vanilla round avoids all of that.
+- **The `count` field does not multiply recipe outputs.** The classes that
+  both use the item script and call a `getCount` are `ItemContainer`,
+  `ItemPickerJava`, `IsoGridSquare`, `IsoTrap`, `ItemUser`, `InventoryItem`
+  and a few non-inventory ones; none is in the crafting packages
+  (`CraftRecipeData`, `OutputScript`, `CraftRecipe` do not reference it) (JAR).
+  It is why loot and `inventory:AddItem("Base.Bullets9mm")` give five rounds;
+  `item 1 Base.Bullets9mm` in a recipe gives one. This matches
+  `OpenBoxOfBullets50`, which outputs `item 50` for a 50-round box.
+
+## 2. Ammunition recipes
+
+FILE: `scripts/generated/recipes/recipes_ammunition.txt` (the whole file).
 
 | Recipe | What it does |
 |---|---|
-| `GatherGunpowder` | 1 `tags[base:ammo]` + pliers (kept) → `Base.GunPowder` with one use. `AnySurfaceCraft`, `timedAction = Making`, `time = 30` |
+| `GatherGunpowder` | 1 `tags[base:ammo] mode:destroy` + pliers (kept) → `item 1 Base.GunPowder flags[HasOneUse]`. `AnySurfaceCraft`, `timedAction = Making`, `time = 30`, `category = Packing` |
 | `OpenBoxOfBullets50` / `20`, `OpenBoxOfShotgunShells` | box → loose rounds |
 | `place_ammo_in_box` | loose rounds → box |
 
-That is all. **Vanilla has no recipe that makes a round.**
+**No vanilla recipe makes a round**, and dismantling one yields exactly one
+use of gunpowder and nothing else.
 
-### Components
+## 3. Cartridge components
 
-| Component | Vanilla | Evidence |
+| Component | Vanilla | Searched for |
 |---|---|---|
-| Powder | `Base.GunPowder`: `ItemType = base:drainable`, `UseDelta = 0.1` (10 uses), Weight 0.5, icon `GunpowderJar` | `items/drainable.txt` |
-| Powder consumers | `MakePipeBomb` (`item 20 [Base.GunPowder]` = 20 uses), `MakeFirecracker` (1 use) | `recipes/recipes_traps.txt` |
-| Cartridge case | **none**. No item, tag or translation contains "casing" or an empty case | grep of `scripts/`, `ItemName.json` |
-| Spent brass | **none**. Firing leaves no item; "casing" appears in Lua only in `ISRackFirearm.lua` / `ISReloadWeaponAction.lua`, not as an item id | grep of `lua/` |
-| Primer | **none** | grep |
-| Bullet / projectile | **none** | grep |
-| Lead | **none** as a material (`Base.LeadPipe` is a weapon) | grep |
-| Brass | `Base.BrassIngot`, `Base.BrassScrap`; no vanilla recipe consumes them | metallurgy research §9 |
+| Cartridge case | **none** | casing, case (as ammunition), shell, hull, brass |
+| Spent brass | **none**; firing leaves no item. "casing" occurs in Lua only in `ISRackFirearm.lua` / `ISReloadWeaponAction.lua`, not as an item | casing, spent |
+| Primer | **none** | primer, percussion, cap, detonator, blasting, fulminate |
+| Bullet / projectile | **none**. `Base.SteelSlug` is a steel bar offcut (`base:steelmaterial`), `Base.Slug` an animal | bullet, slug, projectile, pellet, shot |
+| Lead | **none** as a material. `Base.LeadPipe` is a weapon and no recipe takes it apart | lead, sinker, weight |
+| Propellant | `Base.GunPowder` (§4) | powder, propellant |
 
-So of the four cartridge components, vanilla provides one (powder, and only by
-dismantling existing rounds). Cases, primers and projectiles are the mod's to
-define.
+The "Reloading" perk and the Reloading books are about loading firearms faster,
+not handloading.
 
-## 2. Metal-forming conventions the component recipes can copy (FILE)
+## 4. Gunpowder and its ingredients
 
-Vanilla shapes non-ferrous metal in two ways.
+FILE: `items/drainable.txt`, `recipes/recipes_traps.txt`,
+`lua/shared/Foraging/Categories/Trash.lua`.
 
-**Hot, at a forge** (`entities/blacksmith/craftRecipes/recipes_blacksmith_other_metals.txt`):
+- `Base.GunPowder`: `ItemType = base:drainable`, `UseDelta = 0.1` (10 uses),
+  Weight 0.5, icon `GunpowderJar`. Sources: `GatherGunpowder`, and foraging
+  (it is listed in the Trash foraging category). It is in no loot
+  distribution.
+- Consumers: `MakePipeBomb` (`item 20 [Base.GunPowder]`), `MakeFirecracker`
+  (`item 1 [Base.GunPowder]`).
+- **An input line of a drainable counts uses, not items** (JAR:
+  `InputScript.isUsesPartialItem`: true for `ItemType.DRAINABLE` unless the
+  line is `mode:keep`, `mode:destroy` or carries `flags[ItemCount]`). So
+  `item 1 [Base.GunPowder]` is one use, the amount one dismantled round gives.
+- A drainable output is a full item unless it carries `flags[HasOneUse]` or
+  `HasNoUses` (JAR: `OutputFlag`).
+
+Raw materials a powder recipe could use:
+
+| Resource | Vanilla | Notes |
+|---|---|---|
+| Charcoal | `Base.Charcoal` (loot), `Base.CharcoalCrafted` (made at the charcoal pit / burner, so renewable), `Base.Coke`; all `base:charcoal` | already the fuel of every furnace recipe |
+| Sulfur | **none** | sulfur, sulphur |
+| Nitrate | **no item by that name** (nitrate, saltpeter, potassium, niter). The nearest vanilla things: `Base.Fertilizer` (`base:drainable`, `UseDelta = 0.125` = 8 uses, tag `base:fertilizer`, 18 distribution entries) and `Base.Coldpack`, which vanilla itself uses as the reactive ingredient of `MakeSmokeBomb` | |
+| Other chemistry | fluids `Bleach`, `Acid`, `RubbingAlcohol`, `CleaningLiquid`; `Base.CompostBag`; animal dung items. No chemistry station, no chemistry recipes | |
+| Grinding tool | `Base.MortarPestle`, `Base.CeramicMortarandPestle` (craftable pottery), both `base:mortarpestle`. Used kept in `MakeAerosolBomb` (`flags[MayDegradeLight]`), the gas-mask filter recipes (with charcoal) and the poultices | |
+| Measuring | `Base.Calipers`, `Base.Funnel`, `Mov_ScaleMedical` (furniture). No recipe uses a scale | |
+
+So vanilla has two of black powder's three ingredients in gameplay form
+(charcoal, and fertilizer as the nitrate stand-in), a grinding tool, and no
+sulfur.
+
+## 5. Explosives (how vanilla abstracts energetic materials)
+
+FILE: `recipes/recipes_traps.txt`. All `NeedToBeLearn = true`, no skill.
+
+| Recipe | Energetic input |
+|---|---|
+| `MakePipeBomb` | 20 uses of `Base.GunPowder` |
+| `MakeFirecracker` | 1 use of `Base.GunPowder` |
+| `MakeAerosolBomb` | `Base.Sparklers` + aluminium, mortar and pestle kept |
+| `MakeSmokeBomb` | `Base.Coldpack` + newspaper |
+| `MakeFlameBomb` | 1.0 petrol |
+
+Vanilla's convention is a household item standing in for a chemical, ground
+or mixed with simple tools on a surface. A primer or powder recipe in that
+style fits the game; a chemistry simulation would not.
+
+## 6. Primer-like items
+
+| Item | Definition | Availability |
+|---|---|---|
+| `Base.CapGunCap` | toy cap, Weight 0.005, icon `SnapCap`, `DisplayCategory = Memento`. Ammunition of the toy cap guns (`AmmoType = base:cap_gun_cap`) | loose and as `Base.CapGunCapBox` (100 caps, `OpenBox100`) in two toy-themed distribution lists |
+| `Base.Matches`, `Base.Matchbox` | drainables, 10 and 50 uses, `base:startfire` | 42 and 25 distribution entries: common |
+| `Base.MagnesiumShavings`, `Base.Sparklers` | fire tinder; aerosol bomb ingredient | loot |
+
+Toy caps are an impact-sensitive charge in a cup, which is what a primer is;
+match heads are the other classic improvised priming compound. Both are real
+loot, neither requires dismantling ammunition.
+
+## 7. Metal-forming conventions to copy
+
+Hot, at a forge (`entities/blacksmith/craftRecipes/`):
 
 ```text
-craftRecipe Forge_Copper_Sheet
+craftRecipe Forge_Small_Metalworking_Punch_Set      (the template for a small tool set)
 {
-    time = 200,
-    SkillRequired = Blacksmith:0,
-    timedAction = HammerMetalStanding,
-    Tags = PrimitiveForge,
-    category = Blacksmithing,
+    time = 300, SkillRequired = Blacksmith:5, NeedToBeLearn = true,
+    timedAction = HammerMetalStanding, xpAward = Blacksmith:45,
+    Tags = Forge, category = Tools,
     inputs
     {
-        item 1 tags[base:charcoal],
-        item 4 [Base.CopperScrap;Base.SmallCopperSheet],
-        item 1 tags[base:hammer;base:clubhammer] mode:keep flags[Prop1;MayDegradeLight],
-        item 1 tags[base:tongs;base:metalworkingpliers] mode:keep flags[Prop2;MayDegradeLight],
+        item 2 tags[base:charcoal],
+        item 2 [Base.SteelBarQuarter],
+        item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+        item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+        item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
     }
-    outputs { item 1 Base.CopperSheet, }
+    outputs { item 1 Base.SmallPunchSet, }
 }
 ```
 
-`Forge_Small_Copper_Sheet` is the same with 1 scrap → 1 `Base.SmallCopperSheet`
-(Weight 0.5, icon `Sheet_Copper_Small`, world model `SmallCopperSheet`).
-`Forge_Gold_Sheets` turns one small bar into 4 sheets. Products are then made
-from sheets (`Forge_Cup`: 1 small sheet → 1 cup, `Forge` tag, Blacksmith 3).
+`Base.SmallPunchSet`: `DisplayCategory = Tool`, Weight 1.0, icon
+`Punches_Forged`, models `MetalworkingPunch` / `SmallMetalworkingPunches`,
+`ConditionMax = 8`. `Base.SteelBarQuarter` (0.5) comes from vanilla bar-stock
+recipes. `Forge_Copper_Sheet` (sheets) is quoted in the previous version of
+this file and in `AC_Recipes.txt`.
 
-**Cold, on any surface** (`recipes/recipes_metalWelding_Armor.txt`,
-`recipes_improvised_weapons.txt`, `recipes_blacksmith_other_metals.txt`):
+Cold, on any surface: `Tags = AnySurfaceCraft`, `category = Metalworking`,
+tools `tags[base:metalworkingpunch;base:smallpunch] mode:keep
+flags[MayDegradeLight]` and `tags[base:hammer] mode:keep
+flags[MayDegradeVeryLight]`, `timedAction = MakingHammer_Surface`
+(`NailSpikeWeapon`); `timedAction = Making` for hand assembly
+(`GatherGunpowder`, `MakeFirecracker`).
 
-```text
-Tags = AnySurfaceCraft, category = Metalworking
-item 1 tags[base:metalworkingpunch;base:drillmetal] mode:keep flags[MayDegradeLight],
-item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
-item 1 tags[base:sheetmetalsnips;base:metalsaw] mode:keep flags[MayDegradeLight],
-```
+Crafting categories that exist (`IGUI_CraftingCategories_*`): Assembly, Armor,
+Blade, Blacksmithing, Carpentry, Carving, Cooking, Cookware, Electrical,
+Farming, Fishing, Furniture, Glassmaking, Knapping, Masonry, Medical,
+Metalworking, Miscellaneous, Outdoors, Packing, Pottery, Repair, Tailoring,
+Tools, Weaponry, Welding. There is no ammunition category.
 
-`timedAction = MakingHammer_Surface` is what vanilla uses for hammer work on a
-surface (`NailSpikeWeapon`, with the hammer line above); `SawSmallItemMetal`
-for sawing a sheet into small sheets (`time = 100`).
+Stations: `StandingDrillPress`, `MetalBandsaw`, `Grindstone` exist as bench
+tags; `HandPress` is a pottery brick press. **Vanilla has no reloading press,
+die or bench**, so `AnySurfaceCraft` with a hand tool is the available
+convention.
 
-Tool items: `Base.MetalworkingPunch` (`base:metalworkingpunch`),
-`Base.SmallPunchSet` (`base:smallpunch`), `Base.Hammer`, `Base.BallPeenHammer`,
-`Base.SmithingHammer` (all `base:hammer`), `Base.Tongs`.
+## 8. Callbacks
 
-Other stations that exist and may matter later: `StandingDrillPress`,
-`MetalBandsaw`, `Grindstone` bench tags. `HandPress` is a pottery brick press,
-not a reloading press. **Vanilla has no press, die or reloading bench.**
+`craftRecipeData:getAllCreatedItems()` and `getAllConsumedItems()` exist with
+no-argument overloads returning `ArrayList<InventoryItem>` (JAR). Vanilla Lua
+calls `getAllConsumedItems()` on the recipe data in
+`ISHandcraftAction:performRecipe`, right after `luaCallOnCreate` and before
+`processDestroyAndUsedItems`, so consumed items are still readable inside
+`OnCreate`. `performRecipe` itself writes ModData onto a single crafted
+output, so ModData on crafted items is something vanilla does.
 
-## 3. What this means for the design
+## 9. Consequences for the design
 
-1. Cases, primers and projectiles need mod items. Powder is vanilla's.
-2. The assembled product should be the vanilla round item of the calibre.
-3. Brass can be brought to a workable form with vanilla stations and tools
-   only: forge it into small sheets, punch cups from the sheets cold.
-4. Turning a cup into a case of a specific calibre needs dies and some kind
-   of press, neither of which vanilla has. That is the first step that
-   requires new tools or a station, and so an owner decision.
-5. A recipe may consume a number of uses of a drainable (`item 20
-   [Base.GunPowder]`), which is how a powder charge can be expressed later.
-6. Vanilla firearms eject no brass, so reloading spent cases needs a hook
-   into firing; that is far from the first milestone.
+1. Cases, primers and bullets must be mod items; powder is vanilla's item.
+2. The product is the vanilla round, one item per cartridge.
+3. No lead exists: the first bullet is copper, from metal the mod already
+   mines. No lead geology.
+4. Primer: brass cup plus a loot priming charge (toy caps or match heads).
+5. Powder: charcoal plus fertilizer, ground with a mortar and pestle, into
+   vanilla `Base.GunPowder`. No sulfur item is invented.
+6. One use of gunpowder per pistol round, the same amount vanilla returns
+   when a round is dismantled, so dismantle-and-reassemble can never gain
+   powder.
+7. Tools: a die set per calibre, forged like vanilla's small punch set.
 
-## 4. REQUIRES FUTURE IN-GAME VERIFICATION
+## 10. REQUIRES FUTURE IN-GAME VERIFICATION
 
-- What the item field `count` does when a recipe outputs a round (whether
-  `item 1 Base.Bullets9mm` yields 1 or 5). To be checked before the assembly
-  stage; nothing in the first milestone outputs ammunition.
-- That `MakingHammer_Surface` looks right for punching.
+- A recipe output of `item 1 Base.Bullets9mm` yields one round (JAR evidence
+  says so).
+- A recipe line `item 1 [Base.GunPowder]` takes one use from a jar, and
+  `item 2 [Base.Fertilizer]` two uses from a bag.
+- `item 20 [Base.Matches;Base.Matchbox]` draws uses across several items.
+- The hammering and `Making` animations suit the component recipes.
