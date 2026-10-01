@@ -226,6 +226,11 @@ MOCK.knownScriptItems = {
     ["Base.SteelIngotMold"] = true,
     ["Base.Tongs"] = true,
     ["Base.Charcoal"] = true,
+    -- Case stock
+    ["AmmoMaking.SmallBrassSheet"] = true,
+    ["AmmoMaking.BrassCaseCup"] = true,
+    ["Base.BallPeenHammer"] = true,
+    ["Base.MetalworkingPunch"] = true,
 }
 
 -- Mocked CraftRecipe script objects, as getScriptManager():getCraftRecipe(id)

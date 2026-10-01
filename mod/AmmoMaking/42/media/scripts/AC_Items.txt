@@ -42,6 +42,33 @@ module AmmoMaking
         Tags = base:hasmetal;base:ingot,
     }
 
+    /* Cartridge-case stock (docs/AMMUNITION_DESIGN.md, milestone C1).
+       SmallBrassSheet copies Base.SmallCopperSheet (0.5). The cup is the
+       calibre-neutral blank a case is drawn from later. Vanilla art as
+       placeholders. */
+
+    item SmallBrassSheet
+    {
+        DisplayName = Brass Sheet - Small,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = Sheet_Copper_Small,
+        WorldStaticModel = SmallCopperSheet,
+        Tags = base:hasmetal,
+    }
+
+    item BrassCaseCup
+    {
+        DisplayName = Brass Case Cup,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.05,
+        Icon = BrassScrap,
+        WorldStaticModel = BrassScrap,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

@@ -78,6 +78,16 @@ AC_Compat.REQUIRED_ITEMS = {
     "Base.Tongs",
 
     "Base.Charcoal",
+
+    -- Case stock: brass sheets and cups, and the vanilla
+    -- hand tools the debug kit hands out.
+    "AmmoMaking.SmallBrassSheet",
+
+    "AmmoMaking.BrassCaseCup",
+
+    "Base.BallPeenHammer",
+
+    "Base.MetalworkingPunch",
 }
 
 
@@ -931,7 +941,8 @@ end
 
 
 ------------------------------------------------
--- Metallurgy recipes (media/scripts/AC_Recipes.txt).
+-- Station recipes (media/scripts/AC_Recipes.txt):
+-- metallurgy and case stock.
 --
 -- Each recipe must be known to the script manager,
 -- its OnCreate callback must exist, and the Ammo
@@ -958,7 +969,7 @@ local function checkMetallurgyRecipes(
         addResult(
             results,
             "UNVERIFIED",
-            "metallurgy recipes",
+            "station recipes",
             "no script manager"
         )
 
@@ -973,7 +984,7 @@ local function checkMetallurgyRecipes(
             results,
             "WARNING",
             "ScriptManager:getCraftRecipe missing",
-            "metallurgy recipes cannot be checked or given their skill requirement"
+            "the mod's recipes cannot be checked or given their skill requirement"
         )
 
 
@@ -1019,7 +1030,7 @@ local function checkMetallurgyRecipes(
                 results,
                 "WARNING",
                 "recipe " .. recipe.id .. " not found",
-                "AC_Recipes.txt did not load; this furnace recipe is unavailable"
+                "AC_Recipes.txt did not load; this recipe is unavailable"
             )
 
         else
@@ -1055,7 +1066,7 @@ local function checkMetallurgyRecipes(
                         results,
                         "WARNING",
                         "CraftRecipe:addRequiredSkill missing",
-                        "metallurgy recipes get no Ammo Making requirement; craft time does not improve with skill"
+                        "the mod's recipes get no Ammo Making requirement; craft time does not improve with skill"
                     )
                 end
             end

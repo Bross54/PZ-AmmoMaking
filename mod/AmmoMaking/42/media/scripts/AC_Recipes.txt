@@ -1,17 +1,25 @@
-/* Ammo Making - metallurgy recipes for the vanilla Build 42 furnaces.
+/* Ammo Making - recipes on the vanilla Build 42 stations.
 
-   Every block is adapted from a vanilla 42.20.4 recipe in
-   media/scripts/generated/entities/blacksmith/craftRecipes/recipes_blacksmith_furnaces_i.txt:
+   Every block is adapted from a vanilla 42.20.4 recipe.
+
+   Metallurgy, from entities/blacksmith/craftRecipes/recipes_blacksmith_furnaces_i.txt:
 
      AmmoMaking_SmeltZincOre     <- SmeltCopperOre (same fields, zinc items)
      AmmoMaking_Cast*Ingot       <- CastIronIngot (tongs + mold kept, Furnace tag) with the
                                     kept empty crucible of ExtractIronFromSmallItem
      AmmoMaking_CastBrassIngots  <- same casting block, two metals in
 
+   Case stock, from recipes_blacksmith_other_metals.txt and recipes_improvised_weapons.txt:
+
+     AmmoMaking_ForgeSmallBrassSheets <- Forge_Copper_Sheet (tools, flags, timed action)
+     AmmoMaking_PunchBrassCaseCups    <- cold work on a surface: the punch line of the
+                                         scrap-armour recipes, the hammer line and timed
+                                         action of NailSpikeWeapon
+
    The recipes live in module Base, like every vanilla recipe, so the engine
    handles them exactly as its own; the AmmoMaking_ prefix keeps the ids
-   unique. Station attachment is the Tags line only (PrimitiveFurnace /
-   Furnace); the furnaces have no lit or fuel state, charcoal is an input.
+   unique. Station attachment is the Tags line only; the furnaces and forges
+   have no lit or fuel state, charcoal is an input.
 
    No SkillRequired / xpAward lines: the Ammo Making perk is registered from
    Lua after scripts are parsed, so the engine would drop them. AC_Materials
@@ -97,6 +105,45 @@ module Base
         outputs
         {
             item 10 Base.BrassIngot,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeSmallBrassSheets
+    {
+        time = 200,
+        timedAction = HammerMetalStanding,
+        Tags = PrimitiveForge,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onForgeSmallBrassSheets,
+        inputs
+        {
+            item 1 tags[base:charcoal],
+            item 1 [Base.BrassIngot],
+            item 1 tags[base:hammer;base:clubhammer] mode:keep flags[Prop1;MayDegradeLight],
+            item 1 tags[base:tongs;base:metalworkingpliers] mode:keep flags[Prop2;MayDegradeLight],
+        }
+        outputs
+        {
+            item 10 AmmoMaking.SmallBrassSheet,
+        }
+    }
+
+    craftRecipe AmmoMaking_PunchBrassCaseCups
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onPunchBrassCaseCups,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.BrassCaseCup,
         }
     }
 }

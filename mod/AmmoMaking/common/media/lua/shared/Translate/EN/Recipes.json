@@ -2,5 +2,7 @@
     "AmmoMaking_SmeltZincOre": "Smelt Zinc Ore",
     "AmmoMaking_CastCopperIngot": "Cast Copper Ingot",
     "AmmoMaking_CastZincIngot": "Cast Zinc Ingot",
-    "AmmoMaking_CastBrassIngots": "Cast Cartridge Brass (7 Copper + 3 Zinc)"
+    "AmmoMaking_CastBrassIngots": "Cast Cartridge Brass (7 Copper + 3 Zinc)",
+    "AmmoMaking_ForgeSmallBrassSheets": "Forge Small Brass Sheets",
+    "AmmoMaking_PunchBrassCaseCups": "Punch Brass Case Cups"
 }

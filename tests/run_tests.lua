@@ -2283,7 +2283,8 @@ do
         "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
         "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
         "Spawn Metallurgy Kit (furnace tools + materials)",
-        "Set Ammo Making Level", "Inspect Metallurgy Recipes", "Run Compatibility Check",
+        "Spawn Case Stock Kit (brass + forge and punch tools)",
+        "Set Ammo Making Level", "Inspect Station Recipes", "Run Compatibility Check",
     }
     for _, e in ipairs(expected) do
         check(root.submenu:find(e) ~= nil, "debug entry present: " .. e)
@@ -2490,9 +2491,10 @@ end
 -- METALLURGY
 ------------------------------------------------
 --
--- These sections read the mod's own script files and AC_Materials. They
--- prove that the files say what the design says and that the numbers
--- conserve metal. They do NOT prove the engine loads the recipes, shows
+-- Metallurgy (ore to brass) and case stock (brass to case cups). These
+-- sections read the mod's own script files and AC_Materials. They prove
+-- that the files say what the design says and that the numbers conserve
+-- metal. They do NOT prove the engine loads the recipes, shows
 -- them at a furnace or calls the callbacks: that needs the game.
 
 local SCRIPTS = ROOT .. "/mod/AmmoMaking/42/media/scripts/"
@@ -2614,7 +2616,7 @@ for _, block in ipairs(itemScript.blocks) do
     declaredItems[itemScript.module .. "." .. block.name] = block
 end
 
-section("Metallurgy items: script definitions follow the vanilla copper chain")
+section("Material items: script definitions follow the vanilla metal items")
 do
     eq(itemScript.module, "AmmoMaking", "items live in module AmmoMaking")
 
@@ -2662,6 +2664,21 @@ do
         check(block.fields.Icon ~= nil and block.fields.WorldStaticModel ~= nil, block.name .. " has an icon and a world model")
     end
 
+    -- Case stock. The small sheet copies Base.SmallCopperSheet (0.5).
+    local sheet = declaredItems["AmmoMaking.SmallBrassSheet"]
+    local cup = declaredItems["AmmoMaking.BrassCaseCup"]
+    check(sheet and cup, "small brass sheet and case cup are declared")
+    eq(tonumber(sheet.fields.Weight), 0.5, "small brass sheet weighs what a small copper sheet weighs")
+    check(tonumber(cup.fields.Weight) * 2 <= tonumber(sheet.fields.Weight), "two cups do not outweigh the sheet they come from")
+    for _, block in ipairs({ sheet, cup }) do
+        eq(block.fields.DisplayCategory, "Material", block.name .. " category")
+        eq(block.fields.Tags, "base:hasmetal", block.name .. " tags")
+        check(block.fields.Icon ~= nil and block.fields.WorldStaticModel ~= nil, block.name .. " has an icon and a world model")
+    end
+    for _, name in ipairs({ "Case9mm", "Primer", "Bullet9mm", "GunPowder" }) do
+        check(declaredItems["AmmoMaking." .. name] == nil, "no speculative component item yet: " .. name)
+    end
+
     -- Vanilla already has these; the mod must not shadow them.
     for _, name in ipairs({ "CopperOre", "CopperScrap", "CopperIngot", "BrassIngot", "BrassScrap" }) do
         check(declaredItems["AmmoMaking." .. name] == nil, "no AmmoMaking duplicate of vanilla " .. name)
@@ -2683,7 +2700,7 @@ do
     eq(AC_Geology.ITEMS.CopperOre, AC_Materials.ITEMS.CopperOre, "mining and metallurgy agree on the copper ore id")
 end
 
-section("Metallurgy recipes: AC_Recipes.txt equals AC_Materials.RECIPES")
+section("Station recipes: AC_Recipes.txt equals AC_Materials.RECIPES")
 do
     -- Vanilla keeps every recipe in module Base (42.20.4: all 1004 module
     -- declarations), and a name without a dot is looked up there.
@@ -2706,11 +2723,19 @@ do
         mirrorIds[recipe.id] = true
     end
 
-    -- Only what vanilla furnace recipes use, plus OnCreate.
-    local knownFields = { time = true, Tags = true, category = true, OnCreate = true }
-    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true }
-    local knownFlags = { IsEmpty = true, MayDegradeLight = true }
-    local knownItemTags = { ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true }
+    -- Only what the vanilla 42.20.4 template recipes use (furnace recipes,
+    -- Forge_Copper_Sheet, the scrap-armour cold work, NailSpikeWeapon),
+    -- plus OnCreate.
+    local knownFields = { time = true, timedAction = true, Tags = true, category = true, OnCreate = true }
+    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, AnySurfaceCraft = true }
+    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true }
+    local knownCategories = { Blacksmithing = true, Metalworking = true }
+    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true }
+    local knownItemTags = {
+        ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true,
+        ["base:hammer"] = true, ["base:clubhammer"] = true, ["base:metalworkingpliers"] = true,
+        ["base:metalworkingpunch"] = true, ["base:smallpunch"] = true,
+    }
     local probed = {}
     for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
 
@@ -2727,8 +2752,14 @@ do
 
             eq(tonumber(block.fields.time), recipe.time, recipe.id .. " time")
             eq(block.fields.Tags, recipe.benchTag, recipe.id .. " bench tag")
-            check(knownBenchTags[block.fields.Tags], recipe.id .. " attaches to a vanilla furnace tag")
+            check(knownBenchTags[block.fields.Tags], recipe.id .. " attaches to a vanilla bench tag")
             eq(block.fields.category, recipe.category, recipe.id .. " category")
+            check(knownCategories[block.fields.category], recipe.id .. " uses a vanilla crafting category")
+            eq(block.fields.timedAction, recipe.timedAction, recipe.id .. " timed action")
+            check(recipe.timedAction == nil or knownTimedActions[recipe.timedAction], recipe.id .. " timed action is one a vanilla template uses")
+            if block.fields.Tags == "PrimitiveFurnace" or block.fields.Tags == "Furnace" then
+                eq(block.fields.timedAction, nil, recipe.id .. " has no timed action, like vanilla furnace recipes")
+            end
             eq(block.fields.OnCreate, "AC_Materials." .. recipe.callback, recipe.id .. " OnCreate")
             eq(type(AC_Materials[recipe.callback]), "function", recipe.id .. " OnCreate target exists")
 
@@ -2746,10 +2777,10 @@ do
                 check(parsed.item == nil, recipe.id .. " input " .. i .. " has no stray text")
                 check((parsed.items ~= nil) ~= (parsed.tags ~= nil), recipe.id .. " input " .. i .. " is either items or tags")
                 for _, flag in ipairs(parsed.flags or {}) do
-                    check(knownFlags[flag], recipe.id .. " input flag seen in vanilla furnace recipes (" .. flag .. ")")
+                    check(knownFlags[flag], recipe.id .. " input flag seen in the vanilla templates (" .. flag .. ")")
                 end
                 for _, tag in ipairs(parsed.tags or {}) do
-                    check(knownItemTags[tag], recipe.id .. " input tag seen in vanilla furnace recipes (" .. tag .. ")")
+                    check(knownItemTags[tag], recipe.id .. " input tag seen in the vanilla templates (" .. tag .. ")")
                 end
                 for _, id in ipairs(parsed.items or {}) do
                     check(probed[id], recipe.id .. " input item is probed by AC_Compat (" .. id .. ")")
@@ -2778,6 +2809,9 @@ do
     local brassOut = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots").outputs[1]
     eq(brassOut.item, "Base.BrassIngot", "brass is the vanilla item")
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
+    eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
+    eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
+    eq(#AC_Materials.RECIPES, 6, "four metallurgy recipes and two case-stock recipes")
 
     local alloys = 0
     for _, recipe in ipairs(AC_Materials.RECIPES) do
@@ -2789,8 +2823,18 @@ end
 section("Material conservation: no recipe or chain creates metal")
 do
     local U = AC_Materials.UNITS
-    eq(U["Base.CopperOre"].units, 10, "one copper ore is one ingot of metal")
-    eq(U["AmmoMaking.ZincOre"].units, 10, "one zinc ore is one ingot of metal")
+    local INGOT = AC_Materials.CONFIG.unitsPerIngot
+    eq(INGOT, 100, "accounting unit")
+    eq(U["Base.CopperOre"].units, INGOT, "one copper ore is one ingot of metal")
+    eq(U["AmmoMaking.ZincOre"].units, INGOT, "one zinc ore is one ingot of metal")
+    eq(U["Base.CopperIngot"].units, INGOT, "copper ingot")
+    eq(U["AmmoMaking.ZincIngot"].units, INGOT, "zinc ingot")
+    eq(U["AmmoMaking.SmallBrassSheet"].units * 10, INGOT, "ten small brass sheets per ingot")
+    eq(U["AmmoMaking.BrassCaseCup"].units * 2, U["AmmoMaking.SmallBrassSheet"].units, "two cups per small sheet")
+    eq(U["Base.BrassScrap"].units, U["Base.CopperScrap"].units, "brass scrap counts like copper scrap")
+    for id, entry in pairs(U) do
+        check(entry.units == math.floor(entry.units) and entry.units > 0, id .. " has a whole, positive unit value")
+    end
     eq(U["Base.CopperScrap"].units * 10, U["Base.CopperIngot"].units, "ten copper scrap per ingot")
     eq(U["AmmoMaking.ZincScrap"].units * 10, U["AmmoMaking.ZincIngot"].units, "ten zinc scrap per ingot")
     eq(U["Base.BrassIngot"].units, AC_Materials.CONFIG.unitsPerIngot, "a brass ingot is one ingot")
@@ -2821,7 +2865,8 @@ do
                 check(input.count >= 1, recipe.id .. " charcoal count")
             end
         end
-        eq(charcoalInputs, 1, recipe.id .. " has one charcoal input")
+        -- Hot work burns charcoal; cold work on a surface has none.
+        eq(charcoalInputs, recipe.benchTag == "AnySurfaceCraft" and 0 or 1, recipe.id .. " charcoal inputs")
     end
 
     -- Casting recipes keep exactly crucible, tongs and mold.
@@ -2841,9 +2886,9 @@ do
     -- Brass: 7 copper + 3 zinc -> 10 brass, exactly.
     local brass = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")
     local consumed, created = AC_Materials.getRecipeUnits(brass)
-    eq(consumed.copper, 70, "brass takes 7 copper ingots")
-    eq(consumed.zinc, 30, "brass takes 3 zinc ingots")
-    eq(created.brass, 100, "brass yields 10 ingots")
+    eq(consumed.copper, 7 * INGOT, "brass takes 7 copper ingots")
+    eq(consumed.zinc, 3 * INGOT, "brass takes 3 zinc ingots")
+    eq(created.brass, 10 * INGOT, "brass yields 10 ingots")
     eq(consumed.zinc / (consumed.copper + consumed.zinc), 0.3, "30% zinc")
     eq(brass.alloy, "brass", "brass is marked as the alloy")
 
@@ -2899,7 +2944,10 @@ do
     end
     check(reaches("Base.CopperOre", "Base.BrassIngot", {}), "copper ore reaches brass")
     check(reaches("AmmoMaking.ZincOre", "Base.BrassIngot", {}), "zinc ore reaches brass")
-    check(edges["Base.BrassIngot"] == nil, "nothing consumes brass ingots yet")
+    check(reaches("Base.CopperOre", "AmmoMaking.BrassCaseCup", {}), "copper ore reaches case cups")
+    check(edges["Base.BrassIngot"] ~= nil and edges["Base.BrassIngot"]["AmmoMaking.SmallBrassSheet"], "brass ingots become small sheets")
+    check(edges["AmmoMaking.BrassCaseCup"] == nil, "nothing consumes case cups yet")
+    check(not reaches("Base.BrassIngot", "Base.BrassScrap", {}), "no recipe makes brass scrap")
     check(edges["Base.BrassScrap"] == nil, "brass scrap is reserved for later recycling")
 
     -- Run the chain on a pretend inventory. This executes the mirror
@@ -2931,6 +2979,7 @@ do
         return {
             ["Base.CopperOre"] = 7, ["AmmoMaking.ZincOre"] = 3, ["base:charcoal"] = 200,
             ["Base.CeramicCrucible"] = 1, ["base:crudetongs"] = 1, ["Base.ClayIngotMold"] = 1,
+            ["base:hammer"] = 1, ["base:tongs"] = 1, ["base:metalworkingpunch"] = 1,
         }
     end
 
@@ -2954,6 +3003,22 @@ do
     eq(200 - inv["base:charcoal"], 7 * 4 + 3 * 4 + 10 * 4 + 10, "charcoal consumed by every step")
     eq(inv["Base.CeramicCrucible"] + inv["base:crudetongs"] + inv["Base.ClayIngotMold"], 3, "kept tools are still there")
 
+    -- On to case stock: 10 ingots -> 100 small sheets -> 200 cups.
+    local forge = AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets")
+    local punch = AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups")
+    local charcoalBefore = inv["base:charcoal"]
+    check(not craft(inv, punch), "no cups before there are sheets")
+    for _ = 1, 10 do check(craft(inv, forge), "forge small brass sheets") end
+    check(not craft(inv, forge), "no eleventh ingot to forge")
+    eq(inv["AmmoMaking.SmallBrassSheet"], 100, "10 brass ingots -> 100 small sheets")
+    for _ = 1, 100 do check(craft(inv, punch), "punch case cups") end
+    eq(inv["AmmoMaking.BrassCaseCup"], 200, "100 small sheets -> 200 case cups")
+    eq(inv["Base.BrassIngot"] + inv["AmmoMaking.SmallBrassSheet"], 0, "no brass stock left over")
+    eq(metalIn(inv), metalIn(freshInventory()), "metal units unchanged from ore to case cups")
+    eq(charcoalBefore - inv["base:charcoal"], 10, "one charcoal per forged ingot, none for punching")
+    eq(inv["base:hammer"] + inv["base:tongs"] + inv["base:metalworkingpunch"], 3, "hammer, tongs and punch are kept")
+    eq(inv["AmmoMaking.BrassCaseCup"] / 10, 20, "20 cups per ore")
+
     -- Any order of any recipes never increases the metal in the inventory.
     local seed = 12345
     local function nextRandom(n)
@@ -2971,7 +3036,7 @@ do
     eq(worst, initial, "500 crafts in random order never exceed the starting metal")
 end
 
-section("Metallurgy XP: one grant per completed craft (OnCreate callbacks)")
+section("Recipe XP: one grant per completed craft (OnCreate callbacks)")
 do
     -- The engine calls OnCreate(craftRecipeData, character). The callbacks
     -- must not need anything from craftRecipeData.
@@ -2989,7 +3054,7 @@ do
         eq(granted, xp, recipe.id .. " callback reports the XP")
         eq(#player.xpLog, 1, recipe.id .. " grants XP exactly once")
         eq(player.xpLog[1], xp, recipe.id .. " XP amount")
-        check(MOCK.printLogContains("[AmmoMaking] Metallurgy (" .. recipe.id .. "): +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), recipe.id .. " XP logged")
+        check(MOCK.printLogContains("[AmmoMaking] Crafting (" .. recipe.id .. "): +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), recipe.id .. " XP logged")
 
         check(pcall(AC_Materials[recipe.callback], untouchable, nil), recipe.id .. " callback tolerates a missing character")
         eq(AC_Materials[recipe.callback](untouchable, nil), 0, recipe.id .. " no character, no XP")
@@ -3008,7 +3073,7 @@ do
     eq(AC_Materials.getRecipeXP(AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")), AC_Materials.CONFIG.xpCastBrass, "brass XP comes from CONFIG")
 end
 
-section("Metallurgy skill requirement (mocked CraftRecipe scripts)")
+section("Recipe skill requirement (mocked CraftRecipe scripts)")
 do
     -- The mock implements the two methods the 42.20.4 jar declares. That
     -- the engine exposes them to Lua is REQUIRES FUTURE IN-GAME VERIFICATION.
@@ -3060,7 +3125,7 @@ do
     MOCK.capturePrint(false)
     MOCK.scriptManagerAvailable = true
     check(okBoot, "a failing script manager at boot does not raise")
-    check(MOCK.printLogContains("WARNING: metallurgy skill requirements not applied"), "boot failure is logged as a WARNING")
+    check(MOCK.printLogContains("WARNING: recipe skill requirements not applied"), "boot failure is logged as a WARNING")
 
     MOCK.resetCraftRecipes(ids)
     MOCK.clearPrintLog()
@@ -3073,7 +3138,7 @@ do
     end
     local lines = 0
     for _, line in ipairs(MOCK.printLog) do
-        if string.find(line, "Metallurgy recipes: " .. #ids .. " given the Ammo Making requirement", 1, true) then lines = lines + 1 end
+        if string.find(line, "Station recipes: " .. #ids .. " given the Ammo Making requirement", 1, true) then lines = lines + 1 end
     end
     eq(lines, 1, "the attachment is logged once, not on the no-op second run")
 
@@ -3083,6 +3148,9 @@ do
     eq(AC_Materials.getExpectedTime(brass, 1), 190, "5% faster per level")
     eq(AC_Materials.getExpectedTime(brass, 10), 100, "level 10: half the time")
     eq(AC_Materials.getExpectedTime(brass, nil), 200, "unknown level counts as 0")
+    local punch = AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups")
+    eq(AC_Materials.getExpectedTime(punch, 0), 100, "cup punching: the script time at level 0")
+    eq(AC_Materials.getExpectedTime(punch, 10), 50, "cup punching: half at level 10")
     local previous = 201
     for level = 0, 10 do
         local t = AC_Materials.getExpectedTime(brass, level)
@@ -3091,7 +3159,7 @@ do
     end
 end
 
-section("Metallurgy translations: every recipe and item has an English name")
+section("Recipe and item translations: every recipe and item has an English name")
 do
     local function keys(file)
         local defined = {}
@@ -3126,7 +3194,7 @@ do
     eq(count, declaredCount, "one item name per declared item")
 end
 
-section("Metallurgy debug tools")
+section("Metallurgy and case stock debug tools")
 do
     MOCK.debug = true
     local player = MOCK.newPlayer({ square = MOCK.newSquare(5, 5, 0, GRASS) })
@@ -3150,13 +3218,27 @@ do
     eq(inv:count("Base.Charcoal"), 4 + 4 + 4 + 10, "charcoal for every recipe once")
     eq(inv:count("Base.BrassIngot"), 0, "the kit does not hand out brass")
 
+    local stockPlayer = MOCK.newPlayer({ square = MOCK.newSquare(6, 5, 0, GRASS) })
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnCaseStockKit(stockPlayer)
+    MOCK.capturePrint(false)
+    local stock = stockPlayer.inventory
+    eq(stock:count("Base.BallPeenHammer"), 1, "hammer spawned")
+    eq(stock:count("Base.Tongs"), 1, "tongs spawned")
+    eq(stock:count("Base.MetalworkingPunch"), 1, "punch spawned")
+    eq(stock:count("Base.Charcoal"), 1, "charcoal for one forging")
+    eq(stock:count("Base.BrassIngot"), 1, "one brass ingot to forge")
+    eq(stock:count("AmmoMaking.SmallBrassSheet"), 2, "two sheets to punch at once")
+    eq(stock:count("AmmoMaking.BrassCaseCup"), 0, "the kit does not hand out cups")
+
     player.perkLevel = 4
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
     local ok = pcall(AC_GeologyDebug.inspectMetallurgyRecipes, player)
     MOCK.capturePrint(false)
     check(ok, "recipe inspector runs")
-    check(MOCK.printLogContains("METALLURGY RECIPES (Ammo Making level 4)"), "inspector header")
+    check(MOCK.printLogContains("STATION RECIPES (Ammo Making level 4)"), "inspector header")
+    check(MOCK.printLogContains("AmmoMaking_PunchBrassCaseCups [AnySurfaceCraft]: loaded, required skills 1; XP 1; expected time 80/100; metal conserved"), "inspector lists the case-stock recipes")
     check(MOCK.printLogContains("AmmoMaking_CastBrassIngots [Furnace]: loaded, required skills 1; XP 25; expected time 160/200; metal conserved"), "inspector line")
     for _, id in ipairs(ids) do
         eq(#MOCK.craftRecipeScripts[id].requiredSkills, 1, "inspector attaches nothing (" .. id .. ")")
@@ -3200,6 +3282,8 @@ do
     check(MOCK.printLogContains("[AmmoMaking] OK: Base.BrassIngot"), "vanilla brass ingot probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: AmmoMaking.ZincScrap"), "zinc scrap probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: recipe AmmoMaking_CastBrassIngots"), "brass recipe probed")
+    check(MOCK.printLogContains("[AmmoMaking] OK: recipe AmmoMaking_PunchBrassCaseCups"), "case cup recipe probed")
+    check(MOCK.printLogContains("[AmmoMaking] OK: AmmoMaking.BrassCaseCup"), "case cup item probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: CraftRecipe:addRequiredSkill"), "skill attachment method probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: Ammo Making requirement on AmmoMaking_SmeltZincOre"), "attached requirement probed")
 
@@ -3212,7 +3296,7 @@ do
     MOCK.capturePrint(false)
     MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = savedRecipe
     eq(sM.warnings, 1, "a recipe the script manager does not know is one WARNING")
-    check(MOCK.printLogContains("WARNING: recipe AmmoMaking_CastZincIngot not found (AC_Recipes.txt did not load; this furnace recipe is unavailable)"), "missing recipe WARNING line")
+    check(MOCK.printLogContains("WARNING: recipe AmmoMaking_CastZincIngot not found (AC_Recipes.txt did not load; this recipe is unavailable)"), "missing recipe WARNING line")
 
     local bare = MOCK.newCraftRecipeScript("AmmoMaking_CastZincIngot")
     MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = bare

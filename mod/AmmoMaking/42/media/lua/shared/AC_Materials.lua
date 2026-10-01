@@ -1,13 +1,14 @@
--- Ammo Making - Metallurgy materials and recipes
+-- Ammo Making - Materials and station recipes
 -- Project Zomboid Build 42.20
 --
--- Metallurgy is an extension of the vanilla furnaces, not a
--- system of its own. The recipes are ordinary craftRecipe
--- blocks in media/scripts/AC_Recipes.txt, attached to the
--- vanilla furnace bench tags. The engine does the timing,
--- consumes the inputs, keeps the tools and creates the
--- outputs. This module holds only what the script file
--- cannot express:
+-- Metallurgy (ore to brass) and case stock (brass to case
+-- cups) extend the vanilla stations; they are not systems
+-- of their own. The recipes are ordinary craftRecipe blocks
+-- in media/scripts/AC_Recipes.txt, attached to the vanilla
+-- furnace and forge bench tags or to any surface. The
+-- engine does the timing, consumes the inputs, keeps the
+-- tools and creates the outputs. This module holds only
+-- what the script file cannot express:
 --
 --   RECIPES   a Lua mirror of AC_Recipes.txt, so tests can
 --             prove the material-conservation invariants
@@ -37,15 +38,16 @@ AC_Materials = AC_Materials or {}
 -- CONFIG
 ------------------------------------------------
 --
--- Not balanced yet. XP is per completed craft; the brass
--- recipe is one craft for ten ingots.
+-- Not balanced yet. XP is per completed craft: the brass
+-- recipe is one craft for ten ingots, sheet forging one
+-- craft per ingot, cup punching one craft per sheet.
 ------------------------------------------------
 
 AC_Materials.CONFIG = {
 
-    -- Metal accounting unit. One ingot is 10 units, so a
-    -- scrap is exactly 1 and nothing needs fractions.
-    unitsPerIngot = 10,
+    -- Metal accounting unit. One ingot is 100 units, a scrap
+    -- 10 and a case cup 5, so nothing needs fractions.
+    unitsPerIngot = 100,
 
     xpSmeltZincOre = 3,
 
@@ -53,13 +55,17 @@ AC_Materials.CONFIG = {
 
     xpCastBrass = 25,
 
+    xpForgeBrassSheets = 5,
+
+    xpPunchCaseCups = 1,
+
     -- Ammo Making level each recipe requires. 0 gates
     -- nothing; it makes Ammo Making the recipe's relevant
     -- skill, which is what the engine's own time scaling
     -- reads (5% faster per level above the requirement).
     requiredLevel = 0,
 
-    xpLogSource = "Metallurgy",
+    xpLogSource = "Crafting",
 }
 
 
@@ -88,6 +94,10 @@ AC_Materials.ITEMS = {
 
     BrassScrap = "Base.BrassScrap",
 
+    SmallBrassSheet = "AmmoMaking.SmallBrassSheet",
+
+    BrassCaseCup = "AmmoMaking.BrassCaseCup",
+
     Crucible = "Base.CeramicCrucible",
 
     ClayIngotMold = "Base.ClayIngotMold",
@@ -99,6 +109,12 @@ AC_Materials.ITEMS = {
     Tongs = "Base.Tongs",
 
     Charcoal = "Base.Charcoal",
+
+    -- Tools of the case-stock recipes, for the debug kit. The
+    -- recipes themselves ask for tags, not for these ids.
+    BallPeenHammer = "Base.BallPeenHammer",
+
+    MetalworkingPunch = "Base.MetalworkingPunch",
 }
 
 
@@ -117,21 +133,27 @@ AC_Materials.ITEMS = {
 
 AC_Materials.UNITS = {
 
-    ["Base.CopperOre"] = { metal = "copper", units = 10 },
+    ["Base.CopperOre"] = { metal = "copper", units = 100 },
 
-    ["Base.CopperScrap"] = { metal = "copper", units = 1 },
+    ["Base.CopperScrap"] = { metal = "copper", units = 10 },
 
-    ["Base.CopperIngot"] = { metal = "copper", units = 10 },
+    ["Base.CopperIngot"] = { metal = "copper", units = 100 },
 
-    ["AmmoMaking.ZincOre"] = { metal = "zinc", units = 10 },
+    ["AmmoMaking.ZincOre"] = { metal = "zinc", units = 100 },
 
-    ["AmmoMaking.ZincScrap"] = { metal = "zinc", units = 1 },
+    ["AmmoMaking.ZincScrap"] = { metal = "zinc", units = 10 },
 
-    ["AmmoMaking.ZincIngot"] = { metal = "zinc", units = 10 },
+    ["AmmoMaking.ZincIngot"] = { metal = "zinc", units = 100 },
 
-    ["Base.BrassIngot"] = { metal = "brass", units = 10 },
+    ["Base.BrassIngot"] = { metal = "brass", units = 100 },
 
-    ["Base.BrassScrap"] = { metal = "brass", units = 1 },
+    ["Base.BrassScrap"] = { metal = "brass", units = 10 },
+
+    -- Case stock: ten small sheets per ingot, two cups per
+    -- sheet. One cup becomes one cartridge case later.
+    ["AmmoMaking.SmallBrassSheet"] = { metal = "brass", units = 10 },
+
+    ["AmmoMaking.BrassCaseCup"] = { metal = "brass", units = 5 },
 }
 
 
@@ -154,7 +176,8 @@ AC_Materials.ALLOYS = {
 -- An input is { count, items = {...} } or
 -- { count, tags = {...} }, plus keep = true for a tool
 -- that is not consumed and flags = {...} as written in
--- the script. tests/run_tests.lua parses the script
+-- the script. timedAction is set only where the vanilla
+-- template has one (furnace recipes have none). tests/run_tests.lua parses the script
 -- file and compares it with this table field by field.
 --
 -- The vanilla smelting recipe for copper ore
@@ -295,6 +318,83 @@ AC_Materials.RECIPES = {
 
         outputs = {
             { count = 10, item = "Base.BrassIngot" },
+        },
+    },
+
+    ------------------------------------------------
+    -- Case stock (docs/AMMUNITION_DESIGN.md, C1)
+    ------------------------------------------------
+
+    {
+        id = "AmmoMaking_ForgeSmallBrassSheets",
+
+        time = 200,
+
+        timedAction = "HammerMetalStanding",
+
+        benchTag = "PrimitiveForge",
+
+        category = "Blacksmithing",
+
+        callback = "onForgeSmallBrassSheets",
+
+        xpKey = "xpForgeBrassSheets",
+
+        inputs = {
+            charcoal(1),
+            { count = 1, items = { "Base.BrassIngot" } },
+            {
+                count = 1,
+                tags = { "base:hammer", "base:clubhammer" },
+                keep = true,
+                flags = { "Prop1", "MayDegradeLight" },
+            },
+            {
+                count = 1,
+                tags = { "base:tongs", "base:metalworkingpliers" },
+                keep = true,
+                flags = { "Prop2", "MayDegradeLight" },
+            },
+        },
+
+        outputs = {
+            { count = 10, item = "AmmoMaking.SmallBrassSheet" },
+        },
+    },
+
+    {
+        id = "AmmoMaking_PunchBrassCaseCups",
+
+        time = 100,
+
+        timedAction = "MakingHammer_Surface",
+
+        benchTag = "AnySurfaceCraft",
+
+        category = "Metalworking",
+
+        callback = "onPunchBrassCaseCups",
+
+        xpKey = "xpPunchCaseCups",
+
+        inputs = {
+            { count = 1, items = { "AmmoMaking.SmallBrassSheet" } },
+            {
+                count = 1,
+                tags = { "base:metalworkingpunch", "base:smallpunch" },
+                keep = true,
+                flags = { "MayDegradeLight" },
+            },
+            {
+                count = 1,
+                tags = { "base:hammer" },
+                keep = true,
+                flags = { "MayDegradeVeryLight" },
+            },
+        },
+
+        outputs = {
+            { count = 2, item = "AmmoMaking.BrassCaseCup" },
         },
     },
 }
@@ -836,7 +936,7 @@ local function applySkillRequirementsLogged()
     if not ok then
 
         print(
-            "[AmmoMaking] WARNING: metallurgy skill requirements not applied: "
+            "[AmmoMaking] WARNING: recipe skill requirements not applied: "
             .. tostring(summary)
         )
 
@@ -851,7 +951,7 @@ local function applySkillRequirementsLogged()
     then
 
         print(
-            "[AmmoMaking] Metallurgy recipes: "
+            "[AmmoMaking] Station recipes: "
             .. summary.attached
             .. " given the Ammo Making requirement, "
             .. summary.present
@@ -882,5 +982,5 @@ Events.OnGameStart.Add(
 ------------------------------------------------
 
 print(
-    "[AmmoMaking] Metallurgy materials loaded"
+    "[AmmoMaking] Materials and station recipes loaded"
 )

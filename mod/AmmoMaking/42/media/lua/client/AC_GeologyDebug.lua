@@ -627,8 +627,29 @@ local METALLURGY_KIT = {
 }
 
 
-local function spawnMetallurgyKit(
-    player
+-- One ingot to forge into sheets, two sheets to punch
+-- straight away, and the hand tools both recipes keep.
+-- The ball-peen hammer satisfies both hammer tags.
+local CASE_STOCK_KIT = {
+
+    { AC_Materials.ITEMS.BallPeenHammer, 1 },
+
+    { AC_Materials.ITEMS.Tongs, 1 },
+
+    { AC_Materials.ITEMS.MetalworkingPunch, 1 },
+
+    { AC_Materials.ITEMS.Charcoal, 1 },
+
+    { AC_Materials.ITEMS.BrassIngot, 1 },
+
+    { AC_Materials.ITEMS.SmallBrassSheet, 2 },
+}
+
+
+local function spawnKit(
+    player,
+    kit,
+    label
 )
 
     local itemTypes = {}
@@ -637,7 +658,7 @@ local function spawnMetallurgyKit(
     for _,
         entry
     in ipairs(
-        METALLURGY_KIT
+        kit
     )
     do
 
@@ -654,14 +675,39 @@ local function spawnMetallurgyKit(
     spawnItems(
         player,
         itemTypes,
+        label
+    )
+end
+
+
+local function spawnMetallurgyKit(
+    player
+)
+
+    spawnKit(
+        player,
+        METALLURGY_KIT,
         "Metallurgy kit"
     )
 end
 
 
+local function spawnCaseStockKit(
+    player
+)
+
+    spawnKit(
+        player,
+        CASE_STOCK_KIT,
+        "Case stock kit"
+    )
+end
+
+
 ------------------------------------------------
--- Prints what the game knows about each metallurgy
--- recipe. Read-only: it attaches nothing.
+-- Prints what the game knows about each of the mod's
+-- station recipes (metallurgy and case stock).
+-- Read-only: it attaches nothing.
 ------------------------------------------------
 
 local function inspectMetallurgyRecipes(
@@ -680,7 +726,7 @@ local function inspectMetallurgyRecipes(
 
 
     log(
-        "METALLURGY RECIPES (Ammo Making level "
+        "STATION RECIPES (Ammo Making level "
         .. tostring(level)
         .. ")"
     )
@@ -755,7 +801,7 @@ local function inspectMetallurgyRecipes(
 
     halo(
         player,
-        "Metallurgy recipes: "
+        "Station recipes: "
         .. found
         .. "/"
         .. #AC_Materials.RECIPES
@@ -1476,6 +1522,9 @@ AC_GeologyDebug.spawnLaboratoryAnalyzer =
 AC_GeologyDebug.spawnMetallurgyKit =
     spawnMetallurgyKit
 
+AC_GeologyDebug.spawnCaseStockKit =
+    spawnCaseStockKit
+
 AC_GeologyDebug.inspectMetallurgyRecipes =
     inspectMetallurgyRecipes
 
@@ -1653,6 +1702,8 @@ local function onFillWorldObjectContextMenu(
 
     menu:addOption("Spawn Metallurgy Kit (furnace tools + materials)", player, spawnMetallurgyKit)
 
+    menu:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
+
 
     ------------------------------------------------
     -- Skill / diagnostics
@@ -1664,7 +1715,7 @@ local function onFillWorldObjectContextMenu(
     )
 
 
-    menu:addOption("Inspect Metallurgy Recipes", player, inspectMetallurgyRecipes)
+    menu:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
 
     menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
 end
