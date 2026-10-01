@@ -25,6 +25,56 @@ wad, shot) and its own later stage.
 Nothing rifle-specific exists as a component: no rifle case, primer, bullet
 or powder item.
 
+## 1a. Verification pass (FILE, re-extracted for the rifle stage)
+
+Every row of §1 was re-read from the item blocks; additional facts:
+
+| Item | Fields |
+|---|---|
+| `Base.556Bullets` | `DisplayCategory = Ammo`, `ItemType = base:normal`, Weight 0.035, `count = 5`, `Tags = base:ammo`, `MetalValue = 1.0`, icon `RifleAmmo308loose`, world model `RifleAmmo` |
+| `Base.308Bullets` | same, Weight 0.04 |
+| `Base.3030Bullets` | same, Weight 0.05 |
+| `Base.556Box`, `Base.308Box`, `Base.3030Box` | `DoubleClickRecipe = OpenBoxOfBullets20`: 20 rounds each (`item 20 mapper:ammoTypes`); `place_ammo_in_box` packs 20 back |
+| `Base.556Carton`, `Base.308Carton`, `Base.3030Carton` | `OpenCarton12`: 12 boxes |
+| `Base.556Clip` | "M16 Magazine", `AmmoType = base:bullets_556`, `MaxAmmo = 30`, `GunType = Base.AssaultRifle`, `Tags = base:hasmetal;base:riflemagazine` |
+| `Base.JS14_Clip` | "JS-14 Magazine", 5.56, `MaxAmmo = 20`, `GunType = Base.JS14_Rifle` |
+| `Base.M14Clip` | "M1A Magazine", `AmmoType = base:bullets_308`, `MaxAmmo = 20`, `GunType = Base.AssaultRifle2` |
+
+Firearms (display name; magazine or internal; capacity):
+
+| Calibre | Firearm | Loading |
+|---|---|---|
+| 5.56 | `Base.AssaultRifle` (M16 Assault Rifle) | magazine `556Clip`, 30; `FireModePossibilities = Auto/Single` |
+| 5.56 | `Base.JS14_Rifle` (JS-14 Rifle) | magazine `JS14_Clip`, 20 |
+| 5.56 | `Base.VarmintRifle` (MSR700 Rifle) | internal, 5, `RackAfterShoot = true` |
+| .308 | `Base.HuntingRifle` (MSR788 Rifle) | internal, 4, `RackAfterShoot = true` |
+| .308 | `Base.MSR7T_Rifle` (MSR7T Tactical Rifle) | internal, 4, `RackAfterShoot = true` |
+| .308 | `Base.AssaultRifle2` (M1A Rifle) | magazine `M14Clip`, 20 |
+| .30-30 | `Base.L94_Rifle` (L94 Rifle) | internal, 6, `RackAfterShoot = true` |
+
+- **One item is one cartridge**, as for pistols: the box recipes move 20
+  items, and `count = 5` is the loot / `AddItem` multiplier that no crafting
+  class reads (ammunition research §1).
+- **Loading semantics are the pistol ones.** Rifles go through the same
+  `ISReloadWeaponAction` / `transferBullets` code: the round is found by
+  `ammoType:getItemKey()`, removed, and the firearm or magazine count is
+  incremented. No rifle-specific branch exists; the only calibre-specific
+  branch in that file is for `AmmoType.SHOTGUN_SHELLS`.
+- **Dismantling**: vanilla `GatherGunpowder` takes `tags[base:ammo]`, which
+  all three rifle rounds carry, and returns one use of `Base.GunPowder`
+  whatever the round. A rifle round that takes several uses to make
+  therefore returns less than went in; it can never return more.
+- **No rifle-specific ammunition logic** exists in Lua. The three rounds
+  appear only in loot distributions and in the foraging category
+  `lua/shared/Foraging/Categories/Ammo.lua`, which lists all nine vanilla
+  rounds (so loose ammunition, like gunpowder, can be foraged).
+- Rifles have no `AmmoPerShoot` or `ProjectileCount` override: one round per
+  shot.
+- For the later failure stage: vanilla firearms already have a jam mechanic
+  (`JamGunChance` in the item script; `isJammed`, `setJammed`, `checkUnJam`
+  used by `ISRackFirearm.lua`). It lives on the firearm, which is where a
+  handloading effect would have to be carried, since rounds become a count.
+
 ## 2. What the pistol architecture already covers
 
 Adding a rifle calibre is, structurally, the same data as a pistol calibre:
