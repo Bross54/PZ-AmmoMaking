@@ -120,6 +120,40 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item DieSet38Special
+    {
+        DisplayName = .38 Special Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case38Special
+    {
+        DisplayName = Empty .38 Special Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = PistolAmmo,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet38Special
+    {
+        DisplayName = .38 Special Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

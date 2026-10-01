@@ -2285,7 +2285,7 @@ do
         "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
         "Spawn Metallurgy Kit (furnace tools + materials)",
         "Spawn Case Stock Kit (brass + forge and punch tools)",
-        "Spawn 9mm Components Kit", "Spawn Primer and Powder Kit",
+        "Spawn 9mm Components Kit", "Spawn .38 Special Components Kit", "Spawn Primer and Powder Kit",
         "Set Ammo Making Level", "Inspect Station Recipes",
         "Inspect Ammo Components (inventory)", "Run Compatibility Check",
     }
@@ -3445,6 +3445,30 @@ do
     end
 
     eq(AC_Calibres.get("9mm"), AC_Calibres.LIST[1], "lookup by id")
+
+    -- Definitions state only what differs; the rest comes from DEFAULTS.
+    local D = AC_Calibres.DEFAULTS
+    local custom = AC_Calibres.define({ id = "test", suffix = "Test", round = "Base.X", ammoType = "base:bullets_x", levels = { assemble = 5 }, powderUses = 2 })
+    eq(custom.case, "AmmoMaking.CaseTest", "item ids derive from the suffix")
+    eq(custom.bullet, "AmmoMaking.BulletTest", "bullet id derives from the suffix")
+    eq(custom.dieSet, "AmmoMaking.DieSetTest", "die set id derives from the suffix")
+    eq(custom.levels.assemble, 5, "one step can be overridden")
+    eq(custom.levels.case, D.levels.case, "the other steps keep the defaults")
+    eq(custom.powderUses, 2, "a scalar can be overridden")
+    eq(custom.primer, D.primer, "an omitted scalar is the default")
+    eq(D.levels.assemble, 3, "overriding does not write into DEFAULTS")
+    eq(AC_Calibres.define({ id = "t", suffix = "T", round = "Base.X", ammoType = "a", case = "AmmoMaking.Odd" }).case, "AmmoMaking.Odd", "an explicit item id wins")
+    eq(#AC_Calibres.buildCalibreRecipes(custom), 4, "a new definition yields its four recipes with no other code")
+    eq(AC_Calibres.buildCalibreRecipes(custom)[4].inputs[4].count, 2, "its powder charge reaches the assembly recipe")
+    eq(AC_Calibres.buildCalibreRecipes(custom)[4].requiredLevel, 5, "its level reaches the assembly recipe")
+
+    -- The second calibre exists to prove the model, and shares the primer.
+    local second = AC_Calibres.get(".38 Special")
+    check(second ~= nil, ".38 Special is defined")
+    eq(second.round, "Base.Bullets38", ".38 Special assembles the vanilla .38 round")
+    eq(second.primer, AC_Calibres.get("9mm").primer, "both calibres take small pistol primers")
+    eq(#AC_Calibres.PRIMERS, 1, "so a second calibre added no primer item or recipe")
+    eq(#AC_Calibres.LIST, 2, "two calibres; no large-scale expansion yet")
     eq(AC_Calibres.get("nope"), nil, "unknown calibre")
     eq(AC_Calibres.getPrimer("nope"), nil, "unknown primer family")
     eq(AC_Calibres.identify("Base.Plank"), nil, "an unrelated item is not identified")

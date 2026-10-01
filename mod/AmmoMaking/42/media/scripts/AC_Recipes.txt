@@ -300,4 +300,84 @@ module Base
             item 1 Base.Bullets9mm,
         }
     }
+
+    craftRecipe AmmoMaking_ForgeDieSet38Special
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet38Special,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase38Special
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase38Special,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets38Special
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets38Special,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound38Special
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound38Special,
+        inputs
+        {
+            item 1 [AmmoMaking.Case38Special],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.Bullet38Special],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets38,
+        }
+    }
 }

@@ -11,5 +11,9 @@
     "AmmoMaking_ForgeDieSet9mm": "Forge 9mm Handloading Die Set",
     "AmmoMaking_FormCase9mm": "Form 9mm Case",
     "AmmoMaking_SwageBullets9mm": "Swage 9mm Copper Bullets",
-    "AmmoMaking_AssembleRound9mm": "Assemble 9mm Round"
+    "AmmoMaking_AssembleRound9mm": "Assemble 9mm Round",
+    "AmmoMaking_ForgeDieSet38Special": "Forge .38 Special Handloading Die Set",
+    "AmmoMaking_FormCase38Special": "Form .38 Special Case",
+    "AmmoMaking_SwageBullets38Special": "Swage .38 Special Copper Bullets",
+    "AmmoMaking_AssembleRound38Special": "Assemble .38 Special Round"
 }

@@ -150,10 +150,15 @@ AC_Calibres.PRIMERS = {
 -- CALIBRES
 ------------------------------------------------
 --
+-- id       shown in debug labels and logs
 -- suffix   used in item and recipe ids (letters and
 --          digits only)
 -- round    the vanilla cartridge item the assembly makes
 -- ammoType the vanilla weapon AmmoType, for reference
+-- case, bullet, dieSet
+--          the calibre's three mod items; when left out
+--          they are AmmoMaking.Case<suffix>,
+--          AmmoMaking.Bullet<suffix>, AmmoMaking.DieSet<suffix>
 -- primer   a PRIMERS id
 -- bulletsPerScrap
 --          copper bullets swaged from one Base.CopperScrap
@@ -162,11 +167,144 @@ AC_Calibres.PRIMERS = {
 --          1: vanilla returns one use when a round is
 --          taken apart, so less would create powder.
 -- levels   Ammo Making level required per step
+-- xp, time per step
+--
+-- Anything a definition leaves out comes from DEFAULTS,
+-- so a new calibre states only what makes it different.
 ------------------------------------------------
+
+AC_Calibres.DEFAULTS = {
+
+    primer = "SmallPistol",
+
+    bulletsPerScrap = 2,
+
+    powderUses = 1,
+
+    levels = {
+        dieSet = 1,
+        case = 1,
+        bullet = 2,
+        assemble = 3,
+    },
+
+    xp = {
+        dieSet = 10,
+        case = 1,
+        bullet = 1,
+        assemble = 2,
+    },
+
+    time = {
+        dieSet = 300,
+        case = 80,
+        bullet = 80,
+        assemble = 40,
+    },
+}
+
+
+local function copyTable(
+    source
+)
+
+    local copy = {}
+
+
+    for key,
+        value
+    in pairs(
+        source
+    )
+    do
+
+        copy[key] = value
+    end
+
+
+    return copy
+end
+
+
+------------------------------------------------
+-- Completes a definition from DEFAULTS. Step tables
+-- (levels, xp, time) are merged key by key, so a
+-- calibre may override a single step.
+------------------------------------------------
+
+function AC_Calibres.define(
+    definition
+)
+
+    local defaults =
+        AC_Calibres.DEFAULTS
+
+
+    local calibre =
+        copyTable(
+            definition
+        )
+
+
+    calibre.case =
+        calibre.case or ("AmmoMaking.Case" .. calibre.suffix)
+
+    calibre.bullet =
+        calibre.bullet or ("AmmoMaking.Bullet" .. calibre.suffix)
+
+    calibre.dieSet =
+        calibre.dieSet or ("AmmoMaking.DieSet" .. calibre.suffix)
+
+
+    for _,
+        key
+    in ipairs(
+        { "primer", "bulletsPerScrap", "powderUses" }
+    )
+    do
+
+        if calibre[key] == nil then
+            calibre[key] = defaults[key]
+        end
+    end
+
+
+    for _,
+        key
+    in ipairs(
+        { "levels", "xp", "time" }
+    )
+    do
+
+        local merged =
+            copyTable(
+                defaults[key]
+            )
+
+
+        for step,
+            value
+        in pairs(
+            definition[key] or {}
+        )
+        do
+
+            merged[step] = value
+        end
+
+
+        calibre[key] = merged
+    end
+
+
+    return calibre
+end
+
 
 AC_Calibres.LIST = {
 
-    {
+    AC_Calibres.define({
+
         id = "9mm",
 
         suffix = "9mm",
@@ -174,40 +312,22 @@ AC_Calibres.LIST = {
         round = "Base.Bullets9mm",
 
         ammoType = "base:bullets_9mm",
+    }),
 
-        case = "AmmoMaking.Case9mm",
+    -- The second calibre, added to prove the model: one
+    -- definition, three items, their names and a
+    -- regenerated script. It shares the small pistol
+    -- primer with 9mm.
+    AC_Calibres.define({
 
-        bullet = "AmmoMaking.Bullet9mm",
+        id = ".38 Special",
 
-        dieSet = "AmmoMaking.DieSet9mm",
+        suffix = "38Special",
 
-        primer = "SmallPistol",
+        round = "Base.Bullets38",
 
-        bulletsPerScrap = 2,
-
-        powderUses = 1,
-
-        levels = {
-            dieSet = 1,
-            case = 1,
-            bullet = 2,
-            assemble = 3,
-        },
-
-        xp = {
-            dieSet = 10,
-            case = 1,
-            bullet = 1,
-            assemble = 2,
-        },
-
-        time = {
-            dieSet = 300,
-            case = 80,
-            bullet = 80,
-            assemble = 40,
-        },
-    },
+        ammoType = "base:bullets_38",
+    }),
 }
 
 
