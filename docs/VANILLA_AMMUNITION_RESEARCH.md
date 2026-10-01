@@ -51,7 +51,7 @@ That is all. **Vanilla has no recipe that makes a round.**
 | Primer | **none** | grep |
 | Bullet / projectile | **none** | grep |
 | Lead | **none** as a material (`Base.LeadPipe` is a weapon) | grep |
-| Brass | `Base.BrassIngot`, `Base.BrassScrap`; nothing consumes them | metallurgy research §9 |
+| Brass | `Base.BrassIngot`, `Base.BrassScrap`; no vanilla recipe consumes them | metallurgy research §9 |
 
 So of the four cartridge components, vanilla provides one (powder, and only by
 dismantling existing rounds). Cases, primers and projectiles are the mod's to

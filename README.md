@@ -360,7 +360,7 @@ Offline checks (no game required):
 lua5.1 tests/run_tests.lua
 ```
 
-`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 1500+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy (script files against their Lua mirror, material conservation, XP, skill requirement), translation keys, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
+`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 1900+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy and case stock (script files against their Lua mirror, material conservation from ore to case cups, XP, skill requirement), translation keys, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
 
 Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Metallurgy: `docs/METALLURGY_DESIGN.md` (the implemented furnace recipes, items, skill and conservation rules) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42.20.4 provides, read from the installed files and jar).
 
@@ -383,6 +383,24 @@ Current design goals include:
 - finite resource extraction
 
 The machine will not simply generate random ore independently of the geology system.
+
+---
+
+# Cartridge Case Stock
+
+The first step from brass towards ammunition. Vanilla Build 42 has finished rounds and gunpowder, but no cartridge cases, primers or bullets, so those are the mod's to add.
+
+```text
+Base.BrassIngot
+      │ "Forge Small Brass Sheets": 1 ingot + 1 charcoal, hammer and tongs kept
+      ▼ vanilla Primitive Forge
+10 AmmoMaking.SmallBrassSheet
+      │ "Punch Brass Case Cups": metalworking punch and hammer kept
+      ▼ any surface
+2 AmmoMaking.BrassCaseCup per sheet (20 per ingot)
+```
+
+A cup is the calibre-neutral blank one cartridge case is later drawn from. Both recipes copy vanilla recipe patterns, use only vanilla tools and conserve metal. **Not yet tested in game.** Design, vanilla research and the open decisions for the next step: `docs/AMMUNITION_DESIGN.md`, `docs/VANILLA_AMMUNITION_RESEARCH.md`.
 
 ---
 
@@ -524,6 +542,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Laboratory analyzer**: placeable powered world object, 24 processed hours, pauses without power, ±2 % result, cancel, no pickup while occupied
 - **Mining / extraction**: pickaxe timed action inside a sampled 3x3, ore dropped on the tile, XP and tool wear
 - **Metallurgy**: zinc smelting, copper and zinc ingot casting and 7 + 3 brass alloying as recipes on the vanilla furnaces; XP and craft time tied to Ammo Making (**not yet run in game**)
+- **Case stock**: brass ingots forged into small brass sheets at the vanilla forge, sheets punched into brass case cups on any surface (**not yet run in game**)
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
 - **Inspection prototype**: skill-gated inspection panel for the test cartridge
@@ -536,7 +555,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Mining passed a first in-game test on Build 42.20.4** (start, completion, `DigPickAxe` animation, zinc ore on the ground, depletion, exhaustion, cancel by walking away). Save/reload persistence, `Base.CopperOre`, water detection, built floors and the sound are still marked *REQUIRES IN-GAME VERIFICATION* in `docs/DEVELOPMENT.md`.
 - **Multiplayer mining is intentionally disabled.** A multiplayer client gets a disabled option and no extraction. The server-authoritative design is in `docs/MULTIPLAYER_MINING.md`.
 - **Metallurgy has not been run in game yet.** The furnace recipes are written from the installed 42.20.4 files and pass the offline tests; whether they appear at the furnace, award XP and speed up with skill is listed under *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/METALLURGY_DESIGN.md`.
-- **Brass is the end of the chain today.** Nothing consumes brass ingots yet.
+- **Case cups are the end of the chain today.** Brass can be forged into small sheets and punched into calibre-neutral case cups; drawing a cup into a cartridge case needs dies and a press, which are not designed yet (`docs/AMMUNITION_DESIGN.md`, decisions needed).
 - **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
 - **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
@@ -562,14 +581,20 @@ ore on the ground, reserve depleted
 vanilla furnace: ore → scrap → copper / zinc ingots
         ↓
 vanilla furnace: 7 copper + 3 zinc → 10 brass ingots
+        ↓
+vanilla forge: brass ingot → 10 small brass sheets
+        ↓
+any surface, punch + hammer: small sheet → 2 brass case cups
 ```
 
-Intended next stages:
+Intended next stages (`docs/AMMUNITION_DESIGN.md`):
 
 ```text
-components (cases, projectiles, primers, powder)
+cases (cup → case of a calibre; needs dies and a press)
         ↓
-ammunition (assembly, inspection, failures)
+bullets, primers, powder
+        ↓
+assembly into the vanilla round items, inspection, failures
 ```
 
 ## 🚧 In Development
@@ -662,9 +687,11 @@ The development repository is currently organized approximately as follows:
 PZ-AmmoMaking
 ├── README.md
 ├── docs
+│   ├── AMMUNITION_DESIGN.md
 │   ├── DEVELOPMENT.md
 │   ├── METALLURGY_DESIGN.md
 │   ├── MULTIPLAYER_MINING.md
+│   ├── VANILLA_AMMUNITION_RESEARCH.md
 │   └── VANILLA_METALLURGY_RESEARCH.md
 ├── tests
 │   ├── mock_pz.lua

@@ -112,7 +112,7 @@ gate and award no XP, so no Blacksmith requirement is added.
 
 | Lever | How | Value |
 |---|---|---|
-| XP | each recipe's `OnCreate` calls `AC_Materials.on<Recipe>`, which awards once per completed craft through `AmmoMakingSkill.awardXP` (console line `Metallurgy (<recipe id>): +N Ammo Making XP (total a -> b)`) | 3 / 5 / 5 / 25 |
+| XP | each recipe's `OnCreate` calls `AC_Materials.on<Recipe>`, which awards once per completed craft through `AmmoMakingSkill.awardXP` (console line `Crafting (<recipe id>): +N Ammo Making XP (total a -> b)`) | 3 / 5 / 5 / 25 |
 | Time | at boot `AC_Materials.applySkillRequirements()` adds "Ammo Making: 0" to each recipe script with the engine's `CraftRecipe.addRequiredSkill`. The engine's own `getTime(character)` then shortens the craft by 5 % per level: 200 at level 0, 100 at level 10 | engine rule |
 | Access | `CONFIG.requiredLevel` = 0: the whole chain is open from the start | 0 |
 | Tool wear | `MayDegradeLight` uses the recipe's relevant skill level, which is now Ammo Making | engine rule |
@@ -130,12 +130,12 @@ work; only the time lever is lost, and the compatibility check says so.
 
 ## 6. Material conservation
 
-Unit: 1 ingot = 10 units; ore = 10; scrap = 1 (`AC_Materials.UNITS`).
+Unit: 1 ingot = 100 units; ore = 100; scrap = 10 (`AC_Materials.UNITS`).
 
 Invariants, each asserted by `tests/run_tests.lua`:
 
 1. Every mod recipe has units out = units in. 1 ore → 10 scrap → 1 ingot.
-2. The alloy is exact: 70 copper + 30 zinc units in, 100 brass units out,
+2. The alloy is exact: 700 copper + 300 zinc units in, 1000 brass units out,
    30 % zinc.
 3. Kept inputs (crucible, tongs, mold) contain no metal and are never consumed.
 4. Every recipe consumes its charcoal.
@@ -144,7 +144,9 @@ Invariants, each asserted by `tests/run_tests.lua`:
    an inventory (500 random crafts on a mirrored inventory).
 6. `AC_Recipes.txt` and `AC_Materials.RECIPES` are identical field by field,
    so the numbers the tests check are the numbers the game loads.
-7. Nothing consumes `Base.BrassIngot` or `Base.BrassScrap` yet.
+7. Nothing produces or consumes `Base.BrassScrap` yet. `Base.BrassIngot`
+   feeds the case-stock stage (`docs/AMMUNITION_DESIGN.md`), which is held to
+   the same invariants.
 
 The engine consumes inputs and creates outputs; mod Lua never moves an item in
 this stage, so a crash cannot half-apply a recipe on our side.
@@ -159,14 +161,14 @@ receives the created items if a later stage wants to mark them.
 
 | File | Content |
 |---|---|
-| `media/scripts/AC_Recipes.txt` | the four `craftRecipe` blocks |
+| `media/scripts/AC_Recipes.txt` | the four furnace `craftRecipe` blocks (and the two case-stock ones) |
 | `media/scripts/AC_Items.txt` | zinc ore / scrap / ingot |
 | `media/lua/shared/AC_Materials.lua` | item ids, `UNITS`, `RECIPES` mirror, `VANILLA_RECIPES` (for the loop check), `checkConservation`, `getExpectedTime`, the `OnCreate` callbacks, `applySkillRequirements` |
 | `media/lua/shared/AC_Compat.lua` | probes for the metallurgy item ids, each recipe script, its callback and its requirement |
-| `media/lua/client/AC_GeologyDebug.lua` | Spawn Metallurgy Kit, Inspect Metallurgy Recipes |
+| `media/lua/client/AC_GeologyDebug.lua` | Spawn Metallurgy Kit, Inspect Station Recipes |
 | `Translate/EN/Recipes.json`, `ItemName.json` | recipe and item names |
 
-`AC_Materials.CONFIG`: `unitsPerIngot` 10, `xpSmeltZincOre` 3, `xpCastIngot` 5,
+`AC_Materials.CONFIG`: `unitsPerIngot` 100, `xpSmeltZincOre` 3, `xpCastIngot` 5,
 `xpCastBrass` 25, `requiredLevel` 0. Charcoal counts and `time` live in the
 script and its mirror. Nothing is balanced yet.
 
