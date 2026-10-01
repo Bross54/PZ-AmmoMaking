@@ -58,7 +58,7 @@ never move an item into that list.
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
 | `shared/AC_Calibres.lua` | shared | Calibre definitions and defaults, primer families, priming-compound sources, powder; builds the component recipes, their material units and the item list from that data |
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
-| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 17 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 2, four per calibre |
+| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 31 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 4 (two families × two charges), four per calibre × 5 |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
 | `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
@@ -109,9 +109,9 @@ the tables are small. Nothing here has been balanced yet.
 | `xpSmeltZincOre`, `xpCastIngot`, `xpCastBrass` | `AC_Materials.CONFIG` | 3, 5, 25 | XP per completed furnace craft |
 | `xpForgeBrassSheets`, `xpPunchCaseCups` | `AC_Materials.CONFIG` | 5, 1 | XP per forged ingot / punched sheet |
 | `requiredLevel` | `AC_Materials.CONFIG` | 0 | Ammo Making level of metallurgy and case-stock recipes |
-| `DEFAULTS.levels` / `xp` / `time` | `AC_Calibres` | die set 1 / 10 / 300, case 1 / 1 / 80, bullet 2 / 1 / 80, assemble 3 / 2 / 40 | per-calibre steps; a definition may override any of them |
-| `DEFAULTS.bulletsPerScrap`, `powderUses` | `AC_Calibres` | 2, 1 | bullets per copper scrap, gunpowder uses per round (never below 1) |
-| `PRIMERS[..]` | `AC_Calibres` | 10 per small sheet, level 2, XP 2, time 120 | small pistol primers |
+| `DEFAULTS.assembleLevel`, `xp`, `time` | `AC_Calibres` | 3; die set 10 / 300, case 1 / 80, bullet 1 / 80, assemble 2 / 40 | per-calibre steps. Levels derive from `assembleLevel` (`levelsFor`: die set and case two below, bullet one below, minimum 1); a definition may override any step |
+| `DEFAULTS.cupsPerCase`, `bulletsPerScrap`, `powderUses` | `AC_Calibres` | 1, 2, 1 | cups per case, bullets per copper scrap, gunpowder uses per round (whole, never below 1). Overrides: .45 ACP 1 / 1 / 1, .357 Magnum 1 / 2 / 2, .44 Magnum 2 / 1 / 3 |
+| `PRIMERS[..]` | `AC_Calibres` | SmallPistol: brass 1, compound 2, 10 per sheet, level 2. LargePistol: brass 2, compound 4, 5 per sheet, level 3. Both XP 2, time 120 | primer families |
 | `COMPOUND_SOURCES` | `AC_Calibres` | toy cap 2 units, match use 1 unit; a primer needs 2 | priming charge |
 | `POWDER` | `AC_Calibres` | 2 charcoal + 2 fertilizer uses → 1 jar (10 uses), level 3, XP 5, time 150 | gunpowder |
 | `baseQuality`, `qualityPerLevel`, `spread` | `AC_CaseQuality.CONFIG` | 50, 4, 15 | case quality roll (1–100) |
@@ -392,7 +392,7 @@ Design, recipe table and vanilla evidence: `docs/METALLURGY_DESIGN.md` and
 Console lines:
 
 ```text
-[AmmoMaking] Station recipes: 17 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
+[AmmoMaking] Station recipes: 31 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
 [AmmoMaking] Crafting (AmmoMaking_CastBrassIngots): +25 Ammo Making XP (total 40 -> 65)
 [AmmoMaking] WARNING: recipe skill requirements not applied: <error>
 ```
@@ -425,6 +425,17 @@ Design, recipe table, balance and vanilla evidence:
   calibre) and `AC_Materials` appends them at load, after `require
   "AC_Calibres"`. A test scans every other Lua file for a calibre suffix
   and fails if it finds one.
+- **Primer families** are entries of `AC_Calibres.PRIMERS`; a calibre names
+  one in `primerFamily`. Primer recipes are generated per family and
+  compound source. No file outside `AC_Calibres.lua` contains a primer item
+  id (tested).
+- **Validation.** `AC_Calibres.validate(list, primers)` is pure and returns
+  problems as `"<calibre>: text"`: duplicate ids or suffixes, an item used by
+  two calibres or two roles, a non-vanilla round, an unknown primer family,
+  fractional cups / bullets / powder, a component that unlocks after its
+  round, a primer that does not use exactly one sheet. The suite requires
+  the live model to return none and feeds it broken copies; `AC_Compat` runs
+  it at game start.
 - **Adding a calibre**: a `LIST` entry (`id`, `suffix`, `round`, `ammoType`,
   plus only what differs), three items in `AC_Items.txt`, their names in
   `ItemName.json`, four recipe names in `Recipes.json`,
@@ -447,6 +458,12 @@ Design, recipe table, balance and vanilla evidence:
 - **Levels are enforced only through the attached requirement.** The
   compatibility check names every recipe whose requirement is missing and
   what level it should have had.
+- **Compatibility lines for calibres**: `OK: calibre model (5 calibres, 2
+  primer families)`, then `OK: calibre <id> complete` or `WARNING: calibre
+  <id> incomplete (missing …; the other calibres are unaffected)`, and
+  `OK: Base.GunPowder holds 10 uses` (read from the item script's
+  `getUseDelta()`; a different number is a WARNING because the powder
+  accounting assumes ten).
 - **Material model.** A `UNITS` entry is `{ metal, units }` or
   `{ contents = { material = n } }`; `uses` marks a drainable, whose input
   lines count uses (as the engine does) and whose output is a full item
@@ -456,7 +473,7 @@ Design, recipe table, balance and vanilla evidence:
 Console lines:
 
 ```text
-[AmmoMaking] Calibre definitions loaded (2)
+[AmmoMaking] Calibre definitions loaded (5)
 [AmmoMaking] Crafting (AmmoMaking_FormCase9mm): +1 Ammo Making XP (total 80 -> 81)
 [AmmoMaking] WARNING: caseQuality failed for AmmoMaking_FormCase9mm: <error>
 ```
@@ -492,9 +509,10 @@ Right-click the ground → **Ammo Making Debug**: Inspect Current Tile, Survey
 Current Area (3x3), Show Geology Seed, Inspect Clicked Tile Objects (sprites,
 analyzer state), Reset Depletion (tile / 3x3), Spawn Sampling Kit, Spawn Mining
 Kit, Spawn Laboratory Analyzer, Spawn Assayed Sample (current 3x3), Spawn
-Metallurgy Kit, Spawn Case Stock Kit, Spawn <calibre> Components Kit (one per
-calibre), Spawn Primer and Powder Kit, Set Ammo Making Level, Inspect Station
-Recipes, Inspect Ammo Components, Run Compatibility Check. Everything prints to `console.txt`. From
+Metallurgy Kit, Spawn Case Stock Kit, Spawn Calibre Components Kit (a submenu
+with one entry per calibre), Spawn Primer and Powder Kit, Set Ammo Making
+Level, Inspect Station Recipes, Inspect Ammo Components, Print Calibre
+Definitions, Run Compatibility Check. Everything prints to `console.txt`. From
 the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
 
 - **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
@@ -505,9 +523,13 @@ the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
 - **Spawn Case Stock Kit**: a ball-peen hammer, tongs, a metalworking
   punch, one charcoal, one brass ingot and two small brass sheets: forge the
   ingot at a forge, punch the sheets at any surface.
-- **Spawn <calibre> Components Kit**: the die set, a hammer, five case
-  cups, three copper scrap, five primers and a jar of gunpowder: form,
-  swage and assemble five rounds. Built from the calibre list.
+- **Spawn Calibre Components Kit → <calibre>**: the die set, a hammer, and
+  the cups, copper scrap, primers of the calibre's family and gunpowder for
+  five rounds of that calibre, computed from its definition.
+- **Print Calibre Definitions**: one console line per calibre (round, case
+  and cups, bullet and bullets per scrap, primer family and item, powder
+  uses, die set, the four levels) and any problem `AC_Calibres.validate()`
+  finds. Read-only.
 - **Spawn Primer and Powder Kit**: punch, hammer, mortar and pestle, two
   small brass sheets, ten toy caps, a matchbox, two charcoal and a bag of
   fertilizer: both primer recipes and one powder mix. `AddItem` honours a
@@ -567,9 +589,14 @@ recipes, shows them at a furnace and calls `OnCreate` is not tested.
 The component sections add: the calibre model (complete definitions, items
 declared, no calibre named in other Lua), case quality (pure roll, storage,
 both effects against mocked recipe data), progression (levels per step, the
-attached requirement), and the complete 9mm chain on a mirrored inventory:
-exactly 100 rounds from 6 brass ingots, 50 copper scrap, 100 toy caps and 20
-fertilizer uses with nothing left over. Tampered recipes (two rounds out, no
+attached requirement), and for **every** calibre the complete chain on a
+mirrored inventory: exactly 100 rounds from the ingots, scrap, caps and
+fertilizer its definition implies, with nothing left over, plus fifteen ore
+run through every recipe to 100 rounds of 9mm with metal unchanged. Further
+sections pin the calibre matrix, check primer-family parity, prove that no
+component or die set of one calibre can be used by another (in the mirror,
+in the generated script text and on an executed inventory), and simulate a
+career from the first ore, printing the ore needed for each level. Tampered recipes (two rounds out, no
 case, no primer, no bullet, no powder, an undeclared source, a jar from one
 dismantled round) must be rejected by the conservation check; that is how
 the alloy-parts flaw in an earlier version of the check was found.
@@ -630,7 +657,7 @@ for a script field or tag that is not in the tests' whitelists.
   - inputs are consumed, crucible / tongs / mold are kept, a clay mold
     breaks, and the outputs are 10 zinc scrap, 1 ingot, 10 `Base.BrassIngot`;
   - the `Crafting (...)` XP line appears once per craft, also in a batch;
-  - the boot line reports 17 recipes given the requirement, the UI shows Ammo
+  - the boot line reports 31 recipes given the requirement, the UI shows Ammo
     Making 0, and a higher level shortens the craft;
   - zinc item names, icons and world models; carrying the 40-weight zinc ore;
   - every metallurgy line of the compatibility check is OK.
