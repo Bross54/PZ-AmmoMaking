@@ -20,6 +20,8 @@
 -- probe is pcall-guarded. It runs once per game start;
 -- the debug menu can run it again on demand.
 
+require "AC_Calibres"
+
 AC_Compat = AC_Compat or {}
 
 
@@ -89,6 +91,60 @@ AC_Compat.REQUIRED_ITEMS = {
 
     "Base.MetalworkingPunch",
 }
+
+
+------------------------------------------------
+-- Ammunition components: every item the component
+-- recipes name by id, taken from the calibre model so a
+-- new calibre is probed without editing this file, and
+-- the vanilla tools the debug kits hand out.
+------------------------------------------------
+
+for _,
+    itemType
+in ipairs(
+    AC_Calibres.getItems()
+)
+do
+
+    local known = false
+
+
+    for _,
+        existing
+    in ipairs(
+        AC_Compat.REQUIRED_ITEMS
+    )
+    do
+
+        if existing == itemType then
+            known = true
+        end
+    end
+
+
+    if not known then
+
+        table.insert(
+            AC_Compat.REQUIRED_ITEMS,
+            itemType
+        )
+    end
+end
+
+
+for _,
+    itemType
+in ipairs(
+    { "Base.MortarPestle", "Base.Hammer" }
+)
+do
+
+    table.insert(
+        AC_Compat.REQUIRED_ITEMS,
+        itemType
+    )
+end
 
 
 ------------------------------------------------
@@ -685,6 +741,8 @@ local function checkGlobals(
         { "AC_LaboratoryAnalyzerObject loaded", function() return AC_LaboratoryAnalyzerObject ~= nil end, "server/BuildingObjects/AC_LaboratoryAnalyzerObject.lua did not load; the analyzer cannot be placed" },
 
         { "Metabolics.HeavyDomestic", function() return Metabolics ~= nil and Metabolics.HeavyDomestic ~= nil end, "metabolic load while picking up the analyzer" },
+
+        { "AC_CaseQuality effects", function() return AC_CaseQuality ~= nil and AC_CaseQuality.EFFECTS ~= nil and AC_CaseQuality.EFFECTS.caseQuality ~= nil and AC_CaseQuality.EFFECTS.roundQuality ~= nil end, "formed cases get no quality" },
     }
 
 
@@ -1100,7 +1158,9 @@ local function checkMetallurgyRecipes(
                         results,
                         "WARNING",
                         "Ammo Making requirement not attached to " .. recipe.id,
-                        "craft time does not improve with skill"
+                        AC_Materials.getRequiredLevel(recipe) > 0
+                            and ("the recipe is not gated at Ammo Making " .. AC_Materials.getRequiredLevel(recipe))
+                            or "craft time does not improve with skill"
                     )
                 end
             end

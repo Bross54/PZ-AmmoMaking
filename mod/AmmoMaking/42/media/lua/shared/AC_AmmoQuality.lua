@@ -140,13 +140,13 @@ function AmmoQuality.calculateReliability(item)
     data.catastrophicFailureChance = clamp(catastrophic, 0, 100)
 end
 
--- Returns a simple quality label (translated for display)
-function AmmoQuality.getQualityLabel(item)
-    if not item then
+-- Label for a 0-100 quality value (translated for display). Shared by
+-- cartridges and by components that carry a single quality, such as
+-- cartridge cases.
+function AmmoQuality.labelFor(quality)
+    if type(quality) ~= "number" then
         return AC_Text.get("IGUI_AmmoMaking_Quality_Unknown", "Unknown")
     end
-
-    local quality = AmmoQuality.calculateOverall(item)
 
     if quality >= 90 then
         return AC_Text.get("IGUI_AmmoMaking_Quality_Excellent", "Excellent")
@@ -163,4 +163,13 @@ function AmmoQuality.getQualityLabel(item)
     else
         return AC_Text.get("IGUI_AmmoMaking_Quality_Dangerous", "Dangerous")
     end
+end
+
+-- Returns a simple quality label (translated for display)
+function AmmoQuality.getQualityLabel(item)
+    if not item then
+        return AmmoQuality.labelFor(nil)
+    end
+
+    return AmmoQuality.labelFor(AmmoQuality.calculateOverall(item))
 end

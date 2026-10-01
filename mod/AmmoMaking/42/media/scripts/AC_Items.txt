@@ -69,6 +69,57 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    /* Ammunition components (docs/AMMUNITION_DESIGN.md). The primer is
+       shared by a primer family; case, bullet and die set exist per calibre
+       and are listed in AC_Calibres.LIST. The assembled round is the vanilla
+       item (Base.Bullets9mm), never a mod copy. The die set copies the look
+       of Base.SmallPunchSet. Vanilla art as placeholders throughout. */
+
+    item SmallPistolPrimer
+    {
+        DisplayName = Small Pistol Primer,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.001,
+        Icon = SnapCap,
+        WorldStaticModel = CapGunCap,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet9mm
+    {
+        DisplayName = 9mm Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case9mm
+    {
+        DisplayName = Empty 9mm Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = PistolAmmo,
+        WorldStaticModel = 9mmRounds,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet9mm
+    {
+        DisplayName = 9mm Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

@@ -231,6 +231,20 @@ MOCK.knownScriptItems = {
     ["AmmoMaking.BrassCaseCup"] = true,
     ["Base.BallPeenHammer"] = true,
     ["Base.MetalworkingPunch"] = true,
+    -- Ammunition components (vanilla ids confirmed in the installed scripts)
+    ["AmmoMaking.SmallPistolPrimer"] = true,
+    ["AmmoMaking.DieSet9mm"] = true,
+    ["AmmoMaking.Case9mm"] = true,
+    ["AmmoMaking.Bullet9mm"] = true,
+    ["Base.Bullets9mm"] = true,
+    ["Base.GunPowder"] = true,
+    ["Base.Fertilizer"] = true,
+    ["Base.CapGunCap"] = true,
+    ["Base.Matches"] = true,
+    ["Base.Matchbox"] = true,
+    ["Base.SteelBarQuarter"] = true,
+    ["Base.MortarPestle"] = true,
+    ["Base.Hammer"] = true,
 }
 
 -- Mocked CraftRecipe script objects, as getScriptManager():getCraftRecipe(id)
@@ -840,7 +854,8 @@ end
 -- Mod Lua files the tests load, relative to media/lua/ (UI panels are
 -- mocked instead of loaded).
 MOCK.MOD_FILES = {
-    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Compat",
+    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality",
+    "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Geology", "shared/AC_GeologySampling",
     "shared/AC_LaboratoryAnalyzer", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_Text",
     "shared/AC_WorldData",
@@ -871,6 +886,8 @@ function MOCK.resetLuaState()
     AC_Deposits = nil
     AC_Mining = nil
     AC_Materials = nil
+    AC_Calibres = nil
+    AC_CaseQuality = nil
     AC_Compat = nil
     AC_MineOreAction = nil
     AC_PickUpAnalyzerAction = nil

@@ -1,9 +1,9 @@
 -- Ammo Making - Materials and station recipes
 -- Project Zomboid Build 42.20
 --
--- Metallurgy (ore to brass) and case stock (brass to case
--- cups) extend the vanilla stations; they are not systems
--- of their own. The recipes are ordinary craftRecipe blocks
+-- Metallurgy (ore to brass), case stock (brass to case
+-- cups) and the ammunition components of AC_Calibres extend
+-- the vanilla stations; they are not systems of their own. The recipes are ordinary craftRecipe blocks
 -- in media/scripts/AC_Recipes.txt, attached to the vanilla
 -- furnace and forge bench tags or to any surface. The
 -- engine does the timing, consumes the inputs, keeps the
@@ -30,6 +30,10 @@
 --
 -- Nothing here persists anything, and there is no custom
 -- station, fuel, heat or timer.
+
+-- The component recipes and their units are built from the
+-- calibre definitions, which must be loaded first.
+require "AC_Calibres"
 
 AC_Materials = AC_Materials or {}
 
@@ -59,10 +63,12 @@ AC_Materials.CONFIG = {
 
     xpPunchCaseCups = 1,
 
-    -- Ammo Making level each recipe requires. 0 gates
-    -- nothing; it makes Ammo Making the recipe's relevant
-    -- skill, which is what the engine's own time scaling
-    -- reads (5% faster per level above the requirement).
+    -- Ammo Making level of a recipe that names none of its
+    -- own (metallurgy and case stock). 0 gates nothing; it
+    -- makes Ammo Making the recipe's relevant skill, which
+    -- is what the engine's own time scaling reads (5% faster
+    -- per level above the requirement). The component
+    -- recipes carry their own levels (AC_Calibres).
     requiredLevel = 0,
 
     xpLogSource = "Crafting",
@@ -155,6 +161,19 @@ AC_Materials.UNITS = {
 
     ["AmmoMaking.BrassCaseCup"] = { metal = "brass", units = 5 },
 }
+
+
+-- Ammunition components: cases, bullets, primers, powder,
+-- priming compound and the vanilla rounds they become.
+for itemType,
+    entry
+in pairs(
+    AC_Calibres.buildUnits()
+)
+do
+
+    AC_Materials.UNITS[itemType] = entry
+end
 
 
 ------------------------------------------------
@@ -400,6 +419,23 @@ AC_Materials.RECIPES = {
 }
 
 
+-- Ammunition components (docs/AMMUNITION_DESIGN.md):
+-- gunpowder, primers, and per calibre the die set, case,
+-- bullets and assembly.
+for _,
+    recipe
+in ipairs(
+    AC_Calibres.buildRecipes()
+)
+do
+
+    table.insert(
+        AC_Materials.RECIPES,
+        recipe
+    )
+end
+
+
 ------------------------------------------------
 -- Vanilla recipes that touch the same metals,
 -- recorded from the installed 42.20.4 scripts so
@@ -453,6 +489,35 @@ AC_Materials.VANILLA_RECIPES = {
 }
 
 
+-- Vanilla "Gather Gunpowder" takes any round apart for
+-- one use of gunpowder (tags[base:ammo] in the script).
+-- Recorded once per calibre the mod can assemble, so the
+-- tests can prove that taking a round apart and making a
+-- new one never gains anything.
+for _,
+    calibre
+in ipairs(
+    AC_Calibres.LIST
+)
+do
+
+    table.insert(
+        AC_Materials.VANILLA_RECIPES,
+        {
+            id = "GatherGunpowder_" .. calibre.suffix,
+
+            inputs = {
+                { count = 1, items = { calibre.round } },
+            },
+
+            outputs = {
+                { count = 1, item = AC_Calibres.POWDER.item, oneUse = true },
+            },
+        }
+    )
+end
+
+
 ------------------------------------------------
 -- LOOKUP
 ------------------------------------------------
@@ -488,21 +553,37 @@ function AC_Materials.getRecipeXP(
 
 
     return
-        tonumber(
-            AC_Materials.CONFIG[recipe.xpKey]
-        )
+        tonumber(recipe.xp)
+        or tonumber(AC_Materials.CONFIG[recipe.xpKey])
         or 0
 end
 
 
+-- Ammo Making level a recipe requires.
+function AC_Materials.getRequiredLevel(
+    recipe
+)
+
+    return
+        tonumber(recipe and recipe.requiredLevel)
+        or AC_Materials.CONFIG.requiredLevel
+end
+
+
 ------------------------------------------------
--- METAL UNITS OF A RECIPE
+-- MATERIAL UNITS OF A RECIPE
 ------------------------------------------------
 --
--- Returns two tables metal -> units: what the recipe
+-- Returns two tables material -> units: what the recipe
 -- consumes and what it creates. Kept tools and items
--- without a UNITS entry (charcoal, crucible, mold)
--- contain no metal.
+-- without a UNITS entry (charcoal, crucible, mold, steel)
+-- contain nothing that is tracked.
+--
+-- A UNITS entry is { metal, units } or, for a component
+-- of several materials, { contents = { material = n } }.
+-- For a drainable ("uses" set) the units are per use: an
+-- input line counts uses, as the engine does, and an
+-- output line is a full item unless it is marked oneUse.
 --
 -- An input that accepts several items counts the
 -- alternative with the FEWEST units: the invariant
@@ -517,6 +598,42 @@ local function addUnits(
 
     totals[metal] =
         (totals[metal] or 0) + units
+end
+
+
+local function contentsOf(
+    entry
+)
+
+    if entry.contents then
+        return entry.contents
+    end
+
+
+    return { [entry.metal] = entry.units }
+end
+
+
+local function totalOf(
+    contents
+)
+
+    local total = 0
+
+
+    for _,
+        units
+    in pairs(
+        contents
+    )
+    do
+
+        total =
+            total + units
+    end
+
+
+    return total
 end
 
 
@@ -554,24 +671,33 @@ function AC_Materials.getRecipeUnits(
                     AC_Materials.UNITS[itemType]
 
 
-                if entry
-                    and (
-                        not cheapest
-                        or entry.units < cheapest.units
-                    )
-                then
+                if entry then
 
-                    cheapest = entry
+                    local contents =
+                        contentsOf(entry)
+
+
+                    if not cheapest
+                        or totalOf(contents) < totalOf(cheapest)
+                    then
+
+                        cheapest = contents
+                    end
                 end
             end
 
 
-            if cheapest then
+            for material,
+                units
+            in pairs(
+                cheapest or {}
+            )
+            do
 
                 addUnits(
                     consumed,
-                    cheapest.metal,
-                    cheapest.units * input.count
+                    material,
+                    units * input.count
                 )
             end
         end
@@ -591,11 +717,30 @@ function AC_Materials.getRecipeUnits(
 
         if entry then
 
-            addUnits(
-                created,
-                entry.metal,
-                entry.units * output.count
+            local perItem = 1
+
+
+            if entry.uses
+                and not output.oneUse
+            then
+
+                perItem = entry.uses
+            end
+
+
+            for material,
+                units
+            in pairs(
+                contentsOf(entry)
             )
+            do
+
+                addUnits(
+                    created,
+                    material,
+                    units * perItem * output.count
+                )
+            end
         end
     end
 
@@ -608,10 +753,15 @@ end
 -- CONSERVATION
 ------------------------------------------------
 --
--- A recipe conserves metal when, for every metal it
--- creates, it consumed at least as many units of that
--- metal - or, for an alloy, of the alloy's parts in
+-- A recipe conserves material when, for every material
+-- it creates, it consumed at least as many units of that
+-- material - or, for an alloy, of the alloy's parts in
 -- total. An alloy recipe must come out exactly even.
+--
+-- recipe.source names the one material a recipe may bring
+-- into existence from untracked raw inputs (gunpowder from
+-- charcoal and fertilizer). Such a recipe must still
+-- consume something.
 --
 -- Returns ok and a reason string for a failure.
 ------------------------------------------------
@@ -638,8 +788,19 @@ function AC_Materials.checkConservation(
             consumed[metal] or 0
 
 
+        if recipe.source == metal then
+
+            -- Never short, whatever is created.
+            available = units
+        end
+
+
+        -- The parts of an alloy pay for it only in the recipe
+        -- that makes the alloy. Anywhere else brass must come
+        -- from brass: the copper of a bullet is not a case.
         local parts =
-            AC_Materials.ALLOYS[metal]
+            recipe.alloy == metal
+            and AC_Materials.ALLOYS[metal]
 
 
         if parts then
@@ -687,6 +848,39 @@ function AC_Materials.checkConservation(
     end
 
 
+    if recipe.source then
+
+        local consumesSomething = false
+
+
+        for _,
+            input
+        in ipairs(
+            recipe.inputs or {}
+        )
+        do
+
+            if not input.keep
+                and input.count > 0
+            then
+
+                consumesSomething = true
+            end
+        end
+
+
+        if not consumesSomething then
+
+            return
+                false,
+                recipe.id
+                .. " creates "
+                .. recipe.source
+                .. " from nothing"
+        end
+    end
+
+
     return true, nil
 end
 
@@ -711,7 +905,9 @@ function AC_Materials.getExpectedTime(
 )
 
     local required =
-        AC_Materials.CONFIG.requiredLevel
+        AC_Materials.getRequiredLevel(
+            recipe
+        )
 
 
     level =
@@ -751,7 +947,8 @@ end
 
 function AC_Materials.onRecipeCreated(
     recipeId,
-    character
+    character,
+    craftRecipeData
 )
 
     local recipe =
@@ -760,22 +957,66 @@ function AC_Materials.onRecipeCreated(
         )
 
 
-    if not recipe
-        or not character
-    then
+    if not recipe then
         return 0
     end
 
 
-    return
-        AmmoMakingSkill.awardXP(
-            character,
-            AC_Materials.getRecipeXP(recipe),
-            AC_Materials.CONFIG.xpLogSource
-            .. " ("
-            .. recipe.id
-            .. ")"
-        )
+    local granted = 0
+
+
+    if character then
+
+        granted =
+            AmmoMakingSkill.awardXP(
+                character,
+                AC_Materials.getRecipeXP(recipe),
+                AC_Materials.CONFIG.xpLogSource
+                .. " ("
+                .. recipe.id
+                .. ")"
+            )
+    end
+
+
+    ------------------------------------------------
+    -- Some recipes do one more thing than XP: a formed
+    -- case gets its quality, an assembled round inherits
+    -- it (AC_CaseQuality.EFFECTS). A failure there must
+    -- not break the craft, which has already happened.
+    ------------------------------------------------
+
+    local effect =
+        recipe.effect
+        and AC_CaseQuality.EFFECTS[recipe.effect]
+
+
+    if effect then
+
+        local ok,
+              err =
+            pcall(
+                effect,
+                craftRecipeData,
+                character
+            )
+
+
+        if not ok then
+
+            print(
+                "[AmmoMaking] WARNING: "
+                .. recipe.effect
+                .. " failed for "
+                .. recipe.id
+                .. ": "
+                .. tostring(err)
+            )
+        end
+    end
+
+
+    return granted
 end
 
 
@@ -799,7 +1040,8 @@ do
             return
                 AC_Materials.onRecipeCreated(
                     recipeId,
-                    character
+                    character,
+                    craftRecipeData
                 )
         end
 end
@@ -809,12 +1051,17 @@ end
 -- SKILL REQUIREMENT ON THE RECIPE SCRIPTS
 ------------------------------------------------
 --
--- Adds "Ammo Making: requiredLevel" to each of our
--- recipe scripts through the engine's own
+-- Adds "Ammo Making: <level>" to each of our recipe
+-- scripts through the engine's own
 -- CraftRecipe.addRequiredSkill(Perk, int). With it the
--- crafting UI shows Ammo Making as the recipe's skill
--- and CraftRecipe.getTime(character) shortens the
--- craft with the character's Ammo Making level.
+-- crafting UI shows Ammo Making as the recipe's skill,
+-- the engine refuses the craft below that level, and
+-- CraftRecipe.getTime(character) shortens the craft
+-- with the character's Ammo Making level.
+--
+-- This is the ONLY thing that gates the component
+-- recipes by level: if it cannot be attached, they are
+-- open to everyone and the compatibility check says so.
 --
 -- Safe to call any number of times: a recipe that
 -- already has a required skill is left alone. Every
@@ -910,7 +1157,7 @@ function AC_Materials.applySkillRequirements()
 
             script:addRequiredSkill(
                 perk,
-                AC_Materials.CONFIG.requiredLevel
+                AC_Materials.getRequiredLevel(recipe)
             )
 
 

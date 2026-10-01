@@ -705,6 +705,185 @@ end
 
 
 ------------------------------------------------
+-- AMMUNITION COMPONENTS
+------------------------------------------------
+--
+-- Kits are built from the calibre model, so a new
+-- calibre gets its kit without a change here.
+--
+-- Components kit: everything to form cases, swage
+-- bullets and assemble five rounds of one calibre.
+-- Primer and powder kit: the raw materials and tools
+-- of the primer and gunpowder recipes.
+--
+-- Note: inventory:AddItem honours a vanilla item's
+-- "count", so a few vanilla entries may arrive as more
+-- than one item. The kits are for testing, not exact.
+------------------------------------------------
+
+local function spawnComponentsKit(
+    player,
+    calibre
+)
+
+    local primer =
+        AC_Calibres.getPrimer(
+            calibre.primer
+        )
+
+
+    spawnKit(
+        player,
+        {
+            { calibre.dieSet, 1 },
+
+            { "Base.Hammer", 1 },
+
+            { AC_Materials.ITEMS.BrassCaseCup, 5 },
+
+            { AC_Materials.ITEMS.CopperScrap, 3 },
+
+            { primer.item, 5 },
+
+            { AC_Calibres.POWDER.item, 1 },
+        },
+        calibre.id .. " components kit"
+    )
+end
+
+
+local function spawnPrimerPowderKit(
+    player
+)
+
+    spawnKit(
+        player,
+        {
+            { AC_Materials.ITEMS.MetalworkingPunch, 1 },
+
+            { "Base.Hammer", 1 },
+
+            { "Base.MortarPestle", 1 },
+
+            { AC_Materials.ITEMS.SmallBrassSheet, 2 },
+
+            { "Base.CapGunCap", 10 },
+
+            { "Base.Matchbox", 1 },
+
+            { AC_Materials.ITEMS.Charcoal, 2 },
+
+            { AC_Calibres.POWDER.fertilizerItem, 1 },
+        },
+        "Primer and powder kit"
+    )
+end
+
+
+------------------------------------------------
+-- Lists the cases and handloaded rounds the player
+-- carries with their stored quality. Read-only.
+------------------------------------------------
+
+local function inspectAmmoComponents(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    log("AMMO COMPONENTS IN INVENTORY")
+
+
+    local total = 0
+
+
+    local function report(
+        itemType,
+        kind,
+        reader
+    )
+
+        local items =
+            player:getInventory():
+                getItemsFromFullType(
+                    itemType,
+                    true
+                )
+
+
+        if not items then
+            return
+        end
+
+
+        for index = 0, items:size() - 1 do
+
+            local quality =
+                reader(
+                    items:get(index)
+                )
+
+
+            total =
+                total + 1
+
+
+            log(
+                itemType
+                .. " ("
+                .. kind
+                .. "): "
+                .. (
+                    quality
+                    and (
+                        "quality "
+                        .. tostring(quality)
+                        .. " ("
+                        .. AC_CaseQuality.getLabel(quality)
+                        .. ")"
+                    )
+                    or "no stored quality"
+                )
+            )
+        end
+    end
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        report(
+            calibre.case,
+            calibre.id .. " case",
+            AC_CaseQuality.get
+        )
+
+
+        report(
+            calibre.round,
+            calibre.id .. " round",
+            AC_CaseQuality.getRoundQuality
+        )
+    end
+
+
+    halo(
+        player,
+        "Ammo components: "
+        .. total
+        .. " listed (see console)"
+    )
+end
+
+
+------------------------------------------------
 -- Prints what the game knows about each of the mod's
 -- station recipes (metallurgy and case stock).
 -- Read-only: it attaches nothing.
@@ -787,6 +966,8 @@ local function inspectMetallurgyRecipes(
             .. recipe.benchTag
             .. "]: "
             .. state
+            .. "; level "
+            .. tostring(AC_Materials.getRequiredLevel(recipe))
             .. "; XP "
             .. tostring(AC_Materials.getRecipeXP(recipe))
             .. "; expected time "
@@ -1525,6 +1706,15 @@ AC_GeologyDebug.spawnMetallurgyKit =
 AC_GeologyDebug.spawnCaseStockKit =
     spawnCaseStockKit
 
+AC_GeologyDebug.spawnComponentsKit =
+    spawnComponentsKit
+
+AC_GeologyDebug.spawnPrimerPowderKit =
+    spawnPrimerPowderKit
+
+AC_GeologyDebug.inspectAmmoComponents =
+    inspectAmmoComponents
+
 AC_GeologyDebug.inspectMetallurgyRecipes =
     inspectMetallurgyRecipes
 
@@ -1704,6 +1894,18 @@ local function onFillWorldObjectContextMenu(
 
     menu:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
 
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        menu:addOption("Spawn " .. calibre.id .. " Components Kit", player, spawnComponentsKit, calibre)
+    end
+
+    menu:addOption("Spawn Primer and Powder Kit", player, spawnPrimerPowderKit)
+
 
     ------------------------------------------------
     -- Skill / diagnostics
@@ -1716,6 +1918,8 @@ local function onFillWorldObjectContextMenu(
 
 
     menu:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
+
+    menu:addOption("Inspect Ammo Components (inventory)", player, inspectAmmoComponents)
 
     menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
 end

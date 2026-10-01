@@ -4,5 +4,12 @@
     "AmmoMaking_CastZincIngot": "Cast Zinc Ingot",
     "AmmoMaking_CastBrassIngots": "Cast Cartridge Brass (7 Copper + 3 Zinc)",
     "AmmoMaking_ForgeSmallBrassSheets": "Forge Small Brass Sheets",
-    "AmmoMaking_PunchBrassCaseCups": "Punch Brass Case Cups"
+    "AmmoMaking_PunchBrassCaseCups": "Punch Brass Case Cups",
+    "AmmoMaking_MixGunpowder": "Mix Gunpowder (Charcoal + Fertilizer)",
+    "AmmoMaking_MakeSmallPistolPrimersFromCaps": "Make Small Pistol Primers (Toy Caps)",
+    "AmmoMaking_MakeSmallPistolPrimersFromMatches": "Make Small Pistol Primers (Match Heads)",
+    "AmmoMaking_ForgeDieSet9mm": "Forge 9mm Handloading Die Set",
+    "AmmoMaking_FormCase9mm": "Form 9mm Case",
+    "AmmoMaking_SwageBullets9mm": "Swage 9mm Copper Bullets",
+    "AmmoMaking_AssembleRound9mm": "Assemble 9mm Round"
 }

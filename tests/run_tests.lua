@@ -26,6 +26,7 @@ local ROOT = arg and arg[0] and arg[0]:match("^(.*)/tests/[^/]*$") or "."
 local LUA = ROOT .. "/mod/AmmoMaking/42/media/lua/"
 
 local MOCK = dofile(ROOT .. "/tests/mock_pz.lua")
+local RENDER = dofile(ROOT .. "/tests/render_recipes.lua")
 
 ------------------------------------------------
 -- MINIMAL TEST FRAMEWORK
@@ -2284,7 +2285,9 @@ do
         "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
         "Spawn Metallurgy Kit (furnace tools + materials)",
         "Spawn Case Stock Kit (brass + forge and punch tools)",
-        "Set Ammo Making Level", "Inspect Station Recipes", "Run Compatibility Check",
+        "Spawn 9mm Components Kit", "Spawn Primer and Powder Kit",
+        "Set Ammo Making Level", "Inspect Station Recipes",
+        "Inspect Ammo Components (inventory)", "Run Compatibility Check",
     }
     for _, e in ipairs(expected) do
         check(root.submenu:find(e) ~= nil, "debug entry present: " .. e)
@@ -2675,8 +2678,9 @@ do
         eq(block.fields.Tags, "base:hasmetal", block.name .. " tags")
         check(block.fields.Icon ~= nil and block.fields.WorldStaticModel ~= nil, block.name .. " has an icon and a world model")
     end
-    for _, name in ipairs({ "Case9mm", "Primer", "Bullet9mm", "GunPowder" }) do
-        check(declaredItems["AmmoMaking." .. name] == nil, "no speculative component item yet: " .. name)
+    -- Vanilla has the powder and the round; the mod must not copy them.
+    for _, name in ipairs({ "GunPowder", "Bullets9mm", "Round9mm", "Cartridge9mm", "Lead", "LeadOre", "Sulfur", "Nitrate" }) do
+        check(declaredItems["AmmoMaking." .. name] == nil, "no mod copy or speculative resource: " .. name)
     end
 
     -- Vanilla already has these; the mod must not shadow them.
@@ -2694,7 +2698,7 @@ do
         check(probed[id], "AC_Materials.ITEMS." .. name .. " (" .. id .. ") is probed by AC_Compat")
     end
     for id in pairs(AC_Materials.UNITS) do
-        check(probed[id], "metal item " .. id .. " is probed by AC_Compat")
+        check(probed[id], "tracked item " .. id .. " is probed by AC_Compat")
     end
     eq(AC_Geology.ITEMS.ZincOre, AC_Materials.ITEMS.ZincOre, "mining and metallurgy agree on the zinc ore id")
     eq(AC_Geology.ITEMS.CopperOre, AC_Materials.ITEMS.CopperOre, "mining and metallurgy agree on the copper ore id")
@@ -2727,14 +2731,16 @@ do
     -- Forge_Copper_Sheet, the scrap-armour cold work, NailSpikeWeapon),
     -- plus OnCreate.
     local knownFields = { time = true, timedAction = true, Tags = true, category = true, OnCreate = true }
-    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, AnySurfaceCraft = true }
-    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true }
-    local knownCategories = { Blacksmithing = true, Metalworking = true }
+    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true }
+    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true }
+    local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true }
     local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true }
     local knownItemTags = {
         ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true,
         ["base:hammer"] = true, ["base:clubhammer"] = true, ["base:metalworkingpliers"] = true,
         ["base:metalworkingpunch"] = true, ["base:smallpunch"] = true,
+        ["base:ballpeenhammer"] = true, ["base:whetstone"] = true, ["base:file"] = true,
+        ["base:mortarpestle"] = true,
     }
     local probed = {}
     for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
@@ -2811,7 +2817,14 @@ do
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
-    eq(#AC_Materials.RECIPES, 6, "four metallurgy recipes and two case-stock recipes")
+    eq(#AC_Materials.RECIPES, 6 + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST,
+        "metallurgy 4, case stock 2, gunpowder 1, primers per family and source, four per calibre")
+
+    -- The script body is exactly what tests/render_recipes.lua makes of the
+    -- mirror: the file is generated, never typed.
+    local header, body = RENDER.splitHeader(readFile(SCRIPTS .. "AC_Recipes.txt"))
+    check(header ~= "" and string.find(header, "GENERATED", 1, true) ~= nil, "the script header says the body is generated")
+    eq(body, RENDER.renderModule(AC_Materials.RECIPES), "AC_Recipes.txt body equals the rendered mirror (run tests/write_recipes.lua)")
 
     local alloys = 0
     for _, recipe in ipairs(AC_Materials.RECIPES) do
@@ -2833,7 +2846,10 @@ do
     eq(U["AmmoMaking.BrassCaseCup"].units * 2, U["AmmoMaking.SmallBrassSheet"].units, "two cups per small sheet")
     eq(U["Base.BrassScrap"].units, U["Base.CopperScrap"].units, "brass scrap counts like copper scrap")
     for id, entry in pairs(U) do
-        check(entry.units == math.floor(entry.units) and entry.units > 0, id .. " has a whole, positive unit value")
+        check((entry.contents ~= nil) ~= (entry.metal ~= nil), id .. " is either one material or a contents table")
+        for material, units in pairs(entry.contents or { [entry.metal] = entry.units }) do
+            check(type(units) == "number" and units == math.floor(units) and units > 0, id .. " has a whole, positive amount of " .. tostring(material))
+        end
     end
     eq(U["Base.CopperScrap"].units * 10, U["Base.CopperIngot"].units, "ten copper scrap per ingot")
     eq(U["AmmoMaking.ZincScrap"].units * 10, U["AmmoMaking.ZincIngot"].units, "ten zinc scrap per ingot")
@@ -2849,8 +2865,22 @@ do
         local ok, reason = AC_Materials.checkConservation(recipe)
         check(ok, recipe.id .. " conserves metal: " .. tostring(reason))
         local consumed, created = AC_Materials.getRecipeUnits(recipe)
+        if recipe.source then
+            -- The one material it brings in from untracked raw inputs.
+            created[recipe.source] = nil
+        end
         eq(total(created), total(consumed), recipe.id .. " units out equal units in")
-        check(total(created) > 0, recipe.id .. " produces metal")
+        for material, units in pairs(created) do
+            local parts = AC_Materials.ALLOYS[material]
+            if not parts then
+                eq(units, consumed[material], recipe.id .. " " .. material .. " out equals " .. material .. " in")
+            end
+        end
+        if recipe.tool then
+            eq(total(created), 0, recipe.id .. " makes a tool, no tracked material")
+        elseif not recipe.source then
+            check(total(created) > 0, recipe.id .. " produces tracked material")
+        end
 
         local charcoalInputs = 0
         for _, input in ipairs(recipe.inputs) do
@@ -2865,8 +2895,24 @@ do
                 check(input.count >= 1, recipe.id .. " charcoal count")
             end
         end
-        -- Hot work burns charcoal; cold work on a surface has none.
-        eq(charcoalInputs, recipe.benchTag == "AnySurfaceCraft" and 0 or 1, recipe.id .. " charcoal inputs")
+        -- Hot work burns charcoal; cold work on a surface has none, except
+        -- gunpowder, where charcoal is an ingredient.
+        local expectedCharcoal = 1
+        if recipe.benchTag == "AnySurfaceCraft" and recipe.source ~= "powder" then expectedCharcoal = 0 end
+        eq(charcoalInputs, expectedCharcoal, recipe.id .. " charcoal inputs")
+
+        -- Tools named by tag are never consumed (charcoal is the only
+        -- consumed tag input), and every die set is kept.
+        for _, input in ipairs(recipe.inputs) do
+            if input.tags and input.tags[1] ~= "base:charcoal" then
+                check(input.keep == true, recipe.id .. " keeps its tool " .. input.tags[1])
+            end
+            for _, id in ipairs(input.items or {}) do
+                if AC_Calibres.identify(id) == "dieSet" then
+                    check(input.keep == true, recipe.id .. " keeps the die set")
+                end
+            end
+        end
     end
 
     -- Casting recipes keep exactly crucible, tongs and mold.
@@ -2915,15 +2961,40 @@ do
     local all = {}
     for _, r in ipairs(AC_Materials.RECIPES) do table.insert(all, r) end
     for _, r in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(all, r) end
+    -- An edge A -> B means a recipe moves METAL from A into B (the same
+    -- metal, or a part into its alloy). Powder is not metal: a round and
+    -- the gunpowder gathered from it share none, and that non-metal cycle
+    -- is tested on its own below.
+    local METALS = { copper = true, zinc = true, brass = true }
+    local function contents(id)
+        local entry = U[id]
+        if not entry then return {} end
+        return entry.contents or { [entry.metal] = entry.units }
+    end
+    local function movesMetal(from, to)
+        for a in pairs(contents(from)) do
+            if METALS[a] then
+                for b in pairs(contents(to)) do
+                    if a == b then return true end
+                    for _, part in ipairs(AC_Materials.ALLOYS[b] or {}) do
+                        if part == a then return true end
+                    end
+                end
+            end
+        end
+        return false
+    end
     local edges = {}
     for _, recipe in ipairs(all) do
-        check(AC_Materials.checkConservation(recipe), recipe.id .. " does not create metal")
+        check(AC_Materials.checkConservation(recipe), recipe.id .. " does not create material")
         for _, input in ipairs(recipe.inputs) do
             for _, from in ipairs(input.items or {}) do
                 if U[from] and not input.keep then
-                    edges[from] = edges[from] or {}
                     for _, output in ipairs(recipe.outputs) do
-                        if U[output.item] then edges[from][output.item] = true end
+                        if movesMetal(from, output.item) then
+                            edges[from] = edges[from] or {}
+                            edges[from][output.item] = true
+                        end
                     end
                 end
             end
@@ -2946,7 +3017,12 @@ do
     check(reaches("AmmoMaking.ZincOre", "Base.BrassIngot", {}), "zinc ore reaches brass")
     check(reaches("Base.CopperOre", "AmmoMaking.BrassCaseCup", {}), "copper ore reaches case cups")
     check(edges["Base.BrassIngot"] ~= nil and edges["Base.BrassIngot"]["AmmoMaking.SmallBrassSheet"], "brass ingots become small sheets")
-    check(edges["AmmoMaking.BrassCaseCup"] == nil, "nothing consumes case cups yet")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(edges["AmmoMaking.BrassCaseCup"][calibre.case], "case cups become " .. calibre.id .. " cases")
+        check(reaches("Base.CopperOre", calibre.round, {}), "copper ore reaches the " .. calibre.id .. " round")
+        check(reaches("AmmoMaking.ZincOre", calibre.round, {}), "zinc ore reaches the " .. calibre.id .. " round")
+        check(edges[calibre.round] == nil, "no recipe takes metal back out of a " .. calibre.id .. " round")
+    end
     check(not reaches("Base.BrassIngot", "Base.BrassScrap", {}), "no recipe makes brass scrap")
     check(edges["Base.BrassScrap"] == nil, "brass scrap is reserved for later recycling")
 
@@ -2964,16 +3040,28 @@ do
             end
         end
         for _, output in ipairs(recipe.outputs) do
-            inventory[output.item] = (inventory[output.item] or 0) + output.count
+            -- A drainable is held as uses: a full item unless marked oneUse.
+            local perItem = 1
+            if U[output.item] and U[output.item].uses and not output.oneUse then perItem = U[output.item].uses end
+            inventory[output.item] = (inventory[output.item] or 0) + output.count * perItem
         end
         return true
     end
-    local function metalIn(inventory)
+    -- Units of one material in the inventory, or of all metals when the
+    -- material is nil.
+    local function materialIn(inventory, material)
         local sum = 0
         for id, count in pairs(inventory) do
-            if U[id] then sum = sum + U[id].units * count end
+            for m, units in pairs(contents(id)) do
+                if (material and m == material) or (not material and METALS[m]) then
+                    sum = sum + units * count
+                end
+            end
         end
         return sum
+    end
+    local function metalIn(inventory)
+        return materialIn(inventory, nil)
     end
     local function freshInventory()
         return {
@@ -3026,14 +3114,34 @@ do
         return (seed % n) + 1
     end
     inv = freshInventory()
+    inv["Base.SteelBarQuarter"] = 4
+    inv["base:ballpeenhammer"] = 1
+    inv["base:metalworkingpliers"] = 1
+    inv["base:whetstone"] = 1
+    inv["base:mortarpestle"] = 1
+    inv["Base.Fertilizer"] = 16
+    inv["Base.CapGunCap"] = 100
+    inv["Base.Matches"] = 40
+    inv["Base.Bullets9mm"] = 5
+    local mix = AC_Materials.getRecipe("AmmoMaking_MixGunpowder")
     local initial = metalIn(inv)
-    local worst = initial
-    for _ = 1, 500 do
-        craft(inv, all[nextRandom(#all)])
+    local initialCompound = materialIn(inv, "compound")
+    local initialPowder = materialIn(inv, "powder")
+    local worst, worstCompound, worstPowderExcess, mixes = initial, initialCompound, 0, 0
+    for _ = 1, 3000 do
+        local recipe = all[nextRandom(#all)]
+        if craft(inv, recipe) and recipe == mix then mixes = mixes + 1 end
         local now = metalIn(inv)
         if now > worst then worst = now end
+        local compound = materialIn(inv, "compound")
+        if compound > worstCompound then worstCompound = compound end
+        local excess = materialIn(inv, "powder") - initialPowder - mixes * AC_Calibres.POWDER.usesPerJar
+        if excess > worstPowderExcess then worstPowderExcess = excess end
     end
-    eq(worst, initial, "500 crafts in random order never exceed the starting metal")
+    eq(worst, initial, "3000 crafts in random order never exceed the starting metal")
+    eq(worstCompound, initialCompound, "priming compound is never created")
+    eq(worstPowderExcess, 0, "powder only ever comes from mixing; taking rounds apart and reassembling gains none")
+    check(mixes > 0 and mixes <= 16 / AC_Calibres.POWDER.fertilizerUses, "mixing is bounded by the fertilizer (" .. mixes .. ")")
 end
 
 section("Recipe XP: one grant per completed craft (OnCreate callbacks)")
@@ -3048,16 +3156,27 @@ do
         local player = MOCK.newPlayer()
         MOCK.clearPrintLog()
         MOCK.capturePrint(true)
-        local ok, granted = pcall(AC_Materials[recipe.callback], untouchable, player)
+        -- Recipes with an effect read the created / consumed items.
+        local data = untouchable
+        if recipe.effect then
+            data = {
+                getAllCreatedItems = function() return MOCK.arrayList({}) end,
+                getAllConsumedItems = function() return MOCK.arrayList({}) end,
+            }
+        end
+        local ok, granted = pcall(AC_Materials[recipe.callback], data, player)
         MOCK.capturePrint(false)
         check(ok, recipe.id .. " callback runs: " .. tostring(granted))
+        check(not MOCK.printLogContains("WARNING"), recipe.id .. " callback logs no warning")
         eq(granted, xp, recipe.id .. " callback reports the XP")
         eq(#player.xpLog, 1, recipe.id .. " grants XP exactly once")
         eq(player.xpLog[1], xp, recipe.id .. " XP amount")
         check(MOCK.printLogContains("[AmmoMaking] Crafting (" .. recipe.id .. "): +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), recipe.id .. " XP logged")
 
-        check(pcall(AC_Materials[recipe.callback], untouchable, nil), recipe.id .. " callback tolerates a missing character")
-        eq(AC_Materials[recipe.callback](untouchable, nil), 0, recipe.id .. " no character, no XP")
+        MOCK.capturePrint(true)
+        check(pcall(AC_Materials[recipe.callback], data, nil), recipe.id .. " callback tolerates a missing character")
+        eq(AC_Materials[recipe.callback](data, nil), 0, recipe.id .. " no character, no XP")
+        MOCK.capturePrint(false)
     end
 
     local player = MOCK.newPlayer()
@@ -3088,7 +3207,7 @@ do
         local script = MOCK.craftRecipeScripts[id]
         eq(#script.requiredSkills, 1, id .. " has one required skill")
         eq(script.requiredSkills[1].perk, AmmoMakingSkill.perk, id .. " requires the Ammo Making perk")
-        eq(script.requiredSkills[1].level, AC_Materials.CONFIG.requiredLevel, id .. " required level from CONFIG")
+        eq(script.requiredSkills[1].level, AC_Materials.getRequiredLevel(AC_Materials.getRecipe(id)), id .. " carries its own required level")
     end
     eq(AC_Materials.CONFIG.requiredLevel, 0, "smelting is reachable at level 0")
 
@@ -3238,8 +3357,8 @@ do
     MOCK.capturePrint(false)
     check(ok, "recipe inspector runs")
     check(MOCK.printLogContains("STATION RECIPES (Ammo Making level 4)"), "inspector header")
-    check(MOCK.printLogContains("AmmoMaking_PunchBrassCaseCups [AnySurfaceCraft]: loaded, required skills 1; XP 1; expected time 80/100; metal conserved"), "inspector lists the case-stock recipes")
-    check(MOCK.printLogContains("AmmoMaking_CastBrassIngots [Furnace]: loaded, required skills 1; XP 25; expected time 160/200; metal conserved"), "inspector line")
+    check(MOCK.printLogContains("AmmoMaking_PunchBrassCaseCups [AnySurfaceCraft]: loaded, required skills 1; level 0; XP 1; expected time 80/100; metal conserved"), "inspector lists the case-stock recipes")
+    check(MOCK.printLogContains("AmmoMaking_CastBrassIngots [Furnace]: loaded, required skills 1; level 0; XP 25; expected time 160/200; metal conserved"), "inspector line")
     for _, id in ipairs(ids) do
         eq(#MOCK.craftRecipeScripts[id].requiredSkills, 1, "inspector attaches nothing (" .. id .. ")")
     end
@@ -3255,6 +3374,561 @@ do
 
     MOCK.resetCraftRecipes(ids)
     AC_Materials.applySkillRequirements()
+    MOCK.debug = false
+end
+
+------------------------------------------------
+-- AMMUNITION COMPONENTS
+------------------------------------------------
+--
+-- The calibre model, case quality, progression and the complete chain
+-- from brass to the vanilla round. As above: this proves the Lua logic,
+-- the file contents and the arithmetic, not that the game runs it.
+
+section("Calibre model: definitions are complete and generate everything")
+do
+    check(#AC_Calibres.LIST >= 1, "at least one calibre")
+    eq(AC_Calibres.LIST[1].id, "9mm", "9mm is the first calibre")
+
+    local ids, suffixes, itemsSeen = {}, {}, {}
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local name = calibre.id
+        check(not ids[name], name .. " id is unique")
+        ids[name] = true
+        check(not suffixes[calibre.suffix], name .. " suffix is unique")
+        suffixes[calibre.suffix] = true
+        check(type(calibre.suffix) == "string" and not string.find(calibre.suffix, "[^%w]"), name .. " suffix is letters and digits")
+
+        -- The product is a vanilla item; the components are the mod's.
+        eq(string.sub(calibre.round, 1, 5), "Base.", name .. " assembles a vanilla round")
+        check(MOCK.knownScriptItems[calibre.round], name .. " round id is one recorded from the installed scripts")
+        eq(string.sub(calibre.ammoType, 1, 13), "base:bullets_", name .. " records the vanilla ammo type")
+        for _, kind in ipairs({ "case", "bullet", "dieSet" }) do
+            local id = calibre[kind]
+            check(declaredItems[id] ~= nil, name .. " " .. kind .. " is declared in AC_Items.txt (" .. tostring(id) .. ")")
+            check(not itemsSeen[id], name .. " " .. kind .. " item is not shared with another calibre")
+            itemsSeen[id] = true
+            local kindFound, owner = AC_Calibres.identify(id)
+            eq(kindFound, kind, name .. " " .. kind .. " is identified")
+            eq(owner, calibre, name .. " " .. kind .. " belongs to its calibre")
+        end
+        local kindFound, owner = AC_Calibres.identify(calibre.round)
+        eq(kindFound, "round", name .. " round is identified")
+        eq(owner, calibre, name .. " round belongs to its calibre")
+
+        local primer = AC_Calibres.getPrimer(calibre.primer)
+        check(primer ~= nil, name .. " names an existing primer family")
+        check(calibre.powderUses >= 1 and calibre.powderUses == math.floor(calibre.powderUses), name .. " takes at least one whole use of powder")
+        local bulletUnits = AC_Calibres.CONFIG.scrapUnits / calibre.bulletsPerScrap
+        eq(bulletUnits, math.floor(bulletUnits), name .. " bullets divide a scrap evenly")
+        for _, step in ipairs({ "dieSet", "case", "bullet", "assemble" }) do
+            check(type(calibre.levels[step]) == "number", name .. " level for " .. step)
+            check(type(calibre.xp[step]) == "number" and calibre.xp[step] > 0, name .. " xp for " .. step)
+            check(type(calibre.time[step]) == "number" and calibre.time[step] > 0, name .. " time for " .. step)
+        end
+
+        -- Four recipes per calibre, all carrying the calibre and the die set.
+        local recipes = AC_Calibres.buildCalibreRecipes(calibre)
+        eq(#recipes, 4, name .. " has four recipes")
+        for _, recipe in ipairs(recipes) do
+            eq(recipe.calibre, name, recipe.id .. " names its calibre")
+            check(string.find(recipe.id, calibre.suffix, 1, true) ~= nil, recipe.id .. " id carries the suffix")
+            eq(AC_Materials.getRecipe(recipe.id) ~= nil, true, recipe.id .. " is in AC_Materials.RECIPES")
+            local usesDieSet = false
+            for _, input in ipairs(recipe.inputs) do
+                if input.items and input.items[1] == calibre.dieSet then usesDieSet = true end
+            end
+            eq(usesDieSet, recipe.step ~= "dieSet", recipe.id .. " needs the die set unless it makes it")
+        end
+        eq(recipes[4].outputs[1].item, calibre.round, name .. " assembly outputs the vanilla round")
+        eq(recipes[4].outputs[1].count, 1, name .. " assembly makes one round per craft (one vanilla item is one cartridge)")
+    end
+
+    eq(AC_Calibres.get("9mm"), AC_Calibres.LIST[1], "lookup by id")
+    eq(AC_Calibres.get("nope"), nil, "unknown calibre")
+    eq(AC_Calibres.getPrimer("nope"), nil, "unknown primer family")
+    eq(AC_Calibres.identify("Base.Plank"), nil, "an unrelated item is not identified")
+    for _, primer in ipairs(AC_Calibres.PRIMERS) do
+        check(declaredItems[primer.item] ~= nil, primer.id .. " primer is declared in AC_Items.txt")
+        eq(AC_Calibres.identify(primer.item), "primer", primer.id .. " primer is identified")
+        local sheet = AC_Calibres.CONFIG.sheetUnits
+        eq(primer.perSheet * primer.brassUnits, sheet, primer.id .. " primers use the whole sheet")
+        for _, source in ipairs(AC_Calibres.COMPOUND_SOURCES) do
+            local count = primer.perSheet * primer.compoundUnits / source.units
+            eq(count, math.floor(count), primer.id .. " takes a whole number of " .. source.id)
+        end
+    end
+
+    -- Every item the recipes name is probed at game start.
+    local probed = {}
+    for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do
+        check(not probed[id], "compat list has no duplicate: " .. id)
+        probed[id] = true
+    end
+    for _, id in ipairs(AC_Calibres.getItems()) do
+        check(probed[id], "component recipe item is probed by AC_Compat (" .. id .. ")")
+    end
+    for _, id in ipairs({ "Base.Bullets9mm", "Base.GunPowder", "Base.Fertilizer", "Base.CapGunCap", "Base.Matches", "Base.SteelBarQuarter" }) do
+        check(probed[id], "vanilla dependency probed: " .. id)
+    end
+
+    -- No calibre is hard-coded outside the calibre table: adding one must
+    -- not mean hunting through the Lua for "9mm".
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        if name ~= "shared/AC_Calibres" then
+            local source = readFile(LUA .. name .. ".lua")
+            for _, calibre in ipairs(AC_Calibres.LIST) do
+                check(string.find(source, calibre.suffix, 1, true) == nil, name .. ".lua does not mention " .. calibre.suffix)
+            end
+        end
+    end
+end
+
+section("Case quality: roll, storage and inheritance (mocked recipe data)")
+do
+    local C = AC_CaseQuality.CONFIG
+
+    -- Pure roll.
+    eq(AC_CaseQuality.roll(0, 0.5), C.baseQuality, "level 0, centre roll")
+    eq(AC_CaseQuality.roll(10, 0.5), C.baseQuality + 10 * C.qualityPerLevel, "level 10, centre roll")
+    eq(AC_CaseQuality.roll(3, 0.5), AC_CaseQuality.roll(3, 0.5), "same inputs, same quality")
+    eq(AC_CaseQuality.roll(0, 0), C.baseQuality - C.spread, "lowest roll")
+    eq(AC_CaseQuality.roll(0, 1), C.baseQuality + C.spread, "highest roll")
+    eq(AC_CaseQuality.roll(10, 1), C.maxQuality, "clamped at the top")
+    eq(AC_CaseQuality.roll(0, 0, -500), C.minQuality, "clamped at the bottom")
+    eq(AC_CaseQuality.roll(99, 0.5), AC_CaseQuality.roll(10, 0.5), "level clamped to 10")
+    eq(AC_CaseQuality.roll(-3, 0.5), AC_CaseQuality.roll(0, 0.5), "negative level counts as 0")
+    eq(AC_CaseQuality.roll(nil, nil), C.baseQuality, "missing inputs give the level-0 centre")
+    eq(AC_CaseQuality.roll(5, 0.5, 10), AC_CaseQuality.roll(5, 0.5) + 10, "a tool bonus is added (future press)")
+    local previous = 0
+    for level = 0, 10 do
+        local q = AC_CaseQuality.roll(level, 0.5)
+        check(q > previous, "quality rises with level (" .. level .. ")")
+        previous = q
+        for step = 0, 10 do
+            local rolled = AC_CaseQuality.roll(level, step / 10)
+            check(rolled >= C.minQuality and rolled <= C.maxQuality and rolled == math.floor(rolled), "in range and whole at level " .. level)
+        end
+        check(AC_CaseQuality.roll(level, 0) >= 30, "even the worst roll at level " .. level .. " is not Dangerous")
+    end
+    check(AC_CaseQuality.roll(0, 0.9) > AC_CaseQuality.roll(0, 0.1), "quality rises with the roll")
+
+    -- Labels are the existing AmmoQuality scale.
+    eq(AC_CaseQuality.getLabel(95), "Excellent", "label 95")
+    eq(AC_CaseQuality.getLabel(65), "Average", "label 65")
+    eq(AC_CaseQuality.getLabel(10), "Dangerous", "label 10")
+    eq(AC_CaseQuality.getLabel(nil), "Unknown", "label for no quality")
+    eq(AmmoQuality.getQualityLabel(nil), "Unknown", "the cartridge label still works through the shared function")
+
+    -- Storage.
+    local calibre = AC_Calibres.LIST[1]
+    local case = MOCK.newItem(calibre.case)
+    eq(AC_CaseQuality.get(case), nil, "a fresh case has no quality")
+    eq(AC_CaseQuality.set(case, 72.4), true, "set")
+    eq(AC_CaseQuality.get(case), 72, "stored as a whole number")
+    eq(case.modData[C.flagKey], true, "case flagged")
+    AC_CaseQuality.set(case, 500)
+    eq(AC_CaseQuality.get(case), C.maxQuality, "stored value clamped")
+    eq(AC_CaseQuality.set(case, "good"), false, "non-numeric quality refused")
+    eq(AC_CaseQuality.set(nil, 50), false, "no item")
+    case.modData[C.qualityKey] = "broken"
+    eq(AC_CaseQuality.get(case), nil, "malformed stored quality counts as none")
+    eq(AC_CaseQuality.get(nil), nil, "no item, no quality")
+
+    -- Forming: one roll per created case, from the maker's level.
+    local function recipeData(created, consumed)
+        return {
+            getAllCreatedItems = function() return MOCK.arrayList(created or {}) end,
+            getAllConsumedItems = function() return MOCK.arrayList(consumed or {}) end,
+        }
+    end
+    local player = MOCK.newPlayer()
+    player.perkLevel = 4
+    local made = { MOCK.newItem(calibre.case), MOCK.newItem(calibre.case), MOCK.newItem("Base.Plank") }
+    local written = AC_CaseQuality.onCasesFormed(recipeData(made), player, 0)
+    eq(#written, 2, "only the cases get a quality")
+    -- The mock ZombRandFloat returns the midpoint, so the roll is the centre.
+    eq(AC_CaseQuality.get(made[1]), C.baseQuality + 4 * C.qualityPerLevel, "quality follows the maker's level")
+    eq(made[3].modData[C.qualityKey], nil, "other items are untouched")
+    local realRandom = ZombRandFloat
+    ZombRandFloat = function() return 0 end
+    written = AC_CaseQuality.onCasesFormed(recipeData({ MOCK.newItem(calibre.case) }), player, 0)
+    ZombRandFloat = realRandom
+    eq(written[1], C.baseQuality + 4 * C.qualityPerLevel - C.spread, "the random spread is applied")
+    eq(#AC_CaseQuality.onCasesFormed(recipeData({ MOCK.newItem(calibre.case) }), nil, 0), 1, "no character: level 0, still a quality")
+    eq(#AC_CaseQuality.onCasesFormed(nil, player, 0), 0, "no recipe data: nothing written, no error")
+    eq(#AC_CaseQuality.onCasesFormed({}, player, 0), 0, "recipe data without the method: nothing written")
+
+    -- Assembly: the round takes the average of the consumed cases.
+    local a, b = MOCK.newItem(calibre.case), MOCK.newItem(calibre.case)
+    AC_CaseQuality.set(a, 60)
+    AC_CaseQuality.set(b, 81)
+    local round = MOCK.newItem(calibre.round)
+    local other = MOCK.newItem("Base.Plank")
+    local average = AC_CaseQuality.onRoundsAssembled(recipeData({ round, other }, { a, b, MOCK.newItem(calibre.bullet) }))
+    eq(average, 71, "average of the consumed cases, rounded")
+    eq(AC_CaseQuality.getRoundQuality(round), 71, "written to the round")
+    eq(round.modData[C.roundFlagKey], true, "round flagged as handloaded")
+    eq(round.modData.casingQuality, 71, "under the field name the AmmoQuality prototype uses")
+    eq(other.modData.casingQuality, nil, "other created items untouched")
+
+    local plain = MOCK.newItem(calibre.round)
+    eq(AC_CaseQuality.onRoundsAssembled(recipeData({ plain }, { MOCK.newItem(calibre.case) })), nil, "cases without a quality give the round none")
+    eq(AC_CaseQuality.getRoundQuality(plain), nil, "round left untouched")
+    eq(next(plain.modData), nil, "no ModData is created on such a round")
+    eq(AC_CaseQuality.onRoundsAssembled(nil), nil, "no recipe data")
+    eq(AC_CaseQuality.getRoundQuality(nil), nil, "no round")
+
+    -- Through the real OnCreate callbacks.
+    local form = AC_Materials.getRecipe("AmmoMaking_FormCase" .. calibre.suffix)
+    local assemble = AC_Materials.getRecipe("AmmoMaking_AssembleRound" .. calibre.suffix)
+    eq(form.effect, "caseQuality", "forming rolls the quality")
+    eq(assemble.effect, "roundQuality", "assembly inherits it")
+    local effects = 0
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        if recipe.effect then
+            effects = effects + 1
+            check(type(AC_CaseQuality.EFFECTS[recipe.effect]) == "function", recipe.id .. " effect exists")
+            check(recipe.step == "case" or recipe.step == "assemble", recipe.id .. " is a case or assembly step")
+        end
+    end
+    eq(effects, 2 * #AC_Calibres.LIST, "only case forming and assembly have an effect: nothing upstream carries quality")
+
+    local formed = MOCK.newItem(calibre.case)
+    local crafter = MOCK.newPlayer()
+    crafter.perkLevel = 2
+    MOCK.capturePrint(true)
+    AC_Materials[form.callback](recipeData({ formed }), crafter)
+    MOCK.capturePrint(false)
+    eq(AC_CaseQuality.get(formed), C.baseQuality + 2 * C.qualityPerLevel, "the forming callback sets the quality")
+    eq(#crafter.xpLog, 1, "and grants XP once")
+    local newRound = MOCK.newItem(calibre.round)
+    MOCK.capturePrint(true)
+    AC_Materials[assemble.callback](recipeData({ newRound }, { formed }), crafter)
+    MOCK.capturePrint(false)
+    eq(AC_CaseQuality.getRoundQuality(newRound), AC_CaseQuality.get(formed), "the assembly callback passes it to the round")
+    eq(#crafter.xpLog, 2, "one more XP grant, no more")
+
+    -- A broken effect must not break the craft or the XP.
+    local broken = { getAllCreatedItems = function() error("engine said no") end }
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local okEffect, granted = pcall(AC_Materials[form.callback], broken, crafter)
+    MOCK.capturePrint(false)
+    check(okEffect, "a failing effect does not raise")
+    eq(granted, AC_Materials.getRecipeXP(form), "XP is still granted")
+    check(MOCK.printLogContains("WARNING: caseQuality failed for " .. form.id), "the failure is logged")
+
+    -- Quality never touches material: the units of the recipes are constants.
+    local before = AC_Materials.getRecipeUnits(assemble)
+    AC_CaseQuality.set(formed, 1)
+    local after = AC_Materials.getRecipeUnits(assemble)
+    eq(after.brass, before.brass, "quality does not change what assembly consumes")
+end
+
+section("Progression: Ammo Making levels of the recipes")
+do
+    for _, id in ipairs({ "AmmoMaking_SmeltZincOre", "AmmoMaking_CastCopperIngot", "AmmoMaking_CastZincIngot", "AmmoMaking_CastBrassIngots", "AmmoMaking_ForgeSmallBrassSheets", "AmmoMaking_PunchBrassCaseCups" }) do
+        eq(AC_Materials.getRequiredLevel(AC_Materials.getRecipe(id)), 0, id .. " stays open from level 0")
+    end
+    eq(AC_Materials.getRequiredLevel(nil), AC_Materials.CONFIG.requiredLevel, "no recipe: the default")
+
+    local nine = AC_Calibres.get("9mm")
+    eq(nine.levels.dieSet, 1, "9mm die set at level 1")
+    eq(nine.levels.case, 1, "9mm cases at level 1")
+    eq(nine.levels.bullet, 2, "9mm bullets at level 2")
+    eq(nine.levels.assemble, 3, "9mm assembly at level 3")
+    eq(AC_Calibres.getPrimer("SmallPistol").requiredLevel, 2, "small pistol primers at level 2")
+    eq(AC_Calibres.POWDER.requiredLevel, 3, "gunpowder at level 3")
+
+    local highest = 0
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local level = AC_Materials.getRequiredLevel(recipe)
+        check(level >= 0 and level <= 10 and level == math.floor(level), recipe.id .. " has a valid level")
+        if level > highest then highest = level end
+        if recipe.calibre then
+            local calibre = AC_Calibres.get(recipe.calibre)
+            eq(level, calibre.levels[recipe.step], recipe.id .. " level comes from its calibre definition")
+            eq(AC_Materials.getRecipeXP(recipe), calibre.xp[recipe.step], recipe.id .. " xp comes from its calibre definition")
+            eq(recipe.time, calibre.time[recipe.step], recipe.id .. " time comes from its calibre definition")
+        end
+    end
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local levels = calibre.levels
+        check(levels.dieSet <= levels.case and levels.case <= levels.bullet and levels.bullet <= levels.assemble, calibre.id .. " steps unlock in order")
+        check(AC_Calibres.getPrimer(calibre.primer).requiredLevel <= levels.assemble, calibre.id .. " primers are available by the time rounds are")
+        check(AC_Calibres.POWDER.requiredLevel <= levels.assemble, calibre.id .. " powder is available by the time rounds are")
+        check(levels.assemble > 0, calibre.id .. " the complete round is not open at level 0")
+    end
+
+    -- Not grindy: every level up to the highest can be earned from
+    -- recipes that are already open below it.
+    for level = 1, highest do
+        local open = false
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if AC_Materials.getRequiredLevel(recipe) < level and AC_Materials.getRecipeXP(recipe) > 0 then open = true end
+        end
+        check(open, "XP can be earned below level " .. level)
+    end
+    check(highest <= 4, "the first calibre is complete by level 4 at the latest (" .. highest .. ")")
+
+    -- The requirement the engine enforces is the one attached to the script.
+    local ids = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
+    MOCK.resetCraftRecipes(ids)
+    AC_Materials.applySkillRequirements()
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local attached = MOCK.craftRecipeScripts[recipe.id].requiredSkills
+        eq(#attached, 1, recipe.id .. " has one requirement attached")
+        eq(attached[1].level, AC_Materials.getRequiredLevel(recipe), recipe.id .. " attached level")
+        eq(attached[1].perk, AmmoMakingSkill.perk, recipe.id .. " requires Ammo Making, not another skill")
+    end
+
+    -- Predicted time counts levels above the recipe's own requirement.
+    local assemble = AC_Materials.getRecipe("AmmoMaking_AssembleRound9mm")
+    eq(AC_Materials.getExpectedTime(assemble, 3), assemble.time, "no speed-up at the required level")
+    eq(AC_Materials.getExpectedTime(assemble, 2), assemble.time, "nor below it")
+    eq(AC_Materials.getExpectedTime(assemble, 10), assemble.time - 7 * math.floor(assemble.time / 20), "5% per level above the requirement")
+end
+
+section("Complete 9mm chain: raw materials to vanilla rounds, exactly accounted")
+do
+    local U = AC_Materials.UNITS
+    local nine = AC_Calibres.get("9mm")
+    local primer = AC_Calibres.getPrimer(nine.primer)
+    local R = AC_Materials.getRecipe
+
+    -- What one round contains.
+    local round = U[nine.round].contents
+    eq(round.brass, 5 + 1, "a round holds the brass of one case and one primer")
+    eq(round.copper, 5, "and one copper bullet")
+    eq(round.compound, primer.compoundUnits, "and one primer's compound")
+    eq(round.powder, nine.powderUses, "and its powder charge")
+    eq(U[nine.case].units, U["AmmoMaking.BrassCaseCup"].units, "a case is one cup")
+    eq(U["Base.GunPowder"].uses, 10, "a jar of gunpowder is 10 uses")
+
+    -- Mirror inventory; drainables are held as uses.
+    local function craft(inventory, recipe)
+        for _, input in ipairs(recipe.inputs) do
+            local id = input.items and input.items[1] or input.tags[1]
+            if (inventory[id] or 0) < input.count then return false end
+        end
+        for _, input in ipairs(recipe.inputs) do
+            if not input.keep then
+                local id = input.items and input.items[1] or input.tags[1]
+                inventory[id] = inventory[id] - input.count
+            end
+        end
+        for _, output in ipairs(recipe.outputs) do
+            local perItem = 1
+            if U[output.item] and U[output.item].uses and not output.oneUse then perItem = U[output.item].uses end
+            inventory[output.item] = (inventory[output.item] or 0) + output.count * perItem
+        end
+        return true
+    end
+    local function times(inventory, recipe, n, what)
+        for i = 1, n do
+            check(craft(inventory, recipe), what .. " " .. i .. "/" .. n)
+        end
+    end
+
+    -- Everything for exactly 100 rounds, starting from ingots and loot.
+    local tools = {
+        "base:hammer", "base:tongs", "base:metalworkingpunch", "base:ballpeenhammer",
+        "base:metalworkingpliers", "base:whetstone", "base:mortarpestle",
+    }
+    local inv = {
+        ["Base.BrassIngot"] = 6,            -- 5 for cases, 1 for primers
+        ["Base.CopperScrap"] = 50,          -- 5 copper ore's worth
+        ["Base.CapGunCap"] = 100,           -- one box of toy caps
+        ["Base.Fertilizer"] = 20,           -- uses: two and a half bags
+        ["base:charcoal"] = 6 + 2 + 20,
+        ["Base.SteelBarQuarter"] = 2,
+    }
+    for _, tool in ipairs(tools) do inv[tool] = 1 end
+
+    times(inv, R("AmmoMaking_ForgeSmallBrassSheets"), 6, "forge sheets")
+    times(inv, R("AmmoMaking_PunchBrassCaseCups"), 50, "punch cups")
+    times(inv, R("AmmoMaking_MakeSmallPistolPrimersFromCaps"), 10, "make primers")
+    times(inv, R("AmmoMaking_ForgeDieSet9mm"), 1, "forge die set")
+    times(inv, R("AmmoMaking_FormCase9mm"), 100, "form case")
+    times(inv, R("AmmoMaking_SwageBullets9mm"), 50, "swage bullets")
+    times(inv, R("AmmoMaking_MixGunpowder"), 10, "mix powder")
+    eq(inv["Base.GunPowder"], 100, "ten jars are 100 charges")
+    eq(inv[nine.case], 100, "100 cases")
+    eq(inv[nine.bullet], 100, "100 bullets")
+    eq(inv[primer.item], 100, "100 primers")
+    times(inv, R("AmmoMaking_AssembleRound9mm"), 100, "assemble")
+    eq(inv[nine.round], 100, "100 vanilla 9mm rounds")
+    check(not craft(inv, R("AmmoMaking_AssembleRound9mm")), "no 101st round")
+
+    for _, id in ipairs({ "Base.BrassIngot", "AmmoMaking.SmallBrassSheet", "AmmoMaking.BrassCaseCup", "Base.CopperScrap",
+                          "Base.CapGunCap", "Base.Fertilizer", "base:charcoal", "Base.SteelBarQuarter",
+                          nine.case, nine.bullet, primer.item, "Base.GunPowder" }) do
+        eq(inv[id], 0, "nothing left over: " .. id)
+    end
+    for _, tool in ipairs(tools) do eq(inv[tool], 1, "tool kept: " .. tool) end
+    eq(inv[nine.dieSet], 1, "the die set is made once and kept through 250 crafts")
+
+    -- 100 rounds = 6 brass ingots + 50 copper scrap = 9.2 copper ore + 1.8 zinc ore.
+    eq(100 * round.brass, 6 * AC_Materials.CONFIG.unitsPerIngot, "brass in the rounds equals six ingots")
+    eq(100 * round.copper, 50 * U["Base.CopperScrap"].units, "copper in the rounds equals fifty scrap")
+
+    -- The match-head primer recipe yields the same primers.
+    local matchInv = { ["AmmoMaking.SmallBrassSheet"] = 1, ["Base.Matches"] = 20, ["base:metalworkingpunch"] = 1, ["base:hammer"] = 1 }
+    check(craft(matchInv, R("AmmoMaking_MakeSmallPistolPrimersFromMatches")), "primers from match heads")
+    eq(matchInv[primer.item], primer.perSheet, "same number of primers")
+    eq(matchInv["Base.Matches"], 0, "twenty match uses consumed")
+    matchInv = { ["AmmoMaking.SmallBrassSheet"] = 1, ["Base.Matches"] = 19, ["base:metalworkingpunch"] = 1, ["base:hammer"] = 1 }
+    check(not craft(matchInv, R("AmmoMaking_MakeSmallPistolPrimersFromMatches")), "nineteen match uses are not enough")
+
+    -- Nothing is free: each component recipe refuses to run without its inputs.
+    for _, recipe in ipairs(AC_Calibres.buildRecipes()) do
+        for index, input in ipairs(recipe.inputs) do
+            local stock = {}
+            for other, otherInput in ipairs(recipe.inputs) do
+                if other ~= index then
+                    stock[otherInput.items and otherInput.items[1] or otherInput.tags[1]] = otherInput.count
+                end
+            end
+            check(not craft(stock, recipe), recipe.id .. " cannot run without input " .. index)
+        end
+    end
+
+    -- Take-apart and rebuild: vanilla returns one use of powder per round
+    -- and nothing else, so it can never pay for another round.
+    local gather
+    for _, vanilla in ipairs(AC_Materials.VANILLA_RECIPES) do
+        if vanilla.id == "GatherGunpowder_9mm" then gather = vanilla end
+    end
+    check(gather ~= nil, "vanilla Gather Gunpowder is recorded for 9mm")
+    local loop = { [nine.round] = 10, [nine.dieSet] = 1 }
+    times(loop, gather, 10, "gather powder")
+    eq(loop["Base.GunPowder"], 10, "ten rounds give ten uses of powder, not ten jars")
+    check(not craft(loop, R("AmmoMaking_AssembleRound9mm")), "powder alone assembles nothing")
+    eq(loop[nine.round], 0, "the rounds are gone")
+    local consumed, created = AC_Materials.getRecipeUnits(gather)
+    eq(created.powder, nine.powderUses, "gathering returns exactly the charge that went in")
+    check(created.powder <= consumed.powder, "so it never creates powder")
+    eq(created.brass, nil, "and returns no brass")
+
+    -- A net-new loop: none of the component recipes needs a finished round.
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        for _, input in ipairs(recipe.inputs) do
+            for _, id in ipairs(input.items or {}) do
+                check(AC_Calibres.identify(id) ~= "round", recipe.id .. " does not consume finished ammunition")
+            end
+            for _, tag in ipairs(input.tags or {}) do
+                check(tag ~= "base:ammo", recipe.id .. " does not consume ammunition by tag")
+            end
+        end
+    end
+
+    -- Exactly one recipe may bring a tracked material into existence.
+    local sources = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        if recipe.source then table.insert(sources, recipe.id .. ":" .. recipe.source) end
+    end
+    eq(table.concat(sources, ","), "AmmoMaking_MixGunpowder:powder", "gunpowder mixing is the only source recipe")
+
+    -- Mutations the conservation check must catch.
+    local assemble = R("AmmoMaking_AssembleRound9mm")
+    local function variant(change)
+        local copy = {}
+        for k, v in pairs(assemble) do copy[k] = v end
+        for k, v in pairs(change) do copy[k] = v end
+        copy.id = assemble.id .. "_tampered"
+        return copy
+    end
+    local function without(index)
+        local inputs = {}
+        for i, input in ipairs(assemble.inputs) do
+            if i ~= index then table.insert(inputs, input) end
+        end
+        return inputs
+    end
+    check(AC_Materials.checkConservation(assemble), "the real assembly conserves every material")
+    check(not AC_Materials.checkConservation(variant({ outputs = { { count = 2, item = nine.round } } })), "two rounds from one set of components is rejected")
+    check(not AC_Materials.checkConservation(variant({ inputs = without(1) })), "a round without a case is rejected")
+    check(not AC_Materials.checkConservation(variant({ inputs = without(2) })), "a round without a primer is rejected")
+    check(not AC_Materials.checkConservation(variant({ inputs = without(3) })), "a round without a bullet is rejected")
+    check(not AC_Materials.checkConservation(variant({ inputs = without(4) })), "a round without powder is rejected")
+    check(AC_Materials.checkConservation(variant({ inputs = without(5) })), "the die set carries no material (its keep flag is tested elsewhere)")
+    local mix = R("AmmoMaking_MixGunpowder")
+    check(AC_Materials.checkConservation(mix), "gunpowder mixing is a declared source")
+    check(not AC_Materials.checkConservation({ id = "free_powder", source = "powder", inputs = { mix.inputs[3] }, outputs = mix.outputs }), "powder from a kept tool alone is rejected")
+    check(not AC_Materials.checkConservation({ id = "undeclared", inputs = mix.inputs, outputs = mix.outputs }), "an undeclared source is rejected")
+    check(not AC_Materials.checkConservation({ id = "powder_to_brass", source = "powder", inputs = mix.inputs, outputs = { { count = 1, item = "Base.BrassIngot" } } }), "a source recipe may only create its own material")
+    local primers = R("AmmoMaking_MakeSmallPistolPrimersFromCaps")
+    check(not AC_Materials.checkConservation({ id = "more_primers", inputs = primers.inputs, outputs = { { count = 11, item = primer.item } } }), "an eleventh primer from one sheet is rejected")
+    local swage = R("AmmoMaking_SwageBullets9mm")
+    check(not AC_Materials.checkConservation({ id = "more_bullets", inputs = swage.inputs, outputs = { { count = 3, item = nine.bullet } } }), "a third bullet from one scrap is rejected")
+    -- One use of gathered powder is not a full jar.
+    local jarOut = { id = "gather_jar", inputs = gather.inputs, outputs = { { count = 1, item = "Base.GunPowder" } } }
+    check(not AC_Materials.checkConservation(jarOut), "a full jar from one round would be caught")
+end
+
+section("Ammunition component debug tools")
+do
+    MOCK.debug = true
+    local nine = AC_Calibres.get("9mm")
+    local player = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, GRASS) })
+
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnComponentsKit(player, nine)
+    MOCK.capturePrint(false)
+    local inv = player.inventory
+    eq(inv:count(nine.dieSet), 1, "die set spawned")
+    eq(inv:count("Base.Hammer"), 1, "hammer spawned")
+    eq(inv:count("AmmoMaking.BrassCaseCup"), 5, "cups for five cases")
+    eq(inv:count("Base.CopperScrap"), 3, "copper for six bullets")
+    eq(inv:count("AmmoMaking.SmallPistolPrimer"), 5, "five primers")
+    eq(inv:count("Base.GunPowder"), 1, "a jar of powder")
+    eq(inv:count(nine.round), 0, "the kit hands out no finished ammunition")
+
+    local chem = MOCK.newPlayer({ square = MOCK.newSquare(8, 5, 0, GRASS) })
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnPrimerPowderKit(chem)
+    MOCK.capturePrint(false)
+    eq(chem.inventory:count("Base.CapGunCap"), 10, "toy caps for one primer batch")
+    eq(chem.inventory:count("Base.Matchbox"), 1, "matches for the other primer recipe")
+    eq(chem.inventory:count("AmmoMaking.SmallBrassSheet"), 2, "a sheet for each primer recipe")
+    eq(chem.inventory:count("Base.Charcoal"), 2, "charcoal for one powder mix")
+    eq(chem.inventory:count("Base.Fertilizer"), 1, "fertilizer")
+    eq(chem.inventory:count("Base.MortarPestle"), 1, "mortar and pestle")
+    eq(chem.inventory:count("Base.GunPowder"), 0, "no ready powder in the raw-material kit")
+
+    -- Inspector: lists cases and rounds with their stored quality.
+    local good = MOCK.newItem(nine.case)
+    AC_CaseQuality.set(good, 84)
+    inv:addItem(good)
+    inv:addItem(MOCK.newItem(nine.case))
+    local loaded = MOCK.newItem(nine.round)
+    loaded.modData.casingQuality = 66
+    inv:addItem(loaded)
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local ok = pcall(AC_GeologyDebug.inspectAmmoComponents, player)
+    MOCK.capturePrint(false)
+    check(ok, "component inspector runs")
+    check(MOCK.printLogContains(nine.case .. " (9mm case): quality 84 (Very Good)"), "case quality listed with its label")
+    check(MOCK.printLogContains(nine.case .. " (9mm case): no stored quality"), "a case without quality is listed as such")
+    check(MOCK.printLogContains(nine.round .. " (9mm round): quality 66 (Average)"), "handloaded round listed")
+    eq(AC_CaseQuality.get(good), 84, "the inspector changes nothing")
+    check(pcall(AC_GeologyDebug.inspectAmmoComponents, nil), "inspector tolerates no player")
+
+    -- Station recipe inspector shows the level of a gated recipe.
+    local ids = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
+    MOCK.resetCraftRecipes(ids)
+    AC_Materials.applySkillRequirements()
+    player.perkLevel = 5
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.inspectMetallurgyRecipes(player)
+    MOCK.capturePrint(false)
+    check(MOCK.printLogContains("AmmoMaking_AssembleRound9mm [AnySurfaceCraft]: loaded, required skills 1; level 3; XP 2; expected time 36/40; metal conserved"), "assembly listed with its level and predicted time")
+    check(not MOCK.printLogContains("NOT CONSERVED"), "every recipe is reported as conserving")
     MOCK.debug = false
 end
 
