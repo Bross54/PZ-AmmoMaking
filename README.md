@@ -249,29 +249,60 @@ Higher skill levels reveal more detailed information about cartridge quality and
 
 # Materials
 
-## Copper
+## Copper and brass
 
-Ammo Making uses Project Zomboid's existing Build 42 copper resources where possible.
-
-Examples:
+Ammo Making uses Project Zomboid's own Build 42 items and never duplicates them:
 
 ```text
 Base.CopperOre
+Base.CopperScrap
 Base.CopperIngot
+Base.BrassIngot
+Base.BrassScrap   (reserved for later recycling)
 ```
 
 ## Zinc
 
-The mod adds zinc as a new manufacturing resource.
-
-Current zinc items:
+Vanilla Build 42 has no zinc, so the mod adds it, copying the vanilla copper items:
 
 ```text
-AmmoMaking.ZincOre
-AmmoMaking.ZincIngot
+AmmoMaking.ZincOre     40.0, two-handed, like Base.CopperOre
+AmmoMaking.ZincScrap   0.5, like Base.CopperScrap
+AmmoMaking.ZincIngot   6.0, like Base.CopperIngot
 ```
 
-Copper and zinc will eventually be combined to create different grades of brass.
+The zinc items use vanilla icons and models as placeholders.
+
+---
+
+# Metallurgy
+
+Metallurgy extends the vanilla Build 42 furnaces. There is no custom furnace, fuel, heat or timer: the mod adds recipes to the vanilla Primitive and Simple Furnace crafting menus.
+
+```text
+Base.CopperOre                       AmmoMaking.ZincOre
+      │ vanilla "Smelt Copper Ore"         │ "Smelt Zinc Ore"
+      │ 4 charcoal, Primitive Furnace      │ 4 charcoal, Primitive Furnace
+      ▼                                    ▼
+10 Base.CopperScrap                  10 AmmoMaking.ZincScrap
+      │ "Cast Copper Ingot"                │ "Cast Zinc Ingot"
+      │ 10 scrap + 4 charcoal              │ 10 scrap + 4 charcoal
+      ▼ Simple Furnace                     ▼ Simple Furnace
+Base.CopperIngot                     AmmoMaking.ZincIngot
+      └────────────────┬───────────────────┘
+                       ▼ "Cast Cartridge Brass", Simple Furnace
+                         7 copper ingots + 3 zinc ingots + 10 charcoal
+                10 Base.BrassIngot
+```
+
+- casting needs an empty ceramic crucible, tongs and an ingot mold; all three are kept (a clay mold breaks, as it does for vanilla casting)
+- one ore is one ingot of metal; ten ore make ten brass ingots, with nothing created or lost on the way
+- vanilla "Smelt Copper Ore" is used as it is
+- Ammo Making XP per completed craft; crafting gets 5 % faster per Ammo Making level through the game's own recipe timing
+- no Blacksmithing requirement, like vanilla smelting
+- brass quality is not tracked yet; it becomes relevant when cartridge cases are made
+
+**Not yet tested in game.** The recipes were written from the installed Build 42.20.4 files and are covered by the offline tests; see `docs/METALLURGY_DESIGN.md`.
 
 ---
 
@@ -329,9 +360,9 @@ Offline checks (no game required):
 lua5.1 tests/run_tests.lua
 ```
 
-`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 880+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), translation keys, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
+`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 1500+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy (script files against their Lua mirror, material conservation, XP, skill requirement), translation keys, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
 
-Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Next stage design: `docs/METALLURGY_DESIGN.md` (ore processing and metallurgy, design only) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42 provides, with evidence levels and the local verification commands).
+Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Metallurgy: `docs/METALLURGY_DESIGN.md` (the implemented furnace recipes, items, skill and conservation rules) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42.20.4 provides, read from the installed files and jar).
 
 ---
 
@@ -355,24 +386,14 @@ The machine will not simply generate random ore independently of the geology sys
 
 ---
 
-# Planned Metallurgy
+# Planned Metallurgy Extensions
 
-Mining is only the beginning of the manufacturing chain.
+The first metallurgy stage (ore to brass on the vanilla furnaces) is implemented; see *Metallurgy* above. Still planned:
 
-Planned metallurgy includes:
-
-- copper smelting
-- zinc smelting
-- brass production
-- multiple brass compositions
-- material purity
-- poor-quality alloys
-- high-quality alloys
-- large furnace equipment
-- reusable metal molds
-- cheaper clay molds
-
-Material quality will eventually influence ammunition quality.
+- brass quality, decided when cartridge cases are made
+- more than one brass composition
+- recycling brass scrap
+- balance of charcoal, time and XP
 
 ---
 
@@ -502,6 +523,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Field and advanced assays**: limited-use kits, measurement error, grade or range results, XP once per assay
 - **Laboratory analyzer**: placeable powered world object, 24 processed hours, pauses without power, ±2 % result, cancel, no pickup while occupied
 - **Mining / extraction**: pickaxe timed action inside a sampled 3x3, ore dropped on the tile, XP and tool wear
+- **Metallurgy**: zinc smelting, copper and zinc ingot casting and 7 + 3 brass alloying as recipes on the vanilla furnaces; XP and craft time tied to Ammo Making (**not yet run in game**)
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
 - **Inspection prototype**: skill-gated inspection panel for the test cartridge
@@ -513,7 +535,8 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 
 - **Mining passed a first in-game test on Build 42.20.4** (start, completion, `DigPickAxe` animation, zinc ore on the ground, depletion, exhaustion, cancel by walking away). Save/reload persistence, `Base.CopperOre`, water detection, built floors and the sound are still marked *REQUIRES IN-GAME VERIFICATION* in `docs/DEVELOPMENT.md`.
 - **Multiplayer mining is intentionally disabled.** A multiplayer client gets a disabled option and no extraction. The server-authoritative design is in `docs/MULTIPLAYER_MINING.md`.
-- **Metallurgy does not exist yet.** Ore is the end of the chain today; no furnaces, smelting, crushing or brass.
+- **Metallurgy has not been run in game yet.** The furnace recipes are written from the installed 42.20.4 files and pass the offline tests; whether they appear at the furnace, award XP and speed up with skill is listed under *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/METALLURGY_DESIGN.md`.
+- **Brass is the end of the chain today.** Nothing consumes brass ingots yet.
 - **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
 - **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
@@ -535,16 +558,16 @@ assay (field / advanced / laboratory)
 mining (pickaxe, inside the sampled 3x3)
         ↓
 ore on the ground, reserve depleted
+        ↓
+vanilla furnace: ore → scrap → copper / zinc ingots
+        ↓
+vanilla furnace: 7 copper + 3 zinc → 10 brass ingots
 ```
 
-Intended next stages (not started):
+Intended next stages:
 
 ```text
-ore processing (crushing / sorting)
-        ↓
-metallurgy (smelting, alloys, purity)
-        ↓
-brass and components (cases, projectiles, primers, powder)
+components (cases, projectiles, primers, powder)
         ↓
 ammunition (assembly, inspection, failures)
 ```
@@ -559,14 +582,9 @@ ammunition (assembly, inspection, failures)
 
 ## 📋 Planned
 
-⬜ Furnaces  
-⬜ Copper smelting  
-⬜ Zinc smelting  
-⬜ Brass production  
 ⬜ Multiple brass alloys  
-⬜ Material purity  
-⬜ Clay molds  
-⬜ Metal molds  
+⬜ Brass quality  
+⬜ Brass recycling  
 ⬜ Cartridge case manufacturing  
 ⬜ Projectile manufacturing  
 ⬜ Primer manufacturing  
@@ -660,14 +678,17 @@ PZ-AmmoMaking
         │           └── shared
         │               └── Translate
         │                   └── EN
-        │                       └── IG_UI.json
+        │                       ├── IG_UI.json
+        │                       ├── ItemName.json
+        │                       └── Recipes.json
         │
         └── 42
             ├── mod.info
             │
             └── media
                 ├── scripts
-                │   └── AC_Items.txt
+                │   ├── AC_Items.txt
+                │   └── AC_Recipes.txt
                 │
                 └── lua
                     ├── client
@@ -694,6 +715,7 @@ PZ-AmmoMaking
                         ├── AC_Geology.lua
                         ├── AC_GeologySampling.lua
                         ├── AC_LaboratoryAnalyzer.lua
+                        ├── AC_Materials.lua
                         ├── AC_Mining.lua
                         ├── AC_Text.lua
                         └── AC_WorldData.lua

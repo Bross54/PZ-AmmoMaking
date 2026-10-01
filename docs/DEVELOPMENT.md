@@ -40,6 +40,8 @@ never move an item into that list.
   with a pickaxe.
 - The whole placed laboratory analyzer loop, and everything else under
   *REQUIRES IN-GAME VERIFICATION* at the end of this file.
+- **All of metallurgy** (added 2026-10-02 without a game run): see
+  *Metallurgy* below.
 
 ## Module map
 
@@ -53,6 +55,9 @@ never move an item into that list.
 | `server/BuildingObjects/AC_LaboratoryAnalyzerObject.lua` | server | `ISBuildingObject` placement cursor; `create()` turns the analyzer item into an `IsoThumpable` |
 | `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology, depletion records in global ModData |
 | `shared/AC_Mining.lua` | shared | Pickaxe rules, prospect lookup, `extract()` (the only mutation point of the mining loop) |
+| `shared/AC_Materials.lua` | shared | Metallurgy: item ids, metal units, Lua mirror of the furnace recipes, conservation check, `OnCreate` XP callbacks, the Ammo Making requirement attached to the recipe scripts at boot |
+| `scripts/AC_Recipes.txt` | script | The four furnace `craftRecipe` blocks (module `Base`, ids prefixed `AmmoMaking_`) |
+| `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
 | `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
 | `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype |
@@ -98,6 +103,10 @@ the tables are small. Nothing here has been balanced yet.
 | `sound`, `soundRadius` | `AC_Mining.CONFIG` | `Shoveling`, 20 | placeholder mining sound |
 | `PICKAXE_TYPES` | `AC_Mining` | `Base.PickAxe`, `Base.PickAxeForged` | accepted tools |
 | perk XP thresholds | `AC_AmmoMakingSkill.lua` | 75 … 9000 | levelling |
+| `unitsPerIngot` | `AC_Materials.CONFIG` | 10 | metal accounting (scrap = 1, ore = 10) |
+| `xpSmeltZincOre`, `xpCastIngot`, `xpCastBrass` | `AC_Materials.CONFIG` | 3, 5, 25 | XP per completed furnace craft |
+| `requiredLevel` | `AC_Materials.CONFIG` | 0 | Ammo Making level attached to the furnace recipes |
+| recipe `time`, charcoal counts | `AC_Recipes.txt` + `AC_Materials.RECIPES` | 200; 4 / 4 / 4 / 10 | furnace recipes (the two must match; a test compares them) |
 
 ## Invariants of the mining loop
 
@@ -336,6 +345,61 @@ not restored: they predate localization, laboratory XP and the shared terrain
 rule, and the menu calls the removed `AC_GeologySampling.updateLaboratoryAssay`.
 Its `AC_SpriteInspector.lua` became a debug submenu entry.
 
+## Metallurgy
+
+Design, recipe table and vanilla evidence: `docs/METALLURGY_DESIGN.md` and
+`docs/VANILLA_METALLURGY_RESEARCH.md`. What a developer needs to know here:
+
+- **The engine does the work.** The recipes are plain `craftRecipe` blocks on
+  the vanilla bench tags `PrimitiveFurnace` and `Furnace`. Mod Lua never
+  consumes or creates an item in this stage and stores nothing.
+- **Two sources of truth, pinned together.** `scripts/AC_Recipes.txt` is what
+  the game loads; `AC_Materials.RECIPES` is what the tests reason about. The
+  section *AC_Recipes.txt equals AC_Materials.RECIPES* parses the script and
+  compares every field, input and output. Change both or the suite fails.
+- **Adding a recipe**: add the block to `AC_Recipes.txt` (copy a vanilla
+  block; only fields in the test's whitelist), the mirror entry with a
+  `callback` and `xpKey`, the name in `Recipes.json`, and any new item id to
+  `AC_Compat.REQUIRED_ITEMS` and `AC_Materials.UNITS`. The conservation,
+  translation and compat tests then cover it without further changes.
+- **Skill.** `SkillRequired` / `xpAward` cannot name the Ammo Making perk in a
+  script: scripts are parsed before mod Lua registers it, and the engine
+  drops unknown perks (jar: `CraftRecipe.Load`, `GameWindow.initShared`). XP
+  therefore comes from `OnCreate` (`AC_Materials.on<Recipe>(craftRecipeData,
+  character)`), and `applySkillRequirements()` adds "Ammo Making:
+  `requiredLevel`" to each recipe script on `OnGameBoot` and again on
+  `OnGameStart`. It is idempotent: a recipe that already has a required skill
+  is skipped. The engine then scales craft time itself
+  (`CraftRecipe.getTime`: 5 % per level above the requirement).
+- **Kahlua rule respected**: `addRequiredSkill` is called only with
+  `(perk, number)`, the one signature in the jar, and only after the method
+  was found on the object.
+
+Console lines:
+
+```text
+[AmmoMaking] Metallurgy recipes: 4 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
+[AmmoMaking] Metallurgy (AmmoMaking_CastBrassIngots): +25 Ammo Making XP (total 40 -> 65)
+[AmmoMaking] WARNING: metallurgy skill requirements not applied: <error>
+```
+
+The first line is printed only when something was attached or something is
+wrong; a second run that finds everything in place is silent.
+
+Invariants (asserted by the tests): units out = units in for every mod
+recipe; brass is exactly 70 + 30 → 100 units; kept tools hold no metal;
+charcoal is consumed; no recipe loop exists over mod and vanilla copper
+recipes together; XP is granted once per `OnCreate` call and never without a
+character.
+
+### Multiplayer requirements (not implemented)
+
+- `OnCreate` runs on the server (`ISHandcraftAction:complete` →
+  `performRecipe`). Grant XP there with vanilla's `addXp(character, perk,
+  amount)` instead of the single-player `getXp():AddXP`.
+- Run `applySkillRequirements()` on the server and on every client.
+- Nothing else: there is no custom state, command or timed action.
+
 ## Compatibility self-check
 
 `AC_Compat.run()` executes once on `OnGameStart` and prints one line per
@@ -345,17 +409,30 @@ and character methods the actions call, client globals, whether the translation
 file loaded (and which perk-description key spelling resolves) and the geology
 seed, and what the placed laboratory analyzer relies on (square and character
 methods, `ISBuildingObject`, `IsoThumpable.new`, that the `server/` cursor file
-loaded, and that the world sprite exists). It never changes game state and
-cannot raise. The debug menu can re-run it.
+loaded, and that the world sprite exists), and metallurgy (the vanilla and
+zinc item ids, each furnace recipe script, its `OnCreate` callback, whether
+`CraftRecipe:addRequiredSkill` exists and whether the Ammo Making requirement
+is attached). It never changes game state and cannot raise. The debug menu can
+re-run it.
 
 ## Debug tools (`-debug` only)
 
 Right-click the ground → **Ammo Making Debug**: Inspect Current Tile, Survey
 Current Area (3x3), Show Geology Seed, Inspect Clicked Tile Objects (sprites,
 analyzer state), Reset Depletion (tile / 3x3), Spawn Sampling Kit, Spawn Mining
-Kit, Spawn Laboratory Analyzer, Spawn Assayed Sample (current 3x3), Set Ammo
-Making Level, Run Compatibility Check. Everything prints to `console.txt`. From
+Kit, Spawn Laboratory Analyzer, Spawn Assayed Sample (current 3x3), Spawn
+Metallurgy Kit, Set Ammo Making Level, Inspect Metallurgy Recipes, Run
+Compatibility Check. Everything prints to `console.txt`. From
 the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
+
+- **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
+  (it does not break), 22 charcoal, one zinc ore, ten scrap of each metal,
+  six copper and two zinc ingots: every furnace recipe once, with the two
+  cast ingots completing a 7 + 3 brass batch. About 130 weight. No furnace
+  is spawned; build one or use vanilla debug.
+- **Inspect Metallurgy Recipes**: one console line per recipe: whether the
+  script manager knows it, its required-skill count, XP, predicted time at
+  the player's level and the conservation verdict. Read-only.
 
 Right-clicking a square that holds an Ammo Making analyzer (placed or dropped)
 adds two more entries; they never appear for other squares:
@@ -396,6 +473,16 @@ check is `loadfile(path)` on every `.lua` file in the same runtime.
 The tests load the real `AC_AmmoMakingSkill.lua` with a minimal `PerkFactory`
 mock, so `awardXP()` and its log line are the mod's own code; perk
 registration itself is engine behaviour and not tested.
+
+The metallurgy sections read `AC_Items.txt`, `AC_Recipes.txt`, `Recipes.json`
+and `ItemName.json` from disk with a small parser written for the blocks this
+mod uses. They prove what the files contain and that the numbers conserve
+metal. The `CraftRecipe` script objects are mocked; that the game loads the
+recipes, shows them at a furnace and calls `OnCreate` is not tested.
+
+Static checks worth running after a change (no game needed): the suite, a
+`loadfile` on every `.lua`, and a look at `git diff` for a script field or tag
+that is not in the tests' whitelists.
 
 ## REQUIRES IN-GAME VERIFICATION
 
@@ -441,3 +528,14 @@ registration itself is engine behaviour and not tested.
 - The debug tools Inspect Analyzer State and Complete Analyzer Job.
 - A dropped analyzer from an older save still working, and one picked up
   mid-assay keeping its sample when placed.
+- **Metallurgy** (nothing in it has run in game):
+  - the four recipes appear at the right furnace (Smelt Zinc Ore at a
+    Primitive Furnace, the three casting recipes at a Simple Furnace) with
+    their names from `Recipes.json`;
+  - inputs are consumed, crucible / tongs / mold are kept, a clay mold
+    breaks, and the outputs are 10 zinc scrap, 1 ingot, 10 `Base.BrassIngot`;
+  - the `Metallurgy (...)` XP line appears once per craft, also in a batch;
+  - the boot line reports 4 recipes given the requirement, the UI shows Ammo
+    Making 0, and a higher level shortens the craft;
+  - zinc item names, icons and world models; carrying the 40-weight zinc ore;
+  - every metallurgy line of the compatibility check is OK.
