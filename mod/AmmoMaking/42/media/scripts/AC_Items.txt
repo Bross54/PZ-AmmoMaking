@@ -1,12 +1,33 @@
 module AmmoMaking
 {
+    /* Zinc mirrors the vanilla copper chain (media/scripts/generated/items/normal.txt):
+       ZincOre   = Base.CopperOre   (40.0, two-handed heavy item)
+       ZincScrap = Base.CopperScrap (0.5)
+       ZincIngot = Base.CopperIngot (6.0, base:ingot)
+       Icons and models are vanilla placeholders until zinc art exists. */
+
     item ZincOre
     {
         DisplayName = Zinc Ore,
         DisplayCategory = Material,
         ItemType = base:normal,
+        Weight = 40.0,
         Icon = IronOre,
+        StaticModel = IronOre,
+        WorldStaticModel = IronOre,
+        Tags = base:hasmetal;base:heavyitem,
+        RequiresEquippedBothHands = true,
+    }
+
+    item ZincScrap
+    {
+        DisplayName = Zinc Scrap,
+        DisplayCategory = Material,
+        ItemType = base:normal,
         Weight = 0.5,
+        Icon = AluminumScrap,
+        WorldStaticModel = AluminumScrap,
+        Tags = base:hasmetal,
     }
 
     item ZincIngot
@@ -14,8 +35,11 @@ module AmmoMaking
         DisplayName = Zinc Ingot,
         DisplayCategory = Material,
         ItemType = base:normal,
+        Weight = 6.0,
         Icon = Ingot_Silver,
-        Weight = 1.0,
+        StaticModel = SilverBar,
+        WorldStaticModel = SilverBar,
+        Tags = base:hasmetal;base:ingot,
     }
 
     item GeologicalSample
