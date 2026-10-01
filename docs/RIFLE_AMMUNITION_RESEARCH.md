@@ -1,10 +1,24 @@
-# Rifle ammunition: research and design for the next stage
+# Rifle ammunition: research, decisions and what was built
 
-Status: **research and design only. Nothing in this document is
-implemented.** Vanilla facts were read on 2026-10-02 from the installed Build
-42.20.4 scripts (`media/scripts/generated/items/weapon.txt`, `normal.txt`),
-with the same extraction used for the pistol calibres
-(`VANILLA_AMMUNITION_RESEARCH.md` §1a).
+Status: **IMPLEMENTED on 2026-10-02, offline-verified only.** The three
+vanilla rifle calibres are part of the calibre model
+(`docs/AMMUNITION_DESIGN.md` has the combined matrix, recipes and balance).
+This document keeps the vanilla evidence and records how each open question
+of the research was decided. Nothing here has been run in the game
+(REQUIRES FUTURE IN-GAME VERIFICATION, §9).
+
+Vanilla facts were read from the installed Build 42.20.4 scripts
+(`media/scripts/generated/items/weapon.txt`, `normal.txt`), Lua and jar.
+
+## 0. Decisions taken
+
+| Question (section) | Decision | Where it lives |
+|---|---|---|
+| Primer families (§3) | Two new families, `SmallRifle` (5.56) and `LargeRifle` (.308, .30-30), with their own items; never interchangeable with pistol primers | `AC_Calibres.PRIMERS`, `class = "rifle"` |
+| Powder scale (§4) | Compressed: 5.56 3, .30-30 4, .308 5 whole uses of vanilla gunpowder | `powderUses` |
+| Case brass, bullets (§5) | Cups 2 / 2 / 3; bullets per scrap 2 / 1 / 1; copper-only | `cupsPerCase`, `bulletsPerScrap` |
+| Press or hand (§6) | **By hand**, with the same kind of die set as pistols. No quality penalty: round quality has no combat effect, so rifles differ by level, time, material and powder instead. No press object | `AC_Calibres.CLASSES.rifle` |
+| Levels (§7) | All three rounds at level 5; level 6 would have been a grind wall (57 ore to level 5, 105 to level 6 in the simulated career) | `assembleLevel` |
 
 ## 1. Vanilla rifle calibres (FILE)
 
@@ -75,16 +89,18 @@ Firearms (display name; magazine or internal; capacity):
   used by `ISRackFirearm.lua`). It lives on the firearm, which is where a
   handloading effect would have to be carried, since rounds become a count.
 
-## 2. What the pistol architecture already covers
+## 2. What the pistol architecture already covered
 
-Adding a rifle calibre is, structurally, the same data as a pistol calibre:
-a `LIST` entry, three items, names, a regenerated script. The model's knobs
-(`cupsPerCase`, `bulletsPerScrap`, `powderUses`, `primerFamily`,
-`assembleLevel`) apply unchanged, the validator and every generic test pick
-a new entry up, and case quality needs no change.
+Adding a rifle calibre is the same data as a pistol calibre: a `LIST` entry,
+three items, names, a regenerated script. The model's knobs (`cupsPerCase`,
+`bulletsPerScrap`, `powderUses`, `primerFamily`, `assembleLevel`) applied
+unchanged, the validator and every generic test picked the new entries up,
+and case quality needed no change. The only addition was `class`, which
+supplies rifle defaults and ties a calibre to primer families of its own
+class.
 
-So rifles are not blocked by architecture. They are blocked by four design
-questions, below, each of which changes gameplay rather than code.
+The sections below are the research as written before implementation, kept
+for the reasoning; §0 says what was chosen.
 
 ## 3. Primer families
 
@@ -97,7 +113,7 @@ thicker cup and a hotter charge.
 | A. Two new families, `SmallRifle` and `LargeRifle` | 2 items, 4 generated recipes | matches reality; lets rifle primers cost more compound and unlock later | two more items that look like the pistol ones |
 | B. Reuse the pistol families | none | nothing to add; small/large already means size | a 5.56 round would take the same primer as a 9 mm |
 
-Recommendation: **A**, with the rifle primer holding the same brass as its
+Recommendation, **adopted**: **A**, with the rifle primer holding the same brass as its
 pistol size and half as much compound again (3 and 6 units against 2 and 4).
 The family model, the generated primer recipes and the conservation checks
 already handle it; it is two `PRIMERS` entries. Note that 3 units of compound
@@ -122,7 +138,7 @@ not metal, the only thing that matters.
 | Compressed (recommended) | 3 | 4 | 5 | 100 uses |
 | Compressed, with a rifle-powder mix that yields more | 3 | 4 | 5 | fewer, but needs a second powder recipe |
 
-Recommendation: **compressed**, keeping the rule that no rifle round takes
+Recommendation, **adopted**: **compressed**, keeping the rule that no rifle round takes
 less than the largest pistol charge (.44 Magnum, 3). Charges stay whole uses
 of vanilla `Base.GunPowder`; no rifle-powder item. If rifle ammunition then
 still feels powder-starved, the lever is the mix yield (one line in
@@ -163,13 +179,14 @@ of the press.
 | B. Rifle calibres by hand at a quality penalty, press later removes it | no new station now; uses the existing `toolBonus` hook with a negative value; rifles available earlier |
 | C. Rifle calibres by hand, no penalty | simplest; least believable |
 
-Recommendation: **B first, then A's press as the tier above it**, because B
-needs nothing the engine has not already been asked for, and it makes the
-later press an upgrade for every calibre instead of a gate for some. Either
-way the die sets are reused: the press takes the same die set item.
+Recommendation at the time: B first, then A's press as the tier above it.
 
-This is an architecture decision for the project owner, like the die-set
-decision before the pistol stage.
+**Decided by the project owner: by hand, without the penalty** (closest to
+option C, with the differentiation moved elsewhere). A quality penalty would
+balance nothing while round quality has no combat effect, so rifles are
+separated from pistols by a higher level, about twice the craft time, larger
+material and powder requirements and their own primer families. The press
+remains the later upgrade tier and takes the same die sets.
 
 ## 7. Progression
 
@@ -187,27 +204,40 @@ becoming a grind wall. Options:
 3. Revisit the perk's XP thresholds. They are part of the perk registration
    that is confirmed working in game, so this is the most invasive option.
 
-Recommendation: **1**, and re-run the career simulation (it already reports
-ore per level) before choosing numbers.
+Recommendation at the time: 1, after re-running the career simulation.
 
-## 8. Suggested first rifle milestone
+**Outcome:** the simulation was extended to rifles. Level 5 takes 57 ore,
+level 6 takes 105. All three rifle rounds were placed at level 5, with
+slightly more XP per rifle craft (cases 2–3, rounds 4–5); the first rifle
+round is assembled after 73 ore and about 500 pistol rounds. The perk's XP
+thresholds were not touched.
 
-1. Owner decisions: press or hand (§6), powder scale (§4), primer families
-   (§3), levels (§7).
-2. Two primer families and three calibre definitions, generated recipes,
-   items, names: the same five steps as any calibre.
-3. The career simulation extended to rifles; the 100-round chain and
-   cross-calibre tests run for them automatically.
-4. If option A of §6 is chosen: the press, as its own milestone before any
-   rifle recipe, starting with what a mod must register to add a bench tag.
+## 8. What was built
 
-Shotgun shells come after rifles: they need a hull, shot and wad, none of
+- `AmmoMaking.SmallRiflePrimer`, `AmmoMaking.LargeRiflePrimer` and four
+  generated primer recipes (15 toy caps or 30 match uses per sheet).
+- Per calibre: `DieSet556NATO` / `Case556NATO` / `Bullet556NATO`,
+  `DieSet3030Win` / …, `DieSet308Win` / …, and four generated recipes each.
+- Assembly outputs `Base.556Bullets`, `Base.3030Bullets`, `Base.308Bullets`.
+- The 100-round chain, cross-calibre isolation, primer-family, validation
+  and mutation tests run for the rifle calibres through the same generic
+  code as the pistols.
+
+Shotgun shells come next and are researched in
+`docs/SHOTGUN_SHELL_RESEARCH.md`: they need a hull, shot and wad, none of
 which the brass-case model describes.
 
 ## 9. REQUIRES FUTURE IN-GAME VERIFICATION
 
-Nothing here is implemented, so nothing new needs the game yet. Before the
-rifle stage is built, the pistol stage's list
-(`AMMUNITION_DESIGN.md` §13) should have been run, in particular whether
-multi-use powder inputs (`item 3 [Base.GunPowder]`) behave as the jar
-evidence says, because rifle charges lean on it harder.
+- The twelve rifle recipes and four rifle primer recipes appear and work as
+  written (see `AMMUNITION_DESIGN.md` §13 for the full list).
+- Multi-use powder inputs: `item 3`, `item 4`, `item 5 [Base.GunPowder]`
+  take that many uses from a jar, and continue into a second jar when one
+  runs out.
+- `item 3 [AmmoMaking.BrassCaseCup]` takes three cups for a .308 case.
+- `item 15 [Base.CapGunCap]` and `item 30 [Base.Matches;Base.Matchbox]` for
+  rifle primers.
+- Handloaded rifle rounds load into `556Clip`, `JS14_Clip`, `M14Clip` and
+  the internal magazines and fire like vanilla rounds.
+- Rifle recipes are unavailable below level 5 and their parts below their
+  levels.

@@ -1,14 +1,17 @@
 # Ammunition components: from brass to vanilla rounds
 
-Status: **the pistol-calibre foundation is implemented, offline-verified
-only.** Five calibres (9 mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum),
-two primer families, gunpowder, a calibre model with validation, case quality,
-probes, debug tools and tests exist. Nothing in this document has been run in
-the game; what needs it is in §13.
+Status: **IMPLEMENTED, offline-verified only.** Eight calibres (five pistol,
+three rifle), four primer families, gunpowder, a data-driven calibre model
+with validation, case quality, compatibility probes, debug tools and tests.
 
-Vanilla facts used here are in `docs/VANILLA_AMMUNITION_RESEARCH.md`, read
-from the installed Build 42.20.4 files and jar. Rifle calibres are researched,
-not implemented: `docs/RIFLE_AMMUNITION_RESEARCH.md`.
+**Nothing in this document has been run in the game.** Everything that only
+the game can confirm is collected in §13 under REQUIRES FUTURE IN-GAME
+VERIFICATION.
+
+Vanilla facts used here are in `docs/VANILLA_AMMUNITION_RESEARCH.md` and
+`docs/RIFLE_AMMUNITION_RESEARCH.md`, read from the installed Build 42.20.4
+files and jar. Shotgun shells are researched, not implemented:
+`docs/SHOTGUN_SHELL_RESEARCH.md`.
 
 All balance numbers in this document are **tunable and untuned**.
 
@@ -24,25 +27,30 @@ All balance numbers in this document are **tunable and untuned**.
 - Ammo Making is the only skill. It changes access, time and case quality,
   never the amount of material.
 - A calibre is data. No Lua outside `AC_Calibres.lua` names a calibre or a
-  primer item.
+  primer item. Pistols and rifles share one list, one generator and one
+  validator.
 
-## 2. Pistol calibre matrix
+## 2. Calibre matrix
 
-| Calibre | Vanilla output | Case | Projectile | Primer family | Cups per case | Bullets per scrap | Powder uses | Round level | Die set |
-|---|---|---|---|---|---|---|---|---|---|
-| 9mm | `Base.Bullets9mm` | `AmmoMaking.Case9mm` | `AmmoMaking.Bullet9mm` | SmallPistol | 1 | 2 | 1 | 3 | `AmmoMaking.DieSet9mm` |
-| .38 Special | `Base.Bullets38` | `AmmoMaking.Case38Special` | `AmmoMaking.Bullet38Special` | SmallPistol | 1 | 2 | 1 | 3 | `AmmoMaking.DieSet38Special` |
-| .45 ACP | `Base.Bullets45` | `AmmoMaking.Case45ACP` | `AmmoMaking.Bullet45ACP` | LargePistol | 1 | 1 | 1 | 4 | `AmmoMaking.DieSet45ACP` |
-| .357 Magnum | `Base.Bullets357` | `AmmoMaking.Case357Magnum` | `AmmoMaking.Bullet357Magnum` | SmallPistol | 1 | 2 | 2 | 4 | `AmmoMaking.DieSet357Magnum` |
-| .44 Magnum | `Base.Bullets44` | `AmmoMaking.Case44Magnum` | `AmmoMaking.Bullet44Magnum` | LargePistol | 2 | 1 | 3 | 5 | `AmmoMaking.DieSet44Magnum` |
+| Calibre | Type | Vanilla output | Case cups | Projectiles per copper scrap | Primer family | Powder uses | Skill level (round) | Die set |
+|---|---|---|---|---|---|---|---|---|
+| 9mm | pistol | `Base.Bullets9mm` | 1 | 2 | SmallPistol | 1 | 3 | `AmmoMaking.DieSet9mm` |
+| .38 Special | pistol | `Base.Bullets38` | 1 | 2 | SmallPistol | 1 | 3 | `AmmoMaking.DieSet38Special` |
+| .45 ACP | pistol | `Base.Bullets45` | 1 | 1 | LargePistol | 1 | 4 | `AmmoMaking.DieSet45ACP` |
+| .357 Magnum | pistol | `Base.Bullets357` | 1 | 2 | SmallPistol | 2 | 4 | `AmmoMaking.DieSet357Magnum` |
+| .44 Magnum | pistol | `Base.Bullets44` | 2 | 1 | LargePistol | 3 | 5 | `AmmoMaking.DieSet44Magnum` |
+| 5.56 | rifle | `Base.556Bullets` | 2 | 2 | SmallRifle | 3 | 5 | `AmmoMaking.DieSet556NATO` |
+| .30-30 | rifle | `Base.3030Bullets` | 2 | 1 | LargeRifle | 4 | 5 | `AmmoMaking.DieSet3030Win` |
+| .308 | rifle | `Base.308Bullets` | 3 | 1 | LargeRifle | 5 | 5 | `AmmoMaking.DieSet308Win` |
 
-The die set, case and bullet of a calibre unlock before its round: die set
-and case two levels earlier, bullet one level earlier, never below 1
+Case and bullet items follow the die set's naming: `AmmoMaking.Case<suffix>`,
+`AmmoMaking.Bullet<suffix>`. The die set and case of a calibre unlock two
+levels before its round and the bullet one level before, never below 1
 (`AC_Calibres.levelsFor`).
 
-Vanilla firearms these feed (research §1a): M9 Pistol; SN38 Revolver; M1911
-Pistol and Trapper Carbine; Patrol Revolver and L92 Carbine; B-F Pistol and
-Magnum revolver.
+Vanilla firearms these feed: M9 Pistol; SN38 Revolver; M1911 Pistol and
+Trapper Carbine; Patrol Revolver and L92 Carbine; B-F Pistol and Magnum
+revolver; M16, JS-14 and MSR700; L94; MSR788, MSR7T and M1A.
 
 ## 3. The chain
 
@@ -52,17 +60,17 @@ survey → sample → assay → mine → smelt → cast → brass          (earl
 Base.BrassIngot ──Forge Small Brass Sheets──► 10 AmmoMaking.SmallBrassSheet
                                                    │                    │
                               Punch Brass Case Cups│                    │Make <family> Primers
-                                                   ▼                    │ + 10 toy caps, or 20 match uses
+                                                   ▼                    │ + toy caps or match heads
                                       2 AmmoMaking.BrassCaseCup         ▼
-                                                   │          10 small or 5 large pistol primers
+                                                   │          10 small or 5 large primers
                          Form <calibre> Case       │ (die set)          │
-                         1 or 2 cups               ▼                    │
+                         1, 2 or 3 cups            ▼                    │
                                              empty case ────────────────┤
                                         (quality rolled here)           │
 Base.CopperScrap ──Swage <calibre> Copper Bullets (die set)──► 2 or 1 ──┤
                                                                         │
 2 charcoal + 2 uses of Base.Fertilizer ──Mix Gunpowder (mortar)──►      │
-                                Base.GunPowder (10 uses) ──1 to 3 uses──┤
+                                Base.GunPowder (10 uses) ──1 to 5 uses──┤
                                                                         ▼
                                                  Assemble <calibre> Round (die set)
                                                                         ▼
@@ -72,98 +80,108 @@ Base.CopperScrap ──Swage <calibre> Copper Bullets (die set)──► 2 or 1 
 ## 4. Recipes
 
 All in `media/scripts/AC_Recipes.txt`, **generated** from the Lua mirror
-(§10): 31 blocks. "Level" is the Ammo Making level attached to the recipe
+(§11): 47 blocks = metallurgy 4 + case stock 2 + gunpowder 1 + primers 8 +
+4 per calibre × 8. "Level" is the Ammo Making level attached to the recipe
 script at boot.
 
-Shared component recipes (5):
+Shared component recipes (9):
 
 | Recipe | Consumed | Kept | Station | Output | Level | XP | time |
 |---|---|---|---|---|---|---|---|
 | `AmmoMaking_MixGunpowder` | 2 `tags[base:charcoal]`, 2 uses of `Base.Fertilizer` | mortar and pestle | `AnySurfaceCraft` | 1 `Base.GunPowder` (10 uses) | 3 | 5 | 150 |
-| `AmmoMaking_MakeSmallPistolPrimersFromCaps` | 1 `AmmoMaking.SmallBrassSheet`, 10 `Base.CapGunCap` | punch, hammer | `AnySurfaceCraft` | 10 `AmmoMaking.SmallPistolPrimer` | 2 | 2 | 120 |
-| `AmmoMaking_MakeSmallPistolPrimersFromMatches` | 1 sheet, 20 uses of `Base.Matches` / `Base.Matchbox` | punch, hammer | `AnySurfaceCraft` | 10 small primers | 2 | 2 | 120 |
-| `AmmoMaking_MakeLargePistolPrimersFromCaps` | 1 sheet, 10 `Base.CapGunCap` | punch, hammer | `AnySurfaceCraft` | 5 `AmmoMaking.LargePistolPrimer` | 3 | 2 | 120 |
-| `AmmoMaking_MakeLargePistolPrimersFromMatches` | 1 sheet, 20 match uses | punch, hammer | `AnySurfaceCraft` | 5 large primers | 3 | 2 | 120 |
+| `AmmoMaking_MakeSmallPistolPrimersFrom…` | 1 `AmmoMaking.SmallBrassSheet`, 10 `Base.CapGunCap` or 20 match uses | punch, hammer | `AnySurfaceCraft` | 10 `AmmoMaking.SmallPistolPrimer` | 2 | 2 | 120 |
+| `AmmoMaking_MakeLargePistolPrimersFrom…` | 1 sheet, 10 caps or 20 match uses | punch, hammer | `AnySurfaceCraft` | 5 `AmmoMaking.LargePistolPrimer` | 3 | 2 | 120 |
+| `AmmoMaking_MakeSmallRiflePrimersFrom…` | 1 sheet, 15 caps or 30 match uses | punch, hammer | `AnySurfaceCraft` | 10 `AmmoMaking.SmallRiflePrimer` | 4 | 3 | 150 |
+| `AmmoMaking_MakeLargeRiflePrimersFrom…` | 1 sheet, 15 caps or 30 match uses | punch, hammer | `AnySurfaceCraft` | 5 `AmmoMaking.LargeRiflePrimer` | 4 | 3 | 150 |
 
-(plus the six metallurgy and case-stock recipes of the earlier stages.)
+Each primer row is two recipes, `…FromCaps` and `…FromMatches` (match uses
+come from `Base.Matches` or `Base.Matchbox`).
 
-Per calibre (4 × 5 = 20), `<S>` being the calibre's id suffix:
+Per calibre (4 × 8 = 32), `<S>` being the calibre's id suffix:
 
-| Recipe | Consumed | Kept | Station | Output | XP | time |
+| Recipe | Consumed | Kept | Station | Output | XP pistol / rifle | time pistol / rifle |
 |---|---|---|---|---|---|---|
-| `AmmoMaking_ForgeDieSet<S>` | 2 `Base.SteelBarQuarter`, 2 charcoal | ball-peen hammer, pliers/tongs, whetstone/file | `Forge` | 1 die set | 10 | 300 |
-| `AmmoMaking_FormCase<S>` | `cupsPerCase` `AmmoMaking.BrassCaseCup` | die set, hammer | `AnySurfaceCraft` | 1 case | 1 (.44: 2) | 80 |
-| `AmmoMaking_SwageBullets<S>` | 1 `Base.CopperScrap` | die set, hammer | `AnySurfaceCraft` | `bulletsPerScrap` bullets | 1 | 80 |
-| `AmmoMaking_AssembleRound<S>` | 1 case, 1 primer of the family, 1 bullet, `powderUses` uses of `Base.GunPowder` | die set | `AnySurfaceCraft` | 1 vanilla round | 2 (.45, .357: 3; .44: 4) | 40 |
+| `AmmoMaking_ForgeDieSet<S>` | 2 `Base.SteelBarQuarter`, 2 charcoal | ball-peen hammer, pliers/tongs, whetstone/file | `Forge` | 1 die set | 10 / 10 | 300 / 400 |
+| `AmmoMaking_FormCase<S>` | `cupsPerCase` `AmmoMaking.BrassCaseCup` | die set, hammer | `AnySurfaceCraft` | 1 case | 1 (.44: 2) / 2 (.308: 3) | 80 / 160 |
+| `AmmoMaking_SwageBullets<S>` | 1 `Base.CopperScrap` | die set, hammer | `AnySurfaceCraft` | `bulletsPerScrap` bullets | 1 / 1 | 80 / 120 |
+| `AmmoMaking_AssembleRound<S>` | 1 case, 1 primer of the family, 1 bullet, `powderUses` uses of `Base.GunPowder` | die set | `AnySurfaceCraft` | 1 vanilla round | 2 (.45, .357: 3; .44: 4) / 4 (.308: 5) | 40 / 80 |
 
-Vanilla templates (research §7): the die set from
+Vanilla templates (ammunition research §7): the die set from
 `Forge_Small_Metalworking_Punch_Set`; the cold recipes from the punch and
 hammer lines of the scrap-armour recipes and `NailSpikeWeapon`; hand work
 (`Making`) from `GatherGunpowder`; the mortar line from `MakeAerosolBomb`.
 Categories are vanilla's: `Tools`, `Metalworking`, `Miscellaneous`,
 `Weaponry`.
 
-**Batches.** Vanilla batch crafting is on by default for every recipe (jar:
-`CraftRecipe.allowBatchCraft` starts `true`), so single-unit recipes are
-queued with vanilla's slider; no custom UI and no batch recipes. Components
-that naturally come in multiples do: 10 sheets per ingot, 2 cups per sheet,
-10 or 5 primers per sheet, 2 bullets per scrap for the light bullets, 10
-charges per mix. The round stays one per craft: a vanilla round is one item,
+**Batches.** Vanilla batch crafting is on by default for every recipe, so
+single-unit recipes are queued with vanilla's slider; no custom UI and no
+batch recipes. The round stays one per craft: a vanilla round is one item,
 case quality is per case, and vanilla dismantles one round at a time. The
 tests check that k crafts are exactly k times one craft with tools used once.
 
 ## 5. Primer families
 
-| Family | Item | Brass | Compound | Per small brass sheet | Level | Calibres |
-|---|---|---|---|---|---|---|
-| SmallPistol | `AmmoMaking.SmallPistolPrimer` | 1 | 2 | 10 | 2 | 9mm, .38 Special, .357 Magnum |
-| LargePistol | `AmmoMaking.LargePistolPrimer` | 2 | 4 | 5 | 3 | .45 ACP, .44 Magnum |
+| Family | Class | Item | Brass | Compound | Per small brass sheet | Toy caps / match uses per sheet | Level | Calibres |
+|---|---|---|---|---|---|---|---|---|
+| SmallPistol | pistol | `AmmoMaking.SmallPistolPrimer` | 1 | 2 | 10 | 10 / 20 | 2 | 9mm, .38 Special, .357 Magnum |
+| LargePistol | pistol | `AmmoMaking.LargePistolPrimer` | 2 | 4 | 5 | 10 / 20 | 3 | .45 ACP, .44 Magnum |
+| SmallRifle | rifle | `AmmoMaking.SmallRiflePrimer` | 1 | 3 | 10 | 15 / 30 | 4 | 5.56 |
+| LargeRifle | rifle | `AmmoMaking.LargeRiflePrimer` | 2 | 6 | 5 | 15 / 30 | 4 | .308, .30-30 |
 
-The mapping follows real-world practice and lives only in the calibre
-definition (`primerFamily`). Both families use the same abstraction and the
-same inputs: one small brass sheet and the same priming charge (10 toy caps
-or 20 match uses). A large primer is two small ones in material, so neither
-family is cheaper per unit. An assembly recipe accepts only its own family's
-item.
+- The mapping follows real-world practice and lives only in the calibre
+  definition (`primerFamily`).
+- One abstraction for all four: a small brass sheet plus a priming charge. A
+  large primer is two small ones in material; a rifle primer is the pistol
+  primer of its size with half as much compound again (the real ones have a
+  hotter charge). No family is cheaper per unit of material.
+- Rifle primers are separate items. A primer family has a `class`; the
+  validator rejects a rifle calibre that names a pistol family and the
+  reverse, and an assembly recipe names only its own family's item.
 
-Why toy caps and match heads, why copper bullets and why charcoal plus
-fertilizer: research §§3–6 and §9. In short, vanilla has no primer, lead,
-sulfur or nitrate item, and these are the loot items and mined metal that fit
-vanilla's own way of abstracting such things.
+Why toy caps and match heads, copper bullets, and charcoal plus fertilizer:
+ammunition research §§3–6 and §9. Vanilla has no primer, lead, sulfur or
+nitrate item; these are the loot items and mined metal that fit vanilla's own
+way of abstracting such things.
 
-## 6. Material scaling
+## 6. Material model
 
-Gameplay units, not grains. The standard pistol round is the baseline; a
-calibre changes one or more of three whole-number knobs.
+Gameplay units, not grains. Three whole-number knobs per calibre:
 
-| Knob | Meaning | Values | Real-world reason |
+| Knob | Meaning | Pistol values | Rifle values |
 |---|---|---|---|
-| `cupsPerCase` | brass cups drawn into one case (5 units each) | 1; .44 Magnum 2 | a .44 Magnum case has nearly twice the brass of a 9 mm |
-| `bulletsPerScrap` | bullets from one copper scrap (10 units) | 2 = light (9mm, .38, .357); 1 = heavy (.45, .44) | 115–158 gr against 230–240 gr |
-| `powderUses` | uses of `Base.GunPowder` per round | 1; .357 Magnum 2; .44 Magnum 3 | about 5 gr for standard pistol rounds, 15 gr and 23 gr for the magnums |
+| `cupsPerCase` | brass cups (5 units each) drawn into one case | 1; .44 Magnum 2 | 5.56 and .30-30: 2; .308: 3 |
+| `bulletsPerScrap` | bullets from one copper scrap (10 units) | 2 = light (9mm, .38, .357); 1 = heavy (.45, .44) | 5.56: 2; .30-30 and .308: 1 |
+| `powderUses` | uses of `Base.GunPowder` per round | 1; .357 Magnum 2; .44 Magnum 3 | 5.56: 3; .30-30: 4; .308: 5 |
 
 Per round:
 
 | Calibre | Brass (case + primer) | Copper | Powder | Priming compound |
 |---|---|---|---|---|
-| 9mm | 5 + 1 = 6 | 5 | 1 | 2 |
-| .38 Special | 6 | 5 | 1 | 2 |
+| 9mm, .38 Special | 5 + 1 = 6 | 5 | 1 | 2 |
 | .45 ACP | 5 + 2 = 7 | 10 | 1 | 4 |
-| .357 Magnum | 6 | 5 | 2 | 2 |
+| .357 Magnum | 5 + 1 = 6 | 5 | 2 | 2 |
 | .44 Magnum | 10 + 2 = 12 | 10 | 3 | 4 |
+| 5.56 | 10 + 1 = 11 | 5 | 3 | 3 |
+| .30-30 | 10 + 2 = 12 | 10 | 4 | 6 |
+| .308 | 15 + 2 = 17 | 10 | 5 | 6 |
 
-No calibre is cheaper than 9 mm in any material and .44 Magnum is the most
-expensive in every one (asserted). .38 Special equals 9 mm: one cup and half a
-scrap are the smallest steps the unit system has, and vanilla itself treats
-the two as the light pair.
+Reasoning:
 
-**Powder charges are whole uses.** The engine reads recipe amounts as whole
-items or uses and vanilla never writes a fractional one (research §9a), so a
-charge is 1, 2 or 3 uses of the vanilla jar. `Base.GunPowder` is not
-redefined and there is no custom powder item. Vanilla's `GatherGunpowder`
-returns one use from any round; since every charge is at least one,
-dismantling can never return more powder than went in (for the magnums it
-returns less).
+- **Case brass.** Real cases relative to 9 mm: 5.56 about 1.6×, .30-30 2.3×,
+  .308 2.9×. Whole cups give 2, 2, 3. The 5.56 and .30-30 share a case cost
+  and differ in bullet, powder and primer.
+- **Projectile copper.** Solid copper rifle bullets are a real, common
+  bullet, so copper-only remains reasonable and no lead is added. A .308 or
+  .30-30 bullet (150–170 gr) is lighter than a .45 bullet (230 gr), so one
+  scrap each is the right order; the 5.56 bullet (55–62 gr) is lighter than a
+  9 mm bullet but half a scrap is the smallest step the unit system has.
+- **Powder is compressed.** Literal rifle charges would be 5, 6 and 9 uses,
+  nearly a jar per .308 round. The scale is 3 / 4 / 5: no rifle round takes
+  less than the largest pistol charge, none more than half a jar.
+- **Whole uses only.** The engine reads recipe amounts as whole items or
+  uses. `Base.GunPowder` is not redefined and there is no rifle powder item.
+- Vanilla's `GatherGunpowder` returns one use from any round, so dismantling
+  never returns more powder than went in.
 
 **Per 100 rounds** (each run in the tests from these inputs to exactly 100
 rounds with nothing left over):
@@ -174,85 +192,98 @@ rounds with nothing left over):
 | .45 ACP | 7 | 100 | 200 | 20 | 29 | 17 |
 | .357 Magnum | 6 | 50 | 100 | 40 | 48 | 11 |
 | .44 Magnum | 12 | 100 | 200 | 60 | 74 | 22 |
+| 5.56 | 11 | 50 | 150 | 60 | 73 | 16 |
+| .30-30 | 12 | 100 | 300 | 80 | 94 | 22 |
+| .308 | 17 | 100 | 300 | 100 | 119 | 27 |
 
-Plus two `Base.SteelBarQuarter`, once, for the calibre's die set. The
-placeholder of 20 cups per ingot is kept.
+Plus two `Base.SteelBarQuarter`, once, for the calibre's die set.
 
-## 7. Die sets
+**Resource pressure of the powder scale.** One bag of fertilizer (8 uses) is
+four mixes, 40 charges: 40 rounds of 9 mm, 13 of 5.56, 10 of .30-30, 8 of
+.308. A hundred .308 rounds take twelve and a half bags. That is heavy but
+not absurd for the top tier (a vanilla box of .308 is 20 rounds), and metal
+still matters: the same hundred rounds take 27 ore. If rifle ammunition
+proves powder-starved in play, the lever is the mix yield
+(`AC_Calibres.POWDER`), one line, not the charges.
 
-One per calibre, forged from two steel bar quarters at a Simple Forge, kept by
-that calibre's case, bullet and assembly recipes. All five are generated from
-the same recipe template and have no Lua of their own. The forging cost does
-not scale with calibre: it is a one-off tool, and the per-round materials
-already carry the scaling.
+## 7. Die sets and the future press
+
+One die set per calibre, pistol or rifle, forged from two steel bar quarters
+at a Simple Forge and kept by that calibre's case, bullet and assembly
+recipes. All eight come from one recipe template and have no Lua of their
+own. The forging cost does not scale with calibre; rifle die sets take
+longer to forge.
+
+**Rifles are loaded by hand, like pistols.** They are set apart by level,
+time (about twice the pistol times), material, their own primer families and
+powder, not by a quality penalty: round quality has no combat effect, so a
+penalty would balance nothing.
 
 A die set only works for its own calibre: its item id appears in no other
 calibre's recipes, the validator rejects a definition that shares one, and
 the tests check the mirror, the generated script and an executed inventory.
 
-**Future press.** The die sets are the part a press reuses:
+**Future press**, designed for and not built:
 
 ```text
-now:     AnySurfaceCraft   + the calibre's die set
-later:   Reloading Press   + the same die set
+now:     AnySurfaceCraft   + the calibre's die set      slow, by hand
+later:   Reloading Press   + the same die set           faster, better batches
 ```
 
 A press is a second bench tag on the same calibre recipes (or a parallel
 recipe set with shorter `time` and a batch output), with a non-zero
 `toolBonus` passed to `AC_CaseQuality.onCasesFormed`. Components, units,
-quality storage and the calibre model stay as they are. Nothing of the press
-is built.
+quality storage, die sets and the calibre model stay as they are.
 
 ## 8. Case quality
 
-`AC_CaseQuality.lua`, one code path for every calibre; it names none.
+`AC_CaseQuality.lua`, one code path for every calibre and class; it names
+none.
 
-- One number, 1–100, on the scale and labels of the `AmmoQuality` prototype
-  (Excellent ≥ 90, Very Good ≥ 80, Good ≥ 70, Average ≥ 60, Poor ≥ 50, Very
-  Poor ≥ 30, Dangerous).
+- One number, 1–100, on the scale and labels of the `AmmoQuality` prototype.
 - `roll(level, random01, toolBonus)` =
   `50 + 4 × level + toolBonus + (random01 × 2 − 1) × 15`, rounded and clamped
-  on every path (roll, write, read). Pure; the game passes
-  `ZombRandFloat(0, 1)`, the tests a fixed sequence, and the same sequence
-  gives the same qualities for every calibre.
+  on every path. Pure; the same seeded sequence gives the same qualities for
+  every calibre.
 - Rolled in the forming recipe's `OnCreate` for each created case, stored in
-  the case's ModData (`AmmoMakingCase`, `caseQuality`).
-- At assembly the round gets the average quality of the consumed cases **of
-  its own calibre** as `casingQuality`, plus `AmmoMakingHandloaded`.
-- It never changes material: the worst and the best case make the same round
-  from the same inputs (asserted per calibre). No failure, no scrap, no bonus
-  output, no duplication.
+  the case's ModData. At assembly the round gets the average quality of the
+  consumed cases of its own calibre as `casingQuality`.
+- It never changes material.
 
 **Limit, established from vanilla Lua.** Loading a firearm or magazine turns
-round items into a count (`ISReloadWeaponAction`; research §1a). Quality on a
-loose round therefore does not survive loading. It is inspection information
-on loose rounds only. Misfires or wear cannot be built on it; that stage
-needs a different carrier (for example a running average stored on the
-magazine or firearm at load time), which is a design question for later and
-is not started.
+round items into a count (`ISReloadWeaponAction`; ammunition research §1a;
+rifles use the same code). Per-round ModData is therefore not a carrier into
+the firing state. Case and loose-round quality is kept for inspection and
+for the later design only. **No misfire, jam or damage effect is built on
+it.** When that stage comes, the carrier has to be the firearm or magazine;
+vanilla's own jam mechanic (`JamGunChance`, `isJammed`) lives on the firearm
+(rifle research §1a).
 
 ## 9. Progression and XP economy
 
-Perk thresholds per level: 75, 150, 300, 750, 1500, 3000, … (cumulative 75,
-225, 525, 1275, 2775, 5775).
+Perk thresholds per level: 75, 150, 300, 750, 1500, 3000, 4500 … (cumulative
+75, 225, 525, 1275, 2775, 5775, 10275).
 
 | Level | Opens |
 |---|---|
 | 0 | all metallurgy, brass sheets, case cups |
 | 1 | 9mm and .38 Special die sets and cases |
 | 2 | 9mm and .38 bullets; small pistol primers; .45 and .357 die sets and cases |
-| 3 | **9mm and .38 Special rounds**; gunpowder; large pistol primers; .45 and .357 bullets; .44 die set and case |
-| 4 | **.45 ACP and .357 Magnum rounds**; .44 bullets |
-| 5 | **.44 Magnum rounds** |
+| 3 | **9mm and .38 Special rounds**; gunpowder; large pistol primers; .45 and .357 bullets; .44 and all rifle die sets and cases |
+| 4 | **.45 ACP and .357 Magnum rounds**; .44 and rifle bullets; small and large rifle primers |
+| 5 | **.44 Magnum, 5.56, .30-30 and .308 rounds** |
 
-The ladder stops at 5 on purpose. The curve doubles from level 4 to 5 and
-again to 6: level 6 costs 5775 XP, about 110 ore of work, which would be a
-grind wall for one calibre.
+**Why all three rifles are at level 5.** The ladder was chosen from the
+career simulation, not from a wish for levels 6–8. Level 5 comes after 57
+ore; level 6 after 105. A level-6 gate on .308 would have meant some 48 ore
+of making lesser rifle rounds only for the XP. The three rifle calibres are
+instead distinguished by material, powder and time. Nothing in the mod
+requires level 6 or above, and the perk's XP curve is unchanged.
 
 **Simulated career** (test *XP economy*; a mirror inventory, ore counted,
-loot assumed available, every craft blocked until its level is reached). Each
-cycle is a ten-ore brass batch plus the copper for its bullets, turned into
-as many rounds as possible of the best calibre available:
+loot assumed available, every craft blocked until its level is reached).
+Each cycle is a ten-ore brass batch plus the copper for its bullets, turned
+into as many rounds as possible of the most advanced calibre open:
 
 | Level reached | Ore mined | Rounds made so far |
 |---|---|---|
@@ -260,28 +291,32 @@ as many rounds as possible of the best calibre available:
 | 2 | 10 | 0 |
 | 3 | 19 | 0 |
 | 4 | 29 | 166 |
-| 5 | 63 | 332 |
+| 5 | 57 | 332 |
+| 6 (not required) | 105 | 614 |
+| 7 (not required) | 169 | |
 
-After eight cycles: 158 ore, 889 rounds, 8487 XP.
+- First rifle round: after **73 ore and 498 pistol rounds**. Pistols
+  establish the skill; rifles are the next tier, not a separate grind.
+- After ten cycles: 169 ore, 498 pistol and 406 rifle rounds, 10 352 XP.
+- XP by family of work over the career: rifle assembly 20 %, case stock
+  13 %, powder 13 %, rifle cases 12 %, pistol assembly 11 %, mining 8 %,
+  metallurgy 8 %, pistol cases 5 %, rifle bullets 4 %, primers 3 %, pistol
+  bullets 2 %, die sets under 1 %.
+- Largest single source: `AmmoMaking_AssembleRound308Win`, 20 %, the recipe
+  the simulated player spends seven of ten cycles on.
 
 Answers to the review questions:
 
-- **Ore per level**: about 10 for levels 1–2, 19 for level 3, 29 for level
-  4, 63 for level 5.
-- **Is ammunition unlocked before there is material to use it on?** No.
-  Level 3 arrives while the first batch's cases and bullets are being made,
-  and the first rounds follow in the same cycle.
-- **Can a cheap reversible recipe farm XP?** No. Every recipe consumes
-  something. The only cycle among all items is round ↔ gunpowder through
-  vanilla `GatherGunpowder`, and it destroys the case, primer and bullet;
-  powder alone assembles nothing, so the loop earns no XP (asserted per
-  calibre).
-- **Is any batch over-rewarded?** No recipe gives more than 25 XP per craft
-  (the ten-ingot brass batch), none more than 0.5 XP per unit of material,
-  and no recipe type gives 45 % of a career's XP.
-
-No XP value of the earlier stages was changed. The larger calibres give
-slightly more per round (3 or 4 instead of 2) for their extra material.
+- **Do rifles become accessible at a sensible point?** Yes: after the pistol
+  ladder, about 16 ore after level 5 is reached.
+- **Can a cheap craft dominate XP?** No. No family exceeds 45 %, no recipe
+  gives more than 25 XP per craft or 0.5 XP per unit of material.
+- **Can a reversible loop farm XP?** No. The only cycle among all items is
+  round ↔ gunpowder through vanilla `GatherGunpowder`, which destroys the
+  case, primer and bullet; powder alone assembles nothing.
+- **Was XP inflated to force levels?** No. Rifle crafts give 2–3 XP per case
+  and 4–5 per round against 1 and 2 for 9 mm, in line with two to three
+  times the material; no earlier XP value changed.
 
 ## 10. Material conservation
 
@@ -289,19 +324,19 @@ Units: 100 per ingot, 10 per scrap or small sheet, 5 per cup; a component may
 hold several materials (`AC_Materials.UNITS`, built by
 `AC_Calibres.buildUnits`).
 
-Invariants (all asserted):
+Invariants (all asserted, for every calibre):
 
 1. Every recipe is exact per material, except `AmmoMaking_MixGunpowder`, the
    one declared *source* recipe, which must still consume something.
 2. A round contains exactly its case, primer, bullet and charge.
 3. Alloy parts pay for an alloy only in the alloy recipe.
 4. Kept tools and die sets are never consumed.
-5. Vanilla `GatherGunpowder` is modelled per calibre: one use, never a jar,
-   nothing else.
+5. Vanilla `GatherGunpowder` is modelled per calibre: one use, never a jar.
 6. Over 3000 random crafts across every mod and modelled vanilla recipe, no
    metal and no priming compound is created, and powder rises only by ten
    uses per mix.
-7. No component fits another calibre; no primer fits the other family.
+7. No component or die set fits another calibre; no primer fits another
+   family; no pistol primer fits a rifle round.
 8. Fifteen ore run through every recipe to 100 rounds of 9mm ends with the
    same metal it started with.
 
@@ -309,49 +344,55 @@ Invariants (all asserted):
 
 | File | Content |
 |---|---|
-| `shared/AC_Calibres.lua` | `LIST`, `DEFAULTS`, `PRIMERS`, `COMPOUND_SOURCES`, `POWDER`; `define`, `levelsFor`, `validate`, `get`, `getPrimer`, `identify`; `buildRecipes`, `buildUnits`, `getItems` |
+| `shared/AC_Calibres.lua` | `LIST`, `DEFAULTS`, `CLASSES`, `PRIMERS`, `COMPOUND_SOURCES`, `POWDER`; `define`, `levelsFor`, `validate`, `get`, `getPrimer`, `identify`; `buildRecipes`, `buildUnits`, `getItems` |
 | `shared/AC_CaseQuality.lua` | `roll`, `set` / `get`, `onCasesFormed`, `onRoundsAssembled`, `EFFECTS` |
 | `shared/AC_Materials.lua` | appends the component recipes and units; per-recipe `xp`, `requiredLevel`, `effect`, `source`; multi-material conservation |
 | `shared/AC_Compat.lua` | calibre model validation, one completeness line per calibre, gunpowder uses per jar |
 | `scripts/AC_Recipes.txt` | **generated** from `AC_Materials.RECIPES` |
 | `tests/render_recipes.lua`, `tests/write_recipes.lua` | renderer and writer for the script |
 
+The rifle stage added one field with consumers, `class`
+(`"pistol"` / `"rifle"`): `AC_Calibres.CLASSES[class]` supplies what a
+definition leaves out, between `DEFAULTS` and the definition, and a primer
+family's `class` must match its calibre's. Nothing else branches on it.
+There is no rifle file and no rifle code path.
+
 ### Adding a calibre
 
-1. One entry in `AC_Calibres.LIST`: `id`, `suffix`, `round`, `ammoType`, and
-   only what differs from `DEFAULTS` (`primerFamily`, `cupsPerCase`,
-   `bulletsPerScrap`, `powderUses`, `assembleLevel`, single `xp` steps).
+1. One entry in `AC_Calibres.LIST`: `id`, `class` if not a pistol, `suffix`,
+   `round`, `ammoType`, and only what differs from the class and `DEFAULTS`.
 2. Three items in `AC_Items.txt` (`Case<suffix>`, `Bullet<suffix>`,
    `DieSet<suffix>`), their names in `ItemName.json`.
 3. Four recipe names in `Recipes.json`.
 4. `lua5.1 tests/write_recipes.lua`, then the suite.
 5. In the tests' mock, the new ids in `MOCK.knownScriptItems`.
 
-.45 ACP, .357 Magnum and .44 Magnum were added this way; the only Lua that
-changed for them was the model's own new fields.
-
 ## 12. Out of scope, deliberately
 
-Rifle calibres and shotgun shells, a reloading press object, lead, deeper
-primer or powder chemistry, misfires, firearm damage or malfunctions, any use
-of round quality, recycling, spent casings, multiplayer, custom UI, loot
-spawns for die sets.
+A reloading press object, shotgun shells, lead, deeper primer or powder
+chemistry, misfires, failures to fire, jams, firearm damage, custom
+ballistics, any use of round quality, recycling, spent casings, multiplayer
+authority, custom UI, loot spawns for die sets.
 
 ## 13. REQUIRES FUTURE IN-GAME VERIFICATION
 
-- The 31 recipes appear at their stations and in the surface crafting menu
+Everything above is implemented and passes the offline suite. None of it has
+been seen running. To be confirmed in game:
+
+- The 47 recipes appear at their stations and in the surface crafting menu
   with their names.
-- One assembly craft yields one round, for each of the five vanilla rounds.
-- `item N [Base.GunPowder]` takes N uses (1, 2, 3); `item 2 [Base.Fertilizer]`
-  two uses; `item 20 [Base.Matches;Base.Matchbox]` draws uses across items;
-  Mix Gunpowder yields a full ten-use jar.
-- `item 2 [AmmoMaking.BrassCaseCup]` takes two cups for a .44 Magnum case.
+- One assembly craft yields one round, for each of the eight vanilla rounds.
+- `item N [Base.GunPowder]` takes N uses (1 to 5); `item 2 [Base.Fertilizer]`
+  two uses; `item 20` / `item 30 [Base.Matches;Base.Matchbox]` draws uses
+  across items; Mix Gunpowder yields a full ten-use jar.
+- `item 2` / `item 3 [AmmoMaking.BrassCaseCup]` takes that many cups.
 - Die sets, hammer, punch and mortar are kept.
 - The level requirements block and unblock the recipes as in §9.
 - `craftRecipeData:getAllCreatedItems()` / `getAllConsumedItems()` work from
   Lua inside `OnCreate`; cases receive a quality; rounds inherit it.
 - Case ModData survives stacking, container transfers and save/reload.
-- Handloaded rounds of every calibre load and fire like vanilla ones.
-- The compatibility check reports five complete calibres and a ten-use jar.
-- Placeholder icons: empty cases look like loose rounds; both primers share
-  an icon.
+- Handloaded rounds of every calibre load into their firearms and magazines
+  and fire like vanilla ones.
+- The compatibility check reports eight complete calibres and a ten-use jar.
+- Placeholder icons: empty cases look like loose rounds; the four primers
+  share an icon.
