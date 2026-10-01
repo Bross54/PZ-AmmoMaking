@@ -44,6 +44,49 @@ FILE: `scripts/generated/items/normal.txt`, `weapon.txt`.
   `item 1 Base.Bullets9mm` in a recipe gives one. This matches
   `OpenBoxOfBullets50`, which outputs `item 50` for a 50-round box.
 
+## 1a. Pistol calibres and the firearms that use them
+
+FILE: `scripts/generated/items/weapon.txt`, `normal.txt`,
+`Translate/EN/ItemName.json`; extracted with a script over every `item` block
+that has an `AmmoType`, re-run on 2026-10-02.
+
+| Calibre | Round | Weight | `count` | Box (rounds) | Firearms (`AmmoType`) | Magazine | Capacity | Damage |
+|---|---|---|---|---|---|---|---|---|
+| 9 mm | `Base.Bullets9mm` | 0.02 | 5 | `Bullets9mmBox` (50) | `Base.Pistol` (M9 Pistol) | `Base.9mmClip` | 15 | 0.6–1.0 |
+| .38 Special | `Base.Bullets38` | 0.015 | 5 | `Bullets38Box` (50) | `Base.Revolver_Short` (SN38 Revolver) | none | 5 | 0.5–0.8 |
+| .45 ACP | `Base.Bullets45` | 0.025 | 5 | `Bullets45Box` (50) | `Base.Pistol2` (M1911 Pistol), `Base.TrapperCarbine` | `Base.45Clip` (both) | 7 | 0.9–1.2, 1.0–1.4 |
+| .357 Magnum | `Base.Bullets357` | 0.02 | 5 | `Bullets357Box` (50) | `Base.Revolver` (Patrol Revolver), `Base.L92_Carbine` | none | 6, 10 | 0.95–1.4, 1.0–1.6 |
+| .44 Magnum | `Base.Bullets44` | 0.03 | 3 | `Bullets44Box` (20) | `Base.Pistol3` (B-F Pistol), `Base.Revolver_Long` (Magnum) | `Base.44Clip` (pistol only) | 8, 6 | 1.0–1.6 |
+
+- Every round: `DisplayCategory = Ammo`, `ItemType = base:normal`,
+  `Tags = base:ammo`, `MetalValue = 1.0`, and a carton item
+  (`…Carton`, opened by `OpenCarton12`). **One item is one cartridge** for
+  all five; `count` (5, or 3 for .44) is a loot / `AddItem` multiplier only
+  (§1).
+- `AmmoType` values are the ten constants of `zombie.scripting.objects.AmmoType`
+  (JAR): `bullets_9mm`, `bullets_38`, `bullets_45`, `bullets_357`,
+  `bullets_44`, `bullets_308`, `bullets_556`, `bullets_3030`,
+  `shotgun_shells`, `cap_gun_cap`. Each maps to its round through
+  `AmmoType.getItemKey()`.
+- **Magazines** (`Tags = base:pistolmagazine`): `9mmClip` (15), `45Clip` (7,
+  `GunType = Base.Pistol2;Base.TrapperCarbine`), `44Clip` (8). They are
+  filled from loose rounds; there is nothing calibre-specific beyond
+  `AmmoType` and `MaxAmmo`.
+- **Revolvers and the lever carbine** have no `MagazineType`; rounds go in
+  one at a time. Revolvers carry `ManuallyRemoveSpentRounds = true`, which is
+  an unloading animation step, not an item: no casing is produced.
+- .357 firearms do **not** accept .38 Special: a firearm has exactly one
+  `AmmoType`.
+- **Loading turns items into a number.**
+  `lua/shared/TimedActions/ISReloadWeaponAction.lua` looks the round up by
+  `ammoType:getItemKey()`, removes the items and calls
+  `gun:setCurrentAmmoCount(gun:getCurrentAmmoCount() + 1)`; magazines are
+  filled the same way (`ISInventoryPaneContextMenu.transferBullets`). A
+  firearm or magazine holds a count, not items, so **any ModData on a round
+  is gone once it is loaded.** This settles the earlier open question
+  without the game: per-round quality cannot reach the moment of firing
+  through item ModData.
+
 ## 2. Ammunition recipes
 
 FILE: `scripts/generated/recipes/recipes_ammunition.txt` (the whole file).
@@ -201,6 +244,18 @@ output, so ModData on crafted items is something vanilla does.
    when a round is dismantled, so dismantle-and-reassemble can never gain
    powder.
 7. Tools: a die set per calibre, forged like vanilla's small punch set.
+
+## 9a. Powder charges
+
+`InputScript` reads an item line's amount back as a whole number of items or
+uses (`getIntAmount`, JAR), and vanilla never writes a fractional one (the
+only decimal forms in the scripts are whole values such as `item 5.0`). A charge
+is therefore a whole number of uses of `Base.GunPowder`: one for a standard
+pistol round, more for a magnum. No custom powder item is needed.
+
+Batch crafting: `CraftRecipe.allowBatchCraft` is initialised to `true` in the
+constructor (JAR) and 111 of 921 vanilla recipes turn it off, so every mod
+recipe gets vanilla's batch slider without a field.
 
 ## 10. REQUIRES FUTURE IN-GAME VERIFICATION
 
