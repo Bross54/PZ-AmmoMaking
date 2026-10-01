@@ -728,8 +728,15 @@ local function spawnComponentsKit(
 
     local primer =
         AC_Calibres.getPrimer(
-            calibre.primer
+            calibre.primerFamily
         )
+
+
+    -- Enough for five rounds of this calibre, whatever it
+    -- takes: its cups per case, bullets per scrap and its
+    -- primer family. One jar covers five rounds of any
+    -- pistol charge.
+    local rounds = 5
 
 
     spawnKit(
@@ -739,15 +746,111 @@ local function spawnComponentsKit(
 
             { "Base.Hammer", 1 },
 
-            { AC_Materials.ITEMS.BrassCaseCup, 5 },
+            { AC_Materials.ITEMS.BrassCaseCup, rounds * calibre.cupsPerCase },
 
-            { AC_Materials.ITEMS.CopperScrap, 3 },
+            { AC_Materials.ITEMS.CopperScrap, math.ceil(rounds / calibre.bulletsPerScrap) },
 
-            { primer.item, 5 },
+            { primer.item, rounds },
 
-            { AC_Calibres.POWDER.item, 1 },
+            { AC_Calibres.POWDER.item, math.ceil(rounds * calibre.powderUses / AC_Calibres.POWDER.usesPerJar) },
         },
         calibre.id .. " components kit"
+    )
+end
+
+
+------------------------------------------------
+-- Prints the calibre model: what each calibre takes,
+-- what it makes and when it unlocks, and any problem
+-- AC_Calibres.validate() finds. Read-only.
+------------------------------------------------
+
+local function printCalibreDefinitions(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    log(
+        "CALIBRE DEFINITIONS ("
+        .. #AC_Calibres.LIST
+        .. ")"
+    )
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local primer =
+            AC_Calibres.getPrimer(
+                calibre.primerFamily
+            )
+
+
+        log(
+            calibre.id
+            .. " -> "
+            .. tostring(calibre.round)
+            .. " | case "
+            .. tostring(calibre.case)
+            .. " ("
+            .. tostring(calibre.cupsPerCase)
+            .. " cup) | bullet "
+            .. tostring(calibre.bullet)
+            .. " ("
+            .. tostring(calibre.bulletsPerScrap)
+            .. " per scrap) | primer "
+            .. tostring(calibre.primerFamily)
+            .. " ("
+            .. tostring(primer and primer.item)
+            .. ") | powder "
+            .. tostring(calibre.powderUses)
+            .. " | die set "
+            .. tostring(calibre.dieSet)
+            .. " | levels die "
+            .. tostring(calibre.levels.dieSet)
+            .. ", case "
+            .. tostring(calibre.levels.case)
+            .. ", bullet "
+            .. tostring(calibre.levels.bullet)
+            .. ", round "
+            .. tostring(calibre.levels.assemble)
+        )
+    end
+
+
+    local problems =
+        AC_Calibres.validate()
+
+
+    for _,
+        problem
+    in ipairs(
+        problems
+    )
+    do
+
+        log(
+            "WARNING: calibre model: "
+            .. problem
+        )
+    end
+
+
+    halo(
+        player,
+        "Calibres: "
+        .. #AC_Calibres.LIST
+        .. " defined, "
+        .. #problems
+        .. " problems (see console)"
     )
 end
 
@@ -1712,6 +1815,9 @@ AC_GeologyDebug.spawnComponentsKit =
 AC_GeologyDebug.spawnPrimerPowderKit =
     spawnPrimerPowderKit
 
+AC_GeologyDebug.printCalibreDefinitions =
+    printCalibreDefinitions
+
 AC_GeologyDebug.inspectAmmoComponents =
     inspectAmmoComponents
 
@@ -1894,6 +2000,26 @@ local function onFillWorldObjectContextMenu(
 
     menu:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
 
+    -- One entry with a submenu of calibres, so the list
+    -- stays short however many there are.
+    local kitOption =
+        menu:addOption(
+            "Spawn Calibre Components Kit"
+        )
+
+
+    local kitMenu =
+        ISContextMenu:getNew(
+            menu
+        )
+
+
+    menu:addSubMenu(
+        kitOption,
+        kitMenu
+    )
+
+
     for _,
         calibre
     in ipairs(
@@ -1901,7 +2027,7 @@ local function onFillWorldObjectContextMenu(
     )
     do
 
-        menu:addOption("Spawn " .. calibre.id .. " Components Kit", player, spawnComponentsKit, calibre)
+        kitMenu:addOption(calibre.id, player, spawnComponentsKit, calibre)
     end
 
     menu:addOption("Spawn Primer and Powder Kit", player, spawnPrimerPowderKit)
@@ -1920,6 +2046,8 @@ local function onFillWorldObjectContextMenu(
     menu:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
 
     menu:addOption("Inspect Ammo Components (inventory)", player, inspectAmmoComponents)
+
+    menu:addOption("Print Calibre Definitions", player, printCalibreDefinitions)
 
     menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
 end

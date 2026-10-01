@@ -154,6 +154,119 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item LargePistolPrimer
+    {
+        DisplayName = Large Pistol Primer,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.002,
+        Icon = SnapCap,
+        WorldStaticModel = CapGunCap,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet45ACP
+    {
+        DisplayName = .45 ACP Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case45ACP
+    {
+        DisplayName = Empty .45 ACP Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = PistolAmmo,
+        WorldStaticModel = 9mmRounds,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet45ACP
+    {
+        DisplayName = .45 ACP Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.02,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet357Magnum
+    {
+        DisplayName = .357 Magnum Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case357Magnum
+    {
+        DisplayName = Empty .357 Magnum Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = PistolAmmo,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet357Magnum
+    {
+        DisplayName = .357 Magnum Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item DieSet44Magnum
+    {
+        DisplayName = .44 Magnum Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Case44Magnum
+    {
+        DisplayName = Empty .44 Magnum Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = PistolAmmo,
+        WorldStaticModel = 9mmRounds,
+        Tags = base:hasmetal,
+    }
+
+    item Bullet44Magnum
+    {
+        DisplayName = .44 Magnum Copper Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.02,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

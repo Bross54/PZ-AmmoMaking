@@ -19,6 +19,17 @@
 -- cases consumed, under the field name the AmmoQuality
 -- prototype already uses (casingQuality).
 --
+-- One code path for every calibre: nothing here names
+-- one. A case or round is recognised through
+-- AC_Calibres.identify().
+--
+-- LIMIT, established from the vanilla Lua: loading a
+-- firearm or magazine turns round items into a count
+-- (ISReloadWeaponAction), so the quality on a loose
+-- round does not survive loading. It is information on
+-- the loose round only; no combat effect may be built
+-- on it without a different carrier.
+--
 -- REQUIRES FUTURE IN-GAME VERIFICATION: that ModData on a
 -- crafted case survives stacking, container transfers and
 -- save/reload, and that the engine exposes
@@ -381,77 +392,107 @@ function AC_CaseQuality.onRoundsAssembled(
     craftRecipeData
 )
 
-    local total = 0
+    local created =
+        listItems(
+            craftRecipeData,
+            "getAllCreatedItems"
+        )
 
-    local count = 0
 
-
-    for _,
-        item
-    in ipairs(
+    local consumed =
         listItems(
             craftRecipeData,
             "getAllConsumedItems"
         )
-    )
-    do
-
-        local quality =
-            AC_CaseQuality.get(
-                item
-            )
-
-
-        if quality
-            and AC_Calibres.identify(item:getFullType()) == "case"
-        then
-
-            total =
-                total + quality
-
-            count =
-                count + 1
-        end
-    end
-
-
-    if count == 0 then
-        return nil
-    end
-
-
-    local average =
-        math.floor(total / count + 0.5)
 
 
     local config =
         AC_CaseQuality.CONFIG
 
 
+    local written = nil
+
+
     for _,
-        item
+        round
     in ipairs(
-        listItems(
-            craftRecipeData,
-            "getAllCreatedItems"
-        )
+        created
     )
     do
 
-        if AC_Calibres.identify(item:getFullType()) == "round" then
+        local kind,
+              calibre =
+            AC_Calibres.identify(
+                round:getFullType()
+            )
 
-            local data =
-                item:getModData()
+
+        if kind == "round" then
+
+            -- Only cases of the round's own calibre count. The
+            -- recipe cannot take any other, so this only guards
+            -- against a future recipe that mixes inputs.
+            local total = 0
+
+            local count = 0
 
 
-            data[config.roundFlagKey] = true
+            for _,
+                item
+            in ipairs(
+                consumed
+            )
+            do
 
-            data[config.roundQualityKey] = average
+                local itemKind,
+                      itemCalibre =
+                    AC_Calibres.identify(
+                        item:getFullType()
+                    )
+
+
+                local quality =
+                    AC_CaseQuality.get(
+                        item
+                    )
+
+
+                if quality
+                    and itemKind == "case"
+                    and itemCalibre == calibre
+                then
+
+                    total =
+                        total + quality
+
+                    count =
+                        count + 1
+                end
+            end
+
+
+            if count > 0 then
+
+                local average =
+                    math.floor(total / count + 0.5)
+
+
+                local data =
+                    round:getModData()
+
+
+                data[config.roundFlagKey] = true
+
+                data[config.roundQualityKey] = average
+
+
+                written = average
+            end
         end
     end
 
 
-    return average
+    return written
 end
 
 

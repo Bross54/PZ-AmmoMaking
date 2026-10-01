@@ -1181,6 +1181,282 @@ end
 
 
 ------------------------------------------------
+-- Calibres (AC_Calibres).
+--
+-- First the model itself: a definition that shares an
+-- item with another calibre, names an unknown primer
+-- family or has a fractional amount is a WARNING with
+-- the calibre's name.
+--
+-- Then one line per calibre: complete, or which of its
+-- items and recipes this build does not have. A calibre
+-- that is incomplete does not stop the others, and
+-- nothing here stops the game.
+------------------------------------------------
+
+local function checkCalibres(
+    results
+)
+
+    local problems,
+          err =
+        safe(
+            AC_Calibres.validate
+        )
+
+
+    if err then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "calibre model",
+            tostring(err)
+        )
+
+    elseif #problems == 0 then
+
+        addResult(
+            results,
+            "OK",
+            "calibre model (" .. #AC_Calibres.LIST .. " calibres, " .. #AC_Calibres.PRIMERS .. " primer families)"
+        )
+
+    else
+
+        for _,
+            problem
+        in ipairs(
+            problems
+        )
+        do
+
+            addResult(
+                results,
+                "WARNING",
+                "calibre model: " .. problem,
+                "its recipes may take the wrong component or create material"
+            )
+        end
+    end
+
+
+    local manager =
+        safe(
+            function()
+
+                return
+                    getScriptManager()
+            end
+        )
+
+
+    if not manager then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "calibres",
+            "no script manager"
+        )
+
+
+        return
+    end
+
+
+    local canFindRecipes =
+        hasMethod(manager, "getCraftRecipe") == true
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local missing = {}
+
+
+        local primer =
+            AC_Calibres.getPrimer(
+                calibre.primerFamily
+            )
+
+
+        local itemTypes = {
+            calibre.round,
+            calibre.case,
+            calibre.bullet,
+            calibre.dieSet,
+            primer and primer.item or nil,
+        }
+
+
+        for _,
+            itemType
+        in pairs(
+            itemTypes
+        )
+        do
+
+            local script =
+                safe(
+                    function()
+
+                        return
+                            manager:FindItem(
+                                itemType
+                            )
+                    end
+                )
+
+
+            if not script then
+
+                table.insert(
+                    missing,
+                    itemType
+                )
+            end
+        end
+
+
+        if canFindRecipes then
+
+            for _,
+                recipe
+            in ipairs(
+                AC_Calibres.buildCalibreRecipes(calibre)
+            )
+            do
+
+                local script =
+                    safe(
+                        function()
+
+                            return
+                                manager:getCraftRecipe(
+                                    recipe.id
+                                )
+                        end
+                    )
+
+
+                if not script then
+
+                    table.insert(
+                        missing,
+                        recipe.id
+                    )
+                end
+            end
+        end
+
+
+        if #missing == 0 then
+
+            addResult(
+                results,
+                "OK",
+                "calibre " .. calibre.id .. " complete"
+            )
+
+        else
+
+            table.sort(
+                missing
+            )
+
+
+            addResult(
+                results,
+                "WARNING",
+                "calibre " .. calibre.id .. " incomplete",
+                "missing " .. table.concat(missing, ", ") .. "; the other calibres are unaffected"
+            )
+        end
+    end
+
+
+    ------------------------------------------------
+    -- Gunpowder is counted in uses. The material
+    -- model assumes a jar holds POWDER.usesPerJar of
+    -- them; the item script's UseDelta says how many
+    -- it really holds on this build.
+    ------------------------------------------------
+
+    local powder =
+        AC_Calibres.POWDER
+
+
+    local script =
+        safe(
+            function()
+
+                return
+                    manager:FindItem(
+                        powder.item
+                    )
+            end
+        )
+
+
+    if not script
+        or hasMethod(script, "getUseDelta") ~= true
+    then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "uses per jar of " .. powder.item,
+            "item script or getUseDelta unavailable"
+        )
+
+
+        return
+    end
+
+
+    local delta =
+        safe(
+            function()
+
+                return
+                    script:getUseDelta()
+            end
+        )
+
+
+    local uses =
+        type(delta) == "number"
+        and delta > 0
+        and math.floor(1 / delta + 0.5)
+        or nil
+
+
+    if uses == powder.usesPerJar then
+
+        addResult(
+            results,
+            "OK",
+            powder.item .. " holds " .. uses .. " uses"
+        )
+
+    else
+
+        addResult(
+            results,
+            "WARNING",
+            powder.item .. " holds " .. tostring(uses) .. " uses, the mod assumes " .. powder.usesPerJar,
+            "powder accounting and the Mix Gunpowder yield are off on this build"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- RUN
 ------------------------------------------------
 --
@@ -1227,6 +1503,8 @@ function AC_Compat.run()
     checkAnalyzerSprite(results)
 
     checkMetallurgyRecipes(results)
+
+    checkCalibres(results)
 
 
     local summary = {

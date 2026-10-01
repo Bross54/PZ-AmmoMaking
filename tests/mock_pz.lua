@@ -241,6 +241,19 @@ MOCK.knownScriptItems = {
     ["AmmoMaking.Case38Special"] = true,
     ["AmmoMaking.Bullet38Special"] = true,
     ["Base.Bullets38"] = true,
+    ["AmmoMaking.LargePistolPrimer"] = true,
+    ["AmmoMaking.DieSet45ACP"] = true,
+    ["AmmoMaking.Case45ACP"] = true,
+    ["AmmoMaking.Bullet45ACP"] = true,
+    ["Base.Bullets45"] = true,
+    ["AmmoMaking.DieSet357Magnum"] = true,
+    ["AmmoMaking.Case357Magnum"] = true,
+    ["AmmoMaking.Bullet357Magnum"] = true,
+    ["Base.Bullets357"] = true,
+    ["AmmoMaking.DieSet44Magnum"] = true,
+    ["AmmoMaking.Case44Magnum"] = true,
+    ["AmmoMaking.Bullet44Magnum"] = true,
+    ["Base.Bullets44"] = true,
     ["Base.GunPowder"] = true,
     ["Base.Fertilizer"] = true,
     ["Base.CapGunCap"] = true,
@@ -266,6 +279,11 @@ local function newCraftRecipeScript(id)
     end
     return script
 end
+
+-- UseDelta of the drainables the mod relies on, as in the installed scripts
+-- (GunPowder 0.1 = 10 uses, Fertilizer 0.125 = 8 uses).
+MOCK.useDeltas = { ["Base.GunPowder"] = 0.1, ["Base.Fertilizer"] = 0.125 }
+MOCK.useDeltaMethod = true   -- false: item scripts have no getUseDelta
 
 MOCK.newCraftRecipeScript = newCraftRecipeScript
 MOCK.craftRecipeScripts = {}
@@ -345,8 +363,11 @@ function getScriptManager()
     end
     return {
         FindItem = function(_, fullType)
-            if MOCK.knownScriptItems[fullType] then return {} end
-            return nil
+            if not MOCK.knownScriptItems[fullType] then return nil end
+            -- Item scripts expose getUseDelta() (42.20.4 jar: Item.getUseDelta()F).
+            local delta = MOCK.useDeltas[fullType]
+            if MOCK.useDeltaMethod == false then return {} end
+            return { getUseDelta = function() return delta or 0 end }
         end,
         getCraftRecipe = MOCK.craftRecipeLookup and function(_, id)
             return MOCK.craftRecipeScripts[id]
@@ -749,7 +770,10 @@ PerkFactory = {
             }
         end,
     },
-    AddPerk = function() end,
+    -- Records the ten per-level XP amounts the mod registers its perk with.
+    AddPerk = function(perk, name, parent, ...)
+        MOCK.perkXP = { ... }
+    end,
     initTranslations = function() end,
 }
 

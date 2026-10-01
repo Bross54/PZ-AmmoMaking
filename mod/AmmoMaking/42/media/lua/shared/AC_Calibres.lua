@@ -39,7 +39,8 @@ AC_Calibres = AC_Calibres or {}
 
 AC_Calibres.CONFIG = {
 
-    -- Brass in one case cup; a case is drawn from one cup.
+    -- Brass in one case cup. A case is drawn from one cup,
+    -- or from more for the largest calibres (cupsPerCase).
     cupUnits = 5,
 
     -- Units in one vanilla copper scrap / one small brass
@@ -117,8 +118,18 @@ AC_Calibres.COMPOUND_SOURCES = {
 -- PRIMER FAMILIES
 ------------------------------------------------
 --
--- A primer belongs to a family, not to a calibre: 9mm
--- and .38 Special both take small pistol primers.
+-- A primer belongs to a family, not to a calibre. Each
+-- calibre names its family (calibre.primerFamily); no
+-- recipe code names a primer item.
+--
+--   SmallPistol  9mm, .38 Special, .357 Magnum
+--   LargePistol  .45 ACP, .44 Magnum
+--
+-- Both are made the same way from the same inputs: one
+-- small brass sheet and the same priming charge. A large
+-- primer holds twice the brass and twice the compound,
+-- so the sheet yields half as many. Neither family is
+-- cheaper per unit of material than the other.
 ------------------------------------------------
 
 AC_Calibres.PRIMERS = {
@@ -143,6 +154,24 @@ AC_Calibres.PRIMERS = {
 
         time = 120,
     },
+
+    {
+        id = "LargePistol",
+
+        item = "AmmoMaking.LargePistolPrimer",
+
+        brassUnits = 2,
+
+        compoundUnits = 4,
+
+        perSheet = 5,
+
+        requiredLevel = 3,
+
+        xp = 2,
+
+        time = 120,
+    },
 }
 
 
@@ -159,34 +188,52 @@ AC_Calibres.PRIMERS = {
 --          the calibre's three mod items; when left out
 --          they are AmmoMaking.Case<suffix>,
 --          AmmoMaking.Bullet<suffix>, AmmoMaking.DieSet<suffix>
--- primer   a PRIMERS id
+-- primerFamily
+--          a PRIMERS id
+-- cupsPerCase
+--          brass case cups drawn into one case
 -- bulletsPerScrap
 --          copper bullets swaged from one Base.CopperScrap
 -- powderUses
---          uses of Base.GunPowder per round. Never below
---          1: vanilla returns one use when a round is
---          taken apart, so less would create powder.
--- levels   Ammo Making level required per step
+--          uses of Base.GunPowder per round: the charge.
+--          A whole number, never below 1: the engine has
+--          no fractional uses, and vanilla returns one
+--          use when a round is taken apart, so less
+--          would create powder.
+-- assembleLevel
+--          Ammo Making level of the finished round. The
+--          earlier steps are derived from it (levelsFor);
+--          "levels" may still override any single step.
 -- xp, time per step
 --
 -- Anything a definition leaves out comes from DEFAULTS,
 -- so a new calibre states only what makes it different.
+--
+-- MATERIAL SCALE (gameplay units, not grains; tunable).
+-- The standard pistol round is the baseline: one cup of
+-- brass, half a scrap of copper, one charge. A heavy
+-- bullet takes a whole scrap, a magnum takes more
+-- powder, the largest case takes two cups:
+--
+--              cups  bullets/scrap  charges  primer
+--   9mm          1        2            1     small
+--   .38 Special  1        2            1     small
+--   .45 ACP      1        1            1     large
+--   .357 Magnum  1        2            2     small
+--   .44 Magnum   2        1            3     large
 ------------------------------------------------
 
 AC_Calibres.DEFAULTS = {
 
-    primer = "SmallPistol",
+    primerFamily = "SmallPistol",
+
+    cupsPerCase = 1,
 
     bulletsPerScrap = 2,
 
     powderUses = 1,
 
-    levels = {
-        dieSet = 1,
-        case = 1,
-        bullet = 2,
-        assemble = 3,
-    },
+    assembleLevel = 3,
 
     xp = {
         dieSet = 10,
@@ -227,6 +274,41 @@ end
 
 
 ------------------------------------------------
+-- The step ladder of a calibre whose round unlocks at
+-- assembleLevel: the die set and case two levels
+-- earlier, the bullet one level earlier, never below 1.
+-- A player meets a calibre's tools before its rounds.
+------------------------------------------------
+
+function AC_Calibres.levelsFor(
+    assembleLevel
+)
+
+    local early =
+        math.max(
+            1,
+            assembleLevel - 2
+        )
+
+
+    return {
+
+        dieSet = early,
+
+        case = early,
+
+        bullet =
+            math.max(
+                1,
+                assembleLevel - 1
+            ),
+
+        assemble = assembleLevel,
+    }
+end
+
+
+------------------------------------------------
 -- Completes a definition from DEFAULTS. Step tables
 -- (levels, xp, time) are merged key by key, so a
 -- calibre may override a single step.
@@ -259,7 +341,7 @@ function AC_Calibres.define(
     for _,
         key
     in ipairs(
-        { "primer", "bulletsPerScrap", "powderUses" }
+        { "primerFamily", "cupsPerCase", "bulletsPerScrap", "powderUses", "assembleLevel" }
     )
     do
 
@@ -269,16 +351,29 @@ function AC_Calibres.define(
     end
 
 
-    for _,
-        key
-    in ipairs(
-        { "levels", "xp", "time" }
+    local stepDefaults = {
+
+        levels =
+            AC_Calibres.levelsFor(
+                calibre.assembleLevel
+            ),
+
+        xp = defaults.xp,
+
+        time = defaults.time,
+    }
+
+
+    for key,
+        base
+    in pairs(
+        stepDefaults
     )
     do
 
         local merged =
             copyTable(
-                defaults[key]
+                base
             )
 
 
@@ -314,10 +409,6 @@ AC_Calibres.LIST = {
         ammoType = "base:bullets_9mm",
     }),
 
-    -- The second calibre, added to prove the model: one
-    -- definition, three items, their names and a
-    -- regenerated script. It shares the small pistol
-    -- primer with 9mm.
     AC_Calibres.define({
 
         id = ".38 Special",
@@ -328,7 +419,368 @@ AC_Calibres.LIST = {
 
         ammoType = "base:bullets_38",
     }),
+
+    AC_Calibres.define({
+
+        id = ".45 ACP",
+
+        suffix = "45ACP",
+
+        round = "Base.Bullets45",
+
+        ammoType = "base:bullets_45",
+
+        primerFamily = "LargePistol",
+
+        bulletsPerScrap = 1,
+
+        assembleLevel = 4,
+
+        xp = { assemble = 3 },
+    }),
+
+    AC_Calibres.define({
+
+        id = ".357 Magnum",
+
+        suffix = "357Magnum",
+
+        round = "Base.Bullets357",
+
+        ammoType = "base:bullets_357",
+
+        powderUses = 2,
+
+        assembleLevel = 4,
+
+        xp = { assemble = 3 },
+    }),
+
+    AC_Calibres.define({
+
+        id = ".44 Magnum",
+
+        suffix = "44Magnum",
+
+        round = "Base.Bullets44",
+
+        ammoType = "base:bullets_44",
+
+        primerFamily = "LargePistol",
+
+        cupsPerCase = 2,
+
+        bulletsPerScrap = 1,
+
+        powderUses = 3,
+
+        assembleLevel = 5,
+
+        xp = { case = 2, assemble = 4 },
+    }),
 }
+
+
+------------------------------------------------
+-- VALIDATION (pure)
+------------------------------------------------
+--
+-- Returns a list of problems, each "<calibre>: text",
+-- empty when the model is sound. Run by the tests and by
+-- the compatibility check at game start, so a bad
+-- definition is named instead of silently producing a
+-- recipe that takes the wrong case or creates material.
+--
+-- list and primers default to the live tables.
+------------------------------------------------
+
+local function isWhole(
+    value,
+    minimum
+)
+
+    return
+        type(value) == "number"
+        and value == math.floor(value)
+        and value >= minimum
+end
+
+
+function AC_Calibres.validate(
+    list,
+    primers
+)
+
+    list =
+        list or AC_Calibres.LIST
+
+    primers =
+        primers or AC_Calibres.PRIMERS
+
+
+    local problems = {}
+
+
+    local function problem(
+        owner,
+        text
+    )
+
+        table.insert(
+            problems,
+            tostring(owner) .. ": " .. text
+        )
+    end
+
+
+    ------------------------------------------------
+    -- Primer families
+    ------------------------------------------------
+
+    local families = {}
+
+    local itemOwner = {}
+
+
+    for _,
+        primer
+    in ipairs(
+        primers
+    )
+    do
+
+        local name =
+            "primer " .. tostring(primer.id)
+
+
+        if families[primer.id] then
+            problem(name, "duplicate primer family id")
+        end
+
+
+        families[primer.id] = primer
+
+
+        if type(primer.item) ~= "string" then
+
+            problem(name, "no item")
+
+        elseif itemOwner[primer.item] then
+
+            problem(name, "item " .. primer.item .. " is already used by " .. itemOwner[primer.item])
+
+        else
+
+            itemOwner[primer.item] = name
+        end
+
+
+        if not isWhole(primer.brassUnits, 1)
+            or not isWhole(primer.compoundUnits, 1)
+            or not isWhole(primer.perSheet, 1)
+        then
+
+            problem(name, "brass, compound and count must be whole and positive")
+
+        else
+
+            if primer.perSheet * primer.brassUnits ~= AC_Calibres.CONFIG.sheetUnits then
+                problem(name, "does not use exactly one small brass sheet")
+            end
+
+
+            for _,
+                source
+            in ipairs(
+                AC_Calibres.COMPOUND_SOURCES
+            )
+            do
+
+                if not isWhole(primer.perSheet * primer.compoundUnits / source.units, 1) then
+                    problem(name, "takes a fractional amount of " .. source.id)
+                end
+            end
+        end
+
+
+        if not isWhole(primer.requiredLevel, 0)
+            or primer.requiredLevel > 10
+        then
+            problem(name, "invalid level")
+        end
+    end
+
+
+    ------------------------------------------------
+    -- Calibres
+    ------------------------------------------------
+
+    local ids = {}
+
+    local suffixes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        list
+    )
+    do
+
+        local name =
+            tostring(calibre.id)
+
+
+        if type(calibre.id) ~= "string"
+            or calibre.id == ""
+        then
+            problem(name, "no id")
+        elseif ids[calibre.id] then
+            problem(name, "duplicate calibre id")
+        end
+
+
+        ids[name] = true
+
+
+        if type(calibre.suffix) ~= "string"
+            or calibre.suffix == ""
+            or string.find(calibre.suffix, "[^%w]")
+        then
+            problem(name, "suffix must be letters and digits")
+        elseif suffixes[calibre.suffix] then
+            problem(name, "duplicate suffix " .. calibre.suffix)
+        else
+            suffixes[calibre.suffix] = true
+        end
+
+
+        -- A component belongs to exactly one calibre and
+        -- one role: no case, bullet, die set or round may
+        -- stand in for another.
+        for _,
+            kind
+        in ipairs(
+            { "round", "case", "bullet", "dieSet" }
+        )
+        do
+
+            local itemType =
+                calibre[kind]
+
+
+            if type(itemType) ~= "string"
+                or itemType == ""
+            then
+
+                problem(name, "no " .. kind .. " item")
+
+            elseif itemOwner[itemType] then
+
+                problem(name, kind .. " item " .. itemType .. " is already used by " .. itemOwner[itemType])
+
+            else
+
+                itemOwner[itemType] = name .. " " .. kind
+            end
+        end
+
+
+        if type(calibre.round) == "string"
+            and string.sub(calibre.round, 1, 5) ~= "Base."
+        then
+            problem(name, "the round must be a vanilla item")
+        end
+
+
+        local primer =
+            families[calibre.primerFamily]
+
+
+        if not primer then
+            problem(name, "unknown primer family " .. tostring(calibre.primerFamily))
+        end
+
+
+        if not isWhole(calibre.cupsPerCase, 1) then
+            problem(name, "cupsPerCase must be a whole number of at least 1")
+        end
+
+
+        if not isWhole(calibre.bulletsPerScrap, 1)
+            or not isWhole(AC_Calibres.CONFIG.scrapUnits / calibre.bulletsPerScrap, 1)
+        then
+            problem(name, "bulletsPerScrap must divide a scrap into whole units")
+        end
+
+
+        if not isWhole(calibre.powderUses, 1) then
+            problem(name, "powderUses must be a whole number of at least 1")
+        end
+
+
+        local levels =
+            calibre.levels or {}
+
+
+        local ordered = true
+
+
+        for _,
+            step
+        in ipairs(
+            { "dieSet", "case", "bullet", "assemble" }
+        )
+        do
+
+            if not isWhole(levels[step], 0)
+                or levels[step] > 10
+            then
+
+                problem(name, "invalid level for " .. step)
+
+                ordered = false
+            end
+
+
+            if not isWhole(calibre.xp and calibre.xp[step], 1) then
+                problem(name, "invalid xp for " .. step)
+            end
+
+
+            if not isWhole(calibre.time and calibre.time[step], 1) then
+                problem(name, "invalid time for " .. step)
+            end
+        end
+
+
+        if ordered then
+
+            if levels.dieSet > levels.case
+                or levels.case > levels.assemble
+                or levels.bullet > levels.assemble
+            then
+                problem(name, "a component unlocks after the round it is for")
+            end
+
+
+            if primer
+                and isWhole(primer.requiredLevel, 0)
+                and primer.requiredLevel > levels.assemble
+            then
+                problem(name, "its primer unlocks after its round")
+            end
+
+
+            if AC_Calibres.POWDER.requiredLevel > levels.assemble then
+                problem(name, "gunpowder unlocks after its round")
+            end
+        end
+    end
+
+
+    return problems
+end
 
 
 ------------------------------------------------
@@ -480,7 +932,7 @@ function AC_Calibres.buildCalibreRecipes(
 
     local primer =
         AC_Calibres.getPrimer(
-            calibre.primer
+            calibre.primerFamily
         )
 
 
@@ -567,7 +1019,7 @@ function AC_Calibres.buildCalibreRecipes(
             effect = "caseQuality",
 
             inputs = {
-                { count = 1, items = { "AmmoMaking.BrassCaseCup" } },
+                { count = calibre.cupsPerCase, items = { "AmmoMaking.BrassCaseCup" } },
                 dieSet(calibre),
                 hammer(),
             },
@@ -878,12 +1330,12 @@ function AC_Calibres.buildUnits()
 
         local primer =
             AC_Calibres.getPrimer(
-                calibre.primer
+                calibre.primerFamily
             )
 
 
         local caseUnits =
-            AC_Calibres.CONFIG.cupUnits
+            AC_Calibres.CONFIG.cupUnits * calibre.cupsPerCase
 
 
         local bulletUnits =

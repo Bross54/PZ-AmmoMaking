@@ -15,5 +15,19 @@
     "AmmoMaking_ForgeDieSet38Special": "Forge .38 Special Handloading Die Set",
     "AmmoMaking_FormCase38Special": "Form .38 Special Case",
     "AmmoMaking_SwageBullets38Special": "Swage .38 Special Copper Bullets",
-    "AmmoMaking_AssembleRound38Special": "Assemble .38 Special Round"
+    "AmmoMaking_AssembleRound38Special": "Assemble .38 Special Round",
+    "AmmoMaking_MakeLargePistolPrimersFromCaps": "Make Large Pistol Primers (Toy Caps)",
+    "AmmoMaking_MakeLargePistolPrimersFromMatches": "Make Large Pistol Primers (Match Heads)",
+    "AmmoMaking_ForgeDieSet45ACP": "Forge .45 ACP Handloading Die Set",
+    "AmmoMaking_FormCase45ACP": "Form .45 ACP Case",
+    "AmmoMaking_SwageBullets45ACP": "Swage .45 ACP Copper Bullets",
+    "AmmoMaking_AssembleRound45ACP": "Assemble .45 ACP Round",
+    "AmmoMaking_ForgeDieSet357Magnum": "Forge .357 Magnum Handloading Die Set",
+    "AmmoMaking_FormCase357Magnum": "Form .357 Magnum Case",
+    "AmmoMaking_SwageBullets357Magnum": "Swage .357 Magnum Copper Bullets",
+    "AmmoMaking_AssembleRound357Magnum": "Assemble .357 Magnum Round",
+    "AmmoMaking_ForgeDieSet44Magnum": "Forge .44 Magnum Handloading Die Set",
+    "AmmoMaking_FormCase44Magnum": "Form .44 Magnum Case",
+    "AmmoMaking_SwageBullets44Magnum": "Swage .44 Magnum Copper Bullets",
+    "AmmoMaking_AssembleRound44Magnum": "Assemble .44 Magnum Round"
 }

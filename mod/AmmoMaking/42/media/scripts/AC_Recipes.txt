@@ -221,6 +221,46 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_MakeLargePistolPrimersFromCaps
+    {
+        time = 120,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onMakeLargePistolPrimersFromCaps,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 10 [Base.CapGunCap],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.LargePistolPrimer,
+        }
+    }
+
+    craftRecipe AmmoMaking_MakeLargePistolPrimersFromMatches
+    {
+        time = 120,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onMakeLargePistolPrimersFromMatches,
+        inputs
+        {
+            item 1 [AmmoMaking.SmallBrassSheet],
+            item 20 [Base.Matches;Base.Matchbox],
+            item 1 tags[base:metalworkingpunch;base:smallpunch] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.LargePistolPrimer,
+        }
+    }
+
     craftRecipe AmmoMaking_ForgeDieSet9mm
     {
         time = 300,
@@ -378,6 +418,246 @@ module Base
         outputs
         {
             item 1 Base.Bullets38,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet45ACP
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet45ACP,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase45ACP
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase45ACP,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets45ACP
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets45ACP,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound45ACP
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound45ACP,
+        inputs
+        {
+            item 1 [AmmoMaking.Case45ACP],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.Bullet45ACP],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets45,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet357Magnum
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet357Magnum,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase357Magnum
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase357Magnum,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets357Magnum
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets357Magnum,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound357Magnum
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound357Magnum,
+        inputs
+        {
+            item 1 [AmmoMaking.Case357Magnum],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.Bullet357Magnum],
+            item 2 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets357,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet44Magnum
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet44Magnum,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase44Magnum
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase44Magnum,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets44Magnum
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets44Magnum,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound44Magnum
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound44Magnum,
+        inputs
+        {
+            item 1 [AmmoMaking.Case44Magnum],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.Bullet44Magnum],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets44,
         }
     }
 }
