@@ -450,7 +450,7 @@ The first metallurgy stage (ore to brass on the vanilla furnaces) is implemented
 
 The component chain above is the foundation. Still planned:
 
-- shotgun shells (researched in `docs/SHOTGUN_SHELL_RESEARCH.md`)
+- shotgun shells (researched in `docs/SHOTGUN_AMMUNITION_RESEARCH.md`)
 - a reloading press as a faster, higher-quality tier above the hand die set
 - bullet and primer quality, powder load, and their effect on reliability
 - recovering and reloading spent cases
@@ -612,7 +612,7 @@ assembly → vanilla pistol and rifle rounds (8 calibres)
 Intended next stages (`docs/AMMUNITION_DESIGN.md`):
 
 ```text
-shotgun shells (docs/SHOTGUN_SHELL_RESEARCH.md)
+shotgun shells (docs/SHOTGUN_AMMUNITION_RESEARCH.md)
         ↓
 reloading press tier
         ↓
@@ -713,7 +713,7 @@ PZ-AmmoMaking
 │   ├── METALLURGY_DESIGN.md
 │   ├── MULTIPLAYER_MINING.md
 │   ├── RIFLE_AMMUNITION_RESEARCH.md
-│   ├── SHOTGUN_SHELL_RESEARCH.md
+│   ├── SHOTGUN_AMMUNITION_RESEARCH.md
 │   ├── VANILLA_AMMUNITION_RESEARCH.md
 │   └── VANILLA_METALLURGY_RESEARCH.md
 ├── tests

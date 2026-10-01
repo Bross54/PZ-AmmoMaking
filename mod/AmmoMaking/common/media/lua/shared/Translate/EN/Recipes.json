@@ -45,5 +45,9 @@
     "AmmoMaking_ForgeDieSet308Win": "Forge .308 Handloading Die Set",
     "AmmoMaking_FormCase308Win": "Form .308 Case",
     "AmmoMaking_SwageBullets308Win": "Swage .308 Copper Bullets",
-    "AmmoMaking_AssembleRound308Win": "Assemble .308 Round"
+    "AmmoMaking_AssembleRound308Win": "Assemble .308 Round",
+    "AmmoMaking_ForgeDieSet12Gauge": "Forge 12 Gauge Handloading Die Set",
+    "AmmoMaking_FormCase12Gauge": "Form 12 Gauge Brass Hull",
+    "AmmoMaking_SwageBullets12Gauge": "Swage 12 Gauge Copper Shot Charge",
+    "AmmoMaking_AssembleRound12Gauge": "Assemble 12 Gauge Shell"
 }

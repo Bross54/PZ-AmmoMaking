@@ -26,6 +26,11 @@
      AmmoMaking_SwageBullets<calibre> <- cold work with the calibre's die set kept
      AmmoMaking_AssembleRound<calibre> -> the VANILLA round item, one per craft
 
+   A 12 gauge shell is a calibre like the others: its "case" is the brass hull,
+   its "bullet" the shot charge. Its assembly takes one more line, the wad,
+   written as vanilla writes a consumed rag (recipes_blacksmith_blades.txt:
+   "item 1 [Base.RippedSheets;...] mode:destroy").
+
    A drainable input counts uses: "item 1 [Base.GunPowder]" is one use of a jar.
 
    THE BODY OF THIS FILE IS GENERATED. Change AC_Materials.lua / AC_Calibres.lua
@@ -978,6 +983,87 @@ module Base
         outputs
         {
             item 1 Base.308Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeDieSet12Gauge
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeDieSet12Gauge,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.SteelBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.DieSet12Gauge,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase12Gauge
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase12Gauge,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Hull12Gauge,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets12Gauge
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets12Gauge,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.ShotCharge12Gauge,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound12Gauge
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound12Gauge,
+        inputs
+        {
+            item 1 [AmmoMaking.Hull12Gauge],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.ShotCharge12Gauge],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,
+        }
+        outputs
+        {
+            item 1 Base.ShotgunShells,
         }
     }
 }

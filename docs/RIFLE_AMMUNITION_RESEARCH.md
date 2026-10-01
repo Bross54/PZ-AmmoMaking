@@ -224,7 +224,7 @@ thresholds were not touched.
   code as the pistols.
 
 Shotgun shells come next and are researched in
-`docs/SHOTGUN_SHELL_RESEARCH.md`: they need a hull, shot and wad, none of
+`docs/SHOTGUN_AMMUNITION_RESEARCH.md`: they need a hull, shot and wad, none of
 which the brass-case model describes.
 
 ## 9. REQUIRES FUTURE IN-GAME VERIFICATION

@@ -394,6 +394,44 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    /* 12 gauge shell components. The hull is the shell's case, the shot charge
+       its projectile; both go through the same recipes as a cartridge's. The
+       shell takes the large pistol primer. */
+
+    item DieSet12Gauge
+    {
+        DisplayName = 12 Gauge Handloading Die Set,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = Punches_Forged,
+        StaticModel = MetalworkingPunch,
+        WorldStaticModel = SmallMetalworkingPunches,
+        Tags = base:hasmetal,
+    }
+
+    item Hull12Gauge
+    {
+        DisplayName = Empty 12 Gauge Brass Hull,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.015,
+        Icon = ShotgunAmmo,
+        WorldStaticModel = ShotGunShells,
+        Tags = base:hasmetal,
+    }
+
+    item ShotCharge12Gauge
+    {
+        DisplayName = 12 Gauge Copper Shot Charge,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.03,
+        Icon = SteelRod_Slug,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

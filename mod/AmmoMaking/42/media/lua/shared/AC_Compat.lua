@@ -1294,6 +1294,25 @@ local function checkCalibres(
         }
 
 
+        -- A shell's wadding: every alternative its recipe
+        -- line names.
+        if (calibre.wads or 0) > 0 then
+
+            for _,
+                itemType
+            in ipairs(
+                AC_Calibres.WAD.items
+            )
+            do
+
+                table.insert(
+                    itemTypes,
+                    itemType
+                )
+            end
+        end
+
+
         for _,
             itemType
         in pairs(

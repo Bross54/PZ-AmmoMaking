@@ -739,21 +739,35 @@ local function spawnComponentsKit(
     local rounds = 5
 
 
+    local kit = {
+
+        { calibre.dieSet, 1 },
+
+        { "Base.Hammer", 1 },
+
+        { AC_Materials.ITEMS.BrassCaseCup, rounds * calibre.cupsPerCase },
+
+        { AC_Materials.ITEMS.CopperScrap, math.ceil(rounds / calibre.bulletsPerScrap) },
+
+        { primer.item, rounds },
+
+        { AC_Calibres.POWDER.item, math.ceil(rounds * calibre.powderUses / AC_Calibres.POWDER.usesPerJar) },
+    }
+
+
+    -- A shell also takes wadding.
+    if calibre.wads > 0 then
+
+        table.insert(
+            kit,
+            { AC_Calibres.WAD.items[1], rounds * calibre.wads }
+        )
+    end
+
+
     spawnKit(
         player,
-        {
-            { calibre.dieSet, 1 },
-
-            { "Base.Hammer", 1 },
-
-            { AC_Materials.ITEMS.BrassCaseCup, rounds * calibre.cupsPerCase },
-
-            { AC_Materials.ITEMS.CopperScrap, math.ceil(rounds / calibre.bulletsPerScrap) },
-
-            { primer.item, rounds },
-
-            { AC_Calibres.POWDER.item, math.ceil(rounds * calibre.powderUses / AC_Calibres.POWDER.usesPerJar) },
-        },
+        kit,
         calibre.id .. " components kit"
     )
 end
@@ -814,6 +828,7 @@ local function printCalibreDefinitions(
             .. tostring(primer and primer.item)
             .. ") | powder "
             .. tostring(calibre.powderUses)
+            .. (calibre.wads > 0 and (" | wad " .. tostring(calibre.wads)) or "")
             .. " | die set "
             .. tostring(calibre.dieSet)
             .. " | levels die "

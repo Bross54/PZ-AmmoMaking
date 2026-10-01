@@ -19,7 +19,8 @@ local function join(list)
     return table.concat(list, ";")
 end
 
--- "item 1 [A;B] mode:keep flags[X;Y]," / "item 4 tags[base:charcoal],"
+-- "item 1 [A;B] mode:keep flags[X;Y]," / "item 4 tags[base:charcoal]," /
+-- "item 1 [A;B] mode:destroy," (consumed, and no ReplaceOnUse item returned)
 function R.renderInput(input)
     local line = "item " .. input.count .. " "
     if input.tags then
@@ -29,6 +30,8 @@ function R.renderInput(input)
     end
     if input.keep then
         line = line .. " mode:keep"
+    elseif input.destroy then
+        line = line .. " mode:destroy"
     end
     if input.flags then
         line = line .. " flags[" .. join(input.flags) .. "]"

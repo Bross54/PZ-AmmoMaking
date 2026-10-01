@@ -137,6 +137,13 @@ AC_Calibres.COMPOUND_SOURCES = {
 -- family's primer. "class" ties a family to pistol or
 -- rifle calibres: a rifle round may not name a pistol
 -- primer family, nor the other way round.
+--
+-- A 12 gauge shell takes the LargePistol primer: an
+-- all-brass hull is primed that way, and a fifth family
+-- would be one more item and two more recipes that play
+-- exactly like the large pistol ones. The shotgun class
+-- says so itself (CLASSES.shotgun.primerClass); no other
+-- class may borrow a family.
 ------------------------------------------------
 
 AC_Calibres.PRIMERS = {
@@ -231,9 +238,9 @@ AC_Calibres.PRIMERS = {
 ------------------------------------------------
 --
 -- id       shown in debug labels and logs
--- class    "pistol" (default) or "rifle": which CLASSES
---          entry supplies the values a definition leaves
---          out. Nothing else branches on it.
+-- class    "pistol" (default), "rifle" or "shotgun": which
+--          CLASSES entry supplies the values a definition
+--          leaves out. Nothing else branches on it.
 -- suffix   used in item and recipe ids (letters and
 --          digits only)
 -- round    the vanilla cartridge item the assembly makes
@@ -248,6 +255,7 @@ AC_Calibres.PRIMERS = {
 --          brass case cups drawn into one case
 -- bulletsPerScrap
 --          copper bullets swaged from one Base.CopperScrap
+-- wads     pieces of wadding per round (shells only)
 -- powderUses
 --          uses of Base.GunPowder per round: the charge.
 --          A whole number, never below 1: the engine has
@@ -286,11 +294,35 @@ AC_Calibres.PRIMERS = {
 --   .30-30       2        1            4     large rifle
 --   .308         3        1            5     large rifle
 --
+-- The shell sits between the two tiers: as much brass
+-- as a .308, the charge and primer of a .44 Magnum, a
+-- whole scrap of shot, and a wad:
+--
+--   12 Gauge     3        1            3     large pistol
+--
 -- Rifles are made by hand with the same kind of die set
 -- as pistols; what sets them apart is level, time,
 -- material and powder, not a quality penalty. A future
 -- press takes the same die sets.
 ------------------------------------------------
+
+------------------------------------------------
+-- WADDING
+------------------------------------------------
+--
+-- What separates powder from shot in a shell: a scrap of
+-- cloth or cotton. Vanilla items, not tracked as a
+-- material (like charcoal). The recipe line is
+-- mode:destroy, as in the vanilla recipes that consume
+-- Base.RippedSheets, so the rag's ReplaceOnUse (a dirty
+-- rag) is not handed back.
+------------------------------------------------
+
+AC_Calibres.WAD = {
+
+    items = { "Base.RippedSheets", "Base.CottonBalls" },
+}
+
 
 AC_Calibres.DEFAULTS = {
 
@@ -301,6 +333,10 @@ AC_Calibres.DEFAULTS = {
     bulletsPerScrap = 2,
 
     powderUses = 1,
+
+    -- Pieces of wadding (WAD) in one round. Only a shell
+    -- has any.
+    wads = 0,
 
     assembleLevel = 3,
 
@@ -330,6 +366,36 @@ AC_Calibres.DEFAULTS = {
 AC_Calibres.CLASSES = {
 
     pistol = {},
+
+    ------------------------------------------------
+    -- A shotgun shell is a cartridge with one more part.
+    -- Its "case" is the brass hull, its "bullet" the
+    -- measured charge of copper shot, and a wad sits
+    -- between powder and shot. Pistol times: the hull is
+    -- a straight-walled case. primerClass names the
+    -- class whose primer families it takes.
+    ------------------------------------------------
+    shotgun = {
+
+        primerClass = "pistol",
+
+        primerFamily = "LargePistol",
+
+        cupsPerCase = 3,
+
+        bulletsPerScrap = 1,
+
+        powderUses = 3,
+
+        wads = 1,
+
+        assembleLevel = 4,
+
+        xp = {
+            case = 2,
+            assemble = 3,
+        },
+    },
 
     rifle = {
 
@@ -458,7 +524,7 @@ function AC_Calibres.define(
     for _,
         key
     in ipairs(
-        { "primerFamily", "cupsPerCase", "bulletsPerScrap", "powderUses", "assembleLevel" }
+        { "primerFamily", "cupsPerCase", "bulletsPerScrap", "powderUses", "wads", "assembleLevel" }
     )
     do
 
@@ -664,6 +730,30 @@ AC_Calibres.LIST = {
 
         xp = { case = 3, assemble = 5 },
     }),
+
+    ------------------------------------------------
+    -- Shotgun shell (docs/SHOTGUN_AMMUNITION_RESEARCH.md).
+    -- Vanilla has one shell item; the nine pellets are
+    -- the gun's property, so this is "the" 12 gauge
+    -- round. Every value comes from the shotgun class.
+    ------------------------------------------------
+
+    AC_Calibres.define({
+
+        id = "12 Gauge",
+
+        class = "shotgun",
+
+        suffix = "12Gauge",
+
+        round = "Base.ShotgunShells",
+
+        ammoType = "base:shotgun_shells",
+
+        case = "AmmoMaking.Hull12Gauge",
+
+        bullet = "AmmoMaking.ShotCharge12Gauge",
+    }),
 }
 
 
@@ -803,6 +893,25 @@ function AC_Calibres.validate(
 
 
     ------------------------------------------------
+    -- Classes
+    ------------------------------------------------
+
+    for className,
+        class
+    in pairs(
+        AC_Calibres.CLASSES
+    )
+    do
+
+        if class.primerClass
+            and not AC_Calibres.CLASSES[class.primerClass]
+        then
+            problem("class " .. className, "unknown primer class " .. tostring(class.primerClass))
+        end
+    end
+
+
+    ------------------------------------------------
     -- Calibres
     ------------------------------------------------
 
@@ -893,9 +1002,15 @@ function AC_Calibres.validate(
             families[calibre.primerFamily]
 
 
+        -- A calibre takes a primer family of its own class,
+        -- unless its class names another (primerClass).
+        local class =
+            AC_Calibres.CLASSES[calibre.class] or {}
+
+
         if not primer then
             problem(name, "unknown primer family " .. tostring(calibre.primerFamily))
-        elseif primer.class ~= calibre.class then
+        elseif primer.class ~= (class.primerClass or calibre.class) then
             problem(name, "a " .. tostring(calibre.class) .. " calibre cannot take the " .. tostring(primer.class) .. " primer family " .. tostring(primer.id))
         end
 
@@ -914,6 +1029,13 @@ function AC_Calibres.validate(
 
         if not isWhole(calibre.powderUses, 1) then
             problem(name, "powderUses must be a whole number of at least 1")
+        end
+
+
+        if not isWhole(calibre.wads, 0) then
+            problem(name, "wads must be a whole number")
+        elseif calibre.wads < (class.wads or 0) then
+            problem(name, "a " .. tostring(calibre.class) .. " round needs at least " .. class.wads .. " wad")
         end
 
 
@@ -1138,7 +1260,7 @@ function AC_Calibres.buildCalibreRecipes(
         calibre.suffix
 
 
-    return {
+    local recipes = {
 
         -- Adapted from vanilla Forge_Small_Metalworking_Punch_Set.
         {
@@ -1295,6 +1417,24 @@ function AC_Calibres.buildCalibreRecipes(
             },
         },
     }
+
+
+    -- A shell's wad goes in last, after the lines every
+    -- round has.
+    if (calibre.wads or 0) > 0 then
+
+        table.insert(
+            recipes[4].inputs,
+            {
+                count = calibre.wads,
+                items = AC_Calibres.WAD.items,
+                destroy = true,
+            }
+        )
+    end
+
+
+    return recipes
 end
 
 
