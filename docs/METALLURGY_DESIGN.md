@@ -145,8 +145,9 @@ Invariants, each asserted by `tests/run_tests.lua`:
 6. `AC_Recipes.txt` and `AC_Materials.RECIPES` are identical field by field,
    so the numbers the tests check are the numbers the game loads.
 7. Nothing produces or consumes `Base.BrassScrap` yet. `Base.BrassIngot`
-   feeds the case-stock stage (`docs/AMMUNITION_DESIGN.md`), which is held to
-   the same invariants.
+   feeds the case-stock and component stages (`docs/AMMUNITION_DESIGN.md`),
+   which are held to the same invariants.
+8. The parts of an alloy pay for it only in the alloy recipe.
 
 The engine consumes inputs and creates outputs; mod Lua never moves an item in
 this stage, so a crash cannot half-apply a recipe on our side.
@@ -161,7 +162,7 @@ receives the created items if a later stage wants to mark them.
 
 | File | Content |
 |---|---|
-| `media/scripts/AC_Recipes.txt` | the four furnace `craftRecipe` blocks (and the two case-stock ones) |
+| `media/scripts/AC_Recipes.txt` | the four furnace `craftRecipe` blocks among the mod's recipes; the file is generated from the Lua mirror |
 | `media/scripts/AC_Items.txt` | zinc ore / scrap / ingot |
 | `media/lua/shared/AC_Materials.lua` | item ids, `UNITS`, `RECIPES` mirror, `VANILLA_RECIPES` (for the loop check), `checkConservation`, `getExpectedTime`, the `OnCreate` callbacks, `applySkillRequirements` |
 | `media/lua/shared/AC_Compat.lua` | probes for the metallurgy item ids, each recipe script, its callback and its requirement |

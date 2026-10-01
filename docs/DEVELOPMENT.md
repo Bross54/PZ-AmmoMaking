@@ -55,8 +55,10 @@ never move an item into that list.
 | `server/BuildingObjects/AC_LaboratoryAnalyzerObject.lua` | server | `ISBuildingObject` placement cursor; `create()` turns the analyzer item into an `IsoThumpable` |
 | `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology, depletion records in global ModData |
 | `shared/AC_Mining.lua` | shared | Pickaxe rules, prospect lookup, `extract()` (the only mutation point of the mining loop) |
-| `shared/AC_Materials.lua` | shared | Metallurgy and case stock: item ids, metal units, Lua mirror of the station recipes, conservation check, `OnCreate` XP callbacks, the Ammo Making requirement attached to the recipe scripts at boot |
-| `scripts/AC_Recipes.txt` | script | The six `craftRecipe` blocks: four furnace recipes, brass sheets at the forge, case cups on a surface (module `Base`, ids prefixed `AmmoMaking_`) |
+| `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
+| `shared/AC_Calibres.lua` | shared | Calibre definitions and defaults, primer families, priming-compound sources, powder; builds the component recipes, their material units and the item list from that data |
+| `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
+| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 17 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 2, four per calibre |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
 | `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
@@ -106,7 +108,13 @@ the tables are small. Nothing here has been balanced yet.
 | `unitsPerIngot` | `AC_Materials.CONFIG` | 100 | metal accounting (ore 100, scrap 10, small brass sheet 10, case cup 5) |
 | `xpSmeltZincOre`, `xpCastIngot`, `xpCastBrass` | `AC_Materials.CONFIG` | 3, 5, 25 | XP per completed furnace craft |
 | `xpForgeBrassSheets`, `xpPunchCaseCups` | `AC_Materials.CONFIG` | 5, 1 | XP per forged ingot / punched sheet |
-| `requiredLevel` | `AC_Materials.CONFIG` | 0 | Ammo Making level attached to every mod recipe |
+| `requiredLevel` | `AC_Materials.CONFIG` | 0 | Ammo Making level of metallurgy and case-stock recipes |
+| `DEFAULTS.levels` / `xp` / `time` | `AC_Calibres` | die set 1 / 10 / 300, case 1 / 1 / 80, bullet 2 / 1 / 80, assemble 3 / 2 / 40 | per-calibre steps; a definition may override any of them |
+| `DEFAULTS.bulletsPerScrap`, `powderUses` | `AC_Calibres` | 2, 1 | bullets per copper scrap, gunpowder uses per round (never below 1) |
+| `PRIMERS[..]` | `AC_Calibres` | 10 per small sheet, level 2, XP 2, time 120 | small pistol primers |
+| `COMPOUND_SOURCES` | `AC_Calibres` | toy cap 2 units, match use 1 unit; a primer needs 2 | priming charge |
+| `POWDER` | `AC_Calibres` | 2 charcoal + 2 fertilizer uses → 1 jar (10 uses), level 3, XP 5, time 150 | gunpowder |
+| `baseQuality`, `qualityPerLevel`, `spread` | `AC_CaseQuality.CONFIG` | 50, 4, 15 | case quality roll (1–100) |
 | recipe `time`, charcoal counts, output counts | `AC_Recipes.txt` + `AC_Materials.RECIPES` | furnace 200, 4 / 4 / 4 / 10 charcoal; forge 200, 1 charcoal, 10 sheets; punch 100, 2 cups | station recipes (the two must match; a test compares them) |
 
 ## Invariants of the mining loop
@@ -358,11 +366,16 @@ Design, recipe table and vanilla evidence: `docs/METALLURGY_DESIGN.md` and
   the game loads; `AC_Materials.RECIPES` is what the tests reason about. The
   section *AC_Recipes.txt equals AC_Materials.RECIPES* parses the script and
   compares every field, input and output. Change both or the suite fails.
-- **Adding a recipe**: add the block to `AC_Recipes.txt` (copy a vanilla
-  block; only fields in the test's whitelist), the mirror entry with a
-  `callback` and `xpKey`, the name in `Recipes.json`, and any new item id to
-  `AC_Compat.REQUIRED_ITEMS` and `AC_Materials.UNITS`. The conservation,
-  translation and compat tests then cover it without further changes.
+- **The script is generated.** `tests/write_recipes.lua` renders
+  `AC_Materials.RECIPES` through `tests/render_recipes.lua` and rewrites the
+  body of `AC_Recipes.txt`, keeping its leading comment. The suite asserts
+  the file equals the rendering, so the script is never typed by hand.
+- **Adding a recipe**: add the mirror entry (copy a vanilla block; only
+  fields, flags and tags in the tests' whitelists) with a `callback` and an
+  `xp` or `xpKey`, run the writer, add the name to `Recipes.json`, and any
+  new item id to `AC_Compat.REQUIRED_ITEMS` and `AC_Materials.UNITS`. The
+  conservation, translation and compat tests then cover it without further
+  changes. For a calibre see *Ammunition components* below.
 - **Skill.** `SkillRequired` / `xpAward` cannot name the Ammo Making perk in a
   script: scripts are parsed before mod Lua registers it, and the engine
   drops unknown perks (jar: `CraftRecipe.Load`, `GameWindow.initShared`). XP
@@ -379,7 +392,7 @@ Design, recipe table and vanilla evidence: `docs/METALLURGY_DESIGN.md` and
 Console lines:
 
 ```text
-[AmmoMaking] Station recipes: 6 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
+[AmmoMaking] Station recipes: 17 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
 [AmmoMaking] Crafting (AmmoMaking_CastBrassIngots): +25 Ammo Making XP (total 40 -> 65)
 [AmmoMaking] WARNING: recipe skill requirements not applied: <error>
 ```
@@ -395,15 +408,58 @@ once per `OnCreate` call and never without a character.
 
 ### Case stock
 
-`docs/AMMUNITION_DESIGN.md` (milestone C1) and
-`docs/VANILLA_AMMUNITION_RESEARCH.md`. Two more blocks in `AC_Recipes.txt`,
-handled by exactly the same code as the furnace recipes:
 `AmmoMaking_ForgeSmallBrassSheets` (`PrimitiveForge`, copied from vanilla
 `Forge_Copper_Sheet`) and `AmmoMaking_PunchBrassCaseCups` (`AnySurfaceCraft`,
 `MakingHammer_Surface`). Unlike furnace recipes they carry a `timedAction`,
-as their vanilla templates do. The cup has no calibre and no ModData. The
-next step (cup → case) is not implemented: it needs dies and a press, which
-vanilla does not have, and is an owner decision.
+as their vanilla templates do. The cup has no calibre and no ModData.
+
+### Ammunition components
+
+Design, recipe table, balance and vanilla evidence:
+`docs/AMMUNITION_DESIGN.md`, `docs/VANILLA_AMMUNITION_RESEARCH.md`.
+
+- **Data, not code.** `AC_Calibres.LIST` holds one definition per calibre;
+  `AC_Calibres.define()` fills everything it leaves out from `DEFAULTS` and
+  derives the item ids from the suffix. `buildRecipes()` returns the mirror
+  entries (gunpowder, primers per family and compound source, four per
+  calibre) and `AC_Materials` appends them at load, after `require
+  "AC_Calibres"`. A test scans every other Lua file for a calibre suffix
+  and fails if it finds one.
+- **Adding a calibre**: a `LIST` entry (`id`, `suffix`, `round`, `ammoType`,
+  plus only what differs), three items in `AC_Items.txt`, their names in
+  `ItemName.json`, four recipe names in `Recipes.json`,
+  `tests/write_recipes.lua`, and the new ids in the test mock's
+  `knownScriptItems`. Debug kits, compat probes, conservation and
+  progression tests follow the list.
+- **Recipe fields beyond metallurgy's**: `xp` and `requiredLevel` (per
+  recipe), `effect` (`caseQuality` on forming, `roundQuality` on assembly),
+  `source = "powder"` (only on gunpowder mixing), `tool = true` (the die set
+  recipe makes no tracked material).
+- **Effects.** `AC_Materials.onRecipeCreated` grants XP, then runs
+  `AC_CaseQuality.EFFECTS[recipe.effect](craftRecipeData, character)` inside
+  a `pcall`. A failing effect prints one WARNING and changes nothing else:
+  the craft has already happened and the XP is granted.
+- **Engine calls in the effects**: `craftRecipeData:getAllCreatedItems()`
+  and `getAllConsumedItems()`, both with no arguments (overloads exist; the
+  no-argument forms are in the jar and vanilla Lua calls the second),
+  `item:getFullType()`, `item:getModData()`, `ZombRandFloat(0.0, 1.0)`. Each
+  method is looked up before it is called.
+- **Levels are enforced only through the attached requirement.** The
+  compatibility check names every recipe whose requirement is missing and
+  what level it should have had.
+- **Material model.** A `UNITS` entry is `{ metal, units }` or
+  `{ contents = { material = n } }`; `uses` marks a drainable, whose input
+  lines count uses (as the engine does) and whose output is a full item
+  unless the mirror says `oneUse`. Alloy parts pay for an alloy only in the
+  recipe marked `alloy`.
+
+Console lines:
+
+```text
+[AmmoMaking] Calibre definitions loaded (2)
+[AmmoMaking] Crafting (AmmoMaking_FormCase9mm): +1 Ammo Making XP (total 80 -> 81)
+[AmmoMaking] WARNING: caseQuality failed for AmmoMaking_FormCase9mm: <error>
+```
 
 ### Multiplayer requirements (not implemented)
 
@@ -411,6 +467,8 @@ vanilla does not have, and is an owner decision.
   `performRecipe`). Grant XP there with vanilla's `addXp(character, perk,
   amount)` instead of the single-player `getXp():AddXP`.
 - Run `applySkillRequirements()` on the server and on every client.
+- Case quality is written in `OnCreate`, on the server. Whether ModData set
+  there reaches clients needs checking before quality is used for anything.
 - Nothing else: there is no custom state, command or timed action.
 
 ## Compatibility self-check
@@ -434,8 +492,9 @@ Right-click the ground → **Ammo Making Debug**: Inspect Current Tile, Survey
 Current Area (3x3), Show Geology Seed, Inspect Clicked Tile Objects (sprites,
 analyzer state), Reset Depletion (tile / 3x3), Spawn Sampling Kit, Spawn Mining
 Kit, Spawn Laboratory Analyzer, Spawn Assayed Sample (current 3x3), Spawn
-Metallurgy Kit, Spawn Case Stock Kit, Set Ammo Making Level, Inspect Station
-Recipes, Run Compatibility Check. Everything prints to `console.txt`. From
+Metallurgy Kit, Spawn Case Stock Kit, Spawn <calibre> Components Kit (one per
+calibre), Spawn Primer and Powder Kit, Set Ammo Making Level, Inspect Station
+Recipes, Inspect Ammo Components, Run Compatibility Check. Everything prints to `console.txt`. From
 the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
 
 - **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
@@ -446,8 +505,17 @@ the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
 - **Spawn Case Stock Kit**: a ball-peen hammer, tongs, a metalworking
   punch, one charcoal, one brass ingot and two small brass sheets: forge the
   ingot at a forge, punch the sheets at any surface.
+- **Spawn <calibre> Components Kit**: the die set, a hammer, five case
+  cups, three copper scrap, five primers and a jar of gunpowder: form,
+  swage and assemble five rounds. Built from the calibre list.
+- **Spawn Primer and Powder Kit**: punch, hammer, mortar and pestle, two
+  small brass sheets, ten toy caps, a matchbox, two charcoal and a bag of
+  fertilizer: both primer recipes and one powder mix. `AddItem` honours a
+  vanilla item's `count`, so some vanilla entries may arrive in multiples.
+- **Inspect Ammo Components (inventory)**: every case and round of a known
+  calibre the player carries, with its stored quality and label. Read-only.
 - **Inspect Station Recipes**: one console line per recipe: whether the
-  script manager knows it, its required-skill count, XP, predicted time at
+  script manager knows it, its required-skill count, required level, XP, predicted time at
   the player's level and the conservation verdict. Read-only.
 
 Right-clicking a square that holds an Ammo Making analyzer (placed or dropped)
@@ -496,9 +564,20 @@ mod uses. They prove what the files contain and that the numbers conserve
 metal. The `CraftRecipe` script objects are mocked; that the game loads the
 recipes, shows them at a furnace and calls `OnCreate` is not tested.
 
+The component sections add: the calibre model (complete definitions, items
+declared, no calibre named in other Lua), case quality (pure roll, storage,
+both effects against mocked recipe data), progression (levels per step, the
+attached requirement), and the complete 9mm chain on a mirrored inventory:
+exactly 100 rounds from 6 brass ingots, 50 copper scrap, 100 toy caps and 20
+fertilizer uses with nothing left over. Tampered recipes (two rounds out, no
+case, no primer, no bullet, no powder, an undeclared source, a jar from one
+dismantled round) must be rejected by the conservation check; that is how
+the alloy-parts flaw in an earlier version of the check was found.
+
 Static checks worth running after a change (no game needed): the suite, a
-`loadfile` on every `.lua`, and a look at `git diff` for a script field or tag
-that is not in the tests' whitelists.
+`loadfile` on every `.lua`, `tests/write_recipes.lua` followed by `git diff`
+(an unexpected diff means the script and the mirror had drifted), and a look
+for a script field or tag that is not in the tests' whitelists.
 
 ## REQUIRES IN-GAME VERIFICATION
 
@@ -551,10 +630,14 @@ that is not in the tests' whitelists.
   - inputs are consumed, crucible / tongs / mold are kept, a clay mold
     breaks, and the outputs are 10 zinc scrap, 1 ingot, 10 `Base.BrassIngot`;
   - the `Crafting (...)` XP line appears once per craft, also in a batch;
-  - the boot line reports 6 recipes given the requirement, the UI shows Ammo
+  - the boot line reports 17 recipes given the requirement, the UI shows Ammo
     Making 0, and a higher level shortens the craft;
   - zinc item names, icons and world models; carrying the 40-weight zinc ore;
   - every metallurgy line of the compatibility check is OK.
+- **Ammunition components** (nothing in it has run in game): the list in
+  `docs/AMMUNITION_DESIGN.md` §12: one round per assembly craft, drainable
+  inputs taking uses, kept tools, level gates, quality on cases and rounds,
+  ModData persistence, a handloaded round firing like a vanilla one.
 - **Case stock** (nothing in it has run in game): Forge Small Brass Sheets
   at a forge gives 10 sheets from one ingot and keeps hammer and tongs; Punch
   Brass Case Cups in the crafting menu at a surface gives 2 cups per sheet and
