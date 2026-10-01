@@ -1,0 +1,102 @@
+/* Ammo Making - metallurgy recipes for the vanilla Build 42 furnaces.
+
+   Every block is adapted from a vanilla 42.20.4 recipe in
+   media/scripts/generated/entities/blacksmith/craftRecipes/recipes_blacksmith_furnaces_i.txt:
+
+     AmmoMaking_SmeltZincOre     <- SmeltCopperOre (same fields, zinc items)
+     AmmoMaking_Cast*Ingot       <- CastIronIngot (tongs + mold kept, Furnace tag) with the
+                                    kept empty crucible of ExtractIronFromSmallItem
+     AmmoMaking_CastBrassIngots  <- same casting block, two metals in
+
+   The recipes live in module Base, like every vanilla recipe, so the engine
+   handles them exactly as its own; the AmmoMaking_ prefix keeps the ids
+   unique. Station attachment is the Tags line only (PrimitiveFurnace /
+   Furnace); the furnaces have no lit or fuel state, charcoal is an input.
+
+   No SkillRequired / xpAward lines: the Ammo Making perk is registered from
+   Lua after scripts are parsed, so the engine would drop them. AC_Materials
+   attaches the skill requirement at boot and awards XP from OnCreate.
+
+   AC_Materials.RECIPES mirrors this file; tests/run_tests.lua fails when
+   the two differ. */
+
+module Base
+{
+    craftRecipe AmmoMaking_SmeltZincOre
+    {
+        time = 200,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onSmeltZincOre,
+        inputs
+        {
+            item 4 tags[base:charcoal],
+            item 1 [AmmoMaking.ZincOre],
+        }
+        outputs
+        {
+            item 10 AmmoMaking.ZincScrap,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastCopperIngot
+    {
+        time = 200,
+        Tags = Furnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastCopperIngot,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:charcoal],
+            item 10 [Base.CopperScrap],
+            item 1 [Base.ClayIngotMold;Base.IronIngotMold;Base.SteelIngotMold] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.CopperIngot,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastZincIngot
+    {
+        time = 200,
+        Tags = Furnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastZincIngot,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:charcoal],
+            item 10 [AmmoMaking.ZincScrap],
+            item 1 [Base.ClayIngotMold;Base.IronIngotMold;Base.SteelIngotMold] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.ZincIngot,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBrassIngots
+    {
+        time = 200,
+        Tags = Furnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBrassIngots,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 10 tags[base:charcoal],
+            item 7 [Base.CopperIngot],
+            item 3 [AmmoMaking.ZincIngot],
+            item 1 [Base.ClayIngotMold;Base.IronIngotMold;Base.SteelIngotMold] mode:keep,
+        }
+        outputs
+        {
+            item 10 Base.BrassIngot,
+        }
+    }
+}
