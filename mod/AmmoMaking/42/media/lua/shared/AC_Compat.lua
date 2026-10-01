@@ -52,6 +52,32 @@ AC_Compat.REQUIRED_ITEMS = {
     "AmmoMaking.AdvancedFieldAssayKit",
 
     "AmmoMaking.LaboratoryAssayAnalyzer",
+
+    -- Metallurgy: the vanilla items the furnace recipes
+    -- consume, keep and produce, and the mod's zinc chain.
+    "AmmoMaking.ZincScrap",
+
+    "AmmoMaking.ZincIngot",
+
+    "Base.CopperScrap",
+
+    "Base.CopperIngot",
+
+    "Base.BrassIngot",
+
+    "Base.BrassScrap",
+
+    "Base.CeramicCrucible",
+
+    "Base.ClayIngotMold",
+
+    "Base.IronIngotMold",
+
+    "Base.SteelIngotMold",
+
+    "Base.Tongs",
+
+    "Base.Charcoal",
 }
 
 
@@ -905,6 +931,185 @@ end
 
 
 ------------------------------------------------
+-- Metallurgy recipes (media/scripts/AC_Recipes.txt).
+--
+-- Each recipe must be known to the script manager,
+-- its OnCreate callback must exist, and the Ammo
+-- Making requirement AC_Materials attaches at boot
+-- must be there. Read-only: nothing is attached here.
+------------------------------------------------
+
+local function checkMetallurgyRecipes(
+    results
+)
+
+    local manager =
+        safe(
+            function()
+
+                return
+                    getScriptManager()
+            end
+        )
+
+
+    if not manager then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "metallurgy recipes",
+            "no script manager"
+        )
+
+
+        return
+    end
+
+
+    if hasMethod(manager, "getCraftRecipe") ~= true then
+
+        addResult(
+            results,
+            "WARNING",
+            "ScriptManager:getCraftRecipe missing",
+            "metallurgy recipes cannot be checked or given their skill requirement"
+        )
+
+
+        return
+    end
+
+
+    local skillMethodsReported = false
+
+
+    for _,
+        recipe
+    in ipairs(
+        AC_Materials.RECIPES
+    )
+    do
+
+        local script,
+              err =
+            safe(
+                function()
+
+                    return
+                        manager:getCraftRecipe(
+                            recipe.id
+                        )
+                end
+            )
+
+
+        if err then
+
+            addResult(
+                results,
+                "UNVERIFIED",
+                "recipe " .. recipe.id,
+                tostring(err)
+            )
+
+        elseif not script then
+
+            addResult(
+                results,
+                "WARNING",
+                "recipe " .. recipe.id .. " not found",
+                "AC_Recipes.txt did not load; this furnace recipe is unavailable"
+            )
+
+        else
+
+            addResult(
+                results,
+                "OK",
+                "recipe " .. recipe.id
+            )
+
+
+            local canAttach =
+                hasMethod(script, "addRequiredSkill") == true
+                and hasMethod(script, "getRequiredSkillCount") == true
+
+
+            if not skillMethodsReported then
+
+                skillMethodsReported = true
+
+
+                if canAttach then
+
+                    addResult(
+                        results,
+                        "OK",
+                        "CraftRecipe:addRequiredSkill"
+                    )
+
+                else
+
+                    addResult(
+                        results,
+                        "WARNING",
+                        "CraftRecipe:addRequiredSkill missing",
+                        "metallurgy recipes get no Ammo Making requirement; craft time does not improve with skill"
+                    )
+                end
+            end
+
+
+            if canAttach then
+
+                local count =
+                    safe(
+                        function()
+
+                            return
+                                script:getRequiredSkillCount()
+                        end
+                    )
+
+
+                if type(count) == "number"
+                    and count > 0
+                then
+
+                    addResult(
+                        results,
+                        "OK",
+                        "Ammo Making requirement on " .. recipe.id
+                    )
+
+                else
+
+                    addResult(
+                        results,
+                        "WARNING",
+                        "Ammo Making requirement not attached to " .. recipe.id,
+                        "craft time does not improve with skill"
+                    )
+                end
+            end
+        end
+
+
+        if type(AC_Materials[recipe.callback]) ~= "function" then
+
+            addResult(
+                results,
+                "WARNING",
+                "OnCreate callback AC_Materials." .. tostring(recipe.callback) .. " missing",
+                "no Ammo Making XP for " .. recipe.id
+            )
+        end
+    end
+end
+
+
+------------------------------------------------
 -- RUN
 ------------------------------------------------
 --
@@ -949,6 +1154,8 @@ function AC_Compat.run()
     checkGeologySeed(results)
 
     checkAnalyzerSprite(results)
+
+    checkMetallurgyRecipes(results)
 
 
     local summary = {

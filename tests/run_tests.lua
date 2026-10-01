@@ -2282,7 +2282,8 @@ do
         "Reset Depletion: Current Tile", "Reset Depletion: 3x3 Area",
         "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
         "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
-        "Set Ammo Making Level", "Run Compatibility Check",
+        "Spawn Metallurgy Kit (furnace tools + materials)",
+        "Set Ammo Making Level", "Inspect Metallurgy Recipes", "Run Compatibility Check",
     }
     for _, e in ipairs(expected) do
         check(root.submenu:find(e) ~= nil, "debug entry present: " .. e)
@@ -2486,6 +2487,696 @@ do
 end
 
 ------------------------------------------------
+-- METALLURGY
+------------------------------------------------
+--
+-- These sections read the mod's own script files and AC_Materials. They
+-- prove that the files say what the design says and that the numbers
+-- conserve metal. They do NOT prove the engine loads the recipes, shows
+-- them at a furnace or calls the callbacks: that needs the game.
+
+local SCRIPTS = ROOT .. "/mod/AmmoMaking/42/media/scripts/"
+local TRANSLATE = ROOT .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/"
+
+local function readFile(path)
+    local handle = assert(io.open(path, "r"), "cannot open " .. path)
+    local text = handle:read("*a")
+    handle:close()
+    return (string.gsub(text, "\r", ""))
+end
+
+local function stripComments(text)
+    return (string.gsub(text, "/%*.-%*/", ""))
+end
+
+local function trim(text)
+    return (string.gsub(text, "^%s*(.-)%s*$", "%1"))
+end
+
+local function split(text, separator)
+    local parts = {}
+    for part in string.gmatch(text, "([^" .. separator .. "]+)") do
+        table.insert(parts, trim(part))
+    end
+    return parts
+end
+
+-- Parses "module X { <kind> Name { key = value, ... sub { line, } } }" into
+-- { module = "X", blocks = { { kind, name, fields = {}, fieldOrder = {},
+--   sections = { inputs = { "line", ... } } } } }. Enough for the item and
+-- craftRecipe blocks this mod writes; not a general script parser.
+local function parseScript(path)
+    local text = stripComments(readFile(path))
+    local moduleName, body = string.match(text, "^%s*module%s+([%w_]+)%s*(%b{})%s*$")
+    assert(moduleName, "one module block expected in " .. path)
+    body = string.sub(body, 2, -2)
+    local result = { module = moduleName, blocks = {} }
+    for kind, name, block in string.gmatch(body, "([%a]+)%s+([%w_]+)%s*(%b{})") do
+        local entry = { kind = kind, name = name, fields = {}, fieldOrder = {}, sections = {} }
+        local inner = string.sub(block, 2, -2)
+        inner = string.gsub(inner, "([%a]+)%s*(%b{})", function(sectionName, sectionBody)
+            local lines = {}
+            for line in string.gmatch(string.sub(sectionBody, 2, -2), "([^\n]+)") do
+                line = trim(line)
+                if line ~= "" then
+                    table.insert(lines, (string.gsub(line, ",$", "")))
+                end
+            end
+            entry.sections[sectionName] = lines
+            return ""
+        end)
+        for line in string.gmatch(inner, "([^\n]+)") do
+            local key, value = string.match(line, "^%s*([%w_]+)%s*=%s*(.-)%s*,%s*$")
+            if key then
+                entry.fields[key] = value
+                table.insert(entry.fieldOrder, key)
+            else
+                assert(trim(line) == "", "unparsed line in " .. name .. ": " .. line)
+            end
+        end
+        table.insert(result.blocks, entry)
+    end
+    return result
+end
+
+-- "item 1 [A;B] mode:keep flags[X;Y]" / "item 4 tags[base:charcoal]" /
+-- "item 10 Base.CopperScrap" (output form)
+local function parseItemLine(line)
+    local count, rest = string.match(line, "^item%s+(%d+)%s+(.+)$")
+    assert(count, "not an item line: " .. line)
+    local parsed = { count = tonumber(count) }
+    local tags = string.match(rest, "tags%[([^%]]*)%]")
+    if tags then
+        parsed.tags = split(tags, ";")
+        rest = string.gsub(rest, "tags%[[^%]]*%]", "", 1)
+    end
+    local flags = string.match(rest, "flags%[([^%]]*)%]")
+    if flags then
+        parsed.flags = split(flags, ";")
+        rest = string.gsub(rest, "flags%[[^%]]*%]", "", 1)
+    end
+    local mode = string.match(rest, "mode:(%a+)")
+    if mode then
+        parsed.keep = (mode == "keep") or nil
+        parsed.mode = mode
+        rest = string.gsub(rest, "mode:%a+", "", 1)
+    end
+    local items = string.match(rest, "%[([^%]]*)%]")
+    if items then
+        parsed.items = split(items, ";")
+        rest = string.gsub(rest, "%[[^%]]*%]", "", 1)
+    end
+    rest = trim(rest)
+    if rest ~= "" then
+        parsed.item = rest
+    end
+    return parsed
+end
+
+local function sameList(a, b)
+    a, b = a or {}, b or {}
+    if #a ~= #b then return false end
+    for i = 1, #a do
+        if a[i] ~= b[i] then return false end
+    end
+    return true
+end
+
+local function listText(list)
+    return table.concat(list or {}, ";")
+end
+
+local itemScript = parseScript(SCRIPTS .. "AC_Items.txt")
+local recipeScript = parseScript(SCRIPTS .. "AC_Recipes.txt")
+
+local declaredItems = {}
+for _, block in ipairs(itemScript.blocks) do
+    declaredItems[itemScript.module .. "." .. block.name] = block
+end
+
+section("Metallurgy items: script definitions follow the vanilla copper chain")
+do
+    eq(itemScript.module, "AmmoMaking", "items live in module AmmoMaking")
+
+    local seen, duplicates = {}, {}
+    for _, block in ipairs(itemScript.blocks) do
+        eq(block.kind, "item", block.name .. " is an item block")
+        if seen[block.name] then table.insert(duplicates, block.name) end
+        seen[block.name] = true
+    end
+    eq(#duplicates, 0, "no duplicate item ids: " .. table.concat(duplicates, ", "))
+
+    -- Fields and tags seen on the vanilla 42.20.4 metal items
+    -- (media/scripts/generated/items/normal.txt). Anything else would be a
+    -- guessed field.
+    local knownFields = {
+        DisplayName = true, DisplayCategory = true, ItemType = true, Weight = true, Icon = true,
+        StaticModel = true, WorldStaticModel = true, Tags = true, RequiresEquippedBothHands = true,
+    }
+    local knownTags = { ["base:hasmetal"] = true, ["base:heavyitem"] = true, ["base:ingot"] = true }
+    for _, block in ipairs(itemScript.blocks) do
+        for _, key in ipairs(block.fieldOrder) do
+            check(knownFields[key], block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
+        end
+        for _, tag in ipairs(split(block.fields.Tags or "", ";")) do
+            check(knownTags[tag], block.name .. " uses only vanilla tags (" .. tag .. ")")
+        end
+        eq(block.fields.ItemType, "base:normal", block.name .. " item type")
+        check(block.fields.DisplayName ~= nil, block.name .. " has a display name")
+    end
+
+    -- Values recorded from Base.CopperOre / CopperScrap / CopperIngot.
+    local ore = declaredItems["AmmoMaking.ZincOre"]
+    local scrap = declaredItems["AmmoMaking.ZincScrap"]
+    local ingot = declaredItems["AmmoMaking.ZincIngot"]
+    check(ore and scrap and ingot, "zinc ore, scrap and ingot are declared")
+    eq(tonumber(ore.fields.Weight), 40.0, "zinc ore weighs what copper ore weighs")
+    eq(ore.fields.RequiresEquippedBothHands, "true", "zinc ore is two-handed like copper ore")
+    eq(ore.fields.Tags, "base:hasmetal;base:heavyitem", "zinc ore tags")
+    eq(tonumber(scrap.fields.Weight), 0.5, "zinc scrap weighs what copper scrap weighs")
+    eq(scrap.fields.Tags, "base:hasmetal", "zinc scrap tags")
+    eq(tonumber(ingot.fields.Weight), 6.0, "zinc ingot weighs what copper ingot weighs")
+    eq(ingot.fields.Tags, "base:hasmetal;base:ingot", "zinc ingot tags")
+    for _, block in ipairs({ ore, scrap, ingot }) do
+        eq(block.fields.DisplayCategory, "Material", block.name .. " category")
+        check(block.fields.Icon ~= nil and block.fields.WorldStaticModel ~= nil, block.name .. " has an icon and a world model")
+    end
+
+    -- Vanilla already has these; the mod must not shadow them.
+    for _, name in ipairs({ "CopperOre", "CopperScrap", "CopperIngot", "BrassIngot", "BrassScrap" }) do
+        check(declaredItems["AmmoMaking." .. name] == nil, "no AmmoMaking duplicate of vanilla " .. name)
+    end
+
+    -- Every id the materials module names is declared or probed.
+    local probed = {}
+    for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
+    for name, id in pairs(AC_Materials.ITEMS) do
+        if string.sub(id, 1, 11) == "AmmoMaking." then
+            check(declaredItems[id] ~= nil, "AC_Materials.ITEMS." .. name .. " is declared in AC_Items.txt")
+        end
+        check(probed[id], "AC_Materials.ITEMS." .. name .. " (" .. id .. ") is probed by AC_Compat")
+    end
+    for id in pairs(AC_Materials.UNITS) do
+        check(probed[id], "metal item " .. id .. " is probed by AC_Compat")
+    end
+    eq(AC_Geology.ITEMS.ZincOre, AC_Materials.ITEMS.ZincOre, "mining and metallurgy agree on the zinc ore id")
+    eq(AC_Geology.ITEMS.CopperOre, AC_Materials.ITEMS.CopperOre, "mining and metallurgy agree on the copper ore id")
+end
+
+section("Metallurgy recipes: AC_Recipes.txt equals AC_Materials.RECIPES")
+do
+    -- Vanilla keeps every recipe in module Base (42.20.4: all 1004 module
+    -- declarations), and a name without a dot is looked up there.
+    eq(recipeScript.module, "Base", "recipes live in module Base like vanilla recipes")
+    eq(#recipeScript.blocks, #AC_Materials.RECIPES, "one script block per mirrored recipe")
+
+    local byId, duplicates = {}, {}
+    for _, block in ipairs(recipeScript.blocks) do
+        eq(block.kind, "craftRecipe", block.name .. " is a craftRecipe block")
+        if byId[block.name] then table.insert(duplicates, block.name) end
+        byId[block.name] = block
+        eq(string.sub(block.name, 1, 11), "AmmoMaking_", block.name .. " carries the mod prefix")
+        check(not string.find(block.name, "[^%w_]"), block.name .. " has no spaces or punctuation")
+    end
+    eq(#duplicates, 0, "no duplicate recipe ids: " .. table.concat(duplicates, ", "))
+
+    local mirrorIds = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        check(not mirrorIds[recipe.id], "mirror id unique: " .. recipe.id)
+        mirrorIds[recipe.id] = true
+    end
+
+    -- Only what vanilla furnace recipes use, plus OnCreate.
+    local knownFields = { time = true, Tags = true, category = true, OnCreate = true }
+    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true }
+    local knownFlags = { IsEmpty = true, MayDegradeLight = true }
+    local knownItemTags = { ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true }
+    local probed = {}
+    for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
+
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local block = byId[recipe.id]
+        check(block ~= nil, recipe.id .. " exists in AC_Recipes.txt")
+        if block then
+            for _, key in ipairs(block.fieldOrder) do
+                check(knownFields[key], recipe.id .. " uses only verified recipe fields (" .. key .. ")")
+            end
+            -- The engine drops these for a Lua-registered perk.
+            check(block.fields.SkillRequired == nil, recipe.id .. " has no SkillRequired line")
+            check(block.fields.xpAward == nil, recipe.id .. " has no xpAward line")
+
+            eq(tonumber(block.fields.time), recipe.time, recipe.id .. " time")
+            eq(block.fields.Tags, recipe.benchTag, recipe.id .. " bench tag")
+            check(knownBenchTags[block.fields.Tags], recipe.id .. " attaches to a vanilla furnace tag")
+            eq(block.fields.category, recipe.category, recipe.id .. " category")
+            eq(block.fields.OnCreate, "AC_Materials." .. recipe.callback, recipe.id .. " OnCreate")
+            eq(type(AC_Materials[recipe.callback]), "function", recipe.id .. " OnCreate target exists")
+
+            local inputs = block.sections.inputs or {}
+            eq(#inputs, #recipe.inputs, recipe.id .. " input count")
+            for i, line in ipairs(inputs) do
+                local parsed = parseItemLine(line)
+                local mirror = recipe.inputs[i] or {}
+                eq(parsed.count, mirror.count, recipe.id .. " input " .. i .. " count")
+                check(sameList(parsed.items, mirror.items), recipe.id .. " input " .. i .. " items (" .. listText(parsed.items) .. ")")
+                check(sameList(parsed.tags, mirror.tags), recipe.id .. " input " .. i .. " tags (" .. listText(parsed.tags) .. ")")
+                check(sameList(parsed.flags, mirror.flags), recipe.id .. " input " .. i .. " flags (" .. listText(parsed.flags) .. ")")
+                eq(parsed.keep == true, mirror.keep == true, recipe.id .. " input " .. i .. " keep")
+                check(parsed.mode == nil or parsed.mode == "keep", recipe.id .. " input " .. i .. " uses no other mode")
+                check(parsed.item == nil, recipe.id .. " input " .. i .. " has no stray text")
+                check((parsed.items ~= nil) ~= (parsed.tags ~= nil), recipe.id .. " input " .. i .. " is either items or tags")
+                for _, flag in ipairs(parsed.flags or {}) do
+                    check(knownFlags[flag], recipe.id .. " input flag seen in vanilla furnace recipes (" .. flag .. ")")
+                end
+                for _, tag in ipairs(parsed.tags or {}) do
+                    check(knownItemTags[tag], recipe.id .. " input tag seen in vanilla furnace recipes (" .. tag .. ")")
+                end
+                for _, id in ipairs(parsed.items or {}) do
+                    check(probed[id], recipe.id .. " input item is probed by AC_Compat (" .. id .. ")")
+                    check(string.sub(id, 1, 5) == "Base." or declaredItems[id] ~= nil, recipe.id .. " input item exists (" .. id .. ")")
+                end
+            end
+
+            local outputs = block.sections.outputs or {}
+            eq(#outputs, #recipe.outputs, recipe.id .. " output count")
+            for i, line in ipairs(outputs) do
+                local parsed = parseItemLine(line)
+                local mirror = recipe.outputs[i] or {}
+                eq(parsed.count, mirror.count, recipe.id .. " output " .. i .. " count")
+                eq(parsed.item, mirror.item, recipe.id .. " output " .. i .. " item")
+                check(probed[parsed.item], recipe.id .. " output item is probed by AC_Compat (" .. tostring(parsed.item) .. ")")
+                check(string.sub(parsed.item or "", 1, 5) == "Base." or declaredItems[parsed.item] ~= nil, recipe.id .. " output item exists")
+            end
+        end
+    end
+
+    -- Design decisions pinned.
+    eq(AC_Materials.getRecipe("AmmoMaking_SmeltZincOre").benchTag, "PrimitiveFurnace", "zinc ore smelts where copper ore smelts")
+    for _, id in ipairs({ "AmmoMaking_CastCopperIngot", "AmmoMaking_CastZincIngot", "AmmoMaking_CastBrassIngots" }) do
+        eq(AC_Materials.getRecipe(id).benchTag, "Furnace", id .. " casts where vanilla casts")
+    end
+    local brassOut = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots").outputs[1]
+    eq(brassOut.item, "Base.BrassIngot", "brass is the vanilla item")
+    eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
+
+    local alloys = 0
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        if recipe.alloy then alloys = alloys + 1 end
+    end
+    eq(alloys, 1, "exactly one alloy recipe")
+end
+
+section("Material conservation: no recipe or chain creates metal")
+do
+    local U = AC_Materials.UNITS
+    eq(U["Base.CopperOre"].units, 10, "one copper ore is one ingot of metal")
+    eq(U["AmmoMaking.ZincOre"].units, 10, "one zinc ore is one ingot of metal")
+    eq(U["Base.CopperScrap"].units * 10, U["Base.CopperIngot"].units, "ten copper scrap per ingot")
+    eq(U["AmmoMaking.ZincScrap"].units * 10, U["AmmoMaking.ZincIngot"].units, "ten zinc scrap per ingot")
+    eq(U["Base.BrassIngot"].units, AC_Materials.CONFIG.unitsPerIngot, "a brass ingot is one ingot")
+
+    local function total(units)
+        local sum = 0
+        for _, v in pairs(units) do sum = sum + v end
+        return sum
+    end
+
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local ok, reason = AC_Materials.checkConservation(recipe)
+        check(ok, recipe.id .. " conserves metal: " .. tostring(reason))
+        local consumed, created = AC_Materials.getRecipeUnits(recipe)
+        eq(total(created), total(consumed), recipe.id .. " units out equal units in")
+        check(total(created) > 0, recipe.id .. " produces metal")
+
+        local charcoalInputs = 0
+        for _, input in ipairs(recipe.inputs) do
+            if input.keep then
+                for _, id in ipairs(input.items or {}) do
+                    check(U[id] == nil, recipe.id .. " keeps no metal-bearing item (" .. id .. ")")
+                end
+            end
+            if input.tags and input.tags[1] == "base:charcoal" then
+                charcoalInputs = charcoalInputs + 1
+                check(not input.keep, recipe.id .. " consumes its charcoal")
+                check(input.count >= 1, recipe.id .. " charcoal count")
+            end
+        end
+        eq(charcoalInputs, 1, recipe.id .. " has one charcoal input")
+    end
+
+    -- Casting recipes keep exactly crucible, tongs and mold.
+    for _, id in ipairs({ "AmmoMaking_CastCopperIngot", "AmmoMaking_CastZincIngot", "AmmoMaking_CastBrassIngots" }) do
+        local kept = {}
+        for _, input in ipairs(AC_Materials.getRecipe(id).inputs) do
+            if input.keep then table.insert(kept, (input.items or input.tags)[1]) end
+        end
+        table.sort(kept)
+        eq(table.concat(kept, ","), "Base.CeramicCrucible,Base.ClayIngotMold,base:crudetongs", id .. " keeps crucible, mold and tongs")
+    end
+    local smelt = AC_Materials.getRecipe("AmmoMaking_SmeltZincOre")
+    for _, input in ipairs(smelt.inputs) do
+        check(not input.keep, "ore smelting needs no tool, like vanilla copper")
+    end
+
+    -- Brass: 7 copper + 3 zinc -> 10 brass, exactly.
+    local brass = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")
+    local consumed, created = AC_Materials.getRecipeUnits(brass)
+    eq(consumed.copper, 70, "brass takes 7 copper ingots")
+    eq(consumed.zinc, 30, "brass takes 3 zinc ingots")
+    eq(created.brass, 100, "brass yields 10 ingots")
+    eq(consumed.zinc / (consumed.copper + consumed.zinc), 0.3, "30% zinc")
+    eq(brass.alloy, "brass", "brass is marked as the alloy")
+
+    -- The checker itself: it must reject what it is there to reject.
+    local function variant(base, change)
+        local copy = { id = base.id .. "_tampered", alloy = base.alloy, inputs = base.inputs, outputs = base.outputs }
+        for k, v in pairs(change) do copy[k] = v end
+        return copy
+    end
+    check(not AC_Materials.checkConservation(variant(smelt, { outputs = { { count = 11, item = "AmmoMaking.ZincScrap" } } })), "11 scrap from one ore is rejected")
+    check(not AC_Materials.checkConservation(variant(brass, { outputs = { { count = 11, item = "Base.BrassIngot" } } })), "11 brass from 10 ingots is rejected")
+    check(not AC_Materials.checkConservation(variant(brass, { outputs = { { count = 9, item = "Base.BrassIngot" } } })), "an alloy that loses metal is rejected as inexact")
+    check(AC_Materials.checkConservation(variant(smelt, { outputs = { { count = 9, item = "AmmoMaking.ZincScrap" } } })), "a lossy non-alloy recipe is allowed")
+    check(not AC_Materials.checkConservation(variant(smelt, { outputs = { { count = 1, item = "Base.CopperIngot" } } })), "zinc cannot become copper")
+    check(not AC_Materials.checkConservation(variant(brass, { inputs = { { count = 10, items = { "Base.CopperIngot" }, keep = true } } })), "kept inputs pay for nothing")
+    check(not AC_Materials.checkConservation({
+        id = "cheapest",
+        inputs = { { count = 1, items = { "Base.CopperIngot", "Base.CopperScrap" } } },
+        outputs = { { count = 2, item = "Base.CopperScrap" } },
+    }), "an either-or input counts as its cheapest alternative")
+
+    -- Whole graph, vanilla copper recipes included: every recipe is
+    -- non-increasing and no metal item can be turned back into itself.
+    local all = {}
+    for _, r in ipairs(AC_Materials.RECIPES) do table.insert(all, r) end
+    for _, r in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(all, r) end
+    local edges = {}
+    for _, recipe in ipairs(all) do
+        check(AC_Materials.checkConservation(recipe), recipe.id .. " does not create metal")
+        for _, input in ipairs(recipe.inputs) do
+            for _, from in ipairs(input.items or {}) do
+                if U[from] and not input.keep then
+                    edges[from] = edges[from] or {}
+                    for _, output in ipairs(recipe.outputs) do
+                        if U[output.item] then edges[from][output.item] = true end
+                    end
+                end
+            end
+        end
+    end
+    local function reaches(from, target, visited)
+        for nextItem in pairs(edges[from] or {}) do
+            if nextItem == target then return true end
+            if not visited[nextItem] then
+                visited[nextItem] = true
+                if reaches(nextItem, target, visited) then return true end
+            end
+        end
+        return false
+    end
+    for id in pairs(U) do
+        check(not reaches(id, id, {}), "no recipe loop returns to " .. id)
+    end
+    check(reaches("Base.CopperOre", "Base.BrassIngot", {}), "copper ore reaches brass")
+    check(reaches("AmmoMaking.ZincOre", "Base.BrassIngot", {}), "zinc ore reaches brass")
+    check(edges["Base.BrassIngot"] == nil, "nothing consumes brass ingots yet")
+    check(edges["Base.BrassScrap"] == nil, "brass scrap is reserved for later recycling")
+
+    -- Run the chain on a pretend inventory. This executes the mirror
+    -- table, not the game's crafting system.
+    local function craft(inventory, recipe)
+        for _, input in ipairs(recipe.inputs) do
+            local id = input.items and input.items[1] or input.tags[1]
+            if (inventory[id] or 0) < input.count then return false end
+        end
+        for _, input in ipairs(recipe.inputs) do
+            if not input.keep then
+                local id = input.items and input.items[1] or input.tags[1]
+                inventory[id] = inventory[id] - input.count
+            end
+        end
+        for _, output in ipairs(recipe.outputs) do
+            inventory[output.item] = (inventory[output.item] or 0) + output.count
+        end
+        return true
+    end
+    local function metalIn(inventory)
+        local sum = 0
+        for id, count in pairs(inventory) do
+            if U[id] then sum = sum + U[id].units * count end
+        end
+        return sum
+    end
+    local function freshInventory()
+        return {
+            ["Base.CopperOre"] = 7, ["AmmoMaking.ZincOre"] = 3, ["base:charcoal"] = 200,
+            ["Base.CeramicCrucible"] = 1, ["base:crudetongs"] = 1, ["Base.ClayIngotMold"] = 1,
+        }
+    end
+
+    local inv = freshInventory()
+    local vanillaSmelt = AC_Materials.VANILLA_RECIPES[1]
+    eq(vanillaSmelt.id, "SmeltCopperOre", "vanilla copper smelting is recorded")
+    for _ = 1, 7 do check(craft(inv, vanillaSmelt), "smelt copper ore") end
+    for _ = 1, 3 do check(craft(inv, smelt), "smelt zinc ore") end
+    check(not craft(inv, smelt), "no fourth zinc ore to smelt")
+    eq(inv["Base.CopperScrap"], 70, "7 copper ore -> 70 scrap")
+    eq(inv["AmmoMaking.ZincScrap"], 30, "3 zinc ore -> 30 scrap")
+    for _ = 1, 7 do check(craft(inv, AC_Materials.getRecipe("AmmoMaking_CastCopperIngot")), "cast copper ingot") end
+    for _ = 1, 3 do check(craft(inv, AC_Materials.getRecipe("AmmoMaking_CastZincIngot")), "cast zinc ingot") end
+    eq(inv["Base.CopperIngot"], 7, "70 scrap -> 7 copper ingots")
+    eq(inv["AmmoMaking.ZincIngot"], 3, "30 scrap -> 3 zinc ingots")
+    check(craft(inv, brass), "cast brass")
+    check(not craft(inv, brass), "the ingots are gone after one batch")
+    eq(inv["Base.BrassIngot"], 10, "10 ore -> 10 brass ingots")
+    eq(inv["Base.CopperIngot"] + inv["AmmoMaking.ZincIngot"] + inv["Base.CopperScrap"] + inv["AmmoMaking.ZincScrap"], 0, "nothing left over")
+    eq(metalIn(inv), metalIn(freshInventory()), "metal units unchanged from ore to brass")
+    eq(200 - inv["base:charcoal"], 7 * 4 + 3 * 4 + 10 * 4 + 10, "charcoal consumed by every step")
+    eq(inv["Base.CeramicCrucible"] + inv["base:crudetongs"] + inv["Base.ClayIngotMold"], 3, "kept tools are still there")
+
+    -- Any order of any recipes never increases the metal in the inventory.
+    local seed = 12345
+    local function nextRandom(n)
+        seed = (seed * 1103515245 + 12345) % 2147483648
+        return (seed % n) + 1
+    end
+    inv = freshInventory()
+    local initial = metalIn(inv)
+    local worst = initial
+    for _ = 1, 500 do
+        craft(inv, all[nextRandom(#all)])
+        local now = metalIn(inv)
+        if now > worst then worst = now end
+    end
+    eq(worst, initial, "500 crafts in random order never exceed the starting metal")
+end
+
+section("Metallurgy XP: one grant per completed craft (OnCreate callbacks)")
+do
+    -- The engine calls OnCreate(craftRecipeData, character). The callbacks
+    -- must not need anything from craftRecipeData.
+    local untouchable = setmetatable({}, { __index = function(_, key) error("craftRecipeData." .. tostring(key) .. " was read") end })
+
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local xp = AC_Materials.getRecipeXP(recipe)
+        check(xp > 0, recipe.id .. " awards XP")
+        local player = MOCK.newPlayer()
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local ok, granted = pcall(AC_Materials[recipe.callback], untouchable, player)
+        MOCK.capturePrint(false)
+        check(ok, recipe.id .. " callback runs: " .. tostring(granted))
+        eq(granted, xp, recipe.id .. " callback reports the XP")
+        eq(#player.xpLog, 1, recipe.id .. " grants XP exactly once")
+        eq(player.xpLog[1], xp, recipe.id .. " XP amount")
+        check(MOCK.printLogContains("[AmmoMaking] Metallurgy (" .. recipe.id .. "): +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), recipe.id .. " XP logged")
+
+        check(pcall(AC_Materials[recipe.callback], untouchable, nil), recipe.id .. " callback tolerates a missing character")
+        eq(AC_Materials[recipe.callback](untouchable, nil), 0, recipe.id .. " no character, no XP")
+    end
+
+    local player = MOCK.newPlayer()
+    eq(AC_Materials.onRecipeCreated("not_a_recipe", player), 0, "unknown recipe id grants nothing")
+    eq(#player.xpLog, 0, "no XP for an unknown recipe")
+    eq(AC_Materials.getRecipeXP(nil), 0, "no recipe, no XP")
+
+    -- Skill never creates metal: XP and level appear nowhere in the units.
+    local before = AC_Materials.getRecipeUnits(AC_Materials.getRecipe("AmmoMaking_CastBrassIngots"))
+    player.perkLevel = 10
+    local after = AC_Materials.getRecipeUnits(AC_Materials.getRecipe("AmmoMaking_CastBrassIngots"))
+    eq(after.copper, before.copper, "level does not change what a recipe consumes")
+    eq(AC_Materials.getRecipeXP(AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")), AC_Materials.CONFIG.xpCastBrass, "brass XP comes from CONFIG")
+end
+
+section("Metallurgy skill requirement (mocked CraftRecipe scripts)")
+do
+    -- The mock implements the two methods the 42.20.4 jar declares. That
+    -- the engine exposes them to Lua is REQUIRES FUTURE IN-GAME VERIFICATION.
+    local ids = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
+
+    MOCK.resetCraftRecipes(ids)
+    local summary = AC_Materials.applySkillRequirements()
+    eq(summary.attached, #ids, "every recipe gets the requirement")
+    eq(summary.missing + summary.unsupported + summary.present, 0, "nothing else reported")
+    for _, id in ipairs(ids) do
+        local script = MOCK.craftRecipeScripts[id]
+        eq(#script.requiredSkills, 1, id .. " has one required skill")
+        eq(script.requiredSkills[1].perk, AmmoMakingSkill.perk, id .. " requires the Ammo Making perk")
+        eq(script.requiredSkills[1].level, AC_Materials.CONFIG.requiredLevel, id .. " required level from CONFIG")
+    end
+    eq(AC_Materials.CONFIG.requiredLevel, 0, "smelting is reachable at level 0")
+
+    summary = AC_Materials.applySkillRequirements()
+    eq(summary.attached, 0, "a second run attaches nothing")
+    eq(summary.present, #ids, "a second run finds them present")
+    for _, id in ipairs(ids) do
+        eq(#MOCK.craftRecipeScripts[id].requiredSkills, 1, id .. " still has exactly one")
+    end
+
+    MOCK.resetCraftRecipes({ ids[1] })
+    summary = AC_Materials.applySkillRequirements()
+    eq(summary.attached, 1, "the one known recipe is handled")
+    eq(summary.missing, #ids - 1, "unknown recipes are counted, not raised")
+
+    MOCK.resetCraftRecipes(ids)
+    MOCK.craftRecipeScripts[ids[2]].addRequiredSkill = nil
+    summary = AC_Materials.applySkillRequirements()
+    eq(summary.unsupported, 1, "a script without addRequiredSkill is unsupported")
+    eq(summary.attached, #ids - 1, "the others still get it")
+
+    MOCK.resetCraftRecipes(ids)
+    MOCK.craftRecipeLookup = false
+    local ok
+    ok, summary = pcall(AC_Materials.applySkillRequirements)
+    MOCK.craftRecipeLookup = true
+    check(ok, "no getCraftRecipe on the script manager does not raise")
+    eq(summary.missing, #ids, "without the lookup every recipe is missing")
+
+    MOCK.scriptManagerAvailable = false
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local okBoot = pcall(Events.OnGameBoot.fire)
+    MOCK.capturePrint(false)
+    MOCK.scriptManagerAvailable = true
+    check(okBoot, "a failing script manager at boot does not raise")
+    check(MOCK.printLogContains("WARNING: metallurgy skill requirements not applied"), "boot failure is logged as a WARNING")
+
+    MOCK.resetCraftRecipes(ids)
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    Events.OnGameBoot.fire()
+    Events.OnGameStart.fire()
+    MOCK.capturePrint(false)
+    for _, id in ipairs(ids) do
+        eq(#MOCK.craftRecipeScripts[id].requiredSkills, 1, id .. " attached once across OnGameBoot and OnGameStart")
+    end
+    local lines = 0
+    for _, line in ipairs(MOCK.printLog) do
+        if string.find(line, "Metallurgy recipes: " .. #ids .. " given the Ammo Making requirement", 1, true) then lines = lines + 1 end
+    end
+    eq(lines, 1, "the attachment is logged once, not on the no-op second run")
+
+    -- Predicted craft time, mirroring CraftRecipe.getTime in the jar.
+    local brass = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")
+    eq(AC_Materials.getExpectedTime(brass, 0), 200, "level 0: the script time")
+    eq(AC_Materials.getExpectedTime(brass, 1), 190, "5% faster per level")
+    eq(AC_Materials.getExpectedTime(brass, 10), 100, "level 10: half the time")
+    eq(AC_Materials.getExpectedTime(brass, nil), 200, "unknown level counts as 0")
+    local previous = 201
+    for level = 0, 10 do
+        local t = AC_Materials.getExpectedTime(brass, level)
+        check(t < previous and t > 0, "time falls with level and stays positive (" .. level .. ")")
+        previous = t
+    end
+end
+
+section("Metallurgy translations: every recipe and item has an English name")
+do
+    local function keys(file)
+        local defined = {}
+        for key, value in string.gmatch(readFile(TRANSLATE .. file), '"([^"]+)"%s*:%s*"([^"]*)"') do
+            defined[key] = value
+        end
+        return defined
+    end
+
+    -- Recipes.json keys are the recipe id without a module prefix
+    -- (42.20.4: Translator.getRecipeName(name)).
+    local recipeNames = keys("Recipes.json")
+    local count = 0
+    for _ in pairs(recipeNames) do count = count + 1 end
+    eq(count, #AC_Materials.RECIPES, "no stale recipe names")
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        check(recipeNames[recipe.id] ~= nil and recipeNames[recipe.id] ~= "", "recipe name for " .. recipe.id)
+    end
+
+    -- ItemName.json keys are full types, as in vanilla ("Base.CopperIngot").
+    local itemNames = keys("ItemName.json")
+    count = 0
+    for key in pairs(itemNames) do
+        count = count + 1
+        check(declaredItems[key] ~= nil, "item name key belongs to a declared item (" .. key .. ")")
+    end
+    local declaredCount = 0
+    for id, block in pairs(declaredItems) do
+        declaredCount = declaredCount + 1
+        eq(itemNames[id], block.fields.DisplayName, "ItemName.json agrees with the script DisplayName for " .. id)
+    end
+    eq(count, declaredCount, "one item name per declared item")
+end
+
+section("Metallurgy debug tools")
+do
+    MOCK.debug = true
+    local player = MOCK.newPlayer({ square = MOCK.newSquare(5, 5, 0, GRASS) })
+    local ids = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
+    MOCK.resetCraftRecipes(ids)
+    AC_Materials.applySkillRequirements()
+
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnMetallurgyKit(player)
+    MOCK.capturePrint(false)
+    local inv = player.inventory
+    eq(inv:count("Base.Tongs"), 1, "tongs spawned")
+    eq(inv:count("Base.CeramicCrucible"), 1, "crucible spawned")
+    eq(inv:count("Base.IronIngotMold"), 1, "a mold that does not break is spawned")
+    eq(inv:count("AmmoMaking.ZincOre"), 1, "zinc ore spawned")
+    eq(inv:count("Base.CopperScrap"), 10, "copper scrap for one ingot")
+    eq(inv:count("AmmoMaking.ZincScrap"), 10, "zinc scrap for one ingot")
+    eq(inv:count("Base.CopperIngot") + 1, 7, "copper ingots: one short of a batch, cast the last")
+    eq(inv:count("AmmoMaking.ZincIngot") + 1, 3, "zinc ingots: one short of a batch, cast the last")
+    eq(inv:count("Base.Charcoal"), 4 + 4 + 4 + 10, "charcoal for every recipe once")
+    eq(inv:count("Base.BrassIngot"), 0, "the kit does not hand out brass")
+
+    player.perkLevel = 4
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local ok = pcall(AC_GeologyDebug.inspectMetallurgyRecipes, player)
+    MOCK.capturePrint(false)
+    check(ok, "recipe inspector runs")
+    check(MOCK.printLogContains("METALLURGY RECIPES (Ammo Making level 4)"), "inspector header")
+    check(MOCK.printLogContains("AmmoMaking_CastBrassIngots [Furnace]: loaded, required skills 1; XP 25; expected time 160/200; metal conserved"), "inspector line")
+    for _, id in ipairs(ids) do
+        eq(#MOCK.craftRecipeScripts[id].requiredSkills, 1, "inspector attaches nothing (" .. id .. ")")
+    end
+
+    MOCK.resetCraftRecipes({})
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    ok = pcall(AC_GeologyDebug.inspectMetallurgyRecipes, player)
+    MOCK.capturePrint(false)
+    check(ok, "recipe inspector runs without loaded recipes")
+    check(MOCK.printLogContains("AmmoMaking_SmeltZincOre [PrimitiveFurnace]: NOT FOUND in the script manager"), "missing recipe reported")
+    check(pcall(AC_GeologyDebug.inspectMetallurgyRecipes, nil), "inspector tolerates no player")
+
+    MOCK.resetCraftRecipes(ids)
+    AC_Materials.applySkillRequirements()
+    MOCK.debug = false
+end
+
+------------------------------------------------
 -- COMPATIBILITY CHECK
 ------------------------------------------------
 
@@ -2506,6 +3197,52 @@ do
     eq(summary.warnings, 0, "no warnings with every API mocked")
     eq(summary.unverified, 0, "nothing unverified with a player present")
     check(MOCK.printLogContains("[AmmoMaking] OK: Base.CopperOre"), "OK line format")
+    check(MOCK.printLogContains("[AmmoMaking] OK: Base.BrassIngot"), "vanilla brass ingot probed")
+    check(MOCK.printLogContains("[AmmoMaking] OK: AmmoMaking.ZincScrap"), "zinc scrap probed")
+    check(MOCK.printLogContains("[AmmoMaking] OK: recipe AmmoMaking_CastBrassIngots"), "brass recipe probed")
+    check(MOCK.printLogContains("[AmmoMaking] OK: CraftRecipe:addRequiredSkill"), "skill attachment method probed")
+    check(MOCK.printLogContains("[AmmoMaking] OK: Ammo Making requirement on AmmoMaking_SmeltZincOre"), "attached requirement probed")
+
+    -- Metallurgy recipe probes
+    local savedRecipe = MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"]
+    MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local rM, sM = AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = savedRecipe
+    eq(sM.warnings, 1, "a recipe the script manager does not know is one WARNING")
+    check(MOCK.printLogContains("WARNING: recipe AmmoMaking_CastZincIngot not found (AC_Recipes.txt did not load; this furnace recipe is unavailable)"), "missing recipe WARNING line")
+
+    local bare = MOCK.newCraftRecipeScript("AmmoMaking_CastZincIngot")
+    MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = bare
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    rM, sM = AC_Compat.run()
+    MOCK.capturePrint(false)
+    eq(sM.warnings, 1, "a recipe without the requirement is one WARNING")
+    check(MOCK.printLogContains("WARNING: Ammo Making requirement not attached to AmmoMaking_CastZincIngot"), "unattached requirement WARNING line")
+    eq(#bare.requiredSkills, 0, "the compatibility check attaches nothing itself")
+    MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = savedRecipe
+
+    MOCK.craftRecipeLookup = false
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    rM, sM = AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.craftRecipeLookup = true
+    eq(sM.warnings, 1, "no getCraftRecipe is one WARNING, not one per recipe")
+    check(MOCK.printLogContains("WARNING: ScriptManager:getCraftRecipe missing"), "missing lookup WARNING line")
+
+    local savedCallback = AC_Materials.onCastBrassIngots
+    AC_Materials.onCastBrassIngots = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    rM, sM = AC_Compat.run()
+    MOCK.capturePrint(false)
+    AC_Materials.onCastBrassIngots = savedCallback
+    eq(sM.warnings, 1, "a missing OnCreate callback is one WARNING")
+    check(MOCK.printLogContains("WARNING: OnCreate callback AC_Materials.onCastBrassIngots missing (no Ammo Making XP for AmmoMaking_CastBrassIngots)"), "missing callback WARNING line")
     check(MOCK.printLogContains("Compatibility check:"), "summary line printed")
 
     MOCK.knownScriptItems["Base.CopperOre"] = nil

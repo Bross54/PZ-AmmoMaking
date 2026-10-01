@@ -594,6 +594,177 @@ end
 
 
 ------------------------------------------------
+-- METALLURGY
+------------------------------------------------
+--
+-- The kit covers every furnace recipe once: one zinc
+-- ore to smelt, ten scrap of each metal to cast, and
+-- enough ingots that the two cast ones complete a
+-- 7 + 3 brass batch. The iron mold is used because the
+-- clay one breaks on smithing. A furnace is not
+-- spawned: build or find a vanilla one.
+------------------------------------------------
+
+local METALLURGY_KIT = {
+
+    { AC_Materials.ITEMS.Tongs, 1 },
+
+    { AC_Materials.ITEMS.Crucible, 1 },
+
+    { AC_Materials.ITEMS.IronIngotMold, 1 },
+
+    { AC_Materials.ITEMS.Charcoal, 22 },
+
+    { AC_Materials.ITEMS.ZincOre, 1 },
+
+    { AC_Materials.ITEMS.CopperScrap, 10 },
+
+    { AC_Materials.ITEMS.ZincScrap, 10 },
+
+    { AC_Materials.ITEMS.CopperIngot, 6 },
+
+    { AC_Materials.ITEMS.ZincIngot, 2 },
+}
+
+
+local function spawnMetallurgyKit(
+    player
+)
+
+    local itemTypes = {}
+
+
+    for _,
+        entry
+    in ipairs(
+        METALLURGY_KIT
+    )
+    do
+
+        for _ = 1, entry[2] do
+
+            table.insert(
+                itemTypes,
+                entry[1]
+            )
+        end
+    end
+
+
+    spawnItems(
+        player,
+        itemTypes,
+        "Metallurgy kit"
+    )
+end
+
+
+------------------------------------------------
+-- Prints what the game knows about each metallurgy
+-- recipe. Read-only: it attaches nothing.
+------------------------------------------------
+
+local function inspectMetallurgyRecipes(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local level =
+        AmmoMakingSkill.getLevel(
+            player
+        )
+
+
+    log(
+        "METALLURGY RECIPES (Ammo Making level "
+        .. tostring(level)
+        .. ")"
+    )
+
+
+    local found = 0
+
+
+    for _,
+        recipe
+    in ipairs(
+        AC_Materials.RECIPES
+    )
+    do
+
+        local ok,
+              script =
+            pcall(
+                AC_Materials.findRecipeScript,
+                recipe.id
+            )
+
+
+        local state = "NOT FOUND in the script manager"
+
+
+        if ok
+            and script
+        then
+
+            found =
+                found + 1
+
+
+            state = "loaded"
+
+
+            if script.getRequiredSkillCount then
+
+                state =
+                    state
+                    .. ", required skills "
+                    .. tostring(script:getRequiredSkillCount())
+            end
+        end
+
+
+        local conserved,
+              reason =
+            AC_Materials.checkConservation(
+                recipe
+            )
+
+
+        log(
+            recipe.id
+            .. " ["
+            .. recipe.benchTag
+            .. "]: "
+            .. state
+            .. "; XP "
+            .. tostring(AC_Materials.getRecipeXP(recipe))
+            .. "; expected time "
+            .. tostring(AC_Materials.getExpectedTime(recipe, level))
+            .. "/"
+            .. tostring(recipe.time)
+            .. "; metal "
+            .. (conserved and "conserved" or ("NOT CONSERVED: " .. tostring(reason)))
+        )
+    end
+
+
+    halo(
+        player,
+        "Metallurgy recipes: "
+        .. found
+        .. "/"
+        .. #AC_Materials.RECIPES
+        .. " loaded (see console)"
+    )
+end
+
+
+------------------------------------------------
 -- SPAWN ASSAYED SAMPLE
 ------------------------------------------------
 --
@@ -1302,6 +1473,12 @@ AC_GeologyDebug.spawnMiningKit =
 AC_GeologyDebug.spawnLaboratoryAnalyzer =
     spawnLaboratoryAnalyzer
 
+AC_GeologyDebug.spawnMetallurgyKit =
+    spawnMetallurgyKit
+
+AC_GeologyDebug.inspectMetallurgyRecipes =
+    inspectMetallurgyRecipes
+
 AC_GeologyDebug.spawnAssayedSample =
     spawnAssayedSample
 
@@ -1474,6 +1651,8 @@ local function onFillWorldObjectContextMenu(
 
     menu:addOption("Spawn Assayed Sample (current 3x3)", player, spawnAssayedSample)
 
+    menu:addOption("Spawn Metallurgy Kit (furnace tools + materials)", player, spawnMetallurgyKit)
+
 
     ------------------------------------------------
     -- Skill / diagnostics
@@ -1484,6 +1663,8 @@ local function onFillWorldObjectContextMenu(
         player
     )
 
+
+    menu:addOption("Inspect Metallurgy Recipes", player, inspectMetallurgyRecipes)
 
     menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
 end

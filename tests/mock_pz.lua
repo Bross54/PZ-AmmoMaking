@@ -213,7 +213,47 @@ MOCK.knownScriptItems = {
     ["Base.PickAxeForged"] = true,
     ["Base.PickAxeHead"] = true,
     ["Base.Shovel"] = true,
+    -- Metallurgy (ids confirmed in the installed 42.20.4 scripts)
+    ["AmmoMaking.ZincScrap"] = true,
+    ["AmmoMaking.ZincIngot"] = true,
+    ["Base.CopperScrap"] = true,
+    ["Base.CopperIngot"] = true,
+    ["Base.BrassIngot"] = true,
+    ["Base.BrassScrap"] = true,
+    ["Base.CeramicCrucible"] = true,
+    ["Base.ClayIngotMold"] = true,
+    ["Base.IronIngotMold"] = true,
+    ["Base.SteelIngotMold"] = true,
+    ["Base.Tongs"] = true,
+    ["Base.Charcoal"] = true,
 }
+
+-- Mocked CraftRecipe script objects, as getScriptManager():getCraftRecipe(id)
+-- returns them. Only the two methods AC_Materials uses exist; the 42.20.4 jar
+-- declares addRequiredSkill(PerkFactory.Perk, int) and getRequiredSkillCount().
+-- This checks Lua control flow, not that the engine exposes the methods.
+local function newCraftRecipeScript(id)
+    local script = { id = id, requiredSkills = {} }
+    function script:getRequiredSkillCount() return #self.requiredSkills end
+    function script:addRequiredSkill(perk, level)
+        if perk == nil or type(level) ~= "number" then
+            error("No implementation found for function: addRequiredSkill")
+        end
+        table.insert(self.requiredSkills, { perk = perk, level = level })
+    end
+    return script
+end
+
+MOCK.newCraftRecipeScript = newCraftRecipeScript
+MOCK.craftRecipeScripts = {}
+MOCK.craftRecipeLookup = true   -- false: the script manager has no getCraftRecipe
+
+function MOCK.resetCraftRecipes(ids)
+    MOCK.craftRecipeScripts = {}
+    for _, id in ipairs(ids or {}) do
+        MOCK.craftRecipeScripts[id] = newCraftRecipeScript(id)
+    end
+end
 
 local function newItem(fullType, opts)
     opts = opts or {}
@@ -285,6 +325,9 @@ function getScriptManager()
             if MOCK.knownScriptItems[fullType] then return {} end
             return nil
         end,
+        getCraftRecipe = MOCK.craftRecipeLookup and function(_, id)
+            return MOCK.craftRecipeScripts[id]
+        end or nil,
     }
 end
 
@@ -794,7 +837,7 @@ end
 MOCK.MOD_FILES = {
     "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Geology", "shared/AC_GeologySampling",
-    "shared/AC_LaboratoryAnalyzer", "shared/AC_Mining", "shared/AC_Text",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_Text",
     "shared/AC_WorldData",
     "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
     "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
@@ -822,6 +865,7 @@ function MOCK.resetLuaState()
     AC_LaboratoryAnalyzerObject = nil
     AC_Deposits = nil
     AC_Mining = nil
+    AC_Materials = nil
     AC_Compat = nil
     AC_MineOreAction = nil
     AC_PickUpAnalyzerAction = nil
