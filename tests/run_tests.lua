@@ -3740,6 +3740,47 @@ do
     end
 end
 
+section("Balance table: the document is generated from the calibre model")
+do
+    -- docs/AMMUNITION_DESIGN.md carries the one balance table. It is
+    -- rendered from AC_Calibres (tests/render_balance.lua), so no number
+    -- is typed twice.
+    local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+    local document = readFile(ROOT .. "/docs/AMMUNITION_DESIGN.md")
+    local from = string.find(document, BALANCE.START, 1, true)
+    local _, to = string.find(document, BALANCE.FINISH, 1, true)
+    check(from ~= nil and to ~= nil and to > from, "the design document has the balance table markers")
+    eq(string.sub(document, from or 1, to or 1), BALANCE.renderBlock(), "the balance tables equal the rendered model (run tests/write_recipes.lua)")
+    eq(BALANCE.replaceBlock(document), document, "regenerating changes nothing")
+    eq(BALANCE.replaceBlock("no markers here"), nil, "a document without markers is not rewritten")
+
+    -- One row per calibre and per family, and every value a consumer reads.
+    local block = BALANCE.renderBlock()
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local primer = AC_Calibres.getPrimer(calibre.primerFamily)
+        local row = string.match(block, "\n(| " .. string.gsub(calibre.id, "%p", "%%%0") .. " | " .. calibre.class .. " |[^\n]*)")
+        check(row ~= nil, calibre.id .. " has a balance row")
+        row = row or ""
+        for _, value in ipairs({ calibre.round, calibre.dieSet, calibre.primerFamily,
+                                 calibre.levels.dieSet .. " / " .. calibre.levels.case .. " / " .. calibre.levels.bullet .. " / " .. calibre.levels.assemble,
+                                 calibre.xp.dieSet .. " / " .. calibre.xp.case .. " / " .. calibre.xp.bullet .. " / " .. calibre.xp.assemble,
+                                 calibre.time.dieSet .. " / " .. calibre.time.case .. " / " .. calibre.time.bullet .. " / " .. calibre.time.assemble }) do
+            check(string.find(row, value, 1, true) ~= nil, calibre.id .. " row shows " .. value)
+        end
+        check(string.find(block, "| " .. calibre.id .. " | " .. (calibre.cupsPerCase * 5) .. " + " .. primer.brassUnits .. " = ", 1, true) ~= nil, calibre.id .. " has a material row")
+    end
+    for _, primer in ipairs(AC_Calibres.PRIMERS) do
+        check(string.find(block, "| " .. primer.id .. " | " .. primer.class .. " | `" .. primer.item .. "` |", 1, true) ~= nil, primer.id .. " has a primer row")
+    end
+    -- The table follows the model: a changed value changes the rendering.
+    local nine = AC_Calibres.LIST[1]
+    local saved = nine.powderUses
+    nine.powderUses = 7
+    check(BALANCE.renderBlock() ~= block, "a changed charge changes the rendered table")
+    nine.powderUses = saved
+    eq(BALANCE.renderBlock(), block, "and restoring it restores the table")
+end
+
 section("Primer families: pistol and rifle, small and large")
 do
     eq(#AC_Calibres.PRIMERS, 4, "four primer families")
