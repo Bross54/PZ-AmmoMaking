@@ -2290,6 +2290,7 @@ do
         { "Metallurgy", {
             "Spawn Metallurgy Kit (furnace tools + materials)",
             "Spawn Case Stock Kit (brass + forge and punch tools)",
+            "Spawn Recycling Kit (one mixed batch per scrapping recipe + one recast)",
             "Inspect Station Recipes",
         } },
         { "Ammunition", {
@@ -6699,6 +6700,42 @@ do
     check(BALANCE.renderRecycling() ~= rendered, "a changed yield changes the rendered recycling table")
     C.scrapPerBatch = savedYield
     eq(BALANCE.renderRecycling(), rendered, "and restoring it restores the table")
+
+    MOCK.debug = true
+    -- The debug kit follows the model: one mixed batch per scrapping
+    -- recipe, and exactly what one recast still needs.
+    local recyclePlayer = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, GRASS) })
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnRecyclingKit(recyclePlayer)
+    MOCK.capturePrint(false)
+    local bin = recyclePlayer.inventory
+    local mirror = { ["base:hammer"] = 1, ["base:crudetongs"] = 1, ["base:charcoal"] = bin:count("Base.Charcoal") }
+    for _, entry in ipairs(AC_GeologyDebug.buildRecyclingKit()) do
+        mirror[entry[1]] = (mirror[entry[1]] or 0) + entry[2]
+        eq(bin:count(entry[1]) >= entry[2], true, "the recycling kit holds " .. entry[2] .. " of " .. entry[1])
+        check(AC_Compat ~= nil and (string.sub(entry[1], 1, 5) == "Base." or declaredItems[entry[1]] ~= nil), "recycling kit item exists: " .. entry[1])
+    end
+    eq(bin:count("Base.BallPeenHammer"), 1, "a hammer for scrapping")
+    eq(bin:count("Base.CeramicCrucible") + bin:count("Base.Tongs") + bin:count("Base.IronIngotMold"), 3, "and the furnace tools for the recast")
+    local mixedGroups = 0
+    for _, group in ipairs(AC_Recycling.buildGroups()) do
+        local held, kinds = 0, 0
+        for _, id in ipairs(group.items) do
+            held = held + bin:count(id)
+            if bin:count(id) > 0 then kinds = kinds + 1 end
+        end
+        eq(held, group.count, "exactly one batch for the " .. group.units .. "-unit scrapping recipe")
+        if kinds > 1 then mixedGroups = mixedGroups + 1 end
+        check(mirrorCraft(mirror, AC_Materials.getRecipe(AC_Recycling.CONFIG.idPrefix .. group.units)), "the kit's batch scraps (" .. group.units .. " units)")
+        check(not mirrorCraft(mirror, AC_Materials.getRecipe(AC_Recycling.CONFIG.idPrefix .. group.units)), "and only once")
+    end
+    eq(mixedGroups, #AC_Recycling.buildGroups(), "every batch is a mix of two components")
+    eq(mirror["Base.BrassScrap"], AC_Recycling.CONFIG.scrapPerIngot, "scrapping the kit leaves exactly ten brass scrap")
+    check(mirrorCraft(mirror, AC_Materials.getRecipe(AC_Recycling.CONFIG.castId)), "which the kit's furnace tools and charcoal cast")
+    eq(mirror["Base.BrassIngot"], 1, "into one ingot")
+    eq(mirror["Base.BrassScrap"], 0, "with no scrap left")
+    eq(mirror["base:charcoal"], 0, "and no charcoal left")
+    MOCK.debug = false
 
     -- The module is data and arithmetic only.
     local source = readFile(LUA .. "shared/AC_Recycling.lua")

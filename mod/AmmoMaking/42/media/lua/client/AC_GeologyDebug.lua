@@ -705,6 +705,93 @@ end
 
 
 ------------------------------------------------
+-- RECYCLING
+------------------------------------------------
+--
+-- Built from AC_Recycling, so it follows the model: one
+-- batch for each scrapping recipe, MIXED from the first
+-- two components the recipe accepts (the thing to see in
+-- game is that one input line takes a mix), a hammer,
+-- and for one recast the furnace tools, charcoal and as
+-- much brass scrap as the three batches leave short of
+-- an ingot. A furnace is not spawned.
+------------------------------------------------
+
+local function buildRecyclingKit()
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    local kit = {
+        { AC_Materials.ITEMS.BallPeenHammer, 1 },
+        { AC_Materials.ITEMS.Tongs, 1 },
+        { AC_Materials.ITEMS.Crucible, 1 },
+        { AC_Materials.ITEMS.IronIngotMold, 1 },
+        { AC_Materials.ITEMS.Charcoal, config.castCharcoal },
+    }
+
+
+    local scrap = 0
+
+
+    for _,
+        group
+    in ipairs(
+        AC_Recycling.buildGroups()
+    )
+    do
+
+        local first =
+            math.ceil(group.count / 2)
+
+
+        table.insert(
+            kit,
+            { group.items[1], first }
+        )
+
+
+        if group.count > first then
+
+            table.insert(
+                kit,
+                { group.items[2] or group.items[1], group.count - first }
+            )
+        end
+
+
+        scrap =
+            scrap + group.scrap
+    end
+
+
+    if scrap < config.scrapPerIngot then
+
+        table.insert(
+            kit,
+            { config.scrapItem, config.scrapPerIngot - scrap }
+        )
+    end
+
+
+    return kit
+end
+
+
+local function spawnRecyclingKit(
+    player
+)
+
+    spawnKit(
+        player,
+        buildRecyclingKit(),
+        "Recycling kit"
+    )
+end
+
+
+------------------------------------------------
 -- AMMUNITION COMPONENTS
 ------------------------------------------------
 --
@@ -1977,6 +2064,13 @@ AC_GeologyDebug.spawnMetallurgyKit =
 AC_GeologyDebug.spawnCaseStockKit =
     spawnCaseStockKit
 
+AC_GeologyDebug.spawnRecyclingKit =
+    spawnRecyclingKit
+
+AC_GeologyDebug.buildRecyclingKit =
+    buildRecyclingKit
+
+
 AC_GeologyDebug.spawnComponentsKit =
     spawnComponentsKit
 
@@ -2217,6 +2311,8 @@ local function onFillWorldObjectContextMenu(
     metallurgy:addOption("Spawn Metallurgy Kit (furnace tools + materials)", player, spawnMetallurgyKit)
 
     metallurgy:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
+    metallurgy:addOption("Spawn Recycling Kit (one mixed batch per scrapping recipe + one recast)", player, spawnRecyclingKit)
+
 
     metallurgy:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
 
