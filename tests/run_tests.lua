@@ -4665,10 +4665,23 @@ do
             end
         end
     end
+    -- Prospecting comes before ore. A sampled 3x3 site of Moderate grade
+    -- holds one ore per tile; when it is worked out the next site is dug
+    -- and field-assayed. Digging itself grants nothing. The advanced and
+    -- laboratory assays are optional and left out, so this is the lower
+    -- bound of prospecting XP; the upper bound is reported below.
+    local orePerSite = 9 * AC_Deposits.CONFIG.reserveByGrade["Moderate"]
+    career.sites = 0
     local function mine(item, n)
-        inv[item] = (inv[item] or 0) + n
-        career.ore = career.ore + n
-        gain(n * AC_Mining.CONFIG.xpPerOre, "mining", "mining")
+        for _ = 1, n do
+            if career.ore % orePerSite == 0 then
+                career.sites = career.sites + 1
+                gain(AC_GeologySampling.CONFIG.fieldAssayXP, "field assay", "prospecting")
+            end
+            inv[item] = (inv[item] or 0) + 1
+            career.ore = career.ore + 1
+            gain(AC_Mining.CONFIG.xpPerOre, "mining", "mining")
+        end
     end
     -- A craft only happens when the character's level allows it.
     local function make(recipe, n)
@@ -4767,6 +4780,17 @@ do
         print("  XP economy: largest single source = " .. tostring(top) .. " (" .. math.floor(100 * topAmount / career.xp + 0.5) .. "%)")
         career.topFamilyShare = families[1][2] / career.xp
     end
+
+    -- Every source of Ammo Making XP in the mod is in the career: assays,
+    -- mining and every recipe. Prospecting stays a small share even when
+    -- every site also gets the advanced and the laboratory assay.
+    eq(orePerSite, 9, "a Moderate 3x3 site holds nine ore")
+    eq(career.sites, math.ceil(career.ore / orePerSite), "one site per nine ore")
+    eq(career.byFamily.prospecting, career.sites * AC_GeologySampling.CONFIG.fieldAssayXP, "one field assay per site")
+    local thorough = career.sites * (AC_GeologySampling.CONFIG.fieldAssayXP + AC_GeologySampling.CONFIG.advancedAssayXP + AC_LaboratoryAnalyzer.CONFIG.assayXP)
+    check(career.byFamily.prospecting / career.xp < 0.05, "field assays are a small share of the career's XP")
+    check(thorough / (career.xp - career.byFamily.prospecting + thorough) < 0.10, "even with every assay on every site, prospecting stays under a tenth")
+    print("  XP economy: " .. career.sites .. " sites prospected; prospecting XP " .. career.byFamily.prospecting .. " with field assays only, " .. thorough .. " with all three assays on every site")
 
     -- Ammunition is not unlocked before there is material to use it on:
     -- by level 3 the first batch's cases and bullets exist.

@@ -329,8 +329,11 @@ requires level 6 or above, and the perk's XP curve is unchanged.
 
 **Simulated career** (test *XP economy*; a mirror inventory, ore counted,
 loot assumed available, every craft blocked until its level is reached).
-Each cycle is a ten-ore brass batch plus the copper for its bullets, turned
-into as many rounds as possible of the most advanced calibre open:
+It contains every source of Ammo Making XP the mod has: assays, mining and
+every recipe. Each cycle is a ten-ore brass batch plus the copper for its
+bullets, turned into as many rounds as possible of the most advanced calibre
+open. A sampled site of Moderate grade holds nine ore and gets one field
+assay; digging grants nothing:
 
 | Level reached | Ore mined | Rounds made so far |
 |---|---|---|
@@ -347,18 +350,23 @@ one, then .308 for seven.
 - First shell: in the third cycle, at level 4. First rifle round: after **70
   ore and 390 pistol rounds and shells**. Pistols and shells establish the
   skill; rifles are the next tier, not a separate grind.
-- After ten cycles: 166 ore, 332 pistol rounds, 58 shells and 406 rifle
-  rounds, 9 853 XP (level 6; level 7 is not reached).
+- After ten cycles: 166 ore from 19 sites, 332 pistol rounds, 58 shells and
+  406 rifle rounds, 9 910 XP (level 6; level 7 is not reached).
+
+XP per action, for reference: field assay 3, advanced assay 6, laboratory
+assay 10, one ore mined 5; smelting 3, casting an ingot 5, the brass batch
+25, forging sheets 5, punching cups 1, mixing powder 5; components and
+rounds as in §2.
 
 XP economy over that career:
 
 | Family of work | Share of all XP |
 |---|---|
-| rifle assembly | 21 % |
+| rifle assembly | 20 % |
 | case stock (sheets and cups) | 14 % |
 | gunpowder | 13 % |
 | rifle cases | 12 % |
-| metallurgy | 9 % |
+| metallurgy | 8 % |
 | mining | 8 % |
 | pistol assembly | 7 % |
 | rifle bullets | 4 % |
@@ -367,14 +375,20 @@ XP economy over that career:
 | shell assembly | 2 % |
 | pistol bullets | 2 % |
 | hulls, shot charges | 1 % each |
+| prospecting (field assays) | 1 % |
 | die sets | under 1 % |
 
-- Largest single source: `AmmoMaking_AssembleRound308Win`, 21 %, the recipe
+- Largest single source: `AmmoMaking_AssembleRound308Win`, 20 %, the recipe
   the simulated player spends seven of ten cycles on.
-- Geology and assay XP (sampling, field and laboratory assays) is earned
-  before the first ore and is not part of this simulation; it only moves the
-  early levels forward. Those systems were confirmed in game and their XP
-  was left as it was.
+- Prospecting is 57 XP with a field assay per site. With the advanced and
+  the laboratory assay on every site as well it would be 361 XP, still under
+  a tenth of the career. The geology, assay and mining XP values belong to
+  systems confirmed in game and were left as they were.
+- Cheap repeatable crafts: punching cups (1 XP per sheet) and swaging
+  bullets (1 XP per scrap) are the cheapest; each consumes tracked metal, so
+  neither can be repeated without ore. No recipe gives XP without consuming
+  something, and the only reversible pair, round and gunpowder, earns
+  nothing on the way back.
 
 Answers to the review questions:
 
