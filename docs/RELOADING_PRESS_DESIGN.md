@@ -360,6 +360,23 @@ direction: `timePercent` may be set anywhere from 50 to 90 and
 better things to add later; a material or quality bonus would make the
 press mandatory rather than convenient, and is not planned.
 
+**With skill the advantage narrows a little, and that was checked.** The
+engine shortens a recipe by `time / 20`, whole division, per level above its
+requirement (JAR `CraftRecipe#getTime`, no lower bound). A hand time of 80
+loses 4 per level; its press time of 48 loses 2, not 2.4. So the press's
+share of the hand time rises from 60 % at the unlock level to at most
+68.2 % at level 10 (a 9mm case: 30 against 44). The rifle steps start
+higher up the ladder and stay below 66 %. No step ever
+comes out equal to, or slower than, its hand recipe, and no time reaches
+zero. Tuning each step separately would buy two or three points and cost a
+table of per-step numbers; one percentage is kept.
+
+**What the press is worth over a whole batch** is in the generated work
+table of `AMMUNITION_DESIGN.md` 9.1: furnace, forge, primers and powder are
+untouched, so the press saves 15 % to 22 % of a batch's station time (least
+for shells, whose hull is quick to form by hand) and raises the XP earned
+per unit of station time by about a quarter. It is a convenience.
+
 The tests assert, for every calibre and step: same material in and out, same
 output count, same level and XP, the calibre's own die set kept, no hammer,
 no other calibre's item, exactly the configured share of the hand time and

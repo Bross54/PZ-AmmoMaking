@@ -4587,6 +4587,35 @@ do
         end
     end
 
+    -- With skill. The engine shortens a recipe by time / 20 (whole
+    -- division) for each level above its requirement (CraftRecipe.getTime
+    -- in the 42.20.4 jar, mirrored by AC_Materials.getExpectedTime). A
+    -- press time of 48 loses 2 per level where the hand's 80 loses 4, so
+    -- the press's share of the hand time creeps up with skill. It must
+    -- stay an advantage at every level, and never become a different deal
+    -- for one calibre than for another.
+    do
+        local lowest, highest = math.huge, 0
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            for _, recipe in ipairs(AC_Calibres.buildPressRecipes(calibre)) do
+                local hand = AC_Materials.getRecipe(recipe.handRecipe)
+                for level = recipe.requiredLevel, 10 do
+                    local byHand = AC_Materials.getExpectedTime(hand, level)
+                    local pressed = AC_Materials.getExpectedTime(recipe, level)
+                    local what = calibre.id .. " " .. recipe.step .. " at level " .. level
+                    check(pressed > 0, what .. ": the press time stays positive (" .. pressed .. ")")
+                    check(pressed < byHand, what .. ": the press is faster than the hand (" .. pressed .. " against " .. byHand .. ")")
+                    local share = pressed / byHand
+                    lowest, highest = math.min(lowest, share), math.max(highest, share)
+                end
+                eq(AC_Materials.getExpectedTime(recipe, recipe.requiredLevel), recipe.time, calibre.id .. " " .. recipe.step .. ": no speed-up at the level it unlocks")
+            end
+        end
+        check(lowest >= P.timePercent / 100 - 0.005, "the press never takes less than its configured share (" .. string.format("%.3f", lowest) .. ")")
+        check(highest <= 0.70, "and at most seven tenths of the hand time at any level (" .. string.format("%.3f", highest) .. ")")
+        print(string.format("  Press: %d %% of the hand time at the unlock level, at most %.1f %% at level 10", P.timePercent, highest * 100))
+    end
+
     -- Switched on, the generator adds three recipes per calibre after that
     -- calibre's own, and nothing else changes. (Not left on: restored below.)
     local before = AC_Calibres.buildRecipes()
@@ -5264,7 +5293,7 @@ do
     end
 end
 
-section("Economy: a hundred rounds of six calibres and a mixed loadout, from ore")
+section("Economy: a hundred rounds of every calibre and four loadouts, from ore")
 do
     local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
     local R = AC_Materials.getRecipe
@@ -5356,6 +5385,7 @@ do
     end
     check(highOre / lowOre < 3, "the dearest calibre takes under three times the ore of the cheapest (" .. lowOre .. " to " .. highOre .. ")")
     check(highRate / lowRate < 1.6, "XP per ore differs by under 1.6 between calibres (" .. string.format("%.1f to %.1f", lowRate, highRate) .. ")")
+    eq(#BALANCE.ECONOMY_CALIBRES, #AC_Calibres.LIST, "every calibre of the model is in the economy table")
     -- Pistol to rifle: more of everything, powder most of all.
     local rifle = economies[".308"]
     check(rifle.ore > nine.ore and rifle.ore / nine.ore < 3, ".308 takes more ore than 9mm, under three times")
@@ -5376,6 +5406,64 @@ do
     check(mix.totalXP < 5775, "and not to level 6")
     print(string.format("  Economy: per 100 rounds %.0f to %.0f ore, %.0f to %.0f XP per ore; mixed loadout %.1f ore, %.0f charcoal, %.0f fertilizer uses, %.0f XP",
         lowOre, highOre, lowRate, highRate, mix.ore, mix.charcoal, mix.fertilizerUses, mix.totalXP))
+
+    -- The loadouts: A is the mixed kit above, B, C and D one calibre in quantity.
+    eq(#BALANCE.ECONOMY_LOADOUTS, 4, "four canonical loadouts")
+    local loadouts = {}
+    for _, loadout in ipairs(BALANCE.ECONOMY_LOADOUTS) do
+        local e = BALANCE.economyOf(loadout.parts)
+        loadouts[loadout.id] = e
+        local rounds, ore = 0, 0
+        for _, part in ipairs(loadout.parts) do
+            rounds = rounds + part[2]
+            ore = ore + BALANCE.economy(AC_Calibres.get(part[1]), part[2]).ore
+        end
+        eq(e.rounds, rounds, "loadout " .. loadout.id .. ": its rounds")
+        check(near(e.ore, ore), "loadout " .. loadout.id .. ": its ore is the sum of its parts")
+        check(e.totalXP / e.ore >= 45 and e.totalXP / e.ore <= 80, "loadout " .. loadout.id .. ": between 45 and 80 XP per ore")
+    end
+    check(near(loadouts.A.ore, mix.ore), "loadout A is the mixed loadout")
+    check(near(loadouts.B.ore, 5 * nine.ore - 0), "loadout B: five hundred 9mm take five times the ore of a hundred")
+    check(near(loadouts.C.ore, 2 * rifle.ore), "loadout C: two hundred .308")
+    check(near(loadouts.D.ore, 2 * economies["12 Gauge"].ore), "loadout D: two hundred shells")
+    -- A die set is forged once, however large the batch.
+    eq(loadouts.B.xp.dieSet, nine.xp.dieSet, "a bigger batch forges no second die set")
+
+    -- Work: crafts and station time, by hand and with the prepared press.
+    -- The press touches three steps and nothing else, so it can save at
+    -- most its share of those steps, and it never changes a count or XP.
+    local P = AC_Calibres.PRESS
+    local leastSaved, mostSaved = math.huge, 0
+    for id, e in pairs(economies) do
+        local calibre = AC_Calibres.get(id)
+        eq(e.work.cases[1], 100, id .. ": a hundred cases formed")
+        eq(e.work.assembly[1], 100, id .. ": a hundred rounds assembled")
+        eq(e.work.bullets[1], 100 / calibre.bulletsPerScrap, id .. ": projectile crafts follow bullets per scrap")
+        eq(e.work.dieSet[1], 1, id .. ": one die set")
+        check(near(e.crafts, e.hotCrafts + e.benchCrafts), id .. ": every craft is at a fire or at a surface")
+        local byHand, pressed = 0, 0
+        for _, step in ipairs({ "case", "bullet", "assemble" }) do
+            local hand = calibreRecipe(calibre, step)
+            local count = ({ case = e.work.cases[1], bullet = e.work.bullets[1], assemble = e.work.assembly[1] })[step]
+            byHand = byHand + count * hand.time
+            pressed = pressed + count * math.floor(hand.time * P.timePercent / 100)
+        end
+        check(near(e.pressableTime, byHand), id .. ": the time the press can shorten is the three die-set steps")
+        check(near(e.handTime - e.pressTime, byHand - pressed), id .. ": the press saves exactly its share of those steps")
+        check(e.pressTime < e.handTime, id .. ": the press saves time")
+        local saved = (e.handTime - e.pressTime) / e.handTime
+        leastSaved, mostSaved = math.min(leastSaved, saved), math.max(mostSaved, saved)
+        -- No step is counted that is not a recipe: the time by hand is the
+        -- sum over the mirror recipes of crafts times time.
+        check(e.handTime > e.pressableTime, id .. ": most of the work is not at the press")
+    end
+    -- The press is a convenience: it cannot halve a batch's work, because
+    -- furnace, forge, primers and powder are untouched.
+    check(mostSaved < (100 - P.timePercent) / 100, "the press saves less than its nominal " .. (100 - P.timePercent) .. " % of any whole batch (" .. string.format("%.1f %%", mostSaved * 100) .. ")")
+    check(leastSaved > 0.10, "and more than a tenth of every batch (" .. string.format("%.1f %%", leastSaved * 100) .. ")")
+    check(mostSaved / leastSaved < 1.6, "no calibre gains much more from the press than another")
+    print(string.format("  Economy: the press saves %.0f %% to %.0f %% of a batch's station time; loadouts A-D take %.1f, %.0f, %.0f and %.0f ore",
+        leastSaved * 100, mostSaved * 100, loadouts.A.ore, loadouts.B.ore, loadouts.C.ore, loadouts.D.ore))
 
     -- Powder: taking rounds apart never pays.
     for _, calibre in ipairs(AC_Calibres.LIST) do

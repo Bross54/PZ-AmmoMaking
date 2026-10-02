@@ -22,9 +22,11 @@ local DOCUMENT = ROOT .. "/docs/AMMUNITION_DESIGN.md"
 
 local MOCK = dofile(ROOT .. "/tests/mock_pz.lua")
 local RENDER = dofile(ROOT .. "/tests/render_recipes.lua")
-local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
 
 MOCK.loadMod(LUA)
+
+-- After the mod: the balance renderer lists the calibres as it loads.
+local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
 
 local handle = assert(io.open(SCRIPT, "r"), "cannot open " .. SCRIPT)
 local header = RENDER.splitHeader(handle:read("*a"))
