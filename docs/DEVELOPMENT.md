@@ -58,10 +58,10 @@ never move an item into that list.
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
 | `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the prepared press; builds the component recipes, their material units and the item list from that data; validates it |
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
-| `shared/AC_Recycling.lua` | shared | Brass recycling: what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing). Data and arithmetic only |
+| `shared/AC_Recycling.lua` | shared | Brass recycling: the sources of brass (`getSources()`, one today), what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing, a dirtier source never returns more). Data and arithmetic only |
 | `shared/AC_Loot.lua` | shared | Die sets as rare loot: tier weights, target lists, `buildEntries`, `validate`, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists |
 | `shared/AC_QualityTally.lua` | shared | The quality tally of loaded ammunition as pure functions (`repair`, `reconcile`, `split`, `merge`, `consume`, `unload`). **Arithmetic only: no other file calls it**, nothing is stored and no vanilla function is wrapped (`AMMO_QUALITY_RUNTIME_DESIGN.md` 7, 8) |
-| `shared/AC_SaveData.lua` | shared | How persisted numbers are read (`number`, `whole`, `isFinite`) and the schema of every ModData key (`SCHEMA`, `check`). Stores nothing |
+| `shared/AC_SaveData.lua` | shared | How persisted numbers are read (`number`, `whole`, `isFinite`), layout versions (`versionStatus`, `upgrade`) and the schema of every ModData key (`SCHEMA`, `check`). Stores nothing |
 | `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 55 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9, scrapping 3, recast 1 |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
@@ -899,6 +899,10 @@ advancing it.
 
 ```text
 lua5.1 tests/run_tests.lua
+python tests/run_mutants.py
+python tools/test_pz_compat.py
+python tools/build_tiles.py --selftest
+python tools/build_release.py --check        all of the above but the full mutation run, and the package checks
 ```
 
 `tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads
@@ -950,9 +954,27 @@ whose ModData refuses every write, and startup cost (which events the mod
 listens to, and that no menu, action or callback validates the model or
 rebuilds a recipe list).
 
-Added on 2026-10-02:
+Added in the second pass of 2026-10-02:
 
-- **Economy**: six canonical batches and a mixed loadout from ore, checked
+- **Quality tally**: worked examples, a property run of 16,000 random
+  operations with one ledger of rounds, handloaded rounds and quality, a
+  fuzz of every field through every function, and a check that no other
+  file uses the module.
+- **Mock fidelity**: every call on a mocked engine object, Java global or
+  static method is checked against the installed build's overloads; the
+  closing section asserts nothing was refused that was not provoked.
+- **XP potential**: a value for every consumable that every recipe pays its
+  XP out of, which bounds every sequence of crafts, not only the simulated
+  ones.
+- **Loot per room**: the engine's rule for which list fills a container,
+  and a cap of one expected die set for any room of twelve containers.
+- **Save data versions**, **recycling sources**, **spent-case policies**,
+  **press against hand at every level**, **item audit**, **press art**,
+  **release metadata**: one section each.
+
+Added in the first pass of 2026-10-02:
+
+- **Economy**: nine canonical batches and four loadouts from ore, checked
   against a mirror-inventory run, with outlier bounds.
 - **Save data**: the schema against a scan of the source, everything the
   mod writes against the schema, and the fuzz (28,130 calls on damaged
@@ -1062,7 +1084,18 @@ Lua state, restores the file and reports any fault the suite did not notice.
 `check` only verifies that every fault still applies. See the header of the
 file; it must not run while anything else reads the repository.
 
-On 2026-10-02 the list held 98 faults: recycling that returns all the brass
+After the second pass of 2026-10-02 the list holds 124 faults, all killed.
+The 26 added then: the quality tally (a contradiction trusted, quality
+created at unloading, a later release's record overwritten), calls the
+engine would refuse (the mock checks them against the recorded overloads),
+save-data layouts (a later layout taken for an older one, a failed step
+that still advances), recycling sources, the die sets back in the list an
+army surplus store fills its cases from, a sprite probe that accepts a
+sprite made on the spot, a version of 1.0. One of them, the ammunition-only
+check counting as the once-per-start check, would have **survived** the
+suite as it was: the test meant to catch it compared a flag with itself.
+
+On 2026-10-02 the list first held 98 faults: recycling that returns all the brass
 or grants XP, die sets in an unused or the wrong list or ten times as
 likely, a press that saves material, drops its die set or is switched on, a
 box that is a carton, save-data readers that trust a stored 900 or NaN, a

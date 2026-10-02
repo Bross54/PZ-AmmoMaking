@@ -15,7 +15,8 @@ game's files); what the running game has to confirm is listed in
 
 ## 0.9.0 (in development)
 
-No new gameplay. Foundations, tooling and hardening.
+One loot change and one fix; otherwise no new gameplay. Foundations,
+tooling and hardening.
 
 - **Quality tally**: the arithmetic for carrying ammunition quality in a
   magazine or firearm (`AC_QualityTally`), as pure functions that nothing
@@ -26,8 +27,24 @@ No new gameplay. Foundations, tooling and hardening.
   42.20.4 engine would refuse (wrong argument count or type).
 - **Release packaging**: `tools/build_release.py`, this changelog, a version
   in `mod.info`, `versionMin=42.20.0`.
-- Research and design, no code: spent-case economy, firearm event matrix,
-  multiplayer authority map, a portable press, press art specification.
+- **Reloading press, prepared beside the mod**: placeholder sprites, a
+  builder for the game's tile-sheet formats (verified by writing vanilla's
+  own files back byte for byte), the sheet and the station script. Not in
+  the mod; the press stays off.
+- **Loot**: gun-store die sets moved from the accessories list to the
+  magazine-and-ammunition list. Same odds in a gun store; army surplus
+  stores, which would have held about one die set each, hold none.
+- **Fixed**: the game-start check of the analyzer's sprite could never
+  fail (the engine's `getSprite` never returns nil). It now does its job.
+- **Save data**: a layout version on the depletion store, an upgrade
+  runner, and a save written by a later version is never reset.
+- **Brass recycling**: sources of brass are data (one today).
+- **Debug**: a material ledger of the carried inventory.
+- **Economy tables**: all nine calibres, four loadouts, craft counts, hand
+  and press time.
+- Research and design, no code: spent-case policies in numbers, the
+  firearm matrix, mixed-ammunition semantics, the multiplayer authority
+  map, a portable press (rejected), press art specification.
 
 ## 0.8.0 (2026-10-02) Loot, recycling, save safety
 

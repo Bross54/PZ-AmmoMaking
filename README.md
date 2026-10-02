@@ -410,7 +410,7 @@ case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bul
 
 - **Calibres**: all five vanilla pistol calibres (9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum), all three vanilla rifle calibres (5.56, .30-30, .308) and the vanilla 12 gauge shell; table below. A calibre is one data entry; no code names one, and pistol rounds, rifle rounds and the shell share one model. Each has its own case, bullet and die set, and nothing of one calibre fits another.
 - **12 gauge shells**: a brass hull drawn from three case cups, a charge of copper shot swaged from one copper scrap, a large pistol primer, three charges of gunpowder and a wad of ripped sheet or cotton, assembled into the vanilla `Base.ShotgunShells`. Vanilla has a single shell and puts the nine pellets on the gun, so there are no buckshot or slug variants.
-- **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is designed as the faster tier above it and will take the same die sets (`docs/RELOADING_PRESS_DESIGN.md`); its recipes are prepared and switched off, the station itself is not built.
+- **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is designed as the faster tier above it and will take the same die sets (`docs/RELOADING_PRESS_DESIGN.md`); its recipes, a tile sheet with placeholder art and its station script are prepared and switched off, and none of it is in the mod yet.
 - **Bullets are copper**: vanilla has no lead, and copper is already mined.
 - **Primers** come in four families (small and large pistol, small and large rifle), all made the same way from a small brass sheet and toy cap-gun caps or match heads. A large primer holds twice the material of a small one; a rifle primer takes half as much priming charge again and is never interchangeable with a pistol primer. **Gunpowder** is charcoal and fertilizer. Vanilla has no sulfur or nitrate item and none is invented.
 - **Case quality**: 1–100, rolled when a case is formed from the maker's Ammo Making level with a random spread, stored on the case and passed on to the assembled round. It never changes how much material a recipe uses. Nothing reads it in combat yet.
@@ -570,11 +570,12 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Component inspection**: calibre and case quality of an empty case or a loose handloaded round, read-only (**not yet run in game**)
 - **Die-set loot**: each calibre's die set in four vanilla loot lists, rare, added when the world loads (**not yet run in game**)
 - **Brass recycling**: unwanted brass components to vanilla brass scrap at half the brass and no XP, and scrap back to ingots (**not yet run in game**)
-- **Save-data safety**: every stored value is read back within its range; a damaged or hand-edited save cannot give a kit extra uses, stall the analyzer or put a broken number on screen
+- **Save-data safety**: every stored value is read back within its range; a damaged or hand-edited save cannot give a kit extra uses, stall the analyzer or put a broken number on screen. The depletion store carries a layout version, and a save written by a later version of the mod is read without being reset
+- **Quality tally (arithmetic only)**: the bookkeeping that would let ammunition quality travel through a magazine and a firearm, as pure functions that nothing calls yet. Firing is unchanged (`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`)
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
 - **Inspection prototype**: skill-gated inspection panel for the test cartridge
-- **Debug tools** (`-debug` only): one "Ammo Making Debug" tree (Geology, Analyzer, Metallurgy, Ammunition) for inspecting, resetting and spawning
+- **Debug tools** (`-debug` only): one "Ammo Making Debug" tree (Geology, Analyzer, Metallurgy, Ammunition) for inspecting, resetting and spawning, with a material ledger to check in game that a craft neither creates nor loses metal
 - **Compatibility self-check**: every Build 42 assumption probed at game start; problems and a per-class summary in the console, every line in `-debug` mode
 - **Localization**: every player-facing string has an `IGUI_AmmoMaking_*` key with an English fallback
 
@@ -586,8 +587,9 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **The ammunition chain has not been run in game yet**, and its level gates depend on a requirement attached from Lua at boot; see *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/AMMUNITION_DESIGN.md`.
 - **Round quality is stored but not used, and cannot reach the gun as it is.** Vanilla turns loaded rounds into a count, so data on a loose round is gone once it is in a magazine or firearm; misfires and wear need a different carrier and are later work.
 - **Die-set loot and brass recycling have not been run in game yet.** The loot weights are deliberately small and untuned; toy caps and fertilizer are plain vanilla loot (toy caps exist in one Wild West location, so match heads are the practical priming charge). See `docs/LOOT_AND_RECYCLING.md`.
-- **The reloading press is a design, not a station.** Its recipes are generated and switched off. No vanilla sprite can be borrowed safely (a sprite claimed twice stops every world from loading), so the station needs art of its own and can only be checked in the game.
-- **Firing leaves no spent case.** Vanilla has no casing item and ejection is only a sound; recovery is researched and not built.
+- **The reloading press is prepared, not switched on.** Its recipes are generated and switched off. No vanilla sprite can be borrowed safely (a sprite claimed twice stops every world from loading), so the station has a tile sheet of its own, with placeholder art, built beside the mod in `art/reloading_press/`. Whether the game loads and draws it can only be checked in the game.
+- **Firing leaves no spent case.** Vanilla has no casing item and ejection is only a sound; recovery is researched, its effect on the brass economy is worked out in numbers, and nothing is built (`docs/SPENT_CASE_RESEARCH.md`).
+- **Multiplayer is not supported.** Mining and analyzer placement are switched off for clients; sampling and assays are not, and change items on the client only. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
 - **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
 - **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
@@ -723,28 +725,43 @@ Enable **Ammo Making** from the Project Zomboid Mods menu.
 
 # Repository Structure
 
-The development repository is currently organized approximately as follows:
-
 ```text
 PZ-AmmoMaking
 ├── README.md
+├── CHANGELOG.md
 ├── docs
-│   ├── AMMUNITION_DESIGN.md
-│   ├── AMMUNITION_ROADMAP.md
-│   ├── DEVELOPMENT.md
+│   ├── DEVELOPMENT.md                    module map, constants, tests, tools, what needs the game
+│   ├── AMMUNITION_ROADMAP.md             status and what comes next
+│   ├── AMMUNITION_DESIGN.md              the component chain, balance and economy tables
 │   ├── METALLURGY_DESIGN.md
-│   ├── MULTIPLAYER_MINING.md
+│   ├── LOOT_AND_RECYCLING.md
 │   ├── RELOADING_PRESS_DESIGN.md
-│   ├── RIFLE_AMMUNITION_RESEARCH.md
-│   ├── SHOTGUN_AMMUNITION_RESEARCH.md
+│   ├── SPENT_CASE_RESEARCH.md
+│   ├── AMMO_QUALITY_RUNTIME_DESIGN.md
+│   ├── MULTIPLAYER_DESIGN.md
+│   ├── MULTIPLAYER_MINING.md
+│   ├── WORKSHOP_DESCRIPTION.md
 │   ├── VANILLA_AMMUNITION_RESEARCH.md
-│   └── VANILLA_METALLURGY_RESEARCH.md
+│   ├── VANILLA_METALLURGY_RESEARCH.md
+│   ├── RIFLE_AMMUNITION_RESEARCH.md
+│   └── SHOTGUN_AMMUNITION_RESEARCH.md
 ├── tests
-│   ├── mock_pz.lua
-│   ├── render_balance.lua
-│   ├── render_recipes.lua
-│   ├── write_recipes.lua
-│   └── run_tests.lua
+│   ├── run_tests.lua                     the offline suite
+│   ├── mock_pz.lua                       the mocked game API, checked against engine_snapshot.lua
+│   ├── run_mutants.py                    mutation run over the suite
+│   ├── render_recipes.lua, render_balance.lua, write_recipes.lua
+│   │                                     generators of the recipe script and the documents' tables
+│   ├── snapshot_vanilla.lua              writes vanilla_snapshot.lua from an install
+│   ├── vanilla_snapshot.lua              generated: loot lists, ammo boxes
+│   └── engine_snapshot.lua               generated: items, tags, stations, Java signatures
+├── tools
+│   ├── pz_compat.py                      does an installed game still match the mod?
+│   ├── test_pz_compat.py                 its self-test
+│   ├── mod_facts.lua                     what the mod names, from its own model
+│   ├── build_release.py                  gates, then a clean folder and archive
+│   └── build_tiles.py                    the game's tile-sheet formats
+├── art
+│   └── reloading_press                   placeholder sprites, sheet, entity draft (not in the mod)
 │
 └── mod
     └── AmmoMaking
@@ -764,7 +781,7 @@ PZ-AmmoMaking
             └── media
                 ├── scripts
                 │   ├── AC_Items.txt
-                │   └── AC_Recipes.txt
+                │   └── AC_Recipes.txt     generated
                 │
                 └── lua
                     ├── client
@@ -793,13 +810,18 @@ PZ-AmmoMaking
                         ├── AC_Geology.lua
                         ├── AC_GeologySampling.lua
                         ├── AC_LaboratoryAnalyzer.lua
+                        ├── AC_Loot.lua
                         ├── AC_Materials.lua
                         ├── AC_Mining.lua
+                        ├── AC_QualityTally.lua
+                        ├── AC_Recycling.lua
+                        ├── AC_SaveData.lua
                         ├── AC_Text.lua
                         └── AC_WorldData.lua
 ```
 
-The repository structure may change as additional systems are implemented.
+Only `mod/AmmoMaking` is the mod. `python tools/build_release.py` packages
+exactly that folder; tests, tools, documents and art are never shipped.
 
 ---
 
@@ -832,6 +854,17 @@ When reporting an issue, useful information includes:
 ---
 
 # Development
+
+Version: see `modversion=` in `mod/AmmoMaking/42/mod.info` and `CHANGELOG.md`.
+
+```text
+lua5.1 tests/run_tests.lua                              the offline suite (or through Python's lupa)
+python tests/run_mutants.py                             mutation run
+python tools/pz_compat.py --install "<game>"            after a game update: PASS / WARNING / BREAKING
+python tools/build_release.py --install "<game>"        every gate, then a clean release folder and archive
+```
+
+`docs/DEVELOPMENT.md` describes each.
 
 This repository contains active development code.
 

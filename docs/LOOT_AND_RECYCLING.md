@@ -379,6 +379,26 @@ manufacturing content, and their raw materials are vanilla loot already.
 If rare component loot is ever wanted, `AC_Loot` is where it would go (an
 entry is an item, a list and a weight), behind the same validation.
 
+**Whether it should be wanted, in numbers** (the room model of section 1.2;
+a gun store of eight display cases has the magazine-and-ammunition case
+0.42 times, and a weight of `w` puts `4 x w / 100` items in a case):
+
+| Candidate | What it would take | What a find would be worth | Verdict |
+|---|---|---|---|
+| A single primer, cup or sheet | an entry | one round's worth of the cheapest step | pointless: a find has to be a batch |
+| A **box of 100 primers** | a new item and an unpacking recipe | the primer step of a hundred rounds: one brass ingot and 200 match uses, and about 20 XP not earned (3 % of a batch) | at weight 0.3 one gun store in 200 has one: too rare to notice. At weight 5 one in twelve: common enough to skip the only step that needs matches or caps |
+| Case cups or brass sheets | an entry | brass without the mine, the furnace and the forge | no: that is the chain |
+| Gunpowder | vanilla has no loot list for it; it is foraged, or taken from rounds | a jar is ten pistol charges or two .308 | leave it to vanilla |
+| Copper scrap | already in 24 vanilla lists | – | nothing to add |
+| Brass scrap | in no live list | ten units of brass each; ten make an ingot | a rare find would be harmless, and it has no recipe use but the recast; not worth an entry |
+
+There is no weight at which a component is both noticeable and harmless: it
+is either too rare to matter or it replaces a step. Die sets work as loot
+because a found one skips a tool, not a material, and opens no recipe
+early. **Recommendation: none**, and if the owner wants one anyway, a box
+of primers in `GunStoreMagsAmmo` is the least damaging, because that list
+is used at most once per gun store.
+
 ## 5. REQUIRES FUTURE IN-GAME VERIFICATION
 
 - That `place_ammo_in_box` is offered for a stack of handloaded rounds

@@ -526,7 +526,7 @@ fails the suite):
 - **Work.** A hundred rounds are 345 to 584 crafts, nine tenths of them at
   a surface. In recipe time a hundred .308 cost about two and a half times
   a hundred 9mm, in line with their metal.
-- **The press** would take 15 % to 22 % off a batch's station time, least
+- **The press** would take 15 % to 23 % off a batch's station time, least
   for shells, and raise the XP earned per unit of station time from about
   20 to about 25 per thousand. It changes no count, material or XP total.
   Nothing here was rebalanced for it.

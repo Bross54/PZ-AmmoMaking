@@ -301,7 +301,7 @@ go, compared:
 
 | | 1. Hand loading only until the placed press exists | 2. A portable press item now | 3. A press kit: a tool now, the build ingredient of the station later |
 |---|---|---|---|
-| Gameplay now | none new | 15 % to 22 % of a batch's station time saved (`AMMUNITION_DESIGN.md` 9.1) | the same |
+| Gameplay now | none new | 15 % to 23 % of a batch's station time saved (`AMMUNITION_DESIGN.md` 9.1) | the same |
 | Code | nothing | small: the generator exists; the bench tag becomes `AnySurfaceCraft` and one kept line is added | the same, plus the station's build recipe later |
 | Recipe list | 51 manufacturing recipes | **78**: every case, projectile and assembly step twice in the same surface list, told apart only by a suffix | the same until the station exists, then back to one list per place |
 | What the item is afterwards | – | either a second, permanent tier (27 recipes for ever, and a number to balance against the station) or an item whose recipes disappear | an item that stops working as a tool the day the station arrives: a tool the player has been using becomes a crate of parts |
@@ -411,7 +411,7 @@ table of per-step numbers; one percentage is kept.
 
 **What the press is worth over a whole batch** is in the generated work
 table of `AMMUNITION_DESIGN.md` 9.1: furnace, forge, primers and powder are
-untouched, so the press saves 15 % to 22 % of a batch's station time (least
+untouched, so the press saves 15 % to 23 % of a batch's station time (least
 for shells, whose hull is quick to form by hand) and raises the XP earned
 per unit of station time by about a quarter. It is a convenience.
 

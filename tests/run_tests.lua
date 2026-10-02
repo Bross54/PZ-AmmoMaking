@@ -9525,6 +9525,33 @@ do
         check(string.find(readFile(LUA .. name .. ".lua"), info.modversion, 1, true) == nil, name .. ".lua does not repeat the version number")
     end
 
+    -- The README's repository tree names every Lua file of the mod, every
+    -- tool and every document that this suite reads.
+    local readme = readFile(ROOT .. "/README.md")
+    local treeStart = string.find(readme, "# Repository Structure", 1, true)
+    local treeEnd = string.find(readme, "# Disclaimer", 1, true)
+    check(treeStart ~= nil and treeEnd ~= nil and treeEnd > treeStart, "the README has a repository tree")
+    local tree = string.sub(readme, treeStart or 1, treeEnd or 1)
+    local listed = { "client/AC_AmmoInspectionUI", "client/AC_GeologyAssayUI" }
+    for _, name in ipairs(MOCK.MOD_FILES) do table.insert(listed, name) end
+    for _, name in ipairs(listed) do
+        local file = string.match(name, "([^/]+)$") .. ".lua"
+        check(string.find(tree, file, 1, true) ~= nil, "the README's tree lists " .. file)
+    end
+    for _, file in ipairs({
+        "pz_compat.py", "test_pz_compat.py", "mod_facts.lua", "build_release.py", "build_tiles.py", "run_mutants.py",
+        "engine_snapshot.lua", "vanilla_snapshot.lua", "CHANGELOG.md", "WORKSHOP_DESCRIPTION.md", "MULTIPLAYER_DESIGN.md",
+        "SPENT_CASE_RESEARCH.md", "AMMO_QUALITY_RUNTIME_DESIGN.md", "LOOT_AND_RECYCLING.md", "RELOADING_PRESS_DESIGN.md",
+    }) do
+        check(string.find(tree, file, 1, true) ~= nil, "the README's tree lists " .. file)
+    end
+    -- Every Lua file the tree lists under the mod is one the mod has.
+    local known = {}
+    for _, name in ipairs(listed) do known[string.match(name, "([^/]+)$") .. ".lua"] = true end
+    for file in string.gmatch(tree, "(AC_[%w_]+%.lua)") do
+        check(known[file], "the README's tree lists no mod file that does not exist (" .. file .. ")")
+    end
+
     -- The workshop text claims no dependency and no feature the mod lacks.
     local workshop = readFile(ROOT .. "/docs/WORKSHOP_DESCRIPTION.md")
     check(string.find(workshop, "NOT PUBLISHED", 1, true) ~= nil, "the Workshop material says it is not published")
