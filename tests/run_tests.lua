@@ -2234,6 +2234,24 @@ do
     end
     check(used > 50, "keys found in code (" .. used .. ")")
     eq(#missing, 0, "every literal key has an English entry: " .. table.concat(missing, ", "))
+
+    -- The English file and the fallback written next to the key say the
+    -- same thing, so the text a player reads does not depend on whether the
+    -- translation file loaded, and neither can drift from the other.
+    local english = {}
+    for key, value in string.gmatch(json, '"([^"]+)"%s*:%s*"([^"]*)"') do english[key] = value end
+    local compared, different = 0, {}
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        local file = io.open(LUA .. name .. ".lua", "r")
+        local source = file:read("*a")
+        file:close()
+        for key, fallback in string.gmatch(source, '"(IGUI_AmmoMaking_[%w_]+)",%s*"([^"]*)"') do
+            compared = compared + 1
+            if english[key] ~= fallback then table.insert(different, key) end
+        end
+    end
+    check(compared > 100, "fallbacks found beside their keys (" .. compared .. ")")
+    eq(#different, 0, "every fallback equals the English file's text: " .. table.concat(different, ", "))
 end
 
 ------------------------------------------------
@@ -2879,6 +2897,72 @@ do
         if recipe.alloy then alloys = alloys + 1 end
     end
     eq(alloys, 1, "exactly one alloy recipe")
+
+    -- The audit of every recipe, one row at a time: what the script and
+    -- the mirror must agree on, and what each recipe must declare. A recipe
+    -- in one and not the other, a missing callback, name or material
+    -- declaration fails here by name.
+    local names = {}
+    for key, value in string.gmatch(readFile(TRANSLATE .. "Recipes.json"), '"([^"]+)"%s*:%s*"([^"]*)"') do names[key] = value end
+    local inMirror = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        inMirror[recipe.id] = true
+        check(byId[recipe.id] ~= nil, recipe.id .. ": in the mirror and in the script")
+        check(type(recipe.callback) == "string" and type(AC_Materials[recipe.callback]) == "function", recipe.id .. ": has its OnCreate callback")
+        check(names[recipe.id] ~= nil and names[recipe.id] ~= "", recipe.id .. ": has a name")
+        check(type(recipe.time) == "number" and recipe.time >= 20, recipe.id .. ": takes at least 20, so the skill speed-up applies")
+        check(type(recipe.benchTag) == "string" and type(recipe.category) == "string", recipe.id .. ": names its station tag and category")
+        local level = AC_Materials.getRequiredLevel(recipe)
+        check(level >= 0 and level <= 10 and level == math.floor(level), recipe.id .. ": a whole Ammo Making level from 0 to 10")
+        local xp = AC_Materials.getRecipeXP(recipe)
+        check(xp >= 0 and xp == math.floor(xp), recipe.id .. ": a whole, non-negative XP amount")
+        -- Material declaration: every output is either tracked or a declared tool,
+        -- and every consumed item named by id is tracked or a known untracked input.
+        local untracked = { ["Base.SteelBarQuarter"] = true, ["Base.Fertilizer"] = true }
+        for _, id in ipairs(AC_Calibres.WAD.items) do untracked[id] = true end
+        for _, output in ipairs(recipe.outputs) do
+            check(recipe.tool or AC_Materials.UNITS[output.item] ~= nil, recipe.id .. ": its output " .. tostring(output.item) .. " has a material declaration")
+            check(output.count >= 1, recipe.id .. ": makes at least one")
+        end
+        local consumes = false
+        for _, input in ipairs(recipe.inputs) do
+            check(input.count >= 1, recipe.id .. ": every input line asks for at least one")
+            if not input.keep then
+                consumes = true
+                for _, id in ipairs(input.items or {}) do
+                    check(AC_Materials.UNITS[id] ~= nil or untracked[id], recipe.id .. ": its input " .. id .. " has a material declaration or is a known untracked input")
+                end
+            end
+        end
+        check(consumes, recipe.id .. ": consumes something")
+    end
+    for _, block in ipairs(recipeScript.blocks) do
+        check(inMirror[block.name], block.name .. ": in the script and in the mirror")
+    end
+    for id in pairs(names) do
+        check(inMirror[id], id .. ": a recipe name belongs to a recipe")
+    end
+
+    -- docs/DEVELOPMENT.md carries the audit table, rendered from the mirror.
+    local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+    local document = readFile(ROOT .. "/docs/DEVELOPMENT.md")
+    local from = string.find(document, BALANCE.AUDIT_START, 1, true)
+    local _, to = string.find(document, BALANCE.AUDIT_FINISH, 1, true)
+    check(from ~= nil and to ~= nil and to > from, "the development document has the recipe audit markers")
+    eq(string.sub(document, from or 1, to or 1), BALANCE.renderRecipeAuditBlock(), "the recipe audit table equals the rendered mirror (run tests/write_recipes.lua)")
+    local families = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local family = BALANCE.recipeFamily(recipe)
+        families[family] = (families[family] or 0) + 1
+    end
+    eq(families.metallurgy, 4, "four metallurgy recipes")
+    eq(families.caseStock, 2, "two case-stock recipes")
+    eq(families.powder, 1, "one gunpowder recipe")
+    eq(families.primer, 8, "eight primer recipes")
+    for _, step in ipairs({ "dieSet", "case", "bullet", "assemble" }) do eq(families[step], #AC_Calibres.LIST, "one " .. step .. " recipe per calibre") end
+    eq(families.scrap, 3, "three scrapping recipes")
+    eq(families.recast, 1, "one recast")
+    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **55** |", 1, true) ~= nil, "the audit table counts 55 recipes")
 end
 
 section("Material conservation: no recipe or chain creates metal")
@@ -4592,6 +4676,19 @@ end
 
 section("Case quality: one code path for every calibre (mocked recipe data)")
 do
+    -- What is stored is always a whole number from 1 to 100, whatever is
+    -- handed to set().
+    do
+        local Q = AC_CaseQuality.CONFIG
+        local stored = MOCK.newItem(AC_Calibres.get("9mm").case)
+        for _, pair in ipairs({ { 900, Q.maxQuality }, { -5, Q.minQuality }, { 0, Q.minQuality }, { 55.6, 56 }, { 55.4, 55 }, { 100, 100 }, { 1, 1 } }) do
+            eq(AC_CaseQuality.set(stored, pair[1]), true, "set(" .. pair[1] .. ") is accepted")
+            eq(stored.modData[Q.qualityKey], pair[2], "set(" .. pair[1] .. ") stores " .. pair[2])
+        end
+        eq(AC_CaseQuality.set(stored, "good"), false, "a word is not a quality")
+        eq(AC_CaseQuality.set(nil, 50), false, "no item, nothing stored")
+        eq(stored.modData[Q.qualityKey], 1, "a refused set() leaves the stored value alone")
+    end
     local C = AC_CaseQuality.CONFIG
 
     -- Pure roll.
@@ -6270,6 +6367,19 @@ do
         attempt(what .. " canAnalyzeSample", AC_LaboratoryAnalyzer.canAnalyzeSample, sample)
         attempt(what .. " field assay", AC_GeologySampling.analyzeSample, sample, AC_GeologySampling.findKit(player, "AmmoMaking.FieldAssayKit"))
         attempt(what .. " advanced assay", AC_GeologySampling.analyzeSample, sample, AC_GeologySampling.findKit(player, "AmmoMaking.AdvancedFieldAssayKit"))
+        -- Whatever an assay read, what it WROTE is in the schema: a damaged
+        -- truth must not become a stored NaN range or an unknown grade.
+        do
+            local written = {}
+            for _, key in ipairs({ "copperMin", "copperMax", "zincMin", "zincMax", "copperGrade", "zincGrade", "assayRank" }) do
+                written[key] = sample.modData[key]
+            end
+            local rank = tonumber(sample.modData.assayRank) or 0
+            if rank >= 1 and (string.find(what, "trueCopper", 1, true) or string.find(what, "trueZinc", 1, true)) then
+                local left = AC_SaveData.check("sample", written)
+                check(#left == 0, what .. ": the assay stored only valid values (" .. table.concat(left, "; ") .. ")")
+            end
+        end
         local okR, after = attempt(what .. " getResultLines after assays", AC_GeologySampling.getResultLines, sample)
         if okR and type(after) == "table" then
             local clean, bad = cleanLines(after)
@@ -6353,6 +6463,14 @@ do
                     check(isFinite(afterUses) and afterUses >= 0, what .. ": uses never go negative (" .. tostring(afterUses) .. ")")
                 end
                 check(cleanText(kit:getName()), what .. ": the kit's name shows no broken number (" .. tostring(kit:getName()) .. ")")
+                -- Uses that are not a number at all: an empty kit, not a full one.
+                if key == "assayUsesRemaining" and not isFinite(tonumber(value)) then
+                    local emptied = MOCK.newItem(kitType)
+                    AC_GeologySampling.initializeKit(emptied)
+                    emptied.modData.assayUsesRemaining = value
+                    eq(AC_GeologySampling.getKitUses(emptied), 0, what .. ": a kit whose uses are not a number is empty, not refilled")
+                    eq(AC_GeologySampling.consumeKitUse(emptied), false, what .. ": and gives no assay")
+                end
             end
         end
     end
@@ -6983,6 +7101,9 @@ do
     end
 
     -- Pinned numbers: a change to any loot probability shows here.
+    eq(C.maxWeight, 1, "no single die set weighs more than 1")
+    eq(C.maxListWeight, 5, "all die sets of a list together weigh at most 5")
+    eq(C.maxListsPerCalibre, 4, "a die set is in at most four lists")
     eq(C.tierWeight.common, 1, "common tier weight")
     eq(C.tierWeight.uncommon, 0.6, "uncommon tier weight")
     eq(C.tierWeight.rare, 0.3, "rare tier weight")
