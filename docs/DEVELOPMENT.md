@@ -824,7 +824,7 @@ inspection against items whose ModData refuses every write, and startup cost
 (which events the mod listens to, and that no menu, action or callback
 validates the model or rebuilds a recipe list).
 
-**Source-level mutation run.** On 2026-10-02, 52 single changes were applied
+**Source-level mutation run.** On 2026-10-02, 59 single changes were applied
 one at a time to the real mod files (the calibre model, the materials module,
 the compatibility check, the debug and inspection code, the generated script,
 the item script and the translation files), the whole suite was run for each,
@@ -836,14 +836,49 @@ compatibility probe, a hand-edited script, a kept or missing wad, a shell
 with a rifle primer, a double powder yield, changed levels and XP values, the
 press switched on or keeping its hammer or dropping its die set, a debug menu
 shown in normal play, an inspection that writes to its item, a missing name,
-a removed or duplicated item. Every one made the suite fail. The run is not
-part of the repository; it is a loop over `(file, old text, new text)` around
-the suite.
+a removed or duplicated item, an unclamped round quality, a ten-fold mining
+XP, a compatibility summary that counts an incomplete calibre as complete.
+Every one made the suite fail: 52 with failed assertions in a complete run,
+7 with failed assertions followed by the suite stopping on a Lua error. One
+further change turned out to leave the behaviour identical and was replaced.
+The run is not part of the repository; it is a loop over `(file, old text,
+new text)` around the suite.
 
 Static checks worth running after a change (no game needed): the suite, a
 `loadfile` on every `.lua`, `tests/write_recipes.lua` followed by `git diff`
 (an unexpected diff means the script and the mirror had drifted), and a look
 for a script field or tag that is not in the tests' whitelists.
+
+## Item and recipe audit (2026-10-02)
+
+A static pass over the item script, the recipe script, the three translation
+files and every Lua file.
+
+- 41 items and 51 recipes; no duplicate id in either. Every item has a name in
+  `ItemName.json` that equals its `DisplayName`, every recipe a name in
+  `Recipes.json`, and neither file has an entry without an item or recipe.
+- Every item is used: 36 by recipes, the sample, the two kits and the
+  analyzer by the geology code, `AmmoMaking.TestCartridge` by the quality
+  prototype. The test cartridge is **intended**: it is the only carrier of
+  the multi-quality prototype and its debug presets, has no recipe, and is
+  obtained through the game's own debug item list. Its name, "Test 9mm
+  Cartridge", is the one placeholder-looking name, deliberately.
+- Item tags in use: `base:hasmetal`, `base:heavyitem`, `base:ingot`, all
+  vanilla.
+- `IG_UI.json`: 12 keys are never named literally in Lua. Ten are the perk's
+  level descriptions, which the engine reads; two are the metal names, built
+  as `"IGUI_AmmoMaking_Metal_" .. name`. None is dead.
+- Functions defined and not called by the mod: `AmmoMakingSkill.hasLevel`
+  (a two-line helper on the in-game-confirmed skill module; kept) and
+  `AC_LaboratoryAnalyzer.getState` (used by the tests).
+- No debug helper is reachable in normal play: the debug tree, the quality
+  presets and the level menu are behind `isDebugEnabled()`, and a mutation
+  that removes either gate fails the suite.
+- Removed or corrected in this pass: three stale comments ("Not balanced
+  yet" twice, a kit comment that predated rifle charges), the hand-typed
+  balance tables of the design document and the README (now generated), the
+  stale calibre and recipe counts in the documents. No item, recipe or
+  function was found obsolete, and none was removed.
 
 ## REQUIRES IN-GAME VERIFICATION
 
