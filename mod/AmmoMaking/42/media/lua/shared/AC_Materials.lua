@@ -3,7 +3,8 @@
 --
 -- Metallurgy (ore to brass), case stock (brass to case
 -- cups) and the ammunition components of AC_Calibres extend
--- the vanilla stations; they are not systems of their own. The recipes are ordinary craftRecipe blocks
+-- the vanilla stations; they are not systems of their own.
+-- The recipes are ordinary craftRecipe blocks
 -- in media/scripts/AC_Recipes.txt, attached to the vanilla
 -- furnace and forge bench tags or to any surface. The
 -- engine does the timing, consumes the inputs, keeps the
@@ -42,9 +43,11 @@ AC_Materials = AC_Materials or {}
 -- CONFIG
 ------------------------------------------------
 --
--- Not balanced yet. XP is per completed craft: the brass
--- recipe is one craft for ten ingots, sheet forging one
--- craft per ingot, cup punching one craft per sheet.
+-- Tunable. XP is per completed craft: the brass recipe
+-- is one craft for ten ingots, sheet forging one craft
+-- per ingot, cup punching one craft per sheet. The
+-- values were checked against the simulated career in
+-- the tests (docs/AMMUNITION_DESIGN.md, section 9).
 ------------------------------------------------
 
 AC_Materials.CONFIG = {

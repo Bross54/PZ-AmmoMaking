@@ -4110,6 +4110,87 @@ do
     end
 end
 
+section("Startup cost: validation and generation run at load, never per frame or per menu")
+do
+    -- Which events the mod listens to. Nothing per frame or per tick.
+    local perFrame = {
+        OnTick = true, OnTickEvenPaused = true, OnRenderTick = true, OnPlayerUpdate = true,
+        OnPreUIDraw = true, OnPostUIDraw = true, OnPostRender = true, OnFETick = true,
+        EveryOneMinute = true, OnObjectCollide = true, OnCharacterCollide = true,
+    }
+    local allowed = {
+        OnFillWorldObjectContextMenu = true, OnFillInventoryObjectContextMenu = true,
+        OnGameStart = true, OnGameBoot = true, OnInitGlobalModData = true,
+    }
+    local registrations = 0
+    local heavy = { "AC_Calibres.validate", "AC_Calibres.buildRecipes", "AC_Calibres.buildUnits", "AC_Calibres.getItems", "AC_Compat.run", "applySkillRequirements" }
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        local source = readFile(LUA .. name .. ".lua")
+        for event in string.gmatch(source, "Events%.([%w_]+)%.Add") do
+            registrations = registrations + 1
+            check(not perFrame[event], name .. ".lua does not listen to " .. event)
+            check(allowed[event], name .. ".lua listens only to load and menu events (" .. event .. ")")
+        end
+        -- Menus and timed actions never rebuild the model or run the checks.
+        local isMenuOrAction = string.find(name, "ContextMenu", 1, true) or string.find(name, "Action", 1, true) or string.find(name, "UI", 1, true)
+        if isMenuOrAction then
+            for _, call in ipairs(heavy) do
+                check(string.find(source, call, 1, true) == nil, name .. ".lua does not call " .. call)
+            end
+        end
+    end
+    check(registrations >= 8, "event registrations were found (" .. registrations .. ")")
+
+    -- Counted: loading the mod builds the recipe list twice (AC_Materials
+    -- for the mirror, AC_Compat for its item list) and validates nothing;
+    -- an inventory right-click builds and validates nothing.
+    local counts = { validate = 0, buildRecipes = 0, buildCalibreRecipes = 0 }
+    local real = {}
+    for key in pairs(counts) do
+        real[key] = AC_Calibres[key]
+        AC_Calibres[key] = function(...)
+            counts[key] = counts[key] + 1
+            return real[key](...)
+        end
+    end
+    local player = MOCK.newPlayer()
+    local nine = AC_Calibres.get("9mm")
+    for _ = 1, 50 do
+        fillInventoryMenu(player, MOCK.newItem(nine.case))
+        fillInventoryMenu(player, MOCK.newItem(nine.round))
+        fillInventoryMenu(player, MOCK.newItem("Base.Plank"))
+        AmmoInspection.inspectComponent(player, MOCK.newItem(nine.case))
+    end
+    MOCK.debug = false
+    local square = MOCK.newSquare(3, 3, 0, GRASS)
+    for _ = 1, 20 do fillWorldMenu(MOCK.newPlayer({ square = square }), square) end
+    eq(counts.validate, 0, "no menu validates the calibre model")
+    eq(counts.buildRecipes, 0, "no menu rebuilds the recipe list")
+    eq(counts.buildCalibreRecipes, 0, "no menu rebuilds a calibre's recipes")
+
+    -- One callback call does none of it either: it looks its recipe up.
+    AC_Materials.onAssembleRound9mm(nil, player)
+    eq(counts.validate + counts.buildRecipes + counts.buildCalibreRecipes, 0, "an OnCreate callback builds and validates nothing")
+
+    -- The compatibility check validates once per run, and runs once per start.
+    MOCK.capturePrint(true)
+    AC_Compat.run(false)
+    MOCK.capturePrint(false)
+    eq(counts.validate, 1, "one compatibility run validates the model once")
+    eq(counts.buildRecipes, 0, "and does not rebuild the whole recipe list")
+    for key in pairs(counts) do AC_Calibres[key] = real[key] end
+
+    -- identify() allocates nothing per call that depends on the list size:
+    -- same answers as before, for every item of every calibre.
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        for _, kind in ipairs({ "case", "bullet", "dieSet", "round" }) do
+            local found, owner = AC_Calibres.identify(calibre[kind])
+            eq(found, kind, calibre.id .. " " .. kind .. " identified")
+            eq(owner, calibre, calibre.id .. " " .. kind .. " owner")
+        end
+    end
+end
+
 section("Reloading press recipes: prepared from the model, switched off")
 do
     local P = AC_Calibres.PRESS

@@ -733,9 +733,9 @@ local function spawnComponentsKit(
 
 
     -- Enough for five rounds of this calibre, whatever it
-    -- takes: its cups per case, bullets per scrap and its
-    -- primer family. One jar covers five rounds of any
-    -- pistol charge.
+    -- takes: its cups per case, bullets per scrap, its
+    -- primer family and as many jars as five charges need
+    -- (one for a pistol round, three for a .308).
     local rounds = 5
 
 

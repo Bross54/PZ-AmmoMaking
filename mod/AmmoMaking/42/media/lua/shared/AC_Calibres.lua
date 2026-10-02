@@ -35,9 +35,16 @@ AC_Calibres = AC_Calibres or {}
 -- SHARED VALUES
 ------------------------------------------------
 --
--- Not balanced yet. Metal amounts are in the units of
+-- Tunable. Metal amounts are in the units of
 -- AC_Materials (100 per ingot, 10 per scrap or small
 -- sheet, 5 per case cup).
+--
+-- Every balance number of the ammunition stage lives in
+-- this file: CONFIG, POWDER, COMPOUND_SOURCES, PRIMERS,
+-- DEFAULTS, CLASSES and LIST. The recipe script and the
+-- balance tables of docs/AMMUNITION_DESIGN.md are
+-- generated from them, and the tests derive what they
+-- expect from them.
 ------------------------------------------------
 
 AC_Calibres.CONFIG = {
@@ -1217,6 +1224,12 @@ end
 -- nil for anything else.
 ------------------------------------------------
 
+-- The item roles of a calibre, in the order identify()
+-- tries them. One table, not one per call: identify()
+-- runs for every item of an inventory right-click.
+local ITEM_KINDS = { "case", "bullet", "dieSet", "round" }
+
+
 function AC_Calibres.identify(
     fullType
 )
@@ -1231,7 +1244,7 @@ function AC_Calibres.identify(
         for _,
             kind
         in ipairs(
-            { "case", "bullet", "dieSet", "round" }
+            ITEM_KINDS
         )
         do
 
