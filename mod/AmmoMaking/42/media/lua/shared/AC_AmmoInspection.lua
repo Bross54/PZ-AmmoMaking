@@ -515,5 +515,45 @@ function AmmoInspection.inspectComponent(player, item)
         )
     end
 
+    ------------------------------------------------
+    -- -debug mode only: the item type, the record exactly
+    -- as it is stored, and what the save-data schema says
+    -- about it. A normal game never shows these lines, so
+    -- the level gate above is the only thing a player
+    -- sees. Reads only, like the rest.
+    ------------------------------------------------
+
+    if type(isDebugEnabled) == "function"
+        and isDebugEnabled()
+    then
+
+        local config = AC_CaseQuality.CONFIG
+
+        local key =
+            kind == "case"
+            and config.qualityKey
+            or config.roundQualityKey
+
+        local data = item:getModData()
+
+        table.insert(
+            result.lines,
+            "[debug] " .. tostring(item:getFullType())
+        )
+
+        table.insert(
+            result.lines,
+            "[debug] stored " .. key .. " = " .. tostring(data and data[key])
+        )
+
+        local problems =
+            AC_SaveData.check(kind, data)
+
+        table.insert(
+            result.lines,
+            "[debug] save data: " .. (#problems == 0 and "ok" or table.concat(problems, "; "))
+        )
+    end
+
     return result
 end

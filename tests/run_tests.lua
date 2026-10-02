@@ -7654,6 +7654,28 @@ do
         eq(AmmoInspection.getComponent(MOCK.newItem(calibre.dieSet)), nil, name .. ": nor does a die set")
         eq(AmmoInspection.inspectComponent(player, factory), nil, name .. ": no inspection for a factory round")
 
+        -- -debug mode adds the item type, the stored value and the schema's
+        -- verdict, whatever the level; a normal game shows none of it.
+        player.perkLevel = 0
+        local quiet = AmmoInspection.inspectComponent(player, case)
+        for _, line in ipairs(quiet.lines) do
+            check(string.find(line, "[debug]", 1, true) == nil, name .. ": no debug line in a normal game")
+            check(string.find(line, "84", 1, true) == nil, name .. ": and no stored number at level 0")
+        end
+        MOCK.debug = true
+        local verbose = AmmoInspection.inspectComponent(player, case)
+        local damaged = MOCK.newItem(calibre.round)
+        damaged.modData[C.roundFlagKey], damaged.modData[C.roundQualityKey] = true, 9999
+        local damagedLines = table.concat(AmmoInspection.inspectComponent(player, damaged).lines, " | ")
+        MOCK.debug = false
+        eq(#verbose.lines, #quiet.lines + 3, name .. ": -debug adds three lines")
+        eq(verbose.lines[#verbose.lines - 2], "[debug] " .. calibre.case, name .. ": the item type")
+        eq(verbose.lines[#verbose.lines - 1], "[debug] stored " .. C.qualityKey .. " = 84", name .. ": the stored value")
+        eq(verbose.lines[#verbose.lines], "[debug] save data: ok", name .. ": and the schema's verdict")
+        for index = 1, #quiet.lines do eq(verbose.lines[index], quiet.lines[index], name .. ": the player's lines are unchanged in -debug") end
+        check(string.find(damagedLines, "[debug] stored " .. C.roundQualityKey .. " = 9999", 1, true) ~= nil, name .. ": -debug shows a damaged record as it is stored")
+        check(string.find(damagedLines, "[debug] save data: " .. C.roundQualityKey .. ": outside 1..100", 1, true) ~= nil, name .. ": and says what is wrong with it: " .. damagedLines)
+
         player.perkLevel = 0
         local r = AmmoInspection.inspectComponent(player, case)
         eq(r.title, "Ammo Inspection", name .. ": title")

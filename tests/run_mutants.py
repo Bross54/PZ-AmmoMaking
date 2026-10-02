@@ -125,6 +125,10 @@ MUTANTS = [
     (SHARED + "AC_Mining.lua", "    xpPerOre = 5,", "    xpPerOre = 50,", "mining pays ten times the XP"),
     (SHARED + "AC_CaseQuality.lua", "    data[config.qualityKey] =\n        clamp(\n            math.floor(quality + 0.5),\n            config.minQuality,\n            config.maxQuality\n        )", "    data[config.qualityKey] =\n        math.floor(quality + 0.5)", "a case quality is stored unclamped"),
 
+    # ---- inspection
+    (SHARED + "AC_AmmoInspection.lua", "    if type(isDebugEnabled) == \"function\"\n        and isDebugEnabled()\n    then\n\n        local config = AC_CaseQuality.CONFIG", "    if true then\n\n        local config = AC_CaseQuality.CONFIG", "the debug lines of an inspection show in a normal game"),
+    (SHARED + "AC_AmmoInspection.lua", "    elseif level < 5 then\n", "    elseif level < 1 then\n", "the exact case quality is shown below level 5"),
+
     # ---- data files
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json", "    \"AmmoMaking_ScrapBrass10\": \"Scrap Small Brass Sheets and Medium Cases\",\n", "", "a recipe has no name"),
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/IG_UI.json", "This record stays with the loose round; loading or boxing it keeps only a count.", "This record stays with the round.", "the inspection text no longer states the limit"),

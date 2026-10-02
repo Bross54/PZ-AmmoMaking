@@ -252,6 +252,12 @@ A die set only works for its own calibre: its item id appears in no other
 calibre's recipes, the validator rejects a definition that shares one, and
 the tests check the mirror, the generated script and an executed inventory.
 
+**A die set can also be found**, rarely (`LOOT_AND_RECYCLING.md` 1): in a
+gun store's display case, a garage gun locker or among a hunter's things.
+`calibre.lootTier` says how rare. The recipes name the die set by item type
+and keep it, so a found, a forged and a debug-spawned die set are the same
+thing, and finding one opens no recipe before its level.
+
 **Future press**, designed and not built
 (`docs/RELOADING_PRESS_DESIGN.md`):
 
@@ -538,9 +544,11 @@ What catches what, when a definition or recipe is tampered with:
 | `shared/AC_Calibres.lua` | `LIST`, `DEFAULTS`, `CLASSES`, `PRIMERS`, `COMPOUND_SOURCES`, `POWDER`; `define`, `levelsFor`, `validate`, `get`, `getPrimer`, `identify`; `buildRecipes`, `buildUnits`, `getItems` |
 | `shared/AC_CaseQuality.lua` | `roll`, `set` / `get`, `onCasesFormed`, `onRoundsAssembled`, `EFFECTS` |
 | `shared/AC_Materials.lua` | appends the component recipes and units; per-recipe `xp`, `requiredLevel`, `effect`, `source`; multi-material conservation |
-| `shared/AC_Compat.lua` | calibre model validation, one completeness line per calibre, gunpowder uses per jar |
+| `shared/AC_Recycling.lua` | which components are plain brass, the scrapping recipes by brass content, the recast, `validate` |
+| `shared/AC_Loot.lua` | die-set loot: tier weights, target lists, `buildEntries`, `validate`, `register` |
+| `shared/AC_Compat.lua` | calibre model validation, one completeness line per calibre, gunpowder uses per jar, vanilla ammo boxes, recycling, die-set loot |
 | `scripts/AC_Recipes.txt` | **generated** from `AC_Materials.RECIPES` |
-| `tests/render_recipes.lua`, `tests/write_recipes.lua` | renderer and writer for the script |
+| `tests/render_recipes.lua`, `tests/render_balance.lua`, `tests/write_recipes.lua` | renderers and the writer for the script and for every generated table |
 
 The rifle stage added one field with consumers, `class`:
 `AC_Calibres.CLASSES[class]` supplies what a definition leaves out, between
@@ -565,13 +573,16 @@ Every field of a definition has a consumer:
 | `round`, `case`, `bullet`, `dieSet` | recipes, units, `identify`, compatibility probes, debug kits |
 | `ammoType` | reference only: checked against the recorded vanilla ammo types |
 | `primerFamily` | the assembly recipe, units, kits |
-| `cupsPerCase`, `bulletsPerScrap`, `powderUses`, `wads` | recipes, units, kits |
+| `cupsPerCase`, `bulletsPerScrap`, `powderUses`, `wads` | recipes, units, kits; `cupsPerCase` also decides which scrapping recipe takes the case |
+| `box`, `roundsPerBox` | reference only: checked against vanilla's box recipe in the snapshot, probed at game start |
+| `lootTier` | `AC_Loot`: the weight of the calibre's die set in a loot list |
 | `levels`, `xp`, `time` (per step) | recipes; `assembleLevel` is the input `levelsFor` derives `levels` from |
 
 ### Adding a calibre
 
 1. One entry in `AC_Calibres.LIST`: `id`, `class` if not a pistol, `suffix`,
-   `round`, `ammoType`, and only what differs from the class and `DEFAULTS`.
+   `round`, `box`, `roundsPerBox`, `ammoType`, and only what differs from the
+   class and `DEFAULTS` (`lootTier` among them).
 2. Three items in `AC_Items.txt` (`Case<suffix>`, `Bullet<suffix>`,
    `DieSet<suffix>`, or the explicit ids the definition names), their names
    in `ItemName.json`.
@@ -579,24 +590,32 @@ Every field of a definition has a consumer:
 4. `lua5.1 tests/write_recipes.lua` (the recipe script and the tables of §2),
    then the suite.
 5. In the tests: the new ids in `MOCK.knownScriptItems`, a row in the pinned
-   matrix.
+   matrix, and the pinned loot totals.
+
+Recycling, loot, the press recipes, the economy table and the save-data
+schema pick the new calibre up from the model: its case joins the scrapping
+recipe of its brass size and its die set the loot lists its class and tier
+select, with no further edit.
 
 ## 12. Out of scope, deliberately
 
 A reloading press object (designed: `docs/RELOADING_PRESS_DESIGN.md`), shell
 variants (buckshot, birdshot, slugs), paper or plastic hulls, lead, deeper
 primer or powder chemistry, misfires, failures to fire, jams, firearm
-damage, custom ballistics, any use of round quality, recycling, spent
-casings, multiplayer authority, custom UI, loot spawns for die sets
-(designed: `docs/AMMUNITION_ROADMAP.md`).
+damage, custom ballistics, any use of round quality (a carrier is designed:
+`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`), spent casings (researched:
+`docs/SPENT_CASE_RESEARCH.md`), recycling of anything but plain brass,
+component loot, box recipes (vanilla's suffice), multiplayer authority,
+custom UI. What is waiting on what: `docs/AMMUNITION_ROADMAP.md`.
 
 ## 13. REQUIRES FUTURE IN-GAME VERIFICATION
 
 Everything above is implemented and passes the offline suite. None of it has
 been seen running. To be confirmed in game:
 
-- The 51 recipes appear at their stations and in the surface crafting menu
-  with their names.
+- The 51 manufacturing recipes appear at their stations and in the surface
+  crafting menu with their names (the four recycling recipes:
+  `LOOT_AND_RECYCLING.md` 5).
 - One assembly craft yields one round, for each of the nine vanilla rounds.
 - `item N [Base.GunPowder]` takes N uses (1 to 5); `item 2 [Base.Fertilizer]`
   two uses; `item 20` / `item 30 [Base.Matches;Base.Matchbox]` draws uses
