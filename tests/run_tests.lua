@@ -5046,6 +5046,132 @@ do
     end
 end
 
+section("Economy: a hundred rounds of six calibres and a mixed loadout, from ore")
+do
+    local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+    local R = AC_Materials.getRecipe
+
+    -- The document's table is the rendering of the model.
+    local document = readFile(ROOT .. "/docs/AMMUNITION_DESIGN.md")
+    local from = string.find(document, BALANCE.ECONOMY_START, 1, true)
+    local _, to = string.find(document, BALANCE.ECONOMY_FINISH, 1, true)
+    check(from ~= nil and to ~= nil and to > from, "the design document has the economy table markers")
+    eq(string.sub(document, from or 1, to or 1), BALANCE.renderEconomyBlock(), "the economy table equals the rendered model (run tests/write_recipes.lua)")
+    eq(BALANCE.replaceEconomy(document), document, "regenerating the economy table changes nothing")
+
+    local function near(a, b) return math.abs(a - b) < 1e-6 end
+
+    -- 9mm by hand: six ingots of brass and five ore of copper for bullets.
+    local nine = BALANCE.economy(AC_Calibres.get("9mm"), 100)
+    eq(nine.brassIngots, 6, "9mm: six brass ingots per hundred")
+    check(near(nine.copperOre, 9.2) and near(nine.zincOre, 1.8), "9mm: 9.2 copper ore and 1.8 zinc ore")
+    check(near(nine.ore, 11), "9mm: eleven ore in all")
+    eq(nine.copperScrap, 50, "9mm: fifty copper scrap for bullets")
+    eq(nine.caseCups, 100, "9mm: a hundred cups")
+    eq(nine.powderJars, 10, "9mm: ten jars of powder")
+    eq(nine.fertilizerUses, 20, "9mm: twenty uses of fertilizer")
+    eq(nine.toyCaps, 100, "9mm: a hundred toy caps")
+    eq(nine.matchUses, 200, "9mm: or two hundred match uses")
+    check(near(nine.charcoal, 102), "9mm: 102 charcoal (" .. nine.charcoal .. ")")
+    check(near(nine.totalXP, 55 + 5.4 + 30 + 15 + 30 + 50 + 20 + 10 + 100 + 50 + 50 + 200 + 11 / 9 * 3), "9mm: the XP is the sum of every step (" .. nine.totalXP .. ")")
+
+    -- The arithmetic agrees with a mirror-inventory run of the real
+    -- recipes, from brass ingots on, for every canonical calibre.
+    local economies = {}
+    for _, id in ipairs(BALANCE.ECONOMY_CALIBRES) do
+        local calibre = AC_Calibres.get(id)
+        local primer = AC_Calibres.getPrimer(calibre.primerFamily)
+        local e = BALANCE.economy(calibre, 100)
+        economies[id] = e
+        eq(e.brassIngots, math.floor(e.brassIngots), id .. ": a whole number of brass ingots per hundred")
+        local inv = {
+            ["Base.BrassIngot"] = e.brassIngots, ["Base.CopperScrap"] = e.copperScrap, ["Base.CapGunCap"] = e.toyCaps,
+            ["Base.Fertilizer"] = e.fertilizerUses, ["base:charcoal"] = 100000, ["Base.SteelBarQuarter"] = 2,
+            [AC_Calibres.WAD.items[1]] = e.wads,
+            ["base:hammer"] = 1, ["base:tongs"] = 1, ["base:metalworkingpunch"] = 1, ["base:ballpeenhammer"] = 1,
+            ["base:metalworkingpliers"] = 1, ["base:whetstone"] = 1, ["base:mortarpestle"] = 1,
+        }
+        local xp = 0
+        local function run(recipe, n)
+            for _ = 1, n do
+                check(mirrorCraft(inv, recipe), id .. ": " .. recipe.id .. " runs")
+                xp = xp + AC_Materials.getRecipeXP(recipe)
+            end
+        end
+        run(R("AmmoMaking_ForgeSmallBrassSheets"), e.brassIngots)
+        run(R("AmmoMaking_PunchBrassCaseCups"), e.cupSheets)
+        run(primerRecipe(primer, "Caps"), e.primerSheets)
+        run(calibreRecipe(calibre, "dieSet"), 1)
+        run(calibreRecipe(calibre, "case"), 100)
+        run(calibreRecipe(calibre, "bullet"), e.copperScrap)
+        run(R("AmmoMaking_MixGunpowder"), e.powderJars)
+        run(calibreRecipe(calibre, "assemble"), 100)
+        eq(inv[calibre.round], 100, id .. ": the batch is a hundred rounds")
+        for _, left in ipairs({ "Base.BrassIngot", "AmmoMaking.SmallBrassSheet", "AmmoMaking.BrassCaseCup", "Base.CopperScrap", "Base.CapGunCap", "Base.Fertilizer", "Base.GunPowder" }) do
+            eq(inv[left], 0, id .. ": nothing left over of " .. left)
+        end
+        local x = e.xp
+        check(near(xp, x.caseStock + x.primers + x.dieSet + x.cases + x.bullets + x.powder + x.assembly), id .. ": the XP from brass to round is what the recipes paid (" .. xp .. ")")
+        eq(100000 - inv["base:charcoal"], e.brassIngots + e.powderJars * AC_Calibres.POWDER.charcoal + 2, id .. ": charcoal from brass to round")
+        -- Metallurgy: ore in equals metal in the rounds.
+        local units = AC_Materials.UNITS[calibre.round].contents
+        check(near(e.ore * 100, 100 * (units.brass + units.copper)), id .. ": the ore is exactly the metal in the rounds")
+        check(near(e.zincOre, 0.3 * e.brassIngots) and near(e.copperOre, 0.7 * e.brassIngots + e.copperScrap / 10), id .. ": seven parts copper to three of zinc, and the projectiles")
+    end
+
+    -- Outliers: no calibre is out of line with the others.
+    local lowOre, highOre, lowRate, highRate = math.huge, 0, math.huge, 0
+    for id, e in pairs(economies) do
+        lowOre, highOre = math.min(lowOre, e.ore), math.max(highOre, e.ore)
+        local rate = e.totalXP / e.ore
+        lowRate, highRate = math.min(lowRate, rate), math.max(highRate, rate)
+        check(e.ore >= 10 and e.ore <= 30, id .. ": a hundred rounds take between 10 and 30 ore (" .. e.ore .. ")")
+        check(rate >= 45 and rate <= 80, id .. ": between 45 and 80 XP per ore (" .. rate .. ")")
+        for part, amount in pairs(e.xp) do
+            check(amount <= 0.5 * e.totalXP, id .. ": " .. part .. " is at most half of the batch's XP")
+            check(amount > 0, id .. ": " .. part .. " pays something")
+        end
+        local calibre = AC_Calibres.get(id)
+        eq(e.fertilizerUses, 20 * calibre.powderUses, id .. ": fertilizer follows the charge")
+        check(e.fertilizerUses <= 100, id .. ": at most a hundred uses of fertilizer per hundred rounds")
+        check(e.charcoal <= 350, id .. ": at most 350 charcoal per hundred rounds (" .. e.charcoal .. ")")
+    end
+    check(highOre / lowOre < 3, "the dearest calibre takes under three times the ore of the cheapest (" .. lowOre .. " to " .. highOre .. ")")
+    check(highRate / lowRate < 1.6, "XP per ore differs by under 1.6 between calibres (" .. string.format("%.1f to %.1f", lowRate, highRate) .. ")")
+    -- Pistol to rifle: more of everything, powder most of all.
+    local rifle = economies[".308"]
+    check(rifle.ore > nine.ore and rifle.ore / nine.ore < 3, ".308 takes more ore than 9mm, under three times")
+    eq(rifle.fertilizerUses / nine.fertilizerUses, 5, ".308 takes five times the powder of 9mm")
+    check(rifle.fertilizerUses / nine.fertilizerUses > rifle.ore / nine.ore, "powder, not metal, is the rifle's price")
+    eq(economies["12 Gauge"].ore, rifle.ore, "a shell costs the metal of a .308")
+    check(economies["12 Gauge"].powderJars < rifle.powderJars, "and less powder")
+    eq(economies["12 Gauge"].wads, 100, "and a wad each")
+    check(economies[".44 Magnum"].ore > economies[".45 ACP"].ore and economies[".45 ACP"].ore > nine.ore, "pistol calibres rise with the round: 9mm, .45, .44")
+
+    -- The mixed loadout.
+    local mix = BALANCE.economyMix()
+    eq(mix.rounds, 350, "the mixed loadout is 350 rounds")
+    check(near(mix.ore, 2 * nine.ore + rifle.ore + economies["12 Gauge"].ore / 2), "its ore is the sum of its parts (" .. mix.ore .. ")")
+    check(near(mix.ore, 62.5), "62.5 ore")
+    eq(mix.xp.dieSet, 30, "three die sets")
+    check(mix.totalXP > 2775, "a first full kit of ammunition carries a character past level 5 (" .. string.format("%.0f", mix.totalXP) .. " XP)")
+    check(mix.totalXP < 5775, "and not to level 6")
+    print(string.format("  Economy: per 100 rounds %.0f to %.0f ore, %.0f to %.0f XP per ore; mixed loadout %.1f ore, %.0f charcoal, %.0f fertilizer uses, %.0f XP",
+        lowOre, highOre, lowRate, highRate, mix.ore, mix.charcoal, mix.fertilizerUses, mix.totalXP))
+
+    -- Powder: taking rounds apart never pays.
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(calibre.powderUses >= 1, calibre.id .. ": the charge is at least the one use vanilla gives back")
+    end
+    -- The table follows the model.
+    local rendered = BALANCE.renderEconomy()
+    local saved = AC_Calibres.POWDER.fertilizerUses
+    AC_Calibres.POWDER.fertilizerUses = 3
+    check(BALANCE.renderEconomy() ~= rendered, "a changed powder recipe changes the rendered economy table")
+    AC_Calibres.POWDER.fertilizerUses = saved
+    eq(BALANCE.renderEconomy(), rendered, "and restoring it restores the table")
+end
+
 section("Complete chain for every calibre: 100 rounds, exactly accounted")
 do
     local U = AC_Materials.UNITS
