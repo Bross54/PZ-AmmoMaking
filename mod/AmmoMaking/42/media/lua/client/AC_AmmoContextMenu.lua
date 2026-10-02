@@ -57,6 +57,26 @@ local function onInspectAmmo(player, item)
 end
 
 
+-- An empty case or a loose handloaded round. Reads the
+-- item, writes nothing to it.
+local function onInspectComponent(player, item)
+    if not player or not item then
+        return
+    end
+
+    local inspection = AmmoInspection.inspectComponent(player, item)
+
+    if not inspection then
+        return
+    end
+
+    AC_AmmoInspectionUI.open(
+        player,
+        inspection
+    )
+end
+
+
 ------------------------------------------------
 -- DEBUG AMMO QUALITY PRESETS
 ------------------------------------------------
@@ -312,6 +332,32 @@ local function onFillInventoryContextMenu(
 
             -- We found the relevant item,
             -- no reason to continue iterating.
+            return
+        end
+
+
+        ------------------------------------------------
+        -- A real component: an empty case, or a loose
+        -- round that carries a handloading record. One
+        -- entry, read-only. Factory rounds have nothing
+        -- to inspect and get no entry.
+        ------------------------------------------------
+
+        if item
+            and AmmoInspection.getComponent(item)
+        then
+
+            context:addOption(
+                AC_Text.get(
+                    "IGUI_AmmoMaking_InspectAmmo",
+                    "Inspect Ammunition"
+                ),
+                player,
+                onInspectComponent,
+                item
+            )
+
+
             return
         end
     end

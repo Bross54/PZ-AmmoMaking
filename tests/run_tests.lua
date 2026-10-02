@@ -5385,6 +5385,118 @@ do
     eq(AmmoQuality.getQualityLabel(nil), "Unknown", "nil item label")
 end
 
+section("Component inspection: cases and loose handloaded rounds, read-only")
+do
+    local C = AC_CaseQuality.CONFIG
+    local player = MOCK.newPlayer()
+
+    -- An item whose ModData refuses every write: the inspection must only read.
+    local function frozen(fullType, data)
+        local item = MOCK.newItem(fullType)
+        item.modData = setmetatable({}, {
+            __index = data,
+            __newindex = function(_, key) error("inspection wrote ModData." .. tostring(key)) end,
+        })
+        return item
+    end
+
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local name = calibre.id
+        local case = frozen(calibre.case, { [C.flagKey] = true, [C.qualityKey] = 84 })
+        local bare = frozen(calibre.case, {})
+        local loaded = frozen(calibre.round, { [C.roundFlagKey] = true, [C.roundQualityKey] = 66 })
+        local factory = frozen(calibre.round, {})
+
+        eq(AmmoInspection.getComponent(case), "case", name .. ": a case can be inspected")
+        eq(AmmoInspection.getComponent(bare), "case", name .. ": so can a case without a record")
+        eq(AmmoInspection.getComponent(loaded), "round", name .. ": a handloaded round can be inspected")
+        eq(AmmoInspection.getComponent(factory), nil, name .. ": a factory round has nothing to inspect")
+        eq(AmmoInspection.getComponent(MOCK.newItem(calibre.bullet)), nil, name .. ": a bullet carries no quality")
+        eq(AmmoInspection.getComponent(MOCK.newItem(calibre.dieSet)), nil, name .. ": nor does a die set")
+        eq(AmmoInspection.inspectComponent(player, factory), nil, name .. ": no inspection for a factory round")
+
+        player.perkLevel = 0
+        local r = AmmoInspection.inspectComponent(player, case)
+        eq(r.title, "Ammo Inspection", name .. ": title")
+        eq(r.kind, "case", name .. ": kind")
+        eq(r.calibre, name, name .. ": calibre")
+        eq(r.lines[1], "Empty case: " .. name, name .. ": the calibre is always shown")
+        eq(r.lines[2], "You do not know enough about ammunition to judge it.", name .. ": level 0 cannot judge quality")
+        eq(#r.lines, 2, name .. ": two lines at level 0")
+
+        player.perkLevel = 3
+        r = AmmoInspection.inspectComponent(player, case)
+        eq(r.lines[2], "Case quality: Very Good", name .. ": levels 1-4 see the label")
+        eq(#r.lines, 2, name .. ": a case has two lines")
+        eq(AmmoInspection.inspectComponent(player, bare).lines[2], "Case quality: not recorded", name .. ": a case without a record says so")
+
+        player.perkLevel = 5
+        r = AmmoInspection.inspectComponent(player, case)
+        eq(r.lines[2], "Case quality: Very Good (84)", name .. ": level 5 sees the number")
+
+        r = AmmoInspection.inspectComponent(player, loaded)
+        eq(r.kind, "round", name .. ": round kind")
+        eq(r.lines[1], "Handloaded round: " .. name, name .. ": round header")
+        eq(r.lines[2], "Case quality: Average (66)", name .. ": the inherited casing quality")
+        eq(r.lines[3], "This record stays with the loose round; loading it keeps only a count.", name .. ": the limit is stated")
+        eq(#r.lines, 3, name .. ": a round has three lines")
+        for _, line in ipairs(r.lines) do
+            check(not string.find(line, "IGUI_", 1, true), name .. ": no raw translation key")
+        end
+        -- Nothing the mod does not store is shown.
+        for _, line in ipairs(r.lines) do
+            for _, word in ipairs({ "Primer", "Projectile", "Powder", "Failure", "Reliability", "Reload" }) do
+                check(not string.find(line, word, 1, true), name .. ": no invented " .. word .. " line")
+            end
+        end
+    end
+
+    -- Malformed or out-of-range data is tolerated.
+    local nine = AC_Calibres.get("9mm")
+    player.perkLevel = 10
+    local odd = frozen(nine.case, { [C.qualityKey] = "high" })
+    eq(AmmoInspection.inspectComponent(player, odd).lines[2], "Case quality: not recorded", "a non-number quality counts as none")
+    local huge = frozen(nine.case, { [C.qualityKey] = 900 })
+    eq(AmmoInspection.inspectComponent(player, huge).lines[2], "Case quality: Excellent (100)", "an out-of-range quality is clamped for display")
+    eq(AmmoInspection.getComponent(frozen(nine.round, { [C.roundQualityKey] = "x" })), nil, "a round with a malformed record counts as factory")
+    eq(AmmoInspection.inspectComponent(nil, odd), nil, "no player")
+    eq(AmmoInspection.inspectComponent(player, nil), nil, "no item")
+    eq(AmmoInspection.getComponent({}), nil, "something that is not an item")
+    eq(AmmoInspection.inspectComponent(player, MOCK.newItem("Base.Plank")), nil, "an unrelated item")
+
+    -- The context menu: one entry for a case and for a handloaded round,
+    -- none for a factory round or anything else, in normal and debug mode.
+    local case = MOCK.newItem(nine.case)
+    AC_CaseQuality.set(case, 72)
+    local handloaded = MOCK.newItem(nine.round)
+    handloaded.modData[C.roundFlagKey] = true
+    handloaded.modData[C.roundQualityKey] = 61
+    for _, debug in ipairs({ false, true }) do
+        MOCK.debug = debug
+        local mode = debug and "debug" or "normal"
+        local ctx = fillInventoryMenu(player, case)
+        local option = ctx:find("Inspect Ammunition")
+        check(option ~= nil, mode .. ": inspect entry on a case")
+        eq(#ctx.options, 1, mode .. ": and nothing else, not even in debug mode")
+        local before = AC_AmmoInspectionUI.opened
+        ctx:invoke(option)
+        eq(AC_AmmoInspectionUI.opened, before + 1, mode .. ": the entry opens the inspection window")
+        eq(AC_CaseQuality.get(case), 72, mode .. ": inspecting leaves the quality alone")
+        eq(case.modData.AmmoMakingQualityInitialized, nil, mode .. ": and does not run the prototype's initialiser on a real item")
+
+        ctx = fillInventoryMenu(player, handloaded)
+        check(ctx:find("Inspect Ammunition") ~= nil, mode .. ": inspect entry on a handloaded round")
+        eq(#ctx.options, 1, mode .. ": one entry")
+        ctx = fillInventoryMenu(player, MOCK.newItem(nine.round))
+        eq(#ctx.options, 0, mode .. ": no entry on a factory round")
+        ctx = fillInventoryMenu(player, MOCK.newItem(nine.bullet))
+        eq(#ctx.options, 0, mode .. ": no entry on a bullet")
+        ctx = fillInventoryMenu(player, MOCK.newItem("Base.Plank"))
+        eq(#ctx.options, 0, mode .. ": no entry on an unrelated item")
+    end
+    MOCK.debug = false
+end
+
 ------------------------------------------------
 -- SUMMARY
 ------------------------------------------------

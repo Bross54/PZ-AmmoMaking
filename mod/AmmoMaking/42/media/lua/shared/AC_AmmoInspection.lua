@@ -388,3 +388,132 @@ function AmmoInspection.inspect(player, item)
 
     return result
 end
+
+------------------------------------------------
+-- COMPONENT INSPECTION
+------------------------------------------------
+--
+-- For the real components: an empty case (or hull) and a
+-- loose handloaded round. Unlike inspect() above, which
+-- belongs to the test-cartridge prototype and fills in
+-- its item's data, this only READS, and shows only what
+-- the mod stores reliably:
+--
+--   the calibre           from the item's type
+--   the case quality      rolled when the case was formed
+--   the casing quality    a round inherited at assembly
+--
+-- Nothing else exists to show: primers, bullets and
+-- powder carry no quality. A round's record lives on the
+-- loose item only; vanilla loading turns rounds into a
+-- count (AC_CaseQuality), so nothing here describes what
+-- is in a firearm or magazine.
+--
+-- Level 0 sees the calibre only, levels 1-4 the label,
+-- level 5 and above the number as well.
+------------------------------------------------
+
+-- kind ("case" or "round") and the calibre definition
+-- for an item this inspection covers, or nil. A round
+-- counts only when it carries a handloading record:
+-- factory rounds have nothing to inspect.
+function AmmoInspection.getComponent(item)
+    if not item or not item.getFullType then
+        return nil, nil
+    end
+
+    local kind, calibre = AC_Calibres.identify(item:getFullType())
+
+    if kind == "case" then
+        return kind, calibre
+    end
+
+    if kind == "round" and AC_CaseQuality.getRoundQuality(item) then
+        return kind, calibre
+    end
+
+    return nil, nil
+end
+
+
+function AmmoInspection.inspectComponent(player, item)
+    if not player then
+        return nil
+    end
+
+    local kind, calibre = AmmoInspection.getComponent(item)
+
+    if not kind then
+        return nil
+    end
+
+    local level = AmmoMakingSkill.getLevel(player)
+
+    local result = {
+        level = level,
+        kind = kind,
+        calibre = calibre.id,
+        title = text("IGUI_AmmoMaking_Insp_Title", "Ammo Inspection"),
+        lines = {}
+    }
+
+    table.insert(
+        result.lines,
+        kind == "case"
+            and text("IGUI_AmmoMaking_Insp_EmptyCase", "Empty case: %1", calibre.id)
+            or text("IGUI_AmmoMaking_Insp_HandloadedRound", "Handloaded round: %1", calibre.id)
+    )
+
+    local quality =
+        kind == "case"
+        and AC_CaseQuality.get(item)
+        or AC_CaseQuality.getRoundQuality(item)
+
+    if level <= 0 then
+
+        table.insert(
+            result.lines,
+            text(
+                "IGUI_AmmoMaking_Insp_NoKnowledgeComponent",
+                "You do not know enough about ammunition to judge it."
+            )
+        )
+
+    elseif not quality then
+
+        table.insert(
+            result.lines,
+            text("IGUI_AmmoMaking_Insp_NoRecord", "Case quality: not recorded")
+        )
+
+    elseif level < 5 then
+
+        table.insert(
+            result.lines,
+            text("IGUI_AmmoMaking_Insp_CaseQuality", "Case quality: %1",
+                AmmoQuality.labelFor(quality))
+        )
+
+    else
+
+        table.insert(
+            result.lines,
+            text("IGUI_AmmoMaking_Insp_CaseQualityExact", "Case quality: %1 (%2)",
+                AmmoQuality.labelFor(quality),
+                round(quality))
+        )
+    end
+
+    if kind == "round" then
+
+        table.insert(
+            result.lines,
+            text(
+                "IGUI_AmmoMaking_Insp_LooseOnly",
+                "This record stays with the loose round; loading it keeps only a count."
+            )
+        )
+    end
+
+    return result
+end

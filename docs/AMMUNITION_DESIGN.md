@@ -280,6 +280,23 @@ none.
   consumed cases of its own calibre as `casingQuality`.
 - It never changes material.
 
+**Inspection.** Right-clicking an empty case (or hull), or a loose round that
+carries a handloading record, offers one entry, *Inspect Ammunition*
+(`AmmoInspection.inspectComponent`). It reads the item and writes nothing:
+
+```text
+Empty case: .308                      Handloaded round: 9mm
+Case quality: Very Good (84)          Case quality: Average (66)
+                                      This record stays with the loose round;
+                                      loading it keeps only a count.
+```
+
+Level 0 sees the calibre only, levels 1–4 the label, level 5 and above the
+number. Nothing is shown that the mod does not store: primers, bullets and
+powder carry no quality, and a factory round has no record and gets no menu
+entry. (The older multi-quality inspection with failure chances belongs to
+the `AmmoMaking.TestCartridge` prototype only.)
+
 **Limit, established from vanilla Lua.** Loading a firearm or magazine turns
 round items into a count (`ISReloadWeaponAction`; ammunition research §1a;
 rifles use the same code). Per-round ModData is therefore not a carrier into
