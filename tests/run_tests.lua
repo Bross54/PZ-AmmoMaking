@@ -7094,6 +7094,14 @@ do
             eq(facts.opensCount, facts.perBox, name .. ": as many as went in")
             check(facts.carton ~= "nil" and string.sub(facts.carton, 1, 5) == "Base.", name .. ": twelve boxes go into a vanilla carton (" .. facts.carton .. ")")
         end
+        if facts then
+            -- Weight: a round's parts weigh no more than vanilla's round, so
+            -- carrying components is not a way round the weight of ammunition.
+            local primer = AC_Calibres.getPrimer(calibre.primerFamily)
+            local parts = tonumber(declaredItems[calibre.case].fields.Weight) + tonumber(declaredItems[calibre.bullet].fields.Weight) + tonumber(declaredItems[primer.item].fields.Weight)
+            check(parts > 0 and parts <= facts.weight + 1e-9, name .. ": case, projectile and primer weigh no more than the vanilla round (" .. parts .. " against " .. tostring(facts.weight) .. ")")
+            check(parts >= facts.weight / 3, name .. ": and at least a third of it (the rest is the powder)")
+        end
         check(not boxes[calibre.box], name .. ": its box is no other calibre's")
         boxes[calibre.box] = true
         eq(string.sub(calibre.box, 1, 5), "Base.", name .. ": the box is a vanilla item")

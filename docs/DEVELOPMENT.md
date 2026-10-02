@@ -58,7 +58,10 @@ never move an item into that list.
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
 | `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the prepared press; builds the component recipes, their material units and the item list from that data; validates it |
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
-| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 51 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9 |
+| `shared/AC_Recycling.lua` | shared | Brass recycling: what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing). Data and arithmetic only |
+| `shared/AC_Loot.lua` | shared | Die sets as rare loot: tier weights, target lists, `buildEntries`, `validate`, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists |
+| `shared/AC_SaveData.lua` | shared | How persisted numbers are read (`number`, `whole`, `isFinite`) and the schema of every ModData key (`SCHEMA`, `check`). Stores nothing |
+| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 55 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9, scrapping 3, recast 1 |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
 | `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
@@ -73,8 +76,12 @@ never move an item into that list.
 | `client/AC_AmmoContextMenu.lua` | client | *Inspect Ammunition* on cases and loose handloaded rounds; the test cartridge's inspection and debug presets |
 
 Load order is alphabetical within `shared/`, `client/` and `server/`. Modules
-only reference each other from inside functions, so the order does not matter at
-load time. The placement cursor lives in `server/BuildingObjects/` like every
+reference each other from inside functions, so the order does not matter at
+load time, with the exceptions that say so with a `require`: `AC_Materials`
+builds its recipe list from `AC_Calibres` and `AC_Recycling` while it loads,
+`AC_Loot`, `AC_Recycling` and `AC_Compat` read `AC_Calibres`, and
+`AC_SaveData` reads the test cartridge's defaults from `AC_AmmoQuality`. The
+test harness honours `require` the same way. The placement cursor lives in `server/BuildingObjects/` like every
 vanilla `ISBuildingObject` subclass.
 
 ## Gameplay constants
@@ -697,6 +704,21 @@ State that a server would have to own, as the code stands:
 | Laboratory analyzer | object or item ModData, the sample removed and re-created, XP, and time credited by whichever client opens the menu | server-owned state and `transmitModData`; the lazy timer per client is the main hazard |
 | **Ammunition (this stage)** | **none of its own** | see below |
 
+**The systems added on 2026-10-02**, classified by where their state
+lives:
+
+| System | Mutable state of its own | Class | Future multiplayer work |
+|---|---|---|---|
+| Brass recycling | none: four vanilla `craftRecipe` blocks, no XP, no effect | **vanilla-authoritative** | none |
+| Die-set loot | none in a save; it appends to the loot tables in memory on each world load | **vanilla-authoritative**, once the entries are in the server's tables | the handler is in `shared/`, so a dedicated server runs it too; on a client it changes tables the client never rolls from (harmless). REQUIRES FUTURE IN-GAME VERIFICATION on a server |
+| Ammo boxes | none: vanilla's recipe | **vanilla-authoritative** | none |
+| Save-data readers and repairs | none of their own; they run where the owning system runs | as the owning system | a repair that writes (a kit's counters, the analyzer's timer) happens on whichever side reads the data: the same hazard the analyzer row above already names |
+| Press recipes (off) | none | vanilla-authoritative | none; the station is a vanilla entity |
+| Spent cases, quality tally (not built) | would be item ModData written at the shot and at reload | **server-required-later** | every write where vanilla writes the count (`not isClient()`), synced by `syncHandWeaponFields` / `syncItemFields` (`AMMO_QUALITY_RUNTIME_DESIGN.md`) |
+| Inspection | none: reads only | **client-local** | none |
+
+Nothing added in this pass needs networking code, and none was written.
+
 The ammunition stage was built so that it adds nothing to this list. Every
 change it makes goes through a vanilla `craftRecipe`, which the server
 performs. The two things that happen in `OnCreate` are the open points:
@@ -737,8 +759,13 @@ methods, `ISBuildingObject`, `IsoThumpable.new`, that the `server/` cursor file
 loaded, and that the world sprite exists), and metallurgy (the vanilla and
 zinc item ids, each furnace recipe script, its `OnCreate` callback, whether
 `CraftRecipe:addRequiredSkill` exists and whether the Ammo Making requirement
-is attached). It never changes game state and cannot raise. The debug menu can
-re-run it.
+is attached). It also reports the calibre model, the prepared press, the
+vanilla ammo boxes (each round's box item and the `place_ammo_in_box` recipe
+id), brass recycling (`AC_Recycling.validate`), and die-set loot: the model,
+and what the registration found when the world loaded (a list that is
+missing, emptied or named by no container on this build is a WARNING; die
+sets can then only be forged). It never changes game state and cannot raise.
+The debug menu can re-run it.
 
 ## Debug tools (`-debug` only)
 
@@ -859,16 +886,44 @@ source, a jar from one dismantled round) must be rejected by the conservation
 check; that is how the alloy-parts flaw in an earlier version of the check
 was found.
 
-Later sections: whole-chain random crafting (thousands of valid crafts from
-ore to rounds over several seeds, one ledger per material checked after every
-craft), the generated balance tables (the design document and the README
-equal the rendering of the model), the prepared press recipes (same
-material, same die set, faster, absent from the live list), component
-inspection against items whose ModData refuses every write, and startup cost
-(which events the mod listens to, and that no menu, action or callback
-validates the model or rebuilds a recipe list).
+Later sections: whole-chain random crafting (about 44,000 valid crafts from
+ore to rounds over eight seeds, every recipe run at least once, one ledger
+per material checked after every craft), the generated tables (balance,
+economy, loot, recycling and the README's calibre table equal the rendering
+of the model), the prepared press recipes (same material, same die set, 60 %
+of the time, absent from the live list), component inspection against items
+whose ModData refuses every write, and startup cost (which events the mod
+listens to, and that no menu, action or callback validates the model or
+rebuilds a recipe list).
 
-**Source-level mutation run.** On 2026-10-02, 59 single changes were applied
+Added on 2026-10-02:
+
+- **Economy**: six canonical batches and a mixed loadout from ore, checked
+  against a mirror-inventory run, with outlier bounds.
+- **Save data**: the schema against a scan of the source, everything the
+  mod writes against the schema, and the fuzz (28,130 calls on damaged
+  data).
+- **Brass recycling**: the loss, the zero XP, the round trip until the
+  brass is gone, the bound on what a stock of brass can ever earn, and the
+  validator's refusals.
+- **Die-set loot**: the model against `tests/vanilla_snapshot.lua` (which
+  lists the game uses), the pinned weights, registration against a mocked
+  `ProceduralDistributions`, idempotence, dead and missing lists.
+- **Ammo boxes**: the snapshot of vanilla's box recipes against the calibre
+  model, and that the mod has no box item, box recipe or `base:ammo` item.
+
+`tests/vanilla_snapshot.lua` is generated by `tests/snapshot_vanilla.lua
+"<install dir>"` from the installed game. The suite reads the snapshot, not
+the install, so it runs anywhere; re-run the generator after a game
+update.
+
+**Mutation run, now in the repository.** `python tests/run_mutants.py`
+applies each fault of its list to the real file, runs the suite in a fresh
+Lua state, restores the file and reports any fault the suite did not notice.
+`check` only verifies that every fault still applies. See the header of the
+file; it must not run while anything else reads the repository.
+
+**The first source-level mutation run.** On 2026-10-02, 59 single changes were applied
 one at a time to the real mod files (the calibre model, the materials module,
 the compatibility check, the debug and inspection code, the generated script,
 the item script and the translation files), the whole suite was run for each,

@@ -182,14 +182,16 @@ for carton, box in pairs(mapper(recipeBody(packing, "Place12BoxesInCarton"))) do
 local gather = recipeBody(ammunition, "GatherGunpowder")
 
 -- Every item that carries the base:ammo tag, which is what GatherGunpowder
--- takes apart.
+-- takes apart, and each one's weight.
 local tagged = {}
+local weightOf = {}
 for _, file in ipairs({ "normal", "weapon" }) do
     local text = readFile(SCRIPTS .. "items/" .. file .. ".txt")
     for name, body in string.gmatch(text, "\n%s*item%s+([%w_]+)%s*(%b{})") do
         local tags = string.match(body, "\n%s*Tags%s*=%s*([^\n]*)")
         if tags and string.find(";" .. string.gsub(tags, "[%s,]", "") .. ";", ";base:ammo;", 1, true) then
             table.insert(tagged, "Base." .. name)
+            weightOf["Base." .. name] = tonumber(string.match(body, "\n%s*Weight%s*=%s*([%d%.]+)"))
         end
     end
 end
@@ -256,8 +258,8 @@ emit("        rounds = {")
 for _, round in ipairs(sortedKeys(boxOf)) do
     local box = boxOf[round]
     local back = opened[box] or {}
-    emit(string.format("            [%s] = { box = %s, perBox = %d, opensTo = %s, opensCount = %s, carton = %s },",
-        quote(round), quote(box), roundsPerBox[round], quote(tostring(back.round)), tostring(back.count), quote(tostring(cartonOf[box]))))
+    emit(string.format("            [%s] = { box = %s, perBox = %d, opensTo = %s, opensCount = %s, carton = %s, weight = %s },",
+        quote(round), quote(box), roundsPerBox[round], quote(tostring(back.round)), tostring(back.count), quote(tostring(cartonOf[box])), number(weightOf[round])))
 end
 emit("        },")
 emit("    },")
