@@ -816,12 +816,27 @@ end
 
 MOCK.newWorldObject = newWorldObject
 
--- Tile sprites getSprite() knows; unknown names return nil.
+-- Tile sprites the tile definitions hold. As in the 42.20.4 jar
+-- (IsoSpriteManager.getSprite), getSprite() NEVER returns nil: a name it
+-- does not know gets a sprite made on the spot, with the default id
+-- (IsoSprite.DEFAULT_SPRITE_ID) instead of a tile's own. An earlier
+-- version of this mock returned nil for an unknown name, and the mod's
+-- sprite probe was written against that.
 MOCK.knownSprites = { ["industry_03_61"] = true }
+MOCK.DEFAULT_SPRITE_ID = 20000000
+MOCK.spritesMadeOnTheSpot = {}
 
 function getSprite(name)
-    if not MOCK.knownSprites[name] then return nil end
-    return MOCK.strict({ getName = function() return name end }, "IsoSprite")
+    local id = MOCK.DEFAULT_SPRITE_ID
+    if MOCK.knownSprites[name] then
+        id = 1361
+    else
+        MOCK.spritesMadeOnTheSpot[name] = true
+    end
+    return MOCK.strict({
+        getName = function() return name end,
+        getID = function() return id end,
+    }, "IsoSprite")
 end
 
 ------------------------------------------------

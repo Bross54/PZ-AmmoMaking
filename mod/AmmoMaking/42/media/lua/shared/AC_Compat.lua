@@ -949,6 +949,27 @@ end
 -- such tile", which is what this relies on.
 ------------------------------------------------
 
+------------------------------------------------
+-- The analyzer's world sprite.
+--
+-- getSprite(name) cannot answer "does this tile exist"
+-- by itself: in the 42.20.4 jar it is
+-- IsoSpriteManager.getSprite, which CREATES a sprite for
+-- a name it does not know and returns that. It never
+-- returns nil. A sprite made that way has the default id
+-- (IsoSprite.DEFAULT_SPRITE_ID, 20000000) and no tile
+-- properties; a tile from the tile definitions has an id
+-- of its own. IsoSprite:getID() is public and vanilla's
+-- own debug Lua calls it.
+--
+-- So: the sprite's id decides. An earlier version of
+-- this probe treated any non-nil result as OK, which in
+-- the game is every result.
+------------------------------------------------
+
+AC_Compat.DEFAULT_SPRITE_ID = 20000000
+
+
 local function checkAnalyzerSprite(
     results
 )
@@ -993,15 +1014,7 @@ local function checkAnalyzerSprite(
             tostring(err)
         )
 
-    elseif sprite then
-
-        addResult(
-            results,
-            "OK",
-            "analyzer world sprite (" .. tostring(spriteName) .. ")"
-        )
-
-    else
+    elseif not sprite then
 
         addResult(
             results,
@@ -1009,6 +1022,57 @@ local function checkAnalyzerSprite(
             "analyzer world sprite " .. tostring(spriteName) .. " not found",
             "a placed analyzer would be invisible; change AC_LaboratoryAnalyzer.CONFIG.worldSprite"
         )
+
+    elseif hasMethod(sprite, "getID") ~= true then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "analyzer world sprite " .. tostring(spriteName),
+            "IsoSprite:getID unavailable; cannot tell a defined tile from one created on the spot"
+        )
+
+    else
+
+        local id,
+              idErr =
+            safe(
+                function()
+
+                    return
+                        sprite:getID()
+                end
+            )
+
+
+        if idErr
+            or type(id) ~= "number"
+        then
+
+            addResult(
+                results,
+                "UNVERIFIED",
+                "analyzer world sprite " .. tostring(spriteName),
+                tostring(idErr or "no sprite id")
+            )
+
+        elseif id == AC_Compat.DEFAULT_SPRITE_ID then
+
+            addResult(
+                results,
+                "WARNING",
+                "analyzer world sprite " .. tostring(spriteName) .. " not found",
+                "no tile definition has that name: a placed analyzer would be invisible; change AC_LaboratoryAnalyzer.CONFIG.worldSprite"
+            )
+
+        else
+
+            addResult(
+                results,
+                "OK",
+                "analyzer world sprite (" .. tostring(spriteName) .. ")"
+            )
+        end
     end
 end
 

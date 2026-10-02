@@ -155,7 +155,11 @@ MUTANTS = [
     (SHARED + "AC_AmmoInspection.lua", "    if type(isDebugEnabled) == \"function\"\n        and isDebugEnabled()\n    then\n\n        local config = AC_CaseQuality.CONFIG", "    if true then\n\n        local config = AC_CaseQuality.CONFIG", "the debug lines of an inspection show in a normal game"),
     (SHARED + "AC_AmmoInspection.lua", "    elseif level < 5 then\n", "    elseif level < 1 then\n", "the exact case quality is shown below level 5"),
 
+    # ---- probes that must be able to fail
+    (SHARED + "AC_Compat.lua", "        elseif id == AC_Compat.DEFAULT_SPRITE_ID then", "        elseif false then", "the analyzer sprite probe accepts a sprite the engine made up on the spot"),
+
     # ---- per-interaction cost and housekeeping
+    (SHARED + "AC_Compat.lua", "function AC_Compat.runAmmunition(\n    verbose\n)\n\n    local results = {}\n", "function AC_Compat.runAmmunition(\n    verbose\n)\n\n    AC_Compat.hasRun = true\n\n    local results = {}\n", "the ammunition-only check counts as the once-per-start check"),
     (SHARED + "AC_CaseQuality.lua", "    if item.hasModData\n        and not item:hasModData()\n    then\n        return nil\n    end\n", "", "right-clicking a factory round creates ModData on it"),
     (SHARED + "AC_Compat.lua", "function AC_Compat.resetForNewWorld()\n\n    AC_Compat.hasRun = false", "function AC_Compat.resetForNewWorld()\n\n    AC_Compat.hasRun = true", "a second save in the same session gets no compatibility check"),
     (CLIENT + "AC_MiningContextMenu.lua", "            metal,\n            samples\n        )", "            metal\n        )", "the mining menu scans the inventory once per metal"),

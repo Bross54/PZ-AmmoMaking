@@ -6111,7 +6111,17 @@ do
     check(not MOCK.printLogContains("[AmmoMaking] OK: "), "no OK line per probe: the summary is concise")
     check(not MOCK.printLogContains("WARNING"), "and nothing to warn about")
     check(not MOCK.printLogContains("Compatibility check:"), "it is not the full compatibility check")
-    eq(AC_Compat.hasRun, AC_Compat.hasRun, "it leaves the once-per-start flag alone")
+    -- It is not the once-per-start check and must not count as it, in
+    -- either direction.
+    for _, flag in ipairs({ false, true }) do
+        local savedFlag = AC_Compat.hasRun
+        AC_Compat.hasRun = flag
+        MOCK.capturePrint(true)
+        pcall(AC_GeologyDebug.verifyAmmoDependencies, player)
+        MOCK.capturePrint(false)
+        eq(AC_Compat.hasRun, flag, "it leaves the once-per-start flag alone (" .. tostring(flag) .. ")")
+        AC_Compat.hasRun = savedFlag
+    end
     -- With a round missing, the detail appears and the class count drops.
     MOCK.knownScriptItems["Base.556Bullets"] = nil
     MOCK.clearPrintLog()
@@ -9031,6 +9041,30 @@ do
     MOCK.knownSprites["industry_03_61"] = true
     eq(s4.warnings, 1, "missing analyzer sprite is one WARNING")
     check(MOCK.printLogContains("WARNING: analyzer world sprite industry_03_61 not found"), "sprite WARNING line")
+    -- That WARNING is reached although getSprite() returned a sprite: the
+    -- engine never returns nil, it makes the sprite on the spot. The probe
+    -- has to look at the id.
+    check(getSprite("no_such_tile_01_0") ~= nil, "(the mocked getSprite, like the engine's, never returns nil)")
+    eq(getSprite("no_such_tile_01_0"):getID(), AC_Compat.DEFAULT_SPRITE_ID, "(an unknown name gets the default sprite id)")
+    check(getSprite("industry_03_61"):getID() ~= AC_Compat.DEFAULT_SPRITE_ID, "(a defined tile has an id of its own)")
+    eq(AC_Compat.DEFAULT_SPRITE_ID, 20000000, "the default sprite id is the engine's IsoSprite.DEFAULT_SPRITE_ID")
+    -- A build whose getSprite still returned nil is a WARNING too, and a
+    -- sprite without getID() is not guessed at.
+    do
+        local realGet = getSprite
+        getSprite = function() return nil end
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local _, summaryNil = AC_Compat.run(true)
+        getSprite = function(name) return { getName = function() return name end } end
+        local _, summaryNoId = AC_Compat.run(true)
+        MOCK.capturePrint(false)
+        getSprite = realGet
+        eq(summaryNil.warnings, 1, "a nil sprite is a WARNING")
+        eq(summaryNoId.warnings, 0, "a sprite without getID is not a WARNING")
+        check(summaryNoId.unverified >= 1, "it is UNVERIFIED")
+        check(MOCK.printLogContains("IsoSprite:getID unavailable"), "and says why")
+    end
 
     local realGetSprite = getSprite
     getSprite = nil

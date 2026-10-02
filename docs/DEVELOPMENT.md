@@ -353,7 +353,7 @@ same unchanged files). An earlier note said 42.20.2, read from a stale log.
 | `setIsDismantable(false)` keeps a thumpable out of vanilla dismantle / move handling | CONFIRMED: `ISMoveableSpriteProps.fromObject`, `ISDestroyCursor`; vanilla `MOTrap.lua` sets it the same way |
 | `hasModData()`, `getObjectIndex() == -1`, `hasGridPower()` | CONFIRMED: vanilla Lua usage, method names present in the jar |
 | `industry_03_61` exists and is not a vanilla moveable | CONFIRMED: `media/newtiledefinitions.tiles.txt` has no `IsMoveAble`, so vanilla furniture pickup cannot grab the analyzer |
-| `getSprite(name)` returns nil for an unknown tile | STRONG INDICATION: vanilla TileGeometryEditor relies on it |
+| `getSprite(name)` returns nil for an unknown tile | **WRONG, corrected on 2026-10-02.** JAR `IsoSpriteManager#getSprite`: an unknown name is created on the spot and returned, with `IsoSprite.DEFAULT_SPRITE_ID` (20000000) as its id. The game-start probe of the analyzer's sprite therefore reported OK for any name; it now compares `sprite:getID()` with the default id (public, and called by vanilla's debug Lua) |
 | The placed object keeps its ModData through save/reload and chunk unload | **REQUIRES IN-GAME VERIFICATION** |
 
 The placed analyzer was first written locally and never pushed. It was recovered
