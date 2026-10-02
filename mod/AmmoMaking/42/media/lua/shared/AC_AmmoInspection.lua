@@ -510,7 +510,7 @@ function AmmoInspection.inspectComponent(player, item)
             result.lines,
             text(
                 "IGUI_AmmoMaking_Insp_LooseOnly",
-                "This record stays with the loose round; loading it keeps only a count."
+                "This record stays with the loose round; loading or boxing it keeps only a count."
             )
         )
     end

@@ -255,6 +255,15 @@ AC_Calibres.PRIMERS = {
 --          digits only)
 -- round    the vanilla cartridge item the assembly makes
 -- ammoType the vanilla weapon AmmoType, for reference
+-- box, roundsPerBox
+--          the vanilla box item of the round and how many
+--          it holds, as vanilla's own place_ammo_in_box
+--          recipe has them. Reference only: the mod adds
+--          no box recipe, because that recipe takes the
+--          rounds by item type and a handloaded round IS
+--          the vanilla item. The compatibility check
+--          probes the box, so a build that renames one is
+--          reported (docs/LOOT_AND_RECYCLING.md, 3).
 -- case, bullet, dieSet
 --          the calibre's three mod items; when left out
 --          they are AmmoMaking.Case<suffix>,
@@ -682,6 +691,10 @@ AC_Calibres.LIST = {
 
         round = "Base.Bullets9mm",
 
+        box = "Base.Bullets9mmBox",
+
+        roundsPerBox = 50,
+
         ammoType = "base:bullets_9mm",
     }),
 
@@ -693,6 +706,10 @@ AC_Calibres.LIST = {
 
         round = "Base.Bullets38",
 
+        box = "Base.Bullets38Box",
+
+        roundsPerBox = 50,
+
         ammoType = "base:bullets_38",
     }),
 
@@ -703,6 +720,10 @@ AC_Calibres.LIST = {
         suffix = "45ACP",
 
         round = "Base.Bullets45",
+
+        box = "Base.Bullets45Box",
+
+        roundsPerBox = 50,
 
         ammoType = "base:bullets_45",
 
@@ -725,6 +746,10 @@ AC_Calibres.LIST = {
 
         round = "Base.Bullets357",
 
+        box = "Base.Bullets357Box",
+
+        roundsPerBox = 50,
+
         ammoType = "base:bullets_357",
 
         powderUses = 2,
@@ -743,6 +768,10 @@ AC_Calibres.LIST = {
         suffix = "44Magnum",
 
         round = "Base.Bullets44",
+
+        box = "Base.Bullets44Box",
+
+        roundsPerBox = 20,
 
         ammoType = "base:bullets_44",
 
@@ -775,6 +804,10 @@ AC_Calibres.LIST = {
 
         round = "Base.556Bullets",
 
+        box = "Base.556Box",
+
+        roundsPerBox = 20,
+
         ammoType = "base:bullets_556",
 
         primerFamily = "SmallRifle",
@@ -794,6 +827,10 @@ AC_Calibres.LIST = {
 
         round = "Base.3030Bullets",
 
+        box = "Base.3030Box",
+
+        roundsPerBox = 20,
+
         ammoType = "base:bullets_3030",
     }),
 
@@ -806,6 +843,10 @@ AC_Calibres.LIST = {
         suffix = "308Win",
 
         round = "Base.308Bullets",
+
+        box = "Base.308Box",
+
+        roundsPerBox = 20,
 
         ammoType = "base:bullets_308",
 
@@ -832,6 +873,10 @@ AC_Calibres.LIST = {
         suffix = "12Gauge",
 
         round = "Base.ShotgunShells",
+
+        box = "Base.ShotgunShellsBox",
+
+        roundsPerBox = 25,
 
         ammoType = "base:shotgun_shells",
 
@@ -1080,6 +1125,28 @@ function AC_Calibres.validate(
             and string.sub(calibre.round, 1, 5) ~= "Base."
         then
             problem(name, "the round must be a vanilla item")
+        end
+
+
+        -- The box is vanilla's, and no two rounds share one.
+        if type(calibre.box) ~= "string"
+            or string.sub(calibre.box, 1, 5) ~= "Base."
+        then
+
+            problem(name, "the box must be a vanilla item")
+
+        elseif itemOwner[calibre.box] then
+
+            problem(name, "box item " .. calibre.box .. " is already used by " .. itemOwner[calibre.box])
+
+        else
+
+            itemOwner[calibre.box] = name .. " box"
+        end
+
+
+        if not isWhole(calibre.roundsPerBox, 1) then
+            problem(name, "roundsPerBox must be a whole number of at least 1")
         end
 
 

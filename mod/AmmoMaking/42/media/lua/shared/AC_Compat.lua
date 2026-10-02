@@ -1555,6 +1555,124 @@ end
 
 
 ------------------------------------------------
+-- Ammo boxes. The mod has no box recipe: vanilla's
+-- place_ammo_in_box takes the nine rounds by item type,
+-- and a handloaded round is that item. What can be
+-- checked here is that the recipe and each round's box
+-- still exist under the ids the installed 42.20.4
+-- scripts use. A WARNING means boxing handloaded rounds
+-- of that calibre may not be offered on this build;
+-- making and firing them is unaffected.
+------------------------------------------------
+
+AC_Compat.BOX_RECIPE = "place_ammo_in_box"
+
+
+local function checkBoxes(
+    results
+)
+
+    local manager =
+        safe(
+            function()
+
+                return
+                    getScriptManager()
+            end
+        )
+
+
+    if not manager then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "ammo boxes",
+            "no script manager"
+        )
+
+
+        return
+    end
+
+
+    local missing = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local script =
+            safe(
+                function()
+
+                    return
+                        manager:FindItem(
+                            calibre.box
+                        )
+                end
+            )
+
+
+        if not script then
+
+            table.insert(
+                missing,
+                tostring(calibre.box)
+            )
+        end
+    end
+
+
+    if hasMethod(manager, "getCraftRecipe") == true then
+
+        local recipe =
+            safe(
+                function()
+
+                    return
+                        manager:getCraftRecipe(
+                            AC_Compat.BOX_RECIPE
+                        )
+                end
+            )
+
+
+        if not recipe then
+
+            table.insert(
+                missing,
+                "recipe " .. AC_Compat.BOX_RECIPE
+            )
+        end
+    end
+
+
+    if #missing == 0 then
+
+        addResult(
+            results,
+            "OK",
+            "vanilla ammo boxes (" .. #AC_Calibres.LIST .. " rounds, boxed by vanilla's own recipe)"
+        )
+
+    else
+
+        addResult(
+            results,
+            "WARNING",
+            "vanilla ammo boxes changed",
+            "missing " .. table.concat(missing, ", ") .. "; handloaded rounds may not be boxable, everything else is unaffected"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- Brass recycling (AC_Recycling): it loses brass and
 -- awards nothing. Its recipes and items are probed with
 -- all the others (checkMetallurgyRecipes, REQUIRED_ITEMS);
@@ -1997,6 +2115,8 @@ function AC_Compat.run(
     checkMetallurgyRecipes(results)
 
     checkCalibres(results)
+
+    checkBoxes(results)
 
     checkRecycling(results)
 

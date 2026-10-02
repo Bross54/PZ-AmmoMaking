@@ -6243,6 +6243,119 @@ do
 end
 
 ------------------------------------------------
+-- AMMO BOXES
+------------------------------------------------
+
+section("Ammo boxes: vanilla's own recipe takes handloaded rounds; the mod adds none")
+do
+    -- What the installed 42.20.4 recipes say (tests/vanilla_snapshot.lua).
+    local A = VANILLA.ammo
+    eq(A.boxInputLines, 1, "place_ammo_in_box has one input line: the rounds, no empty box, no tool")
+    eq(A.boxIsExclusive, true, "that line is IsExclusive: one round type per box")
+    eq(A.boxHasOnCreate, false, "it has no OnCreate: nothing is copied from the rounds onto the box")
+    eq(A.gatherTakesAmmoTag, true, "GatherGunpowder takes anything tagged base:ammo")
+    eq(A.gatherReturnsOneUse, true, "and returns one use of gunpowder")
+
+    local boxedRounds = 0
+    for _ in pairs(A.rounds) do boxedRounds = boxedRounds + 1 end
+    eq(boxedRounds, #AC_Calibres.LIST, "vanilla boxes exactly as many round types as the mod makes")
+    eq(#A.tagged, #AC_Calibres.LIST, "and tags exactly as many items as ammunition")
+
+    local boxes = {}
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local name = calibre.id
+        local facts = A.rounds[calibre.round]
+        check(facts ~= nil, name .. ": vanilla's box recipe takes " .. calibre.round)
+        if facts then
+            eq(calibre.box, facts.box, name .. ": the model names vanilla's box item")
+            eq(calibre.roundsPerBox, facts.perBox, name .. ": and its size")
+            eq(facts.opensTo, calibre.round, name .. ": opening the box hands back the same round item")
+            eq(facts.opensCount, facts.perBox, name .. ": as many as went in")
+            check(facts.carton ~= "nil" and string.sub(facts.carton, 1, 5) == "Base.", name .. ": twelve boxes go into a vanilla carton (" .. facts.carton .. ")")
+        end
+        check(not boxes[calibre.box], name .. ": its box is no other calibre's")
+        boxes[calibre.box] = true
+        eq(string.sub(calibre.box, 1, 5), "Base.", name .. ": the box is a vanilla item")
+        check(declaredItems[calibre.box] == nil, name .. ": the mod declares no box item")
+        local tagged = false
+        for _, itemType in ipairs(A.tagged) do
+            if itemType == calibre.round then tagged = true end
+        end
+        check(tagged, name .. ": the round is tagged base:ammo, so vanilla can take it apart for powder")
+    end
+
+    -- A handloaded round is the vanilla item: the assembly recipe's output
+    -- is the very type the box recipe names.
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        eq(calibreRecipe(calibre, "assemble").outputs[1].item, calibre.round, calibre.id .. ": assembly makes the item vanilla boxes")
+    end
+
+    -- The mod adds nothing of its own: no recipe makes, takes or names a
+    -- box, and no mod item is tagged as ammunition (which would let
+    -- vanilla's GatherGunpowder take a case or a primer apart for powder).
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        check(string.find(string.lower(recipe.id), "box", 1, true) == nil, recipe.id .. " is not a box recipe")
+        for _, output in ipairs(recipe.outputs) do
+            check(not boxes[output.item], recipe.id .. " does not make a box")
+        end
+        for _, input in ipairs(recipe.inputs) do
+            for _, id in ipairs(input.items or {}) do
+                check(not boxes[id], recipe.id .. " does not take a box")
+            end
+        end
+    end
+    local script = readFile(SCRIPTS .. "AC_Recipes.txt")
+    check(string.find(script, "Box", 1, true) == nil and string.find(script, "Carton", 1, true) == nil, "the recipe script names no box or carton")
+    for id, block in pairs(declaredItems) do
+        check(string.find(";" .. tostring(block.fields.Tags or "") .. ";", ";base:ammo;", 1, true) == nil, id .. " is not tagged base:ammo")
+    end
+
+    -- The validator knows the box.
+    local function problemsWith(change)
+        local list = {}
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            local copy = {}
+            for key, value in pairs(calibre) do copy[key] = value end
+            table.insert(list, copy)
+        end
+        change(list)
+        return table.concat(AC_Calibres.validate(list), "; ")
+    end
+    check(string.find(problemsWith(function(l) l[1].box = nil end), "9mm: the box must be a vanilla item", 1, true) ~= nil, "a calibre without a box is refused")
+    check(string.find(problemsWith(function(l) l[1].box = "AmmoMaking.Box9mm" end), "9mm: the box must be a vanilla item", 1, true) ~= nil, "a mod box is refused")
+    check(string.find(problemsWith(function(l) l[2].box = l[1].box end), "box item Base.Bullets9mmBox is already used by 9mm box", 1, true) ~= nil, "a shared box is refused")
+    check(string.find(problemsWith(function(l) l[1].roundsPerBox = 0 end), "9mm: roundsPerBox must be a whole number of at least 1", 1, true) ~= nil, "an empty box is refused")
+    check(string.find(problemsWith(function(l) l[1].roundsPerBox = 12.5 end), "roundsPerBox must be a whole number", 1, true) ~= nil, "a fractional box is refused")
+
+    -- The game-start probe (mocked script manager).
+    local function boxRun(change, restore)
+        change()
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local _, summary = AC_Compat.run(true)
+        MOCK.capturePrint(false)
+        restore()
+        return summary
+    end
+    local ids = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
+    MOCK.resetCraftRecipes(ids)
+    AC_Materials.applySkillRequirements()
+    AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
+    MOCK.players = { MOCK.newPlayer({ square = MOCK.newSquare(1, 1, 0, GRASS) }) }
+    local clean = boxRun(function() end, function() end)
+    check(MOCK.printLogContains("[AmmoMaking] OK: vanilla ammo boxes (9 rounds, boxed by vanilla's own recipe)"), "the boxes are probed at game start")
+    local renamed = boxRun(function() MOCK.knownScriptItems["Base.556Box"] = nil end, function() MOCK.knownScriptItems["Base.556Box"] = true end)
+    eq(renamed.warnings, clean.warnings + 1, "a box this build does not have is one warning")
+    check(MOCK.printLogContains("WARNING: vanilla ammo boxes changed (missing Base.556Box; handloaded rounds may not be boxable, everything else is unaffected)"), "and it is named")
+    check(MOCK.printLogContains("OK: calibre 5.56 complete"), "the calibre itself is still complete: making rounds does not need the box")
+    local gone = boxRun(function() MOCK.craftRecipeScripts["place_ammo_in_box"] = nil end, function() MOCK.resetCraftRecipes(ids) AC_Materials.applySkillRequirements() end)
+    eq(gone.warnings, clean.warnings + 1, "a missing box recipe is one warning")
+    check(MOCK.printLogContains("missing recipe place_ammo_in_box"), "and the recipe is named")
+    eq(AC_Compat.BOX_RECIPE, "place_ammo_in_box", "the probed recipe id is vanilla's")
+end
+
+------------------------------------------------
 -- COMPATIBILITY CHECK
 ------------------------------------------------
 
@@ -6735,7 +6848,7 @@ do
         eq(r.kind, "round", name .. ": round kind")
         eq(r.lines[1], "Handloaded round: " .. name, name .. ": round header")
         eq(r.lines[2], "Case quality: Average (66)", name .. ": the inherited casing quality")
-        eq(r.lines[3], "This record stays with the loose round; loading it keeps only a count.", name .. ": the limit is stated")
+        eq(r.lines[3], "This record stays with the loose round; loading or boxing it keeps only a count.", name .. ": the limit is stated")
         eq(#r.lines, 3, name .. ": a round has three lines")
         for _, line in ipairs(r.lines) do
             check(not string.find(line, "IGUI_", 1, true), name .. ": no raw translation key")

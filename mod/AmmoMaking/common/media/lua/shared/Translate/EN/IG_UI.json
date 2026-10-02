@@ -129,7 +129,7 @@
   "IGUI_AmmoMaking_Insp_NoRecord": "Case quality: not recorded",
   "IGUI_AmmoMaking_Insp_CaseQuality": "Case quality: %1",
   "IGUI_AmmoMaking_Insp_CaseQualityExact": "Case quality: %1 (%2)",
-  "IGUI_AmmoMaking_Insp_LooseOnly": "This record stays with the loose round; loading it keeps only a count.",
+  "IGUI_AmmoMaking_Insp_LooseOnly": "This record stays with the loose round; loading or boxing it keeps only a count.",
   "IGUI_AmmoMaking_Insp_OverallQuality": "Overall Quality: %1",
   "IGUI_AmmoMaking_Insp_OverallQualityPct": "Overall Quality: %1%",
   "IGUI_AmmoMaking_Insp_CasingQualityPct": "Casing Quality: %1%",

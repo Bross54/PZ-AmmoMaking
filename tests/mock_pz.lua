@@ -203,6 +203,10 @@ end
 local nextItemId = 1
 
 MOCK.knownScriptItems = {
+    -- Vanilla ammo boxes (ids confirmed in the installed 42.20.4 scripts)
+    ["Base.Bullets9mmBox"] = true, ["Base.Bullets38Box"] = true, ["Base.Bullets45Box"] = true,
+    ["Base.Bullets357Box"] = true, ["Base.Bullets44Box"] = true, ["Base.556Box"] = true,
+    ["Base.3030Box"] = true, ["Base.308Box"] = true, ["Base.ShotgunShellsBox"] = true,
     ["Base.CopperOre"] = true,
     ["AmmoMaking.ZincOre"] = true,
     ["AmmoMaking.GeologicalSample"] = true,
@@ -309,8 +313,15 @@ MOCK.newCraftRecipeScript = newCraftRecipeScript
 MOCK.craftRecipeScripts = {}
 MOCK.craftRecipeLookup = true   -- false: the script manager has no getCraftRecipe
 
+-- Vanilla recipes the mod probes by id (confirmed in the installed 42.20.4
+-- scripts). They are always known, whatever mod recipes a test registers.
+MOCK.vanillaCraftRecipes = { "place_ammo_in_box" }
+
 function MOCK.resetCraftRecipes(ids)
     MOCK.craftRecipeScripts = {}
+    for _, id in ipairs(MOCK.vanillaCraftRecipes) do
+        MOCK.craftRecipeScripts[id] = newCraftRecipeScript(id)
+    end
     for _, id in ipairs(ids or {}) do
         MOCK.craftRecipeScripts[id] = newCraftRecipeScript(id)
     end
