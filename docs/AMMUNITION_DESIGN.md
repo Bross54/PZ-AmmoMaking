@@ -411,6 +411,15 @@ Answers to the review questions:
   ingot → case); it awards nothing itself, loses half the brass each time
   round, and a case that is scrapped and re-formed can never return the XP
   its assembly would have given (`LOOT_AND_RECYCLING.md` 2.4).
+  **For every sequence, not only the ones simulated**: the suite finds a
+  value for each consumable (the most XP it can still become) such that
+  every recipe's XP is paid out of the value it uses up, with charcoal
+  counted as free because it never runs out. Such values exist only if no
+  loop is both free and rewarding. They come out at 144 XP for a copper ore
+  and 8 for a zinc ore, against the 49 to 73 a career earns per ore: no
+  order of crafting and recycling, however long, gets more than about twice
+  the ordinary yield out of a stock of material, and the search fails
+  outright if scrapping is made to return all of the brass.
 - **Does a found die set skip the ladder?** No. The levels are on the
   recipes, not on the tool: a looted .308 die set is useless until level 3
   (cases) and 5 (rounds).

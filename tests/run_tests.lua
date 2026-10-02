@@ -6993,6 +6993,171 @@ do
     end
 end
 
+section("XP potential: no sequence of crafts, however long, earns more than its materials are worth")
+do
+    -- The simulations above try many sequences. This is the argument for
+    -- ALL of them. Give every consumable a value v >= 0, the most Ammo
+    -- Making XP it can still be turned into. If for every recipe
+    --
+    --     XP of the craft  <=  v(what it consumes) - v(what it makes)
+    --
+    -- then any sequence of crafts, in any order, with any recycling in
+    -- between, earns at most v(the starting stock): each craft pays its XP
+    -- out of the value on the table and can never put value back. Such a v
+    -- exists only if no loop through the recipes is both free and
+    -- rewarding; the search below finds the smallest one, and the check
+    -- after it verifies the inequality recipe by recipe, independently of
+    -- how v was found.
+    --
+    -- Kept tools are not consumed and have no value. A line that accepts
+    -- several items is worth its cheapest alternative (the adversary picks).
+    -- Drainables are valued per use.
+    --
+    -- Charcoal is worth NOTHING here, on purpose. It is burnt from logs
+    -- and never runs out, so a loop that costs only charcoal is a free
+    -- loop: with charcoal at zero, casting scrap back into ingots cannot
+    -- be what pays for re-forming cases. Everything else that is consumed
+    -- (ore, scrap, fertilizer, caps, matches, steel, wadding) is finite.
+    local FREE = { ["tag base:charcoal"] = true }
+    local U = AC_Materials.UNITS
+    local recipes = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(recipes, recipe) end
+    for _, recipe in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(recipes, recipe) end
+
+    local function usesOf(item)
+        return type(U[item]) == "table" and U[item].uses or 1
+    end
+    -- The consumed lines of a recipe as { count, { names } }, a tag standing
+    -- for the items that carry it.
+    local function consumed(recipe)
+        local lines = {}
+        for _, input in ipairs(recipe.inputs or {}) do
+            if not input.keep then
+                local names = {}
+                for _, item in ipairs(input.items or {}) do table.insert(names, item) end
+                for _, tag in ipairs(input.tags or {}) do table.insert(names, "tag " .. tag) end
+                table.insert(lines, { input.count, names })
+            end
+        end
+        return lines
+    end
+    local function made(recipe)
+        local lines = {}
+        for _, output in ipairs(recipe.outputs or {}) do
+            table.insert(lines, { output.count * (output.oneUse and 1 or usesOf(output.item)), output.item })
+        end
+        return lines
+    end
+
+    local function solve(list, sweeps)
+        local v = setmetatable({}, { __index = function() return 0 end })
+        for sweep = 1, sweeps do
+            local moved = false
+            for _, recipe in ipairs(list) do
+                local lines = consumed(recipe)
+                local inValue = 0
+                for _, line in ipairs(lines) do
+                    local least = math.huge
+                    for _, name in ipairs(line[2]) do least = math.min(least, v[name]) end
+                    line.least = least
+                    inValue = inValue + line[1] * least
+                end
+                local need = AC_Materials.getRecipeXP(recipe)
+                for _, line in ipairs(made(recipe)) do need = need + line[1] * v[line[2]] end
+                if inValue < need - 1e-9 then
+                    -- The shortfall is put on the recipe's first consumed
+                    -- line that is not free: its main material (the case
+                    -- of an assembly, the metal of a casting).
+                    local main = nil
+                    for _, line in ipairs(lines) do
+                        local free = true
+                        for _, name in ipairs(line[2]) do
+                            if not FREE[name] then free = false end
+                        end
+                        if not free and not main then main = line end
+                    end
+                    if not main then return v, nil, recipe.id end
+                    moved = true
+                    local level = main.least + (need - inValue) / main[1]
+                    if level > 1e9 then return v, nil, recipe.id end
+                    for _, name in ipairs(main[2]) do
+                        if v[name] < level then v[name] = level end
+                    end
+                end
+            end
+            if not moved then return v, sweep end
+        end
+        return v, nil
+    end
+
+    local v, sweeps, stuckAt = solve(recipes, 5000)
+    check(sweeps ~= nil, "a value exists for every material: no loop of recipes pays XP for nothing (" .. tostring(stuckAt) .. ")")
+    eq(v["tag base:charcoal"], 0, "charcoal is free in this argument")
+    -- The certificate, checked on its own.
+    local worst = 0
+    for _, recipe in ipairs(recipes) do
+        local inValue, outValue = 0, 0
+        for _, line in ipairs(consumed(recipe)) do
+            local least = math.huge
+            for _, name in ipairs(line[2]) do least = math.min(least, v[name]) end
+            inValue = inValue + line[1] * least
+        end
+        for _, line in ipairs(made(recipe)) do outValue = outValue + line[1] * v[line[2]] end
+        local xp = AC_Materials.getRecipeXP(recipe)
+        check(xp <= inValue - outValue + 1e-6, recipe.id .. ": its XP (" .. xp .. ") is paid out of the value it uses up (" .. string.format("%.3f", inValue - outValue) .. ")")
+        check(inValue - outValue >= -1e-6, recipe.id .. ": it never leaves more value than it took")
+        worst = math.max(worst, xp)
+    end
+    for name, value in pairs(v) do
+        check(isFinite(value) and value >= 0, "the value of " .. name .. " is a finite number (" .. tostring(value) .. ")")
+    end
+
+    -- What that makes an ore worth, at most, against what a career gets.
+    local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+    local copper, zinc = v["Base.CopperOre"], v["AmmoMaking.ZincOre"]
+    check(copper > 0 and zinc > 0, "an ore is worth something (" .. string.format("%.1f and %.1f", copper, zinc) .. ")")
+    -- The bound is not vacuous: no batch of the economy table beats it, and
+    -- it is within a small factor of the best real use.
+    local best = 0
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local e = BALANCE.economy(calibre, 100)
+        local primer = AC_Calibres.getPrimer(calibre.primerFamily)
+        -- XP at stations (mining and prospecting are not crafts), against
+        -- the value of everything the batch consumes.
+        local stationXP = e.totalXP - e.xp.mining - e.xp.prospecting
+        local stock = e.copperOre * copper + e.zincOre * zinc
+            + e.fertilizerUses * v[AC_Calibres.POWDER.fertilizerItem]
+            + e.toyCaps * v["Base.CapGunCap"]
+            + 2 * v["Base.SteelBarQuarter"]
+            + e.wads * math.min(v[AC_Calibres.WAD.items[1]], v[AC_Calibres.WAD.items[2]])
+        check(stationXP <= stock + 1e-6, calibre.id .. ": a hundred rounds earn no more than their materials are worth (" .. string.format("%.0f <= %.0f", stationXP, stock) .. ")")
+        check(stock <= 3 * stationXP, calibre.id .. ": and the bound is within three times what loading them earns, recycling loops included (" .. string.format("%.0f against %.0f", stock, stationXP) .. ")")
+        best = math.max(best, stationXP / e.ore)
+    end
+    print(string.format("  XP potential: a copper ore is worth at most %.1f XP and a zinc ore %.1f, whatever is crafted and however often it is recycled (loading rounds earns up to %.1f per ore); found in %d sweeps",
+        copper, zinc, best, sweeps))
+
+    -- The search fails when a loop does pay: scrapping that returns all of
+    -- the brass, or scrapping that awards XP while losing brass too slowly.
+    local saved = { AC_Recycling.CONFIG.scrapPerBatch, AC_Recycling.CONFIG.xp }
+    local function withRecycling(scrapPerBatch, xp)
+        AC_Recycling.CONFIG.scrapPerBatch, AC_Recycling.CONFIG.xp = scrapPerBatch, xp
+        local list = {}
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if not recipe.recycling then table.insert(list, recipe) end
+        end
+        for _, recipe in ipairs(AC_Recycling.buildRecipes()) do table.insert(list, recipe) end
+        for _, recipe in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(list, recipe) end
+        local _, found = solve(list, 3000)
+        AC_Recycling.CONFIG.scrapPerBatch, AC_Recycling.CONFIG.xp = saved[1], saved[2]
+        return found ~= nil
+    end
+    eq(withRecycling(saved[1], saved[2]), true, "(the model as it is has a value)")
+    eq(withRecycling(2, 0), false, "scrapping that returns ALL the brass has none: cases could be formed and scrapped for ever")
+    eq(withRecycling(3, 0), false, "nor has scrapping that returns more than it takes")
+    eq(AC_Recycling.CONFIG.scrapPerBatch, saved[1], "(the recycling yield was restored)")
+end
+
 section("Spent-case policies: the analysis follows the model and no policy creates brass")
 do
     -- An analysis for a decision, not a feature: the mod defines no spent
