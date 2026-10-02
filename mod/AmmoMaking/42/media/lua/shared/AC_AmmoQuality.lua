@@ -16,6 +16,33 @@ local function clamp(value, minValue, maxValue)
     return value
 end
 
+-- The prototype's fields on a test cartridge and their starting
+-- values. This is the AmmoMaking.TestCartridge prototype only: real
+-- cases and rounds carry one quality, kept by AC_CaseQuality, and must
+-- never be passed to initialize() (a handloaded round also has a
+-- "casingQuality", which this would overwrite).
+AmmoQuality.DEFAULTS = {
+
+    -- Component quality values: 0-100
+    casingQuality = 100,
+    primerQuality = 100,
+    projectileQuality = 100,
+    assemblyQuality = 100,
+
+    -- Powder load: 1.0 = standard load
+    powderLoad = 1.0,
+
+    -- Number of times casing has previously been reloaded
+    reloadCount = 0,
+
+    -- Final calculated quality
+    overallQuality = 100,
+
+    -- Reliability / failure values
+    failureChance = 0,
+    catastrophicFailureChance = 0,
+}
+
 -- Initialize quality data on an ammo item
 function AmmoQuality.initialize(item)
     if not item then
@@ -25,30 +52,24 @@ function AmmoQuality.initialize(item)
     local data = item:getModData()
 
     if data.AmmoMakingQualityInitialized then
+
+        -- Already set up. A field that is missing or is not a
+        -- number (a damaged save) gets its default back, so the
+        -- arithmetic below never meets a nil.
+        for key, default in pairs(AmmoQuality.DEFAULTS) do
+            if type(data[key]) ~= "number" then
+                data[key] = default
+            end
+        end
+
         return
     end
 
     data.AmmoMakingQualityInitialized = true
 
-    -- Component quality values: 0-100
-    data.casingQuality = 100
-    data.primerQuality = 100
-    data.projectileQuality = 100
-    data.assemblyQuality = 100
-
-    -- Powder load
-    -- 1.0 = standard load
-    data.powderLoad = 1.0
-
-    -- Number of times casing has previously been reloaded
-    data.reloadCount = 0
-
-    -- Final calculated quality
-    data.overallQuality = 100
-
-    -- Reliability / failure values
-    data.failureChance = 0
-    data.catastrophicFailureChance = 0
+    for key, default in pairs(AmmoQuality.DEFAULTS) do
+        data[key] = default
+    end
 end
 
 -- Calculate overall cartridge quality

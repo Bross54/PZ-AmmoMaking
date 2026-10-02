@@ -5618,6 +5618,41 @@ do
         end
     end
     eq(AmmoQuality.getQualityLabel(nil), "Unknown", "nil item label")
+
+    -- A fresh cartridge gets exactly the prototype's fields.
+    local fresh = MOCK.newItem("AmmoMaking.TestCartridge")
+    AmmoQuality.initialize(fresh)
+    eq(fresh.modData.AmmoMakingQualityInitialized, true, "initialised flag")
+    for key, default in pairs(AmmoQuality.DEFAULTS) do
+        eq(fresh.modData[key], default, "fresh cartridge " .. key)
+    end
+    -- A preset survives a second initialise: only damaged fields are touched.
+    fresh.modData.casingQuality, fresh.modData.powderLoad, fresh.modData.reloadCount = 35, 1.22, 5
+    AmmoQuality.initialize(fresh)
+    eq(fresh.modData.casingQuality, 35, "an existing value is kept")
+    eq(fresh.modData.powderLoad, 1.22, "an existing powder load is kept")
+    eq(fresh.modData.reloadCount, 5, "an existing reload count is kept")
+
+    -- Damaged data (the flag set, fields missing or of the wrong type) used
+    -- to raise "arithmetic on a nil value" in the menu click. It is repaired.
+    player.perkLevel = 10
+    for _, damage in ipairs({
+        { "casingQuality", nil }, { "primerQuality", "high" }, { "powderLoad", "abc" },
+        { "reloadCount", {} }, { "assemblyQuality", false }, { "projectileQuality", nil },
+    }) do
+        local broken = MOCK.newItem("AmmoMaking.TestCartridge")
+        AmmoQuality.initialize(broken)
+        broken.modData[damage[1]] = damage[2]
+        local ok, result = pcall(AmmoInspection.inspect, player, broken)
+        check(ok, "a cartridge with a damaged " .. damage[1] .. " can still be inspected: " .. tostring(result))
+        eq(broken.modData[damage[1]], AmmoQuality.DEFAULTS[damage[1]], "the damaged " .. damage[1] .. " gets its default back")
+        check(pcall(AmmoQuality.getQualityLabel, broken), "and its label can be read")
+    end
+    local emptied = MOCK.newItem("AmmoMaking.TestCartridge")
+    emptied.modData.AmmoMakingQualityInitialized = true
+    check(pcall(AmmoInspection.inspect, player, emptied), "a cartridge with the flag and no fields at all can be inspected")
+    eq(emptied.modData.overallQuality, 100, "and reads as a default cartridge")
+    player.perkLevel = 0
 end
 
 section("Component inspection: cases and loose handloaded rounds, read-only")
@@ -5694,6 +5729,9 @@ do
     local huge = frozen(nine.case, { [C.qualityKey] = 900 })
     eq(AmmoInspection.inspectComponent(player, huge).lines[2], "Case quality: Excellent (100)", "an out-of-range quality is clamped for display")
     eq(AmmoInspection.getComponent(frozen(nine.round, { [C.roundQualityKey] = "x" })), nil, "a round with a malformed record counts as factory")
+    eq(AmmoInspection.inspectComponent(player, frozen(nine.round, { [C.roundQualityKey] = 900 })).lines[2], "Case quality: Excellent (100)", "a round's out-of-range quality is clamped too")
+    eq(AmmoInspection.inspectComponent(player, frozen(nine.round, { [C.roundQualityKey] = -5 })).lines[2], "Case quality: Dangerous (1)", "and never reads below the minimum")
+    eq(AC_CaseQuality.getRoundQuality(frozen(nine.round, { [C.roundQualityKey] = 66 })), 66, "a sound round quality is returned as stored")
     eq(AmmoInspection.inspectComponent(nil, odd), nil, "no player")
     eq(AmmoInspection.inspectComponent(player, nil), nil, "no item")
     eq(AmmoInspection.getComponent({}), nil, "something that is not an item")

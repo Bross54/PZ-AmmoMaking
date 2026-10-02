@@ -248,7 +248,14 @@ function AC_CaseQuality.getRoundQuality(
     end
 
 
-    return quality
+    -- Clamped like a case's own quality, so damaged data
+    -- never reads as "900".
+    return
+        clamp(
+            quality,
+            AC_CaseQuality.CONFIG.minQuality,
+            AC_CaseQuality.CONFIG.maxQuality
+        )
 end
 
 
