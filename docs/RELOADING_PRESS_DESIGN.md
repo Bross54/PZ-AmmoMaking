@@ -2,7 +2,9 @@
 
 Status: **DESIGNED. The station is not built.** The press *recipes* are
 prepared in the calibre model and switched off; nothing of the press is in
-the game's scripts.
+the game's scripts. A second sprite survey (2026-10-02, §2.4) confirmed that
+no vanilla sprite can be shown to be a safe placeholder, so the world object
+still waits for art and a session with the game.
 
 Vanilla facts were read on 2026-10-02 from the installed Build 42.20.4
 scripts, Lua and `projectzomboid.jar` (paths relative to the install root).
@@ -142,35 +144,84 @@ what comes out** (the mold). That is the press-plus-die-set pattern exactly.
 
 ### 2.4 Sprites are the hard constraint
 
-JAR `SpriteConfigManager#parseEntityScript`:
+JAR `SpriteConfigManager#parseEntityScript`, and what surrounds it:
 
-- each `row =` name must already exist as a sprite, else the entity script is
-  an error (`"Sprite '…' does not exist"`);
-- a sprite may belong to **one** entity; a second claim is an error
-  (`"Sprite '…' is duplicate"`);
-- either error sets `hasLoadErrors`, and JAR `IsoWorld#init` then refuses to
-  load the world: *"World loading could not proceed, there are script load
-  errors."*
-- claiming a sprite marks the sprite itself (`EntityScriptName`,
-  `IsoFlagType.EntityScript`), and JAR
-  `GameEntityFactory#CreateIsoEntityFromCellLoading` creates the entity for
-  any loaded object with that flag. INFERRED: claiming a sprite that the map
-  already uses turns every such object on the map into the station.
+- **A sprite may belong to one entity.** The sprites of every parsed entity
+  go into `HashSet<IsoSprite> registeredScriptedSprites`; a second entity
+  naming one throws `"Sprite '…' is duplicate. entity script: …"`. The
+  exception is caught, `hasLoadErrors` is set, and JAR `IsoWorld#init` ends
+  with `if (… || SpriteConfigManager.HasLoadErrors()) throw new
+  WorldDictionaryException("World loading could not proceed, there are
+  script load errors.")`. That operand is unconditional: **no world loads**,
+  in debug or not, while two active scripts claim one sprite. FILE: no two
+  vanilla entities share a `row` sprite.
+- **A name that does not exist is not an error** (corrected on 2026-10-02;
+  this document used to say it was). The method does contain `"Sprite '…'
+  does not exist"`, but it tests `IsoSpriteManager.instance.getSprite(name)
+  == null`, and JAR `IsoSpriteManager#getSprite(String)` is `namedMap
+  .containsKey(n) ? namedMap.get(n) : AddSprite(n)`: an unknown name is
+  created on the spot, with no tile properties and whatever texture
+  `Texture.getSharedTexture(name)` finds, possibly none. INFERRED: a typo in
+  a sprite name yields an invisible, property-less station, not a refusal
+  to load.
+- **Claiming marks the sprite itself**: property `EntityScriptName` and flag
+  `IsoFlagType.EntityScript`. JAR `CellLoader#AddObject` /
+  `#AddSpecialObject` call `GameEntityFactory.CreateIsoEntityFromCellLoading`
+  for map objects; a sprite with that flag gets the claiming entity's
+  components. INFERRED: claiming a sprite the map uses turns newly loaded
+  map objects with that sprite into the station. For a sprite that also has
+  `IsMoveAble` + `CustomItem` the item path is taken instead, with a warning.
+- **No tile property is required by the engine.** FILE
+  `ISBuildIsoEntity.lua` only reads them to derive behaviour
+  (`BlocksPlacement`, `solid`, `solidtrans`, `IsStackable`); vanilla's own
+  `crafted_02_40` (Stone Quern) gets `solidtrans` from
+  `lua/shared/Util/CustomTileProps.lua` at `OnGameStart`.
+- Order of loading, JAR `IsoWorld#init`: vanilla tile definitions, then
+  `ZomboidFileSystem.loadModTileDefs()`, then
+  `ScriptManager.PostTileDefinitions()`, which parses the entities. A mod's
+  own tile sheet is known before its entity is parsed.
 
-So a press entity needs sprites that exist and that no vanilla entity (and no
-other mod) claims: either new art shipped as a `.pack` and `.tiles` (WORKSHOP
-CLUE: declared in `mod.info` as `pack=` and `tiledef=`), or vanilla sprites
-that are unclaimed today. Unclaimed candidates, from the tile properties in
-`media/newtiledefinitions.tiles` (artwork not viewed):
+Vanilla candidates, from `media/newtiledefinitions.tiles`, the entity
+scripts, the texture packs and the map (`*.lotheader`; 4,065 cells scanned).
+Artwork was not viewed.
 
-| Sprites | Tile name | Notes |
-|---|---|---|
-| `industry_04_20..23` | Grinder Bench | tabletop, moveable (`Base.Mov_BenchGrinder`); **placed on the map** |
-| `crafted_05_0..3` | Press Crude Hand | moveable; the S face is two tiles |
-| `crafted_02_0..3` | Workbench | not moveable |
+| Sprites | Tile name | Claimed by a vanilla entity | Map cells that use it | Tiles per face | Notes |
+|---|---|---|---|---|---|
+| `crafted_01_72`, `_73` | Hand Press | **yes**, `Hand_Press` | 7 / 4 | 1 | unusable: a second claim stops the world loading |
+| `industry_04_16..19` | Key Duplicator | **yes**, `Key_Duplicator` | 1–8 | 1 | unusable |
+| `crafted_05_0..3` | Crude Hand Press | no | 2–5 | **2** | `IsMoveAble`, `solidtrans`; the closest by name |
+| `crafted_02_0..3` | Workbench | no | 9–10 | **2** | not moveable |
+| `industry_04_20..23` | Bench Grinder | no | 1–8 | 1 | tabletop; `CustomItem = Base.Mov_BenchGrinder`, so map objects take the item path |
+| `crafted_04_96..103` | Branch Workbench | no | 1 | **2** | `container = toolcabinet` |
+| `location_business_machinery_01_16..23` | Wood Top Workbench | no | 19–120 | **2** | the commonest; `IsTable` |
+| `construction_01_6`, `_7`, `_14`, `_15` | Mortar Grinder | no | 3–64 | 1 | `Material = SmallMetalPlates` |
+| `location_community_medical_01_64`, `_65` | Tool Bench | no | 6–7 | 1 | two faces only |
+| `crafted_03_120..123` | Grindstone | no | 0 | 1 | tile definition exists, **no texture found in any pack** |
 
-`crafted_01_72/73` (Press Hand) and `industry_04_16..19` (Key Duplicator) are
-claimed by vanilla entities and unusable.
+Three things the table shows:
+
+1. **Every unclaimed candidate that has a texture is placed on the vanilla
+   map.** Not one is both drawable and absent from the map, so claiming any
+   of them changes existing map objects.
+2. The two that read as a press or a bench by name are **two tiles wide** on
+   every face; a single-tile press has no vanilla sprite to borrow.
+3. An unclaimed sprite is only unclaimed today. A vanilla update or another
+   mod that claims the same one turns a working setup into "no world
+   loads".
+
+WORKSHOP CLUE (installed mods, hints only): every installed mod that adds a
+station ships its own tile sheet, declared in `mod.info` as `pack=` and
+`tiledef=<name> <number>` (a 42.19 ammunition mod's reloading bench, with
+`component CraftBench { Recipes = AmmoReloadingBench, }`; a propane cabinet;
+tents). One mod claims hundreds of unclaimed vanilla sprites for decorative
+buildables, never for a station. No installed mod claims any candidate
+above.
+
+**Verdict: no safe placeholder sprite can be proven from the installed
+files.** A vanilla sprite fails on point 1 (map side effects, unverifiable
+offline) and point 3 (a hard failure when someone else claims it). The only
+collision-free choice is a sprite name of the mod's own, with its own tile
+sheet and pack, and that is art plus an in-game check.
 
 ### 2.5 Placement, pickup, persistence
 
@@ -243,17 +294,19 @@ C is rejected: no vanilla tag fits, and reusing one puts ammunition in
 another station's list. A stays the fallback if B's runtime checks fail: it
 needs only an item and the same recipes with `AnySurfaceCraft`.
 
-**It is not implemented in this pass**, for one reason: §2.4. The entity
-cannot exist without sprites, and each way of getting them is a decision that
-only the game can check and that fails by refusing to load the world:
+**It is not implemented**, for one reason: §2.4. The entity cannot exist
+without sprites, and no way of getting them can be shown to be safe from the
+files:
 
-- new art is the only collision-free choice and is not something this pass
-  can produce or look at;
-- an unclaimed vanilla sprite works only until vanilla or another mod claims
-  it, and a map-placed one would turn existing map objects into presses.
+- new art is the only collision-free choice, and is not something an
+  offline pass can produce or look at;
+- every drawable unclaimed vanilla sprite is on the map, so claiming it
+  alters existing map objects in a way only the game can show, and stops the
+  world loading the day vanilla or another mod claims it too.
 
-That is exactly the "uncertain world-object engine behaviour" case, so the
-world object waits for a session that can run the game.
+That is the "uncertain world-object engine behaviour" case, so the world
+object waits for a session that can run the game. `PRESS.enabled` stays
+`false`; nothing of the press is in the scripts.
 
 ## 6. What is prepared
 
@@ -261,42 +314,140 @@ In `AC_Calibres.lua`, tested and switched off:
 
 - `AC_Calibres.PRESS`: `enabled = false`, `benchTag =
   "AmmoMakingReloadingPress"`, `timedAction = "UseHandPress"`,
-  `timeDivisor = 2`, `minimumTime = 20`, the steps that have a press version
-  (case, bullet, assembly; the die set is forged, not pressed).
+  `timePercent = 60`, `minimumTime = 20`, the steps that have a press
+  version (case, bullet, assembly; the die set is forged, not pressed),
+  `nameSuffix = " (Press)"`.
 - `AC_Calibres.buildPressRecipes(calibre)`: each hand recipe of those steps
-  with the press tag and timed action, half the time, and **only** the hammer
-  line removed. Inputs, the kept die set, outputs, level, XP and quality
-  effect are the hand recipe's own.
-- `AC_Calibres.validatePress()`: the tag is letters and digits, the divisor a
-  whole number, and no press recipe drops below 20. The compatibility check
-  reports a problem with it as a WARNING.
+  with the press tag and timed action, 60 % of the time, and **only** the
+  hammer line removed. Inputs, the kept die set, outputs, level, XP and
+  quality effect are the hand recipe's own.
+- `AC_Calibres.validatePress()`: the tag is letters and digits, the
+  percentage a whole number from 50 to 90, every step one the press can do,
+  and no press recipe below a time of 20. The compatibility check reports a
+  problem with it as a WARNING.
 - `AC_Calibres.buildRecipes()` appends the press recipes only when
   `PRESS.enabled`; with it off, the recipe script, callbacks, names and
   compatibility lines are exactly as before.
 
-Press times with the divisor 2 (hand → press): pistol and shell case and
-projectile 80 → 40, assembly 40 → 20; rifle case 160 → 80, bullet 120 → 60,
-assembly 80 → 40.
+All nine rounds are covered: 27 press recipes (three per calibre), each made
+from the live hand recipe, so a calibre added later gets its press recipes
+with no further work.
+
+### 6.1 The press's advantage: time, and only time
+
+| | By hand | At the press |
+|---|---|---|
+| Material in, material out | the recipe's | the same |
+| Die set | kept | the same die set, kept |
+| Output count | the recipe's | the same: no bonus round |
+| Ammo Making level and XP per craft | the recipe's | the same |
+| Hammer | needed, wears very lightly | not needed |
+| Time | the recipe's | **60 %** |
+| Case quality | rolled from skill | the same roll; no bonus |
+
+Times, hand → press: pistol and shell case and projectile 80 → 48, assembly
+40 → 24; rifle case 160 → 96, bullet 120 → 72, assembly 80 → 48.
+
+Why 60 % and not the 50 % first pencilled in. Time is the press's whole
+advantage, and time is also the rate at which a recipe pays XP. At 50 % the
+steps the press covers (about half of a career's XP in the simulation)
+would pay twice as fast, and the pistol assembly would sit
+exactly on the 20 floor below which the engine's skill speed-up stops
+working. At 60 % the press is two fifths faster, every step keeps its
+speed-up (24 / 20 is still 1 per level), and there is room to tune in either
+direction: `timePercent` may be set anywhere from 50 to 90 and
+`validatePress()` refuses anything else. Batches and ergonomics are the
+better things to add later; a material or quality bonus would make the
+press mandatory rather than convenient, and is not planned.
 
 The tests assert, for every calibre and step: same material in and out, same
 output count, same level and XP, the calibre's own die set kept, no hammer,
-no other calibre's item, faster than by hand and never below 20; that the
-live recipe list and the generated script contain nothing of the press; and
-that switching it on adds exactly three recipes per calibre.
+no other calibre's item, exactly the configured share of the hand time and
+never below 20; that the live recipe list and the generated script contain
+nothing of the press; that switching it on adds exactly three recipes per
+calibre; and that each press recipe's name can be derived from its hand
+recipe's and collides with nothing.
 
 ## 7. Building the first prototype (next session with the game)
 
-1. Sprites: ship a tile sheet (`pack=` / `tiledef=` in `mod.info`), or pick an
-   unclaimed vanilla set and accept its risk.
-2. `media/scripts/entities/AC_ReloadingPress.txt`: `entity
-   AmmoMaking_ReloadingPress` with `UiConfig`, `CraftBench { Recipes =
-   AmmoMakingReloadingPress, }`, `SpriteConfig`, and a build `CraftRecipe`
-   (steel bar stock and a few hand tools; a vanilla `SkillRequired`, because
-   the Ammo Making perk is registered from Lua after scripts are parsed). Its
-   `xuiSkin` entry with a display name and icon.
+1. **Sprites.** Ship a tile sheet: a `.tiles` definition and a `.pack`,
+   declared in `mod.info` (`pack=<name>`, `tiledef=<name> <number>`), with
+   sprite names of the mod's own (`ammomaking_press_01_0` …). One tile per
+   face is enough (`face S`, `face E`). Tile properties worth setting, from
+   the vanilla stations: `BlocksPlacement`, `solidtrans`, and for pickup
+   `IsMoveAble`, `PickUpWeight`, `CustomName`.
+2. **The entity**, `media/scripts/entities/AC_ReloadingPress.txt`. A draft,
+   following `Hand_Press` field for field; **it is not in the mod**:
+
+   ```text
+   module Base
+   {
+       entity AmmoMaking_ReloadingPress
+       {
+           component UiConfig
+           {
+               xuiSkin = default,
+               entityStyle = ES_AmmoMaking_ReloadingPress,
+               uiEnabled = true,
+           }
+           component CraftBench
+           {
+               Recipes = AmmoMakingReloadingPress,
+           }
+           component SpriteConfig
+           {
+               health = 100,
+               skillBaseHealth = 20,
+               face S { layer { row = <the mod's sprite, south>, } }
+               face E { layer { row = <the mod's sprite, east>, } }
+           }
+           component CraftRecipe
+           {
+               timedAction = BuildWallHammer,
+               time = 100,
+               category = Blacksmithing,
+               SkillRequired = MetalWelding:2,
+               xpAward = MetalWelding:10,
+               inputs
+               {
+                   item 1 tags[base:hammer] mode:keep flags[Prop1;MayDegradeVeryLight],
+                   item 2 [Base.SteelBarHalf],
+                   item 4 [Base.Plank],
+                   item 8 [Base.Nails],
+               }
+           }
+       }
+
+       xuiSkin default
+       {
+           entity ES_AmmoMaking_ReloadingPress
+           {
+               LuaWindowClass = ISEntityWindow,
+               DisplayName = Reloading Press,
+               Icon = Build_Handpress,
+               components
+               {
+                   CraftLogic
+                   {
+                       LuaPanelClass = ISCraftDefaultPanel,
+                       DisplayName = Press,
+                       Icon = Build_Handpress,
+                   }
+               }
+           }
+       }
+   }
+   ```
+
+   The build recipe's skill has to be a vanilla one: the Ammo Making perk is
+   registered from Lua after scripts are parsed, and the engine drops an
+   unknown skill name. The inputs and the skill are a first guess to be
+   balanced; `Base.SteelBarHalf` is in vanilla's metalwork loot. Every key
+   above is one JAR `CraftRecipe#Load`, `SpriteConfigScript#load` and
+   `CraftBenchScript#load` accept.
 3. `AC_Calibres.PRESS.enabled = true`; `lua5.1 tests/write_recipes.lua`; 27
-   recipe names in `Recipes.json` ("… (Press)"); the entity in the
-   compatibility check.
+   recipe names in `Recipes.json` (each hand name with " (Press)"); the
+   entity in the compatibility check.
 4. In game: see §9.
 
 Later, and independent of the above: a `toolBonus` for cases formed at the
@@ -316,14 +467,20 @@ None of the following can be established offline:
 
 - a mod entity with a new `CraftBench` tag loads on 42.20.4, opens the
   entity window and lists exactly the press recipes;
-- the chosen sprites exist, are unclaimed, and sit correctly; claiming them
-  does not alter map objects;
+- the mod's tile sheet loads (`pack=`, `tiledef=`), its sprites are drawn
+  and sit correctly;
 - the build recipe appears in the build menu, or the moveable item places the
   station; pickup and re-placing keep the `CraftBench`;
 - a press recipe keeps the die set and takes the material of the hand recipe;
 - `UseHandPress` animates acceptably at the press;
-- a recipe time of 20 feels right and the skill speed-up applies;
-- the crafting UI's tag filter copes with a custom tag (JAR
+- press times of 24 to 96 feel right and the skill speed-up applies;
+- the crafting UI's tag filter copes with a custom tag. JAR
   `BaseCraftingLogic#filterAndSortRecipeList` calls
-  `CraftRecipeTag.fromValue`, which throws for an unknown value; whether that
-  path is reached for custom tags was not determined).
+  `CraftRecipeTag.fromValue` only in the `FilterMode.Tags` branch, entered
+  when the search text starts with `$`, and passes it the lower-cased
+  registered tags; `fromValue` compares with the CamelCase ids and throws
+  otherwise. INFERRED: that path would throw for vanilla tags too, so it is
+  not a hazard of a mod tag in particular, but it has not been seen;
+- an unknown sprite name does not stop the world loading and shows as an
+  invisible station (§2.4), so a typo in the tile sheet's names is noticed;
+- claiming the mod's own sprites alters no map object.

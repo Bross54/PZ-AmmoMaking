@@ -347,10 +347,17 @@ AC_Calibres.PRIMERS = {
 -- bench tag yet, and a recipe nothing can craft would
 -- only be dead weight in the game's recipe list.
 --
--- timeDivisor: hand time / press time, a whole number.
+-- timePercent: the press time as a percentage of the
+-- hand time, rounded down. 60 means two fifths faster.
+-- It is the press's ONLY advantage, besides needing no
+-- hammer: same material, same die set, same output, same
+-- XP. It is kept between 50 and 90: below 50 the press
+-- would more than double the XP earned per hour at the
+-- bench, above 90 it would not be worth building.
 -- A press time below 20 is refused: the engine's 5 %
 -- per level speed-up is time / 20 with integer division,
 -- so a shorter recipe would never get faster with skill.
+
 --
 -- timedAction and the kept-tool line follow vanilla's
 -- own press recipes (PressClayBrick: Tags = HandPress,
@@ -365,7 +372,13 @@ AC_Calibres.PRESS = {
 
     timedAction = "UseHandPress",
 
-    timeDivisor = 2,
+    timePercent = 60,
+
+    -- The range timePercent may be tuned in.
+    minimumPercent = 50,
+
+    maximumPercent = 90,
+
 
     minimumTime = 20,
 
@@ -374,6 +387,12 @@ AC_Calibres.PRESS = {
     steps = { "case", "bullet", "assemble" },
 
     idSuffix = "AtPress",
+
+    -- What a press recipe is called: its hand recipe's
+    -- name with this added. No name is written until the
+    -- press is switched on (Recipes.json then needs one
+    -- per press recipe; the tests say which).
+    nameSuffix = " (Press)",
 }
 
 
@@ -1671,7 +1690,8 @@ function AC_Calibres.buildPressRecipes(
                 press.timedAction
 
             recipe.time =
-                math.floor(hand.time / press.timeDivisor)
+                math.floor(hand.time * press.timePercent / 100)
+
 
 
             recipe.inputs = {}
@@ -1744,13 +1764,52 @@ function AC_Calibres.validatePress(
     end
 
 
-    if not isWhole(press.timeDivisor, 1) then
+    if not isWhole(press.timePercent, 1)
+        or press.timePercent < press.minimumPercent
+        or press.timePercent > press.maximumPercent
+    then
 
-        table.insert(problems, "press: timeDivisor must be a whole number of at least 1")
+        table.insert(
+            problems,
+            "press: timePercent must be a whole number from "
+            .. tostring(press.minimumPercent)
+            .. " to "
+            .. tostring(press.maximumPercent)
+        )
 
 
         return problems
     end
+
+
+    if type(press.steps) ~= "table"
+        or #press.steps == 0
+    then
+
+        table.insert(problems, "press: no steps")
+
+
+        return problems
+    end
+
+
+    -- A step the press names must be one a calibre has, and
+    -- never the die set: that is forged.
+    local known = { case = true, bullet = true, assemble = true }
+
+
+    for _,
+        step
+    in ipairs(
+        press.steps
+    )
+    do
+
+        if not known[step] then
+            table.insert(problems, "press: " .. tostring(step) .. " is not a step the press can do")
+        end
+    end
+
 
 
     for _,

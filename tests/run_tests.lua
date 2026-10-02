@@ -4317,7 +4317,10 @@ do
 
             -- Faster, never free, and still long enough for the engine's
             -- skill speed-up (time / 20) to do something.
-            eq(recipe.time, math.floor(hand.time / P.timeDivisor), what .. ": time is the hand time divided")
+            eq(recipe.time, math.floor(hand.time * P.timePercent / 100), what .. ": time is the press's share of the hand time")
+            -- The press saves time and nothing else: the ratio is the same
+            -- for every calibre and step, to the rounding.
+            check(recipe.time * 100 <= hand.time * P.timePercent and (recipe.time + 1) * 100 > hand.time * P.timePercent, what .. ": exactly the configured share, rounded down")
             check(recipe.time < hand.time, what .. ": the press is faster than the hand")
             check(recipe.time >= P.minimumTime, what .. ": at least " .. P.minimumTime)
             check(math.floor(recipe.time / 20) >= 1, what .. ": the skill speed-up still applies")
@@ -4394,15 +4397,74 @@ do
     for _, recipe in ipairs(before) do check(ids[recipe.id], "enabled: " .. recipe.id .. " is still there") end
     eq(#AC_Calibres.buildRecipes(), #before, "switched off again: the list is what it was")
 
-    -- A press that would be too fast for a step is refused.
-    local savedDivisor = P.timeDivisor
-    P.timeDivisor = 4
+    -- Names: a press recipe is called after its hand recipe. None is in
+    -- Recipes.json while the press is off; each can be derived, is unique
+    -- and collides with no existing name.
+    do
+        local names = {}
+        for key, value in string.gmatch(readFile(TRANSLATE .. "Recipes.json"), '"([^"]+)"%s*:%s*"([^"]*)"') do names[key] = value end
+        local taken, derived = {}, 0
+        for _, value in pairs(names) do taken[value] = true end
+        eq(P.nameSuffix, " (Press)", "the press name suffix")
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            for _, recipe in ipairs(AC_Calibres.buildPressRecipes(calibre)) do
+                eq(names[recipe.id], nil, recipe.id .. " has no name yet")
+                local handName = names[recipe.handRecipe]
+                check(handName ~= nil and handName ~= "", recipe.id .. " can be named after " .. recipe.handRecipe)
+                local name = tostring(handName) .. P.nameSuffix
+                check(not taken[name], recipe.id .. " would get a name nothing else has (" .. name .. ")")
+                taken[name] = true
+                derived = derived + 1
+            end
+        end
+        eq(derived, #P.steps * #AC_Calibres.LIST, "twenty-seven press names are ready to be written")
+    end
+
+    -- The press's advantage is pinned and bounded: 60 % of the hand time,
+    -- tunable between a half and nine tenths, nothing else.
+    eq(P.timePercent, 60, "the press takes 60 % of the hand time")
+    eq(P.minimumPercent, 50, "it may be tuned down to half")
+    eq(P.maximumPercent, 90, "and up to nine tenths")
+    local nine = AC_Calibres.get("9mm")
+    local times = {}
+    for _, recipe in ipairs(AC_Calibres.buildPressRecipes(nine)) do times[recipe.step] = recipe.time end
+    eq(times.case, 48, "9mm case at the press: 80 -> 48")
+    eq(times.bullet, 48, "9mm bullets at the press: 80 -> 48")
+    eq(times.assemble, 24, "9mm assembly at the press: 40 -> 24")
+    for _, recipe in ipairs(AC_Calibres.buildPressRecipes(AC_Calibres.get(".308"))) do times[recipe.step] = recipe.time end
+    eq(times.case, 96, ".308 case at the press: 160 -> 96")
+    eq(times.assemble, 48, ".308 assembly at the press: 80 -> 48")
+
+    -- A press that would be too fast, too slow or not a whole percentage
+    -- is refused.
+    local savedPercent, savedMinimum = P.timePercent, P.minimumTime
+    local function pressProblems(percent)
+        P.timePercent = percent
+        local text = table.concat(AC_Calibres.validatePress(), "; ")
+        P.timePercent = savedPercent
+        return text
+    end
+    local bounds = "press: timePercent must be a whole number from 50 to 90"
+    check(string.find(pressProblems(25), bounds, 1, true) ~= nil, "a press four times as fast is refused")
+    check(string.find(pressProblems(49), bounds, 1, true) ~= nil, "just under half is refused")
+    check(string.find(pressProblems(100), bounds, 1, true) ~= nil, "a press no faster than the hand is refused")
+    check(string.find(pressProblems(0), bounds, 1, true) ~= nil, "a free press is refused")
+    check(string.find(pressProblems(62.5), bounds, 1, true) ~= nil, "a fractional percentage is refused")
+    check(string.find(pressProblems("fast"), bounds, 1, true) ~= nil, "a word is refused")
+    eq(pressProblems(50), "", "half is the fastest allowed, and no step drops below the minimum")
+    eq(pressProblems(90), "", "nine tenths is the slowest allowed")
+    P.minimumTime = 30
     local text = table.concat(AC_Calibres.validatePress(), "; ")
-    P.timeDivisor = 0.5
-    local fractional = table.concat(AC_Calibres.validatePress(), "; ")
-    P.timeDivisor = savedDivisor
-    check(string.find(text, "9mm: press time of assemble is 10, below 20", 1, true) ~= nil, "a divisor that drops a step below the minimum is named: " .. text)
-    check(string.find(fractional, "press: timeDivisor must be a whole number of at least 1", 1, true) ~= nil, "a fractional divisor is refused")
+    P.minimumTime = savedMinimum
+    check(string.find(text, "9mm: press time of assemble is 24, below 30", 1, true) ~= nil, "a step that drops below the minimum time is named: " .. text)
+    local savedSteps = P.steps
+    P.steps = { "case", "dieSet" }
+    local badStep = table.concat(AC_Calibres.validatePress(), "; ")
+    P.steps = {}
+    local noSteps = table.concat(AC_Calibres.validatePress(), "; ")
+    P.steps = savedSteps
+    check(string.find(badStep, "press: dieSet is not a step the press can do", 1, true) ~= nil, "a pressed die set is refused: " .. badStep)
+    check(string.find(noSteps, "press: no steps", 1, true) ~= nil, "a press with no steps is refused")
     local savedTag = P.benchTag
     P.benchTag = "Ammo-Press"
     local badTag = table.concat(AC_Calibres.validatePress(), "; ")
