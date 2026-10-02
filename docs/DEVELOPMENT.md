@@ -497,9 +497,21 @@ Console lines:
 
 ## Compatibility self-check
 
-`AC_Compat.run()` executes once on `OnGameStart` and prints one line per
-assumption: `[AmmoMaking] OK: …`, `WARNING: …` or `UNVERIFIED: …`, followed by a
-summary. It probes item scripts, the item factory, global ModData, the square
+`AC_Compat.run()` executes once on `OnGameStart`. Every assumption is a
+result, `OK`, `WARNING` or `UNVERIFIED`. A normal start prints only what needs
+attention and a short summary:
+
+```text
+[AmmoMaking] WARNING: calibre 5.56 incomplete (missing Base.556Bullets; the other calibres are unaffected)
+[AmmoMaking] Pistol calibres: 5/5 complete
+[AmmoMaking] Rifle calibres: 2/3 complete
+[AmmoMaking] Shotgun shells: 1/1 complete
+[AmmoMaking] Compatibility check: 171 ok, 2 warnings, 0 unverified
+```
+
+In `-debug` mode, or from the debug menu, the `[AmmoMaking] OK: …` line of
+every probe is printed as well (`AC_Compat.run(true)`). The class labels come
+from `AC_Calibres.CLASSES[class].label`. It probes item scripts, the item factory, global ModData, the square
 and character methods the actions call, client globals, whether the translation
 file loaded (and which perk-description key spelling resolves) and the geology
 seed, and what the placed laboratory analyzer relies on (square and character
@@ -512,15 +524,25 @@ re-run it.
 
 ## Debug tools (`-debug` only)
 
-Right-click the ground → **Ammo Making Debug**: Inspect Current Tile, Survey
-Current Area (3x3), Show Geology Seed, Inspect Clicked Tile Objects (sprites,
-analyzer state), Reset Depletion (tile / 3x3), Spawn Sampling Kit, Spawn Mining
-Kit, Spawn Laboratory Analyzer, Spawn Assayed Sample (current 3x3), Spawn
-Metallurgy Kit, Spawn Case Stock Kit, Spawn Calibre Components Kit (a submenu
-with one entry per calibre), Spawn Primer and Powder Kit, Set Ammo Making
-Level, Inspect Station Recipes, Inspect Ammo Components, Print Calibre
-Definitions, Run Compatibility Check. Everything prints to `console.txt`. From
-the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
+Right-click the ground → **Ammo Making Debug**, one tree grouped by stage:
+
+```text
+Ammo Making Debug
+├─ Geology       Inspect Current Tile · Survey Current Area (3x3) · Show Geology Seed ·
+│                Inspect Clicked Tile Objects · Reset Depletion (tile / 3x3) ·
+│                Spawn Sampling Kit · Spawn Mining Kit · Spawn Assayed Sample
+├─ Analyzer      Spawn Laboratory Analyzer · (clicked analyzer:) Inspect Analyzer State ·
+│                Complete Analyzer Job
+├─ Metallurgy    Spawn Metallurgy Kit · Spawn Case Stock Kit · Inspect Station Recipes
+├─ Ammunition    Spawn Calibre Kit ▸ one entry per calibre · Spawn Primer and Powder Kit ·
+│                Print Calibre Definitions · Print Primer Families ·
+│                Verify Ammo Dependencies · Inspect Ammo Components (inventory)
+├─ Set Ammo Making Level ▸ 0 … 10
+└─ Run Compatibility Check
+```
+
+Everything prints to `console.txt`. From the Lua console:
+`AC_GeologyDebug.tile(getPlayer())`.
 
 - **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
   (it does not break), 22 charcoal, one zinc ore, ten scrap of each metal,
@@ -530,14 +552,20 @@ the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
 - **Spawn Case Stock Kit**: a ball-peen hammer, tongs, a metalworking
   punch, one charcoal, one brass ingot and two small brass sheets: forge the
   ingot at a forge, punch the sheets at any surface.
-- **Spawn Calibre Components Kit → <calibre>**: the die set, a hammer, and
-  the cups, copper scrap, primers of the calibre's family and gunpowder for
-  five rounds of that calibre, computed from its definition.
-- **Print Calibre Definitions**: one console line per calibre, pistol and
-  rifle alike (class, round, case
-  and cups, bullet and bullets per scrap, primer family and item, powder
-  uses, die set, the four levels) and any problem `AC_Calibres.validate()`
-  finds. Read-only.
+- **Spawn Calibre Kit → <calibre>**: the die set, a hammer, and the cups,
+  copper scrap, primers of the calibre's family, gunpowder and, for a shell,
+  wadding for five rounds of that calibre, computed from its definition.
+- **Print Calibre Definitions**: one console line per calibre, whatever its
+  class (class, round, case and cups, bullet and bullets per scrap, primer
+  family and item, powder uses, wads if any, die set, the four levels) and
+  any problem `AC_Calibres.validate()` finds. Read-only.
+- **Print Primer Families**: one console line per family (class, item, brass
+  and compound, primers per sheet, level, the rounds that take it).
+  Read-only.
+- **Verify Ammo Dependencies**: `AC_Compat.runAmmunition()`, only the
+  ammunition probes (the calibre model, each round's items and recipes, the
+  gunpowder jar). Prints problems, one summary line per class and its own
+  totals; it does not count as the once-per-start compatibility check.
 - **Spawn Primer and Powder Kit**: punch, hammer, mortar and pestle, two
   small brass sheets, ten toy caps, a matchbox, two charcoal and a bag of
   fertilizer: both primer recipes and one powder mix. `AddItem` honours a
@@ -549,7 +577,8 @@ the Lua console: `AC_GeologyDebug.tile(getPlayer())`.
   the player's level and the conservation verdict. Read-only.
 
 Right-clicking a square that holds an Ammo Making analyzer (placed or dropped)
-adds two more entries; they never appear for other squares:
+adds two more entries to the Analyzer submenu; they never appear for other
+squares:
 
 - **Inspect Analyzer State**: state, stored sample, remaining hours, hours
   not yet credited, the inputs of the power rule, the rolled result and

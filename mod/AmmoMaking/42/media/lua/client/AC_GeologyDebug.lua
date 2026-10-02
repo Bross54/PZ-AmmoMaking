@@ -872,6 +872,156 @@ local function printCalibreDefinitions(
 end
 
 
+------------------------------------------------
+-- Prints the primer families: what each holds, how many
+-- a sheet yields, and which rounds take it. Read-only.
+------------------------------------------------
+
+local function printPrimerFamilies(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    log(
+        "PRIMER FAMILIES ("
+        .. #AC_Calibres.PRIMERS
+        .. ")"
+    )
+
+
+    for _,
+        primer
+    in ipairs(
+        AC_Calibres.PRIMERS
+    )
+    do
+
+        local users = {}
+
+
+        for _,
+            calibre
+        in ipairs(
+            AC_Calibres.LIST
+        )
+        do
+
+            if calibre.primerFamily == primer.id then
+
+                table.insert(
+                    users,
+                    calibre.id
+                )
+            end
+        end
+
+
+        log(
+            primer.id
+            .. " ["
+            .. tostring(primer.class)
+            .. "] "
+            .. tostring(primer.item)
+            .. " | brass "
+            .. tostring(primer.brassUnits)
+            .. ", compound "
+            .. tostring(primer.compoundUnits)
+            .. " | "
+            .. tostring(primer.perSheet)
+            .. " per sheet | level "
+            .. tostring(primer.requiredLevel)
+            .. " | rounds: "
+            .. (#users > 0 and table.concat(users, ", ") or "none")
+        )
+    end
+
+
+    halo(
+        player,
+        "Primer families: "
+        .. #AC_Calibres.PRIMERS
+        .. " (see console)"
+    )
+end
+
+
+------------------------------------------------
+-- Checks only what ammunition needs: the calibre model,
+-- each round's items and recipes, the gunpowder jar.
+-- Prints problems and one summary line per class.
+------------------------------------------------
+
+local function verifyAmmoDependencies(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local ok,
+          results,
+          summary =
+        pcall(
+            AC_Compat.runAmmunition
+        )
+
+
+    if not ok then
+
+        log(
+            "WARNING: ammunition dependency check failed: "
+            .. tostring(results)
+        )
+
+
+        halo(
+            player,
+            "Ammo dependency check failed (see console)"
+        )
+
+
+        return
+    end
+
+
+    local parts = {}
+
+
+    for _,
+        tally
+    in ipairs(
+        summary.calibres
+    )
+    do
+
+        table.insert(
+            parts,
+            tally.label
+            .. " "
+            .. tally.complete
+            .. "/"
+            .. tally.total
+        )
+    end
+
+
+    halo(
+        player,
+        "Ammo: "
+        .. table.concat(parts, ", ")
+        .. "; "
+        .. summary.warnings
+        .. " warnings (see console)"
+    )
+end
+
+
 local function spawnPrimerPowderKit(
     player
 )
@@ -1753,7 +1903,8 @@ local function runCompatibilityCheck(
           results,
           summary =
         pcall(
-            AC_Compat.run
+            AC_Compat.run,
+            true
         )
 
 
@@ -1835,6 +1986,12 @@ AC_GeologyDebug.spawnPrimerPowderKit =
 AC_GeologyDebug.printCalibreDefinitions =
     printCalibreDefinitions
 
+AC_GeologyDebug.printPrimerFamilies =
+    printPrimerFamilies
+
+AC_GeologyDebug.verifyAmmoDependencies =
+    verifyAmmoDependencies
+
 AC_GeologyDebug.inspectAmmoComponents =
     inspectAmmoComponents
 
@@ -1900,6 +2057,35 @@ end
 -- WORLD CONTEXT MENU
 ------------------------------------------------
 
+-- Adds an entry that opens a submenu and returns the
+-- submenu.
+local function addSubMenu(
+    parent,
+    label
+)
+
+    local option =
+        parent:addOption(
+            label
+        )
+
+
+    local submenu =
+        ISContextMenu:getNew(
+            parent
+        )
+
+
+    parent:addSubMenu(
+        option,
+        submenu
+    )
+
+
+    return submenu
+end
+
+
 local function onFillWorldObjectContextMenu(
     playerIndex,
     context,
@@ -1933,33 +2119,36 @@ local function onFillWorldObjectContextMenu(
     end
 
 
-    local rootOption =
-        context:addOption(
+    ------------------------------------------------
+    -- One "Ammo Making Debug" tree, one submenu per
+    -- stage of the mod, so no level of it is a long
+    -- flat list.
+    ------------------------------------------------
+
+    local menu =
+        addSubMenu(
+            context,
             "Ammo Making Debug"
         )
 
 
-    local menu =
-        ISContextMenu:getNew(
-            context
+    ------------------------------------------------
+    -- Geology: tiles, depletion, the sampling and
+    -- mining kits
+    ------------------------------------------------
+
+    local geology =
+        addSubMenu(
+            menu,
+            "Geology"
         )
 
 
-    context:addSubMenu(
-        rootOption,
-        menu
-    )
+    geology:addOption("Inspect Current Tile", player, inspectTile)
 
+    geology:addOption("Survey Current Area (3x3)", player, surveyArea)
 
-    ------------------------------------------------
-    -- Inspect
-    ------------------------------------------------
-
-    menu:addOption("Inspect Current Tile", player, inspectTile)
-
-    menu:addOption("Survey Current Area (3x3)", player, surveyArea)
-
-    menu:addOption("Show Geology Seed", player, showSeed)
+    geology:addOption("Show Geology Seed", player, showSeed)
 
 
     local clickedSquare =
@@ -1970,13 +2159,35 @@ local function onFillWorldObjectContextMenu(
 
     if clickedSquare then
 
-        menu:addOption("Inspect Clicked Tile Objects (sprites, analyzer state)", player, inspectTileObjects, clickedSquare)
+        geology:addOption("Inspect Clicked Tile Objects (sprites, analyzer state)", player, inspectTileObjects, clickedSquare)
     end
 
 
+    geology:addOption("Reset Depletion: Current Tile", player, resetTile)
+
+    geology:addOption("Reset Depletion: 3x3 Area", player, resetArea)
+
+    geology:addOption("Spawn Sampling Kit (shovel + assay kits)", player, spawnSamplingKit)
+
+    geology:addOption("Spawn Mining Kit (pickaxes)", player, spawnMiningKit)
+
+    geology:addOption("Spawn Assayed Sample (current 3x3)", player, spawnAssayedSample)
+
+
     ------------------------------------------------
-    -- Laboratory analyzer (clicked analyzer only)
+    -- Analyzer: the state entries only for a clicked
+    -- analyzer
     ------------------------------------------------
+
+    local analyzerMenu =
+        addSubMenu(
+            menu,
+            "Analyzer"
+        )
+
+
+    analyzerMenu:addOption("Spawn Laboratory Analyzer", player, spawnLaboratoryAnalyzer)
+
 
     local analyzer =
         AC_LaboratoryAnalyzer.findInWorldObjects(
@@ -1986,55 +2197,48 @@ local function onFillWorldObjectContextMenu(
 
     if analyzer then
 
-        menu:addOption("Inspect Analyzer State", player, inspectAnalyzer, analyzer)
+        analyzerMenu:addOption("Inspect Analyzer State", player, inspectAnalyzer, analyzer)
 
-        menu:addOption("Complete Analyzer Job (no XP; collect normally)", player, completeAnalyzerJob, analyzer)
+        analyzerMenu:addOption("Complete Analyzer Job (no XP; collect normally)", player, completeAnalyzerJob, analyzer)
     end
 
 
     ------------------------------------------------
-    -- Depletion
+    -- Metallurgy: ore to brass, brass to case cups
     ------------------------------------------------
 
-    menu:addOption("Reset Depletion: Current Tile", player, resetTile)
-
-    menu:addOption("Reset Depletion: 3x3 Area", player, resetArea)
-
-
-    ------------------------------------------------
-    -- Test items
-    ------------------------------------------------
-
-    menu:addOption("Spawn Sampling Kit (shovel + assay kits)", player, spawnSamplingKit)
-
-    menu:addOption("Spawn Mining Kit (pickaxes)", player, spawnMiningKit)
-
-    menu:addOption("Spawn Laboratory Analyzer", player, spawnLaboratoryAnalyzer)
-
-    menu:addOption("Spawn Assayed Sample (current 3x3)", player, spawnAssayedSample)
-
-    menu:addOption("Spawn Metallurgy Kit (furnace tools + materials)", player, spawnMetallurgyKit)
-
-    menu:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
-
-    -- One entry with a submenu of calibres, so the list
-    -- stays short however many there are.
-    local kitOption =
-        menu:addOption(
-            "Spawn Calibre Components Kit"
+    local metallurgy =
+        addSubMenu(
+            menu,
+            "Metallurgy"
         )
 
 
+    metallurgy:addOption("Spawn Metallurgy Kit (furnace tools + materials)", player, spawnMetallurgyKit)
+
+    metallurgy:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
+
+    metallurgy:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
+
+
+    ------------------------------------------------
+    -- Ammunition: kits and printouts built from the
+    -- calibre model
+    ------------------------------------------------
+
+    local ammunition =
+        addSubMenu(
+            menu,
+            "Ammunition"
+        )
+
+
+    -- One entry per calibre, however many there are.
     local kitMenu =
-        ISContextMenu:getNew(
-            menu
+        addSubMenu(
+            ammunition,
+            "Spawn Calibre Kit"
         )
-
-
-    menu:addSubMenu(
-        kitOption,
-        kitMenu
-    )
 
 
     for _,
@@ -2047,7 +2251,16 @@ local function onFillWorldObjectContextMenu(
         kitMenu:addOption(calibre.id, player, spawnComponentsKit, calibre)
     end
 
-    menu:addOption("Spawn Primer and Powder Kit", player, spawnPrimerPowderKit)
+
+    ammunition:addOption("Spawn Primer and Powder Kit", player, spawnPrimerPowderKit)
+
+    ammunition:addOption("Print Calibre Definitions", player, printCalibreDefinitions)
+
+    ammunition:addOption("Print Primer Families", player, printPrimerFamilies)
+
+    ammunition:addOption("Verify Ammo Dependencies", player, verifyAmmoDependencies)
+
+    ammunition:addOption("Inspect Ammo Components (inventory)", player, inspectAmmoComponents)
 
 
     ------------------------------------------------
@@ -2059,12 +2272,6 @@ local function onFillWorldObjectContextMenu(
         player
     )
 
-
-    menu:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
-
-    menu:addOption("Inspect Ammo Components (inventory)", player, inspectAmmoComponents)
-
-    menu:addOption("Print Calibre Definitions", player, printCalibreDefinitions)
 
     menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
 end

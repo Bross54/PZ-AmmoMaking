@@ -2277,22 +2277,51 @@ do
     ctx = fillWorldMenu(player, square)
     local root = ctx:find("Ammo Making Debug")
     check(root ~= nil and root.submenu ~= nil, "debug submenu in debug mode")
+    -- One tree, grouped by stage: no level of it is a long flat list.
     local expected = {
-        "Inspect Current Tile", "Survey Current Area (3x3)", "Show Geology Seed",
-        "Inspect Clicked Tile Objects (sprites, analyzer state)",
-        "Reset Depletion: Current Tile", "Reset Depletion: 3x3 Area",
-        "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
-        "Spawn Laboratory Analyzer", "Spawn Assayed Sample (current 3x3)",
-        "Spawn Metallurgy Kit (furnace tools + materials)",
-        "Spawn Case Stock Kit (brass + forge and punch tools)",
-        "Spawn Calibre Components Kit", "Spawn Primer and Powder Kit",
-        "Set Ammo Making Level", "Inspect Station Recipes",
-        "Inspect Ammo Components (inventory)", "Print Calibre Definitions", "Run Compatibility Check",
+        { "Geology", {
+            "Inspect Current Tile", "Survey Current Area (3x3)", "Show Geology Seed",
+            "Inspect Clicked Tile Objects (sprites, analyzer state)",
+            "Reset Depletion: Current Tile", "Reset Depletion: 3x3 Area",
+            "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
+            "Spawn Assayed Sample (current 3x3)",
+        } },
+        { "Analyzer", { "Spawn Laboratory Analyzer" } },
+        { "Metallurgy", {
+            "Spawn Metallurgy Kit (furnace tools + materials)",
+            "Spawn Case Stock Kit (brass + forge and punch tools)",
+            "Inspect Station Recipes",
+        } },
+        { "Ammunition", {
+            "Spawn Calibre Kit", "Spawn Primer and Powder Kit", "Print Calibre Definitions",
+            "Print Primer Families", "Verify Ammo Dependencies", "Inspect Ammo Components (inventory)",
+        } },
+        { "Set Ammo Making Level" },
+        { "Run Compatibility Check" },
     }
-    for _, e in ipairs(expected) do
-        check(root.submenu:find(e) ~= nil, "debug entry present: " .. e)
+    eq(#root.submenu.options, #expected, "six entries at the top of the debug tree")
+    for index, group in ipairs(expected) do
+        local entry = root.submenu.options[index]
+        eq(entry and entry.name, group[1], "debug entry " .. index .. " is " .. group[1])
+        if group[2] then
+            check(entry and entry.submenu ~= nil, group[1] .. " is a submenu")
+            check(entry and entry.fn == nil, group[1] .. " itself does nothing when clicked")
+            local names = entry and entry.submenu and entry.submenu:names() or {}
+            eq(table.concat(names, " | "), table.concat(group[2], " | "), group[1] .. " entries")
+            check(#names <= 10, group[1] .. " is not a long flat list")
+        end
     end
-    eq(#root.submenu.options, #expected, "no unexpected debug entries")
+    -- Every leaf of the tree does something.
+    local function leaves(menu, path)
+        for _, option in ipairs(menu.options) do
+            if option.submenu then
+                leaves(option.submenu, path .. option.name .. " > ")
+            else
+                eq(type(option.fn), "function", "debug entry has an action: " .. path .. option.name)
+            end
+        end
+    end
+    leaves(root.submenu, "")
     ctx = fillInventoryMenu(player, cartridge)
     check(ctx:find("Debug Ammo Quality") ~= nil, "quality debug in debug mode")
     check(ctx:find("Set Ammo Making Level") ~= nil, "level debug in debug mode")
@@ -2406,12 +2435,14 @@ do
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
 
+    -- The analyzer entries live in the Analyzer submenu of the debug tree.
     local function debugMenu(objects)
         MOCK.players = { player }
         local ctx = MOCK.newContext()
         Events.OnFillWorldObjectContextMenu.fire(0, ctx, objects, false)
         local root = ctx:find("Ammo Making Debug")
-        return root and root.submenu, ctx
+        local group = root and root.submenu:find("Analyzer")
+        return group and group.submenu, ctx
     end
 
     -- Normal mode: nothing, and the helper itself refuses
@@ -3582,7 +3613,12 @@ do
     eq(D.wads, 0, "DEFAULTS were not written to by the shotgun class")
     eq(custom.time.case, D.time.case, "pistol times are untouched by the rifle class")
     eq(D.time.case, 80, "DEFAULTS were not written to")
-    eq(next(AC_Calibres.CLASSES.pistol), nil, "the pistol class adds nothing to DEFAULTS")
+    for key in pairs(AC_Calibres.CLASSES.pistol) do
+        eq(key, "label", "the pistol class adds nothing to DEFAULTS but its label")
+    end
+    for name, class in pairs(AC_Calibres.CLASSES) do
+        check(type(class.label) == "string" and class.label ~= "", "class " .. name .. " has a label for the summaries")
+    end
 
     local ladder = AC_Calibres.levelsFor(1)
     eq(ladder.dieSet, 1, "levels never drop below 1")
@@ -4896,7 +4932,9 @@ do
     -- The calibre kits sit in a submenu, one entry per calibre.
     local ctx = fillWorldMenu(player, player.square)
     local root = ctx:find("Ammo Making Debug")
-    local kits = root.submenu:find("Spawn Calibre Components Kit")
+    local ammunition = root.submenu:find("Ammunition")
+    check(ammunition ~= nil and ammunition.submenu ~= nil, "ammunition tools are a submenu")
+    local kits = ammunition.submenu:find("Spawn Calibre Kit")
     check(kits ~= nil and kits.submenu ~= nil, "calibre kits are a submenu")
     eq(#kits.submenu.options, #AC_Calibres.LIST, "one kit entry per calibre")
     for _, calibre in ipairs(AC_Calibres.LIST) do
@@ -4941,6 +4979,46 @@ do
     check(not MOCK.printLogContains("WARNING"), "no model problem is printed for the live definitions")
     check(pcall(AC_GeologyDebug.printCalibreDefinitions, nil), "printout tolerates no player")
 
+    -- Primer families printout: every family, and the rounds that take it.
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    ok = pcall(AC_GeologyDebug.printPrimerFamilies, player)
+    MOCK.capturePrint(false)
+    check(ok, "primer printout runs")
+    check(MOCK.printLogContains("PRIMER FAMILIES (4)"), "primer printout header")
+    check(MOCK.printLogContains("LargePistol [pistol] AmmoMaking.LargePistolPrimer | brass 2, compound 4 | 5 per sheet | level 3 | rounds: .45 ACP, .44 Magnum, 12 Gauge"), "large pistol family line, with the shell")
+    check(MOCK.printLogContains("SmallRifle [rifle] AmmoMaking.SmallRiflePrimer | brass 1, compound 3 | 10 per sheet | level 4 | rounds: 5.56"), "small rifle family line")
+    check(pcall(AC_GeologyDebug.printPrimerFamilies, nil), "primer printout tolerates no player")
+
+    -- Verify Ammo Dependencies: only the ammunition probes, concise.
+    local recipeIds = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(recipeIds, recipe.id) end
+    MOCK.resetCraftRecipes(recipeIds)
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    ok = pcall(AC_GeologyDebug.verifyAmmoDependencies, player)
+    MOCK.capturePrint(false)
+    check(ok, "ammo dependency check runs")
+    check(MOCK.printLogContains("[AmmoMaking] Pistol calibres: 5/5 complete"), "pistol summary line")
+    check(MOCK.printLogContains("[AmmoMaking] Rifle calibres: 3/3 complete"), "rifle summary line")
+    check(MOCK.printLogContains("[AmmoMaking] Shotgun shells: 1/1 complete"), "shotgun summary line")
+    check(MOCK.printLogContains("[AmmoMaking] Ammunition dependencies: "), "its own totals line")
+    check(not MOCK.printLogContains("[AmmoMaking] OK: "), "no OK line per probe: the summary is concise")
+    check(not MOCK.printLogContains("WARNING"), "and nothing to warn about")
+    check(not MOCK.printLogContains("Compatibility check:"), "it is not the full compatibility check")
+    eq(AC_Compat.hasRun, AC_Compat.hasRun, "it leaves the once-per-start flag alone")
+    -- With a round missing, the detail appears and the class count drops.
+    MOCK.knownScriptItems["Base.556Bullets"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    pcall(AC_GeologyDebug.verifyAmmoDependencies, player)
+    MOCK.capturePrint(false)
+    MOCK.knownScriptItems["Base.556Bullets"] = true
+    check(MOCK.printLogContains("WARNING: calibre 5.56 incomplete (missing Base.556Bullets; the other calibres are unaffected)"), "the missing dependency is detailed")
+    check(MOCK.printLogContains("[AmmoMaking] Rifle calibres: 2/3 complete"), "and the rifle count drops")
+    check(MOCK.printLogContains("[AmmoMaking] Pistol calibres: 5/5 complete"), "pistols are unaffected")
+    check(pcall(AC_GeologyDebug.verifyAmmoDependencies, nil), "dependency check tolerates no player")
+
     -- Station recipe inspector shows the level of a gated recipe.
     local ids = {}
     for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
@@ -4973,7 +5051,7 @@ do
 
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local results, summary = AC_Compat.run()
+    local results, summary = AC_Compat.run(true)
     MOCK.capturePrint(false)
     eq(summary.warnings, 0, "no warnings with every API mocked")
     eq(summary.unverified, 0, "nothing unverified with a player present")
@@ -5004,7 +5082,7 @@ do
     MOCK.knownScriptItems["Base.3030Bullets"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local rR, sR = AC_Compat.run()
+    local rR, sR = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.knownScriptItems["Base.3030Bullets"] = true
     eq(sR.warnings, 2, "a missing rifle round is the item warning plus one calibre warning")
@@ -5013,12 +5091,69 @@ do
     check(MOCK.printLogContains("[AmmoMaking] OK: Base.GunPowder holds 10 uses"), "gunpowder uses probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: AC_CaseQuality effects"), "quality effects probed")
 
+    -- Concise by default: a normal game start prints no OK line per probe,
+    -- only the class summaries and the totals. -debug mode prints them all.
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    results, summary = AC_Compat.run(true)
+    MOCK.capturePrint(false)
+    eq(#summary.calibres, 3, "one summary entry per class")
+    local wanted = { { "pistol", "Pistol calibres", 5 }, { "rifle", "Rifle calibres", 3 }, { "shotgun", "Shotgun shells", 1 } }
+    for index, row in ipairs(wanted) do
+        local tally = summary.calibres[index] or {}
+        eq(tally.class, row[1], "summary " .. index .. " class")
+        eq(tally.label, row[2], "summary " .. index .. " label")
+        eq(tally.total, row[3], row[2] .. " total")
+        eq(tally.complete, row[3], row[2] .. " complete")
+        check(MOCK.printLogContains("[AmmoMaking] " .. row[2] .. ": " .. row[3] .. "/" .. row[3] .. " complete"), row[2] .. " summary line")
+    end
+    local classTotal = 0
+    for _, tally in ipairs(summary.calibres) do classTotal = classTotal + tally.total end
+    eq(classTotal, #AC_Calibres.LIST, "every calibre is counted in exactly one class")
+
+    MOCK.debug = false
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local quietResults, quiet = AC_Compat.run()
+    MOCK.capturePrint(false)
+    eq(quiet.ok, summary.ok, "the quiet run performs the same probes")
+    eq(#quietResults, #results, "and returns the same result list")
+    check(not MOCK.printLogContains("[AmmoMaking] OK: "), "no OK lines outside -debug mode")
+    check(MOCK.printLogContains("[AmmoMaking] Pistol calibres: 5/5 complete"), "the class summary is printed in a normal start")
+    check(MOCK.printLogContains("Compatibility check: " .. summary.ok .. " ok, 0 warnings, 0 unverified"), "and the totals")
+    eq(#MOCK.printLog, 4, "a clean normal start prints four lines: three classes and the totals")
+
+    MOCK.knownScriptItems["Base.Bullets45"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.knownScriptItems["Base.Bullets45"] = true
+    check(MOCK.printLogContains("[AmmoMaking] WARNING: Base.Bullets45 not found"), "a missing dependency is still detailed in a quiet run")
+    check(MOCK.printLogContains("WARNING: calibre .45 ACP incomplete"), "with its calibre")
+    check(MOCK.printLogContains("[AmmoMaking] Pistol calibres: 4/5 complete"), "and the class count shows it")
+    check(not MOCK.printLogContains("[AmmoMaking] OK: "), "still no OK lines")
+
+    MOCK.debug = true
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_Compat.run()
+    MOCK.capturePrint(false)
+    MOCK.debug = false
+    check(MOCK.printLogContains("[AmmoMaking] OK: Base.CopperOre"), "-debug mode prints the OK lines without being asked")
+
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_Compat.run(false)
+    MOCK.capturePrint(false)
+    check(not MOCK.printLogContains("[AmmoMaking] OK: "), "an explicit false is quiet")
+
     -- A build without one of the wadding items: the shell is named, the
     -- cartridges are unaffected.
     MOCK.knownScriptItems["Base.CottonBalls"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local rS, sS = AC_Compat.run()
+    local rS, sS = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.knownScriptItems["Base.CottonBalls"] = true
     eq(sS.warnings, 2, "a missing wadding item is the item warning plus one calibre warning")
@@ -5029,7 +5164,7 @@ do
     MOCK.knownScriptItems["Base.Bullets44"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local rC, sC = AC_Compat.run()
+    local rC, sC = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.knownScriptItems["Base.Bullets44"] = true
     eq(sC.warnings, 2, "a missing vanilla round is the item warning plus one calibre warning")
@@ -5041,7 +5176,7 @@ do
     MOCK.craftRecipeScripts["AmmoMaking_FormCase357Magnum"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    rC, sC = AC_Compat.run()
+    rC, sC = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.craftRecipeScripts["AmmoMaking_FormCase357Magnum"] = savedForm
     check(MOCK.printLogContains("WARNING: calibre .357 Magnum incomplete (missing AmmoMaking_FormCase357Magnum; the other calibres are unaffected)"), "a missing recipe makes its calibre incomplete")
@@ -5052,7 +5187,7 @@ do
     AC_Calibres.LIST[5].case = AC_Calibres.LIST[1].case
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local okModel, rM2, sM2 = pcall(AC_Compat.run)
+    local okModel, rM2, sM2 = pcall(AC_Compat.run, true)
     MOCK.capturePrint(false)
     AC_Calibres.LIST[5].case = savedCase
     check(okModel, "a broken calibre definition does not stop the check")
@@ -5063,7 +5198,7 @@ do
     MOCK.useDeltas["Base.GunPowder"] = 0.2
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    rC, sC = AC_Compat.run()
+    rC, sC = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.useDeltas["Base.GunPowder"] = 0.1
     eq(sC.warnings, 1, "a different jar size is one WARNING")
@@ -5072,7 +5207,7 @@ do
     MOCK.useDeltaMethod = false
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    rC, sC = AC_Compat.run()
+    rC, sC = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.useDeltaMethod = true
     eq(sC.warnings, 0, "no getUseDelta is not a warning")
@@ -5086,7 +5221,7 @@ do
     MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local rM, sM = AC_Compat.run()
+    local rM, sM = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = savedRecipe
     eq(sM.warnings, 1, "a recipe the script manager does not know is one WARNING")
@@ -5096,7 +5231,7 @@ do
     MOCK.craftRecipeScripts["AmmoMaking_CastZincIngot"] = bare
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    rM, sM = AC_Compat.run()
+    rM, sM = AC_Compat.run(true)
     MOCK.capturePrint(false)
     eq(sM.warnings, 1, "a recipe without the requirement is one WARNING")
     check(MOCK.printLogContains("WARNING: Ammo Making requirement not attached to AmmoMaking_CastZincIngot"), "unattached requirement WARNING line")
@@ -5106,7 +5241,7 @@ do
     MOCK.craftRecipeLookup = false
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    rM, sM = AC_Compat.run()
+    rM, sM = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.craftRecipeLookup = true
     eq(sM.warnings, 1, "no getCraftRecipe is one WARNING, not one per recipe")
@@ -5116,7 +5251,7 @@ do
     AC_Materials.onCastBrassIngots = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    rM, sM = AC_Compat.run()
+    rM, sM = AC_Compat.run(true)
     MOCK.capturePrint(false)
     AC_Materials.onCastBrassIngots = savedCallback
     eq(sM.warnings, 1, "a missing OnCreate callback is one WARNING")
@@ -5126,7 +5261,7 @@ do
     MOCK.knownScriptItems["Base.CopperOre"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    results, summary = AC_Compat.run()
+    results, summary = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.knownScriptItems["Base.CopperOre"] = true
     eq(summary.warnings, 1, "one warning for the missing item")
@@ -5135,7 +5270,7 @@ do
     MOCK.players = {}
     MOCK.scriptManagerAvailable = false
     MOCK.capturePrint(true)
-    local okRun, r2, s2 = pcall(AC_Compat.run)
+    local okRun, r2, s2 = pcall(AC_Compat.run, true)
     MOCK.capturePrint(false)
     MOCK.scriptManagerAvailable = true
     check(okRun, "run without player or script manager does not raise")
@@ -5146,7 +5281,7 @@ do
     MOCK.translations = fullTranslations
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    AC_Compat.run()
+    AC_Compat.run(true)
     MOCK.capturePrint(false)
     check(MOCK.printLogContains("translation file loaded"), "loaded translation detected")
     check(MOCK.printLogContains("perk level descriptions resolve (spaced key)"), "spaced description key reported")
@@ -5154,7 +5289,7 @@ do
     MOCK.translations = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local r3, s3 = AC_Compat.run()
+    local r3, s3 = AC_Compat.run(true)
     MOCK.capturePrint(false)
     check(MOCK.printLogContains("WARNING: translation file not loaded"), "missing translation file is a WARNING")
     check(MOCK.printLogContains("UNVERIFIED: perk level descriptions"), "unresolvable description keys are UNVERIFIED, not WARNING")
@@ -5164,7 +5299,7 @@ do
     -- Laboratory analyzer assumptions
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    AC_Compat.run()
+    AC_Compat.run(true)
     MOCK.capturePrint(false)
     check(MOCK.printLogContains("OK: analyzer world sprite (industry_03_61)"), "analyzer sprite probed")
     check(MOCK.printLogContains("OK: IsoGridSquare:AddSpecialObject"), "placement square method probed")
@@ -5175,7 +5310,7 @@ do
     MOCK.knownSprites["industry_03_61"] = nil
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local r4, s4 = AC_Compat.run()
+    local r4, s4 = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.knownSprites["industry_03_61"] = true
     eq(s4.warnings, 1, "missing analyzer sprite is one WARNING")
@@ -5184,7 +5319,7 @@ do
     local realGetSprite = getSprite
     getSprite = nil
     MOCK.capturePrint(true)
-    local r5, s5 = AC_Compat.run()
+    local r5, s5 = AC_Compat.run(true)
     MOCK.capturePrint(false)
     getSprite = realGetSprite
     eq(s5.warnings, 0, "no getSprite is not a warning")
@@ -5196,7 +5331,7 @@ do
     MOCK.players = { MOCK.newPlayer({ square = noWaterSquare }) }
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local rW, sW = AC_Compat.run()
+    local rW, sW = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.players = { player }
     eq(sW.warnings, 1, "missing hasWater is one WARNING")
@@ -5208,7 +5343,7 @@ do
     MOCK.players = { MOCK.newPlayer({ square = bareSquare }) }
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
-    local r6, s6 = AC_Compat.run()
+    local r6, s6 = AC_Compat.run(true)
     MOCK.capturePrint(false)
     MOCK.players = { player }
     eq(s6.warnings, 1, "missing square method is one WARNING")

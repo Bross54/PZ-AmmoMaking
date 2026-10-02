@@ -365,7 +365,12 @@ AC_Calibres.DEFAULTS = {
 
 AC_Calibres.CLASSES = {
 
-    pistol = {},
+    -- label: how the compatibility summary and the debug
+    -- tools name the class.
+    pistol = {
+
+        label = "Pistol calibres",
+    },
 
     ------------------------------------------------
     -- A shotgun shell is a cartridge with one more part.
@@ -376,6 +381,8 @@ AC_Calibres.CLASSES = {
     -- class whose primer families it takes.
     ------------------------------------------------
     shotgun = {
+
+        label = "Shotgun shells",
 
         primerClass = "pistol",
 
@@ -398,6 +405,8 @@ AC_Calibres.CLASSES = {
     },
 
     rifle = {
+
+        label = "Rifle calibres",
 
         primerFamily = "LargeRifle",
 

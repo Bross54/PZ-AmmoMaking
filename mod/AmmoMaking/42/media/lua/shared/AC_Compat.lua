@@ -16,6 +16,16 @@
 -- UNVERIFIED  the check could not be performed safely
 --             here (needs an in-game test instead)
 --
+-- OK lines are printed only in -debug mode (or when the
+-- caller asks for them). A normal game start prints what
+-- needs attention, WARNING and UNVERIFIED, and a short
+-- summary:
+--
+--     [AmmoMaking] Pistol calibres: 5/5 complete
+--     [AmmoMaking] Rifle calibres: 3/3 complete
+--     [AmmoMaking] Shotgun shells: 1/1 complete
+--     [AmmoMaking] Compatibility check: 170 ok, 0 warnings, 0 unverified
+--
 -- It never changes game state and never raises: every
 -- probe is pcall-guarded. It runs once per game start;
 -- the debug menu can run it again on demand.
@@ -1269,6 +1279,12 @@ local function checkCalibres(
         hasMethod(manager, "getCraftRecipe") == true
 
 
+    local classTally = {}
+
+
+    results.calibreSummary = {}
+
+
     for _,
         calibre
     in ipairs(
@@ -1374,7 +1390,49 @@ local function checkCalibres(
         end
 
 
+        -- Tally per class, in the order the classes first
+        -- appear in the list, for the summary lines.
+        local tally =
+            classTally[calibre.class]
+
+
+        if not tally then
+
+            local class =
+                AC_Calibres.CLASSES[calibre.class] or {}
+
+
+            tally = {
+
+                class = calibre.class,
+
+                label = class.label or (tostring(calibre.class) .. " calibres"),
+
+                complete = 0,
+
+                total = 0,
+            }
+
+
+            classTally[calibre.class] = tally
+
+
+            table.insert(
+                results.calibreSummary,
+                tally
+            )
+        end
+
+
+        tally.total =
+            tally.total + 1
+
+
         if #missing == 0 then
+
+            tally.complete =
+                tally.complete + 1
+
 
             addResult(
                 results,
@@ -1481,10 +1539,168 @@ end
 --
 -- Returns the result list and a summary table:
 --
---   { ok = n, warnings = n, unverified = n }
+--   { ok = n, warnings = n, unverified = n,
+--     calibres = { { class, label, complete, total }, ... } }
+--
+-- verbose: print the OK lines too. Left out, it follows
+-- -debug mode.
 ------------------------------------------------
 
-function AC_Compat.run()
+------------------------------------------------
+-- Prints a result list and returns its summary.
+-- OK lines only when verbose; WARNING and UNVERIFIED
+-- always; then one line per calibre class and the
+-- totals under the given title.
+------------------------------------------------
+
+local function report(
+    results,
+    verbose,
+    title
+)
+
+    local summary = {
+
+        ok = 0,
+
+        warnings = 0,
+
+        unverified = 0,
+
+        calibres = results.calibreSummary or {},
+    }
+
+
+    for _,
+        result
+    in ipairs(
+        results
+    )
+    do
+
+        local line =
+            "[AmmoMaking] "
+            .. result.status
+            .. ": "
+            .. result.label
+
+
+        if result.detail
+            and result.status ~= "OK"
+        then
+
+            line =
+                line
+                .. " ("
+                .. tostring(result.detail)
+                .. ")"
+        end
+
+
+        if verbose
+            or result.status ~= "OK"
+        then
+            print(line)
+        end
+
+
+        if result.status == "OK" then
+
+            summary.ok =
+                summary.ok + 1
+
+        elseif result.status == "WARNING" then
+
+            summary.warnings =
+                summary.warnings + 1
+
+        else
+
+            summary.unverified =
+                summary.unverified + 1
+        end
+    end
+
+
+    for _,
+        tally
+    in ipairs(
+        summary.calibres
+    )
+    do
+
+        print(
+            "[AmmoMaking] "
+            .. tally.label
+            .. ": "
+            .. tally.complete
+            .. "/"
+            .. tally.total
+            .. " complete"
+        )
+    end
+
+
+    print(
+        "[AmmoMaking] "
+        .. title
+        .. ": "
+        .. summary.ok
+        .. " ok, "
+        .. summary.warnings
+        .. " warnings, "
+        .. summary.unverified
+        .. " unverified"
+    )
+
+
+    return summary
+end
+
+
+-- OK lines are wanted when the game runs in -debug mode.
+local function defaultVerbose()
+
+    return
+        type(isDebugEnabled) == "function"
+        and safe(isDebugEnabled) == true
+end
+
+
+------------------------------------------------
+-- Only the ammunition part: the calibre model, each
+-- calibre's items and recipes, the gunpowder jar. For
+-- the debug menu's "Verify Ammo Dependencies".
+------------------------------------------------
+
+function AC_Compat.runAmmunition(
+    verbose
+)
+
+    local results = {}
+
+
+    checkCalibres(results)
+
+
+    return
+        results,
+        report(
+            results,
+            verbose == true,
+            "Ammunition dependencies"
+        )
+end
+
+
+function AC_Compat.run(
+    verbose
+)
+
+    if verbose == nil then
+        verbose = defaultVerbose()
+    end
+
 
     local results = {}
 
@@ -1526,72 +1742,12 @@ function AC_Compat.run()
     checkCalibres(results)
 
 
-    local summary = {
-
-        ok = 0,
-
-        warnings = 0,
-
-        unverified = 0,
-    }
-
-
-    for _,
-        result
-    in ipairs(
-        results
-    )
-    do
-
-        local line =
-            "[AmmoMaking] "
-            .. result.status
-            .. ": "
-            .. result.label
-
-
-        if result.detail
-            and result.status ~= "OK"
-        then
-
-            line =
-                line
-                .. " ("
-                .. tostring(result.detail)
-                .. ")"
-        end
-
-
-        print(line)
-
-
-        if result.status == "OK" then
-
-            summary.ok =
-                summary.ok + 1
-
-        elseif result.status == "WARNING" then
-
-            summary.warnings =
-                summary.warnings + 1
-
-        else
-
-            summary.unverified =
-                summary.unverified + 1
-        end
-    end
-
-
-    print(
-        "[AmmoMaking] Compatibility check: "
-        .. summary.ok
-        .. " ok, "
-        .. summary.warnings
-        .. " warnings, "
-        .. summary.unverified
-        .. " unverified"
-    )
+    local summary =
+        report(
+            results,
+            verbose,
+            "Compatibility check"
+        )
 
 
     AC_Compat.hasRun =
