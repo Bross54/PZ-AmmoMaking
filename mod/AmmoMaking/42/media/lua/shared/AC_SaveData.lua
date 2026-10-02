@@ -121,6 +121,159 @@ end
 
 
 ------------------------------------------------
+-- VERSIONS
+------------------------------------------------
+--
+-- A persisted structure that has a layout carries a
+-- whole-number "version". versionStatus() says how a
+-- stored version relates to the one this release writes:
+--
+--   "missing"  no version stored
+--   "current"  this release's layout
+--   "older"    an earlier layout: upgrade() can bring it
+--              forward
+--   "newer"    written by a LATER release. Not ours to
+--              repair, reset or stamp: an owner reads
+--              what it understands and writes nothing it
+--              does not
+--   "damaged"  not a whole number of 1 or more
+--
+-- What "missing" and "damaged" mean is the owner's
+-- business (the deposits store was written without a
+-- version by nobody: it stamps 1).
+------------------------------------------------
+
+function AC_SaveData.versionStatus(
+    value,
+    current
+)
+
+    if value == nil then
+        return "missing"
+    end
+
+
+    if not AC_SaveData.isFinite(value)
+        or value ~= math.floor(value)
+        or value < 1
+    then
+        return "damaged"
+    end
+
+
+    if value == current then
+        return "current"
+    end
+
+
+    if value > current then
+        return "newer"
+    end
+
+
+    return "older"
+end
+
+
+------------------------------------------------
+-- UPGRADE
+------------------------------------------------
+--
+-- Brings data (a table with a "version" field) from an
+-- older layout to current, one step at a time.
+-- steps[v] is a function(data) that turns layout v into
+-- layout v + 1.
+--
+-- Returns a status and the number of steps applied:
+--
+--   "current"   nothing to do (the usual case: one
+--               comparison, no step looked at)
+--   "upgraded"  every step ran; data.version is current
+--   "missing", "newer", "damaged"
+--               as versionStatus(); nothing was touched
+--   "stuck"     there is no step from the stored layout;
+--               nothing further was touched
+--   "failed"    a step raised an error. The version is
+--               left at that step's layout, so the step
+--               runs again at the next load
+--
+-- Rules for a step, because of that last case: it may
+-- run more than once on the same data, so it must
+-- tolerate its own partial result; it converts and never
+-- resets; and it creates nothing a player can hold.
+--
+-- No structure of the mod has a second layout yet, so no
+-- step exists. This is here so that the first one is a
+-- function in a table and not a design.
+------------------------------------------------
+
+function AC_SaveData.upgrade(
+    data,
+    current,
+    steps
+)
+
+    local status =
+        AC_SaveData.versionStatus(
+            data.version,
+            current
+        )
+
+
+    if status ~= "older" then
+        return status, 0
+    end
+
+
+    local applied = 0
+
+
+    while data.version < current do
+
+        local step =
+            steps and steps[data.version]
+
+
+        if type(step) ~= "function" then
+            return "stuck", applied
+        end
+
+
+        local ok,
+              problem =
+            pcall(
+                step,
+                data
+            )
+
+
+        if not ok then
+
+            print(
+                "[AmmoMaking] WARNING: save data upgrade from layout "
+                .. tostring(data.version)
+                .. " failed: "
+                .. tostring(problem)
+            )
+
+
+            return "failed", applied
+        end
+
+
+        data.version =
+            data.version + 1
+
+        applied =
+            applied + 1
+    end
+
+
+    return "upgraded", applied
+end
+
+
+------------------------------------------------
 -- SCHEMA
 ------------------------------------------------
 --
@@ -258,11 +411,11 @@ AC_SaveData.SCHEMA = {
 
         carrier = "global ModData \"AmmoMakingDeposits\"",
 
-        version = "version = 1 is written when missing and never compared: there has been one layout. A second layout would read it here.",
+        version = "version = 1, AC_Deposits.CONFIG.version. Stamped when missing; brought forward by AC_SaveData.upgrade and AC_Deposits.MIGRATIONS (no step exists: there has been one layout); a store written by a later release is read and never reset or stamped.",
 
         keys = {
 
-            { key = "version", type = "number", default = 1, read = false, repair = "restored to 1 when missing" },
+            { key = "version", type = "number", default = 1, repair = "restored to 1 when missing; a higher one marks a later release's store, which is left as it is" },
 
             { key = "tiles", type = "table", default = "empty", repair = "a non-table is replaced by an empty table with a warning; the records are lost" },
         },

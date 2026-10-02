@@ -299,9 +299,7 @@ function AC_QualityTally.repair(
     end
 
 
-    if isWhole(value.version)
-        and value.version > config.version
-    then
+    if AC_SaveData.versionStatus(value.version, config.version) == "newer" then
         return AC_QualityTally.empty(0), AC_QualityTally.NEWER
     end
 

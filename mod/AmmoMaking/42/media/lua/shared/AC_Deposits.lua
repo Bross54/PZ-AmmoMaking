@@ -31,6 +31,15 @@ AC_Deposits.CONFIG = {
 
 
     ------------------------------------------------
+    -- Layout of the depletion store (STORE LAYOUT,
+    -- below). Raise it only together with a step in
+    -- MIGRATIONS.
+    ------------------------------------------------
+
+    version = 1,
+
+
+    ------------------------------------------------
     -- ORE UNITS PER TILE BY GEOLOGICAL GRADE
     ------------------------------------------------
     --
@@ -58,6 +67,21 @@ AC_Deposits.CONFIG = {
         ["Very Rich"] = 4,
     },
 }
+
+
+------------------------------------------------
+-- STORE LAYOUT
+------------------------------------------------
+--
+-- CONFIG.version is the layout this release writes.
+-- MIGRATIONS[v] would turn a store of layout v into
+-- layout v + 1 (AC_SaveData.upgrade). There has been one
+-- layout, so there is no step: the stored number is what
+-- was taken, reserves come from geology, and a rebalance
+-- needs no migration.
+------------------------------------------------
+
+AC_Deposits.MIGRATIONS = {}
 
 
 ------------------------------------------------
@@ -158,7 +182,56 @@ local function getStore()
 
 
     if not store.version then
-        store.version = 1
+        store.version = AC_Deposits.CONFIG.version
+    end
+
+
+    ------------------------------------------------
+    -- Layout. Usually one comparison: the store is of
+    -- this release's layout. An older one is brought
+    -- forward by MIGRATIONS (none exists yet).
+    --
+    -- A store written by a LATER release is not ours to
+    -- repair: it is read as far as it is understood, and
+    -- never reset or stamped. If even its tiles are not
+    -- a table, the answer comes from an empty one that
+    -- is not stored: the tile reads as unworked, and the
+    -- later release's data is left alone.
+    ------------------------------------------------
+
+    local layout =
+        AC_SaveData.upgrade(
+            store,
+            AC_Deposits.CONFIG.version,
+            AC_Deposits.MIGRATIONS
+        )
+
+
+    if layout == "newer" then
+
+        if AC_Deposits.warnedNewerStore ~= store then
+
+            AC_Deposits.warnedNewerStore = store
+
+
+            print(
+                "[AmmoMaking] WARNING: the depletion records of this save were written by a later version of Ammo Making (layout "
+                .. tostring(store.version)
+                .. "); they are read as far as this version understands them and are not repaired"
+            )
+        end
+
+
+        if type(store.tiles) ~= "table" then
+
+            return {
+                version = store.version,
+                tiles = {},
+            }
+        end
+
+
+        return store
     end
 
 

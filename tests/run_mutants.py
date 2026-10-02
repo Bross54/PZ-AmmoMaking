@@ -81,6 +81,10 @@ MUTANTS = [
     (SHARED + "AC_Compat.lua", "AC_Compat.BOX_RECIPE = \"place_ammo_in_box\"", "AC_Compat.BOX_RECIPE = \"PlaceAmmoInBox\"", "the probed box recipe id is not vanilla's"),
 
     # ---- save data
+    (SHARED + "AC_SaveData.lua", "    if value > current then\n        return \"newer\"\n    end\n", "", "a later release's layout is taken for an older one"),
+    (SHARED + "AC_SaveData.lua", "        data.version =\n            data.version + 1\n", "        data.version =\n            current\n", "an upgrade stamps the newest layout after its first step"),
+    (SHARED + "AC_SaveData.lua", "        if not ok then\n", "        if false then\n", "a failed upgrade step still advances the layout"),
+    (SHARED + "AC_Deposits.lua", "        if type(store.tiles) ~= \"table\" then\n\n            return {\n                version = store.version,\n                tiles = {},\n            }\n        end\n\n\n        return store\n    end\n", "    end\n", "a later release's depletion store is reset like a damaged one"),
     (SHARED + "AC_SaveData.lua", "        and value == value\n", "", "NaN counts as a finite number"),
     (SHARED + "AC_SaveData.lua", "        and value ~= math.huge\n", "", "infinity counts as a finite number"),
     (SHARED + "AC_SaveData.lua", "    if maximum ~= nil\n        and number > maximum\n    then\n        return maximum\n    end\n", "", "a stored number is not clamped at its maximum"),
@@ -105,7 +109,7 @@ MUTANTS = [
     (SHARED + "AC_QualityTally.lua", "            (2 * tally.handloaded * staying + tally.count)\n", "            (2 * tally.handloaded * staying)\n", "handloaded rounds always leave first"),
     (SHARED + "AC_QualityTally.lua", "            tally.qualitySum - qualityLeaving\n", "            tally.qualitySum\n", "the quality of a round that leaves also stays behind"),
     (SHARED + "AC_QualityTally.lua", "            math.floor(tally.qualitySum * handloadedLeaving / tally.handloaded)", "            math.ceil(tally.qualitySum * handloadedLeaving / tally.handloaded) + 1", "a round that leaves takes more than its share of quality"),
-    (SHARED + "AC_QualityTally.lua", "    if isWhole(value.version)\n        and value.version > config.version\n    then\n        return AC_QualityTally.empty(0), AC_QualityTally.NEWER\n    end\n", "", "a later release's tally is treated as damage and overwritten"),
+    (SHARED + "AC_QualityTally.lua", "    if AC_SaveData.versionStatus(value.version, config.version) == \"newer\" then\n        return AC_QualityTally.empty(0), AC_QualityTally.NEWER\n    end\n", "", "a later release's tally is treated as damage and overwritten"),
     (SHARED + "AC_QualityTally.lua", "    if a.count + b.count > AC_QualityTally.CONFIG.maxRounds then\n        return a, false\n    end\n", "", "a merge may exceed the round limit"),
     (SHARED + "AC_QualityTally.lua", "    if actual > tally.count\n        or tally.handloaded == 0\n    then\n\n        return\n            make(\n                actual,\n                tally.handloaded,\n                tally.qualitySum\n            ),\n            status\n    end", "    if tally.handloaded == 0 then\n\n        return\n            make(\n                actual,\n                tally.handloaded,\n                tally.qualitySum\n            ),\n            status\n    end", "rounds that arrive unseen are counted as handloaded in proportion"),
     (SHARED + "AC_QualityTally.lua", "    local whole =\n        AC_SaveData.whole(\n            quality,\n            minimum,\n            minimum,\n            maximum\n        )", "    local whole =\n        quality", "a loaded round's quality is taken as given (900 stays 900)"),

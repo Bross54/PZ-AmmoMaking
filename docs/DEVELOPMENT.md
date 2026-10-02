@@ -569,7 +569,7 @@ lazily by `AC_Deposits.getStore()` on any read; nothing is transmitted.
 
 | Key | Value | Lifecycle | Malformed data |
 |---|---|---|---|
-| `version` | `1` | set when missing; **never read or compared** | restored when nil |
+| `version` | `1` (`AC_Deposits.CONFIG.version`) | set when missing; compared on every read of the store (*Versions and migrations*, below) | restored when nil; a higher one marks a later release's store, left as it is |
 | `tiles` | table keyed `"x,y"` | created with the store | a non-table is replaced by `{}` with a warning (the records are lost) |
 | `tiles[k].copper`, `.zinc` | units extracted, integer ≥ 0; `0` means "worked, nothing there" | written on the first extraction attempt, only ever increases; removed only by the debug reset | a non-table record reads as unworked; a count is a whole number of 0 or more, anything else (a word, NaN, an infinity) reads as 0 |
 
@@ -653,7 +653,7 @@ and a test asserts that inspecting a real component writes nothing.
 |---|---|
 | A round's `casingQuality` was returned unclamped: damaged data showed as "Excellent (900)" | **fixed**: clamped like a case's quality |
 | A test cartridge with its flag set and a field missing raised "arithmetic on a nil value" in the menu click | **fixed**: missing or non-numeric fields are restored to their defaults |
-| The deposits `version` is written and never read | left: there is one schema; it is there for the first real migration |
+| The deposits `version` is written and never read | **now read**: see *Versions and migrations* |
 | Several keys are written and never read (table above) | left: harmless, and removing a key from a system confirmed in game buys nothing |
 | `labProcessing` is tested for `true` and only ever written `false` | left: dead state on in-game-confirmed code; noted for the next change to that file |
 | A sample whose grade is damaged into a non-string still counts as a prospect; `storedSample` damaged into a truthy non-`true` value loses the stored sample | left: each needs hand-edited or corrupt save data, none raises an error, and geology (not the sample) still decides what a tile yields |
@@ -675,6 +675,47 @@ escaping its range) and fixed at the place the value is read:
 
 No schema migration was added: nothing has been renamed since the keys were
 introduced, apart from the `labReadyAt` case that is already handled.
+
+### Versions and migrations
+
+The strategy, as of 2026-10-02:
+
+| Structure | Version | Why |
+|---|---|---|
+| Depletion store (global) | `version = 1`, `AC_Deposits.CONFIG.version` | the one structure with a layout that could change (a table of records) |
+| Quality tally (not stored yet) | its own `version`, `AC_QualityTally.CONFIG.version` | a record that later releases may extend |
+| Sample, kits, analyzer, case, round, test cartridge | none | flat keys read one by one, each with its own range and default. A key added later is simply absent in an old save and reads as its default; the analyzer's one change of shape (`labReadyAt`) is recognised by shape |
+| Calibres, recipes, loot, recycling, XP values | not save data | code and scripts: changing them needs no migration |
+
+Two functions in `AC_SaveData` carry it:
+
+- `versionStatus(value, current)`: `missing`, `current`, `older`, `newer`
+  or `damaged`.
+- `upgrade(data, current, steps)`: runs `steps[v]` for each layout from the
+  stored one up to `current`, advancing `data.version` after each. The
+  usual case is one comparison and no step.
+
+The rules, each asserted by the section *Save data versions*:
+
+| Rule | How |
+|---|---|
+| An older valid save stays valid | steps convert, they never reset; a field no step knows is kept |
+| A migration is idempotent | the version is advanced only after a step returns, and a current structure runs nothing |
+| A failed step does not corrupt | the version stays where it was and the step runs again at the next load; a step must tolerate its own partial result |
+| A save from a **later** release is not damaged by an earlier one | `newer`: nothing is repaired, reset or stamped. The depletion store is read where it is understood (a later store's `tiles` table is used as it is; anything else reads as unworked ground and is left alone), with one warning per world load |
+| Not run every frame | there is no event: the check is one comparison inside the store accessor |
+| No duplication | a step moves or converts data and creates no item; the suite's fuzz still requires every count to stay within its range after any damage |
+
+**There is no migration step in the mod**: `AC_Deposits.MIGRATIONS` is
+empty, because the store has had one layout. The first change of layout is
+then one function in that table and `CONFIG.version` raised by one; the
+runner, its failure behaviour and the later-release rule are already
+tested, with an invented three-layout structure.
+
+One limit worth knowing: on a later release's store whose records this
+release cannot read, an extraction is not recorded (there is nowhere it
+could safely be written), so that tile's depletion would not persist. That
+can only happen after downgrading the mod across a change of layout.
 
 ### Reads that write
 

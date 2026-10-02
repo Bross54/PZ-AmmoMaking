@@ -6315,6 +6315,180 @@ do
     MOCK.clearModData()
 end
 
+section("Save data versions: older layouts are brought forward, later ones are left alone")
+do
+    local S = AC_SaveData
+
+    -- How a stored version relates to this release's.
+    eq(S.versionStatus(nil, 1), "missing", "no version stored")
+    eq(S.versionStatus(1, 1), "current", "this release's layout")
+    eq(S.versionStatus(1, 3), "older", "an earlier layout")
+    eq(S.versionStatus(4, 3), "newer", "a later release's layout")
+    for _, bad in ipairs({ 0, -1, 1.5, "1", "one", true, {}, 0 / 0, math.huge, -math.huge }) do
+        eq(S.versionStatus(bad, 1), "damaged", "a version of " .. tostring(bad) .. " is damage")
+    end
+
+    -- upgrade(): an invented structure with three layouts. Layout 1 kept a
+    -- count as a string, layout 2 as a number, layout 3 under another name.
+    local calls = {}
+    local steps = {
+        [1] = function(data)
+            table.insert(calls, 1)
+            data.count = tonumber(data.count) or 0
+        end,
+        [2] = function(data)
+            table.insert(calls, 2)
+            if data.total == nil then data.total = data.count end
+            data.count = nil
+        end,
+    }
+    local old = { version = 1, count = "7", note = "kept" }
+    local status, applied = S.upgrade(old, 3, steps)
+    eq(status, "upgraded", "an old structure is upgraded")
+    eq(applied, 2, "by both steps")
+    eq(table.concat(calls, ","), "1,2", "in order")
+    eq(old.version, 3, "to the current layout")
+    eq(old.total, 7, "its value carried over, not reset")
+    eq(old.note, "kept", "a field no step knows is kept")
+    -- Idempotent: a second run does nothing.
+    status, applied = S.upgrade(old, 3, steps)
+    eq(status, "current", "a second run finds it current")
+    eq(applied, 0, "and applies nothing")
+    eq(#calls, 2, "no step ran again")
+    eq(old.total, 7, "the value is untouched")
+    -- From the middle: only the later step.
+    calls = {}
+    local middle = { version = 2, count = 4 }
+    eq(S.upgrade(middle, 3, steps), "upgraded", "a layout 2 structure is upgraded")
+    eq(table.concat(calls, ","), "2", "by the second step only")
+    eq(middle.total, 4, "its value carried over")
+    -- A later release's structure is not touched at all.
+    local newer = { version = 9, total = 3, queue = { 1, 2, 3 } }
+    status, applied = S.upgrade(newer, 3, steps)
+    eq(status, "newer", "a later layout is reported")
+    eq(applied, 0, "no step runs on it")
+    eq(newer.version, 9, "its version is not stamped down")
+    eq(#newer.queue, 3, "its unknown fields are kept")
+    -- Missing and damaged versions are the owner's to decide.
+    local unversioned = { count = "3" }
+    eq(S.upgrade(unversioned, 3, steps), "missing", "no version: reported, not guessed")
+    eq(unversioned.count, "3", "and nothing is converted")
+    eq(unversioned.version, nil, "nor stamped")
+    local damagedVersion = { version = "two", count = 3 }
+    eq(S.upgrade(damagedVersion, 3, steps), "damaged", "a damaged version: reported")
+    eq(damagedVersion.version, "two", "and left for the owner")
+    -- A step that fails leaves the layout where it was, so it runs again.
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local attempts = 0
+    local failing = {
+        [1] = function(data)
+            attempts = attempts + 1
+            data.half = true
+            if attempts == 1 then error("disk full") end
+            data.done = true
+        end,
+    }
+    local broken = { version = 1 }
+    status, applied = S.upgrade(broken, 2, failing)
+    MOCK.capturePrint(false)
+    eq(status, "failed", "a step that raises is a failed upgrade, not a crash")
+    eq(applied, 0, "nothing counts as applied")
+    eq(broken.version, 1, "the layout is not advanced")
+    check(MOCK.printLogContains("save data upgrade from layout 1 failed"), "one warning names the layout")
+    status = S.upgrade(broken, 2, failing)
+    eq(status, "upgraded", "the next load runs the step again")
+    eq(broken.done, true, "to completion")
+    eq(broken.version, 2, "and only then advances")
+    -- No way forward: reported, not invented.
+    local stuck = { version = 1 }
+    status, applied = S.upgrade(stuck, 3, { [2] = function() end })
+    eq(status, "stuck", "a layout with no step is stuck")
+    eq(stuck.version, 1, "and untouched")
+    eq(S.upgrade({ version = 1 }, 2, nil), "stuck", "no steps at all: stuck, not an error")
+    eq(S.upgrade({ version = 2 }, 2, nil), "current", "the usual case needs no steps table")
+
+    -- The depletion store: the one versioned structure in a save.
+    eq(AC_Deposits.CONFIG.version, 1, "the depletion store's layout is 1")
+    local stepCount = 0
+    for _ in pairs(AC_Deposits.MIGRATIONS) do stepCount = stepCount + 1 end
+    eq(stepCount, AC_Deposits.CONFIG.version - 1, "one migration step per earlier layout (none: there has been one layout)")
+    local x, y, reserve = findTile("copper", 2)
+    MOCK.clearModData()
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    AC_Deposits.recordExtraction(x, y, "copper", 1)
+    local store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    eq(store.version, 1, "a new store is stamped with the current layout")
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "and holds the extraction")
+
+    -- A store from a later release, with tiles this release understands.
+    MOCK.clearModData()
+    store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    store.version = 2
+    store.tiles = { [x .. "," .. y] = { copper = 1, tin = 4 } }
+    store.regions = { north = true }
+    MOCK.clearPrintLog()
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 1, "a later release's store is read where it is understood")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), reserve - 1, "the reserve follows it")
+    eq(store.version, 2, "its version is not stamped down")
+    eq(store.regions.north, true, "its unknown fields are kept")
+    eq(store.tiles[x .. "," .. y].tin, 4, "inside a record too")
+    local warnings = 0
+    for _, line in ipairs(MOCK.printLog) do
+        if string.find(line, "written by a later version of Ammo Making", 1, true) then warnings = warnings + 1 end
+    end
+    eq(warnings, 1, "one warning for the whole world load, not one per read")
+    AC_Deposits.getTileInfo(x, y)
+    AC_Deposits.getWorkedTileCount()
+    warnings = 0
+    for _, line in ipairs(MOCK.printLog) do
+        if string.find(line, "written by a later version of Ammo Making", 1, true) then warnings = warnings + 1 end
+    end
+    eq(warnings, 1, "further reads add no warning")
+
+    -- A later store whose tiles this release cannot read: left alone.
+    MOCK.clearModData()
+    store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    store.version = 3
+    store.tiles = "packed:AAECAw=="
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "an unreadable later store reads as unworked ground")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), reserve, "with the full reserve")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "and no worked tiles")
+    local okWrite = pcall(AC_Deposits.recordExtraction, x, y, "copper", 1)
+    check(okWrite, "an extraction on it does not raise")
+    eq(store.tiles, "packed:AAECAw==", "the later release's data is not reset")
+    eq(store.version, 3, "nor is its version")
+    -- This release's own store, damaged the same way, IS reset: that is the
+    -- difference the version makes.
+    MOCK.clearModData()
+    store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    store.version = 1
+    store.tiles = "garbage"
+    AC_Deposits.getExtracted(x, y, "copper")
+    eq(type(store.tiles), "table", "a damaged store of this layout is repaired as before")
+    MOCK.capturePrint(false)
+    MOCK.clearModData()
+
+    -- The check is one comparison per read, never a walk over the records:
+    -- upgrade() looks at no step when the layout is current.
+    local looked = 0
+    local watched = setmetatable({}, { __index = function() looked = looked + 1 return nil end })
+    eq(S.upgrade({ version = 1 }, 1, watched), "current", "a current structure")
+    eq(looked, 0, "consults no migration step")
+
+    -- Every structure states its version policy, and only the store and
+    -- the (unwired) tally carry a version field.
+    for _, structure in ipairs(S.SCHEMA) do
+        local versioned = false
+        for _, entry in ipairs(structure.keys) do
+            if entry.key == "version" then versioned = true end
+        end
+        eq(versioned, structure.id == "deposits", structure.id .. (versioned and " carries a version" or " carries no version field"))
+    end
+    eq(AC_QualityTally.CONFIG.version, 1, "the tally's record has its own layout number")
+end
+
 section("Save data fuzz: every persisted key, every kind of damage")
 do
     -- The mod's own log lines are captured for the whole section; a failed
