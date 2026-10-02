@@ -831,7 +831,8 @@ Right-click the ground → **Ammo Making Debug**, one tree grouped by stage:
 Ammo Making Debug
 ├─ Geology       Inspect Current Tile · Survey Current Area (3x3) · Show Geology Seed ·
 │                Inspect Clicked Tile Objects · Reset Depletion (tile / 3x3) ·
-│                Spawn Sampling Kit · Spawn Mining Kit · Spawn Assayed Sample
+│                Spawn Sampling Kit · Spawn Equipment Parts Kit · Spawn Mining Kit ·
+│                Spawn Assayed Sample
 ├─ Analyzer      Spawn Laboratory Analyzer · (clicked analyzer:) Inspect Analyzer State ·
 │                Complete Analyzer Job
 ├─ Metallurgy    Spawn Metallurgy Kit · Spawn Case Stock Kit · Spawn Recycling Kit ·
@@ -846,6 +847,9 @@ Ammo Making Debug
 Everything prints to `console.txt`. From the Lua console:
 `AC_GeologyDebug.tile(getPlayer())`.
 
+- **Spawn Equipment Parts Kit**: exactly what one craft of each of the
+  three equipment recipes consumes, and a screwdriver. Built from
+  `AC_Materials.EQUIPMENT_RECIPES`, so it follows a change of the recipes.
 - **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
   (it does not break), 22 charcoal, one zinc ore, ten scrap of each metal,
   six copper and two zinc ingots: every furnace recipe once, with the two
@@ -1097,7 +1101,7 @@ once, and the run used to hang).
 `check` only verifies that every fault still applies. See the header of the
 file; it must not run while anything else reads the repository.
 
-After the third pass of 2026-10-02 the list holds 140 faults, all killed.
+After the third pass of 2026-10-02 the list holds 141 faults, all killed.
 
 **The seeded runs draw from one exact generator.** `MOCK.nextRandom` is
 MINSTD (`x * 48271 mod 2^31 - 1`), whose product stays below 2^53. The
@@ -1436,6 +1440,8 @@ session got none. It now resets on `OnInitGlobalModData`.
   - the reloading press, when it is switched on: `art/reloading_press/
     README.md` and `RELOADING_PRESS_DESIGN.md` 9.
 - **Added in the third pass of 2026-10-02** (none of it seen in game):
+  - (*Ammo Making Debug > Geology > Spawn Equipment Parts Kit* hands out
+    the parts for one craft of each.)
   - *Assemble Field Assay Kit*, *Assemble Advanced Field Assay Kit* and
     *Build Laboratory Assay Analyzer* appear in the crafting window at a
     surface (the first two under Miscellaneous, the analyzer under
@@ -1445,8 +1451,8 @@ session got none. It now resets on `OnInitGlobalModData`.
     the menu opens on a sample, and the made analyzer can be placed like
     the debug one;
   - no `Crafting (...)` XP line is printed for any of the three;
-  - the boot check lists the eleven new vanilla ids as present
+  - the boot check lists the twelve new vanilla ids as present
     (`Base.MagnifyingGlass`, `Base.Tweezers`, `Base.SheetPaper2`,
     `Base.Calculator`, `Base.ElectronicsScrap`, `Base.ElectricWire`,
     `Base.Amplifier`, `Base.LightBulb`, `Base.Screws`, `Base.SheetMetal`,
-    `Base.CarBatteryCharger`).
+    `Base.CarBatteryCharger`, `Base.Screwdriver`).

@@ -129,6 +129,8 @@ AC_Compat.REQUIRED_ITEMS = {
     "Base.SheetMetal",
 
     "Base.CarBatteryCharger",
+
+    "Base.Screwdriver",
 }
 
 

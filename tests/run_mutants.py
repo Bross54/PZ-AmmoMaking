@@ -197,6 +197,8 @@ MUTANTS = [
 
     (SHARED + "AC_Materials.lua", "    { count = 1, items = { \"Base.Tweezers\" } },", "    { count = 1, items = { \"AmmoMaking.LaboratoryAssayAnalyzer\" } },", "every kit needs an analyzer, and nothing makes the first instrument cheaply"),
 
+    (CLIENT + "AC_GeologyDebug.lua", "                entry[2] =\n                    entry[2] + input.count\n", "                entry[2] =\n                    entry[2] + 1\n", "the debug parts kit holds one of each part, not what the recipes take"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]

@@ -384,6 +384,7 @@ MOCK.knownScriptItems = {
     ["Base.MagnifyingGlass"] = true, ["Base.Tweezers"] = true, ["Base.SheetPaper2"] = true,
     ["Base.Calculator"] = true, ["Base.ElectronicsScrap"] = true, ["Base.ElectricWire"] = true,
     ["Base.Amplifier"] = true, ["Base.LightBulb"] = true, ["Base.Screws"] = true, ["Base.SheetMetal"] = true, ["Base.CarBatteryCharger"] = true,
+    ["Base.Screwdriver"] = true,
     ["Base.PickAxe"] = true,
     ["Base.PickAxeForged"] = true,
     ["Base.PickAxeHead"] = true,

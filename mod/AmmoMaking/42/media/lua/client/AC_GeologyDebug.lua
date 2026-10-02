@@ -705,6 +705,85 @@ end
 
 
 ------------------------------------------------
+-- GEOLOGY EQUIPMENT PARTS
+------------------------------------------------
+--
+-- Built from AC_Materials.EQUIPMENT_RECIPES, so it follows
+-- the recipes: exactly what one craft of each consumes,
+-- and a screwdriver for the analyzer's kept line. Enough
+-- to try all three recipes once without scavenging.
+------------------------------------------------
+
+local function buildEquipmentPartsKit()
+
+    local kit = {
+        { AC_Materials.ITEMS.Screwdriver, 1 },
+    }
+
+    local position = {}
+
+
+    for _,
+        recipe
+    in ipairs(
+        AC_Materials.EQUIPMENT_RECIPES
+    )
+    do
+
+        for _,
+            input
+        in ipairs(
+            recipe.inputs
+        )
+        do
+
+            if not input.keep
+                and input.items
+            then
+
+                local itemType =
+                    input.items[1]
+
+
+                if not position[itemType] then
+
+                    table.insert(
+                        kit,
+                        { itemType, 0 }
+                    )
+
+                    position[itemType] = #kit
+                end
+
+
+                local entry =
+                    kit[position[itemType]]
+
+
+                entry[2] =
+                    entry[2] + input.count
+            end
+        end
+    end
+
+
+    return kit
+end
+
+
+local function spawnEquipmentPartsKit(
+    player
+)
+
+    spawnKit(
+        player,
+        buildEquipmentPartsKit(),
+        "Equipment parts kit"
+    )
+end
+
+
+------------------------------------------------
 -- RECYCLING
 ------------------------------------------------
 --
@@ -2233,6 +2312,12 @@ AC_GeologyDebug.spawnCaseStockKit =
 AC_GeologyDebug.spawnRecyclingKit =
     spawnRecyclingKit
 
+AC_GeologyDebug.spawnEquipmentPartsKit =
+    spawnEquipmentPartsKit
+
+AC_GeologyDebug.buildEquipmentPartsKit =
+    buildEquipmentPartsKit
+
 AC_GeologyDebug.buildRecyclingKit =
     buildRecyclingKit
 
@@ -2432,6 +2517,8 @@ local function onFillWorldObjectContextMenu(
     geology:addOption("Reset Depletion: 3x3 Area", player, resetArea)
 
     geology:addOption("Spawn Sampling Kit (shovel + assay kits)", player, spawnSamplingKit)
+
+    geology:addOption("Spawn Equipment Parts Kit (to make both kits and the analyzer)", player, spawnEquipmentPartsKit)
 
     geology:addOption("Spawn Mining Kit (pickaxes)", player, spawnMiningKit)
 

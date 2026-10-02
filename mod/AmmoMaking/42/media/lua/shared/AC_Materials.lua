@@ -128,6 +128,10 @@ AC_Materials.ITEMS = {
     BallPeenHammer = "Base.BallPeenHammer",
 
     MetalworkingPunch = "Base.MetalworkingPunch",
+
+    -- The analyzer recipe keeps a tool tagged base:screwdriver;
+    -- the debug parts kit hands out this one.
+    Screwdriver = "Base.Screwdriver",
 }
 
 

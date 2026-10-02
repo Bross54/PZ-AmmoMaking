@@ -2310,7 +2310,8 @@ do
             "Inspect Current Tile", "Survey Current Area (3x3)", "Show Geology Seed",
             "Inspect Clicked Tile Objects (sprites, analyzer state)",
             "Reset Depletion: Current Tile", "Reset Depletion: 3x3 Area",
-            "Spawn Sampling Kit (shovel + assay kits)", "Spawn Mining Kit (pickaxes)",
+            "Spawn Sampling Kit (shovel + assay kits)",
+            "Spawn Equipment Parts Kit (to make both kits and the analyzer)", "Spawn Mining Kit (pickaxes)",
             "Spawn Assayed Sample (current 3x3)",
         } },
         { "Analyzer", { "Spawn Laboratory Analyzer" } },
@@ -9693,6 +9694,32 @@ do
     for _, recipe in ipairs(without) do table.insert(fieldOnly, recipe) end
     table.insert(fieldOnly, field)
     eq(reachable(fieldOnly, false)[zincOre], true, "the field kit alone is enough to mine")
+
+    -- The debug parts kit follows the recipes: one craft of each, exactly.
+    MOCK.debug = true
+    local partsPlayer = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, GRASS) })
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnEquipmentPartsKit(partsPlayer)
+    MOCK.capturePrint(false)
+    MOCK.debug = false
+    local mirror = { ["base:screwdriver"] = partsPlayer.inventory:count(AC_Materials.ITEMS.Screwdriver) }
+    eq(mirror["base:screwdriver"], 1, "the parts kit holds one screwdriver")
+    eq((ENGINE.items[AC_Materials.ITEMS.Screwdriver] or {}).tags ~= nil and string.find(ENGINE.items[AC_Materials.ITEMS.Screwdriver].tags, "base:screwdriver", 1, true) ~= nil, true,
+        "which carries the tag the analyzer recipe asks for, on the installed build")
+    for _, entry in ipairs(AC_GeologyDebug.buildEquipmentPartsKit()) do
+        if entry[1] ~= AC_Materials.ITEMS.Screwdriver then mirror[entry[1]] = entry[2] end
+        eq(partsPlayer.inventory:count(entry[1]), entry[2], "the parts kit holds " .. entry[2] .. " of " .. entry[1])
+    end
+    for _, recipe in ipairs(E) do
+        check(mirrorCraft(mirror, recipe), "the parts kit makes " .. recipe.id)
+    end
+    for _, recipe in ipairs(E) do
+        check(not mirrorCraft(mirror, recipe), "and " .. recipe.id .. " only once")
+    end
+    for id, count in pairs(mirror) do
+        if string.sub(id, 1, 5) == "Base." then eq(count, 0, "nothing of " .. id .. " is left over") end
+    end
+    eq(mirror["base:screwdriver"], 1, "the screwdriver is kept")
 end
 
 ------------------------------------------------

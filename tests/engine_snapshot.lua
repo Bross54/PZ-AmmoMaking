@@ -997,6 +997,11 @@ return {
             type = "base:normal",
             weight = 0.1,
         },
+        ["Base.Screwdriver"] = {
+            tags = "base:hasmetal;base:screwdriver",
+            type = "base:weapon",
+            weight = 0.5,
+        },
         ["Base.Screws"] = {
             tags = "base:hasmetal",
             type = "base:normal",
