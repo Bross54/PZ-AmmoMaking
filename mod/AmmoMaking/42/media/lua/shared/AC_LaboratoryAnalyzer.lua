@@ -175,11 +175,15 @@ local function laboratoryMeasurement(
     trueValue
 )
 
+    -- A percentage. A damaged stored value never reaches
+    -- the measurement.
     trueValue =
-        tonumber(
-            trueValue
+        AC_SaveData.number(
+            trueValue,
+            0,
+            0,
+            100
         )
-        or 0
 
 
     local maximumError =
@@ -647,14 +651,34 @@ local VALID_STATES = {
 }
 
 
+-- A finite number from 0 to 100 (a numeric string
+-- counts, as it does for the readers).
+local function isPercentage(
+    value
+)
+
+    local number =
+        tonumber(value)
+
+
+    return
+        AC_SaveData.isFinite(number)
+        and number >= 0
+        and number <= 100
+end
+
+
+-- A timer field that is not a finite number (a word, a
+-- table, NaN, an infinity) is dropped.
 local function dropIfNotNumber(
     data,
     field
 )
 
     if data[field] ~= nil
-        and tonumber(data[field]) == nil
+        and not AC_SaveData.isFinite(tonumber(data[field]))
     then
+
 
         data[field] =
             nil
@@ -733,9 +757,12 @@ local function normalizeState(
         end
 
 
-        if tonumber(data.labCopperResult) == nil
-            or tonumber(data.labZincResult) == nil
+        -- A result is a percentage. One that is missing, not
+        -- a number or out of range is measured again.
+        if not isPercentage(data.labCopperResult)
+            or not isPercentage(data.labZincResult)
         then
+
 
             data.labCopperResult =
                 laboratoryMeasurement(
@@ -937,15 +964,32 @@ function AC_LaboratoryAnalyzer.updateState(
 
 
     ------------------------------------------------
+    -- A run never has more than its full time left, and
+    -- never less than none: a damaged timer (a number far
+    -- out of range, or one computed from a damaged
+    -- labReadyAt) is brought back into that range.
+    ------------------------------------------------
+
+    data.labRemainingHours =
+        AC_SaveData.number(
+            data.labRemainingHours,
+            AC_LaboratoryAnalyzer.CONFIG.processingHours,
+            0,
+            AC_LaboratoryAnalyzer.CONFIG.processingHours
+        )
+
+
+    ------------------------------------------------
     -- Calculate elapsed in-game time since the
     -- analyzer was last checked.
     ------------------------------------------------
 
     local lastUpdate =
-        tonumber(
-            data.labLastUpdateAt
+        AC_SaveData.number(
+            data.labLastUpdateAt,
+            now,
+            0
         )
-        or now
 
 
     local elapsed =

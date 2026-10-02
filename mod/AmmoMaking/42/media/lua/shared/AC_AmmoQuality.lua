@@ -54,10 +54,11 @@ function AmmoQuality.initialize(item)
     if data.AmmoMakingQualityInitialized then
 
         -- Already set up. A field that is missing or is not a
-        -- number (a damaged save) gets its default back, so the
-        -- arithmetic below never meets a nil.
+        -- finite number (a damaged save) gets its default back,
+        -- so the arithmetic below never meets a nil, a NaN or an
+        -- infinity.
         for key, default in pairs(AmmoQuality.DEFAULTS) do
-            if type(data[key]) ~= "number" then
+            if not AC_SaveData.isFinite(data[key]) then
                 data[key] = default
             end
         end

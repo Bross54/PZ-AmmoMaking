@@ -211,7 +211,8 @@ function AC_CaseQuality.get(
         data and data[config.qualityKey]
 
 
-    if type(quality) ~= "number" then
+    -- Not a number, or NaN or an infinity: no quality.
+    if not AC_SaveData.isFinite(quality) then
         return nil
     end
 
@@ -243,7 +244,8 @@ function AC_CaseQuality.getRoundQuality(
         data and data[AC_CaseQuality.CONFIG.roundQualityKey]
 
 
-    if type(quality) ~= "number" then
+    -- Not a number, or NaN or an infinity: no quality.
+    if not AC_SaveData.isFinite(quality) then
         return nil
     end
 

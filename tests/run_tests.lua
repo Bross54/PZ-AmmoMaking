@@ -5579,6 +5579,639 @@ do
 end
 
 ------------------------------------------------
+-- SAVE DATA
+------------------------------------------------
+--
+-- Every key the mod persists, damaged in every way a save can be damaged,
+-- then pushed through the code a player actually runs: menus, assays, the
+-- analyzer, mining, inspection. Nothing may raise, and what comes back must
+-- stay inside its documented range. This runs the mod's Lua against mocked
+-- items and objects; that ModData survives a real save is the engine's.
+
+-- The kinds of damage: missing, wrong type, negative, huge, not a number,
+-- an unknown word, a fraction.
+local NIL = {}
+local DAMAGE = {
+    { "missing", NIL }, { "true", true }, { "false", false }, { "an empty string", "" },
+    { "a word", "excellent" }, { "a numeric string", "42" }, { "a negative number", -5 },
+    { "zero", 0 }, { "900", 900 }, { "a huge number", 1e15 }, { "infinity", math.huge },
+    { "minus infinity", -math.huge }, { "not-a-number", 0 / 0 }, { "a table", {} }, { "a fraction", 3.7 },
+}
+
+local function isFinite(value)
+    return type(value) == "number" and value == value and value ~= math.huge and value ~= -math.huge
+end
+
+section("Save data schema: every persisted key is declared, and the mod writes what it declares")
+do
+    local S = AC_SaveData
+
+    -- Reading numbers.
+    eq(S.isFinite(5), true, "5 is finite")
+    eq(S.isFinite(0 / 0), false, "NaN is not")
+    eq(S.isFinite(math.huge), false, "infinity is not")
+    eq(S.isFinite(-math.huge), false, "minus infinity is not")
+    eq(S.isFinite("5"), false, "a string is not a number")
+    eq(S.isFinite(nil), false, "nil is not a number")
+    eq(S.number(42, 0, 0, 100), 42, "a value in range is itself")
+    eq(S.number("42", 0, 0, 100), 42, "a numeric string counts, as for tonumber")
+    eq(S.number(900, 0, 0, 100), 100, "above the range: the maximum")
+    eq(S.number(-5, 7, 0, 100), 0, "below the range: the minimum, not the default")
+    eq(S.number("excellent", 7, 0, 100), 7, "a word: the default")
+    eq(S.number(nil, 7, 0, 100), 7, "missing: the default")
+    eq(S.number({}, 7, 0, 100), 7, "a table: the default")
+    eq(S.number(true, 7, 0, 100), 7, "a boolean: the default")
+    eq(S.number(0 / 0, 7, 0, 100), 7, "NaN: the default")
+    eq(S.number(math.huge, 7, 0, 100), 7, "infinity: the default, not the maximum")
+    eq(S.number(-math.huge, 7, 0, 100), 7, "minus infinity: the default")
+    eq(S.number(1e15, 7, 0, 100), 100, "a huge finite number: the maximum")
+    eq(S.number(12.5, 0), 12.5, "no range: the number")
+    eq(S.number(-3, 0, nil, 10), -3, "no minimum")
+    eq(S.number("x", nil), nil, "a nil default is returned as nil")
+    eq(S.whole(3.7, 0, 0, 10), 3, "whole rounds down")
+    eq(S.whole(-0.5, 9, 0, 10), 0, "whole clamps first")
+    eq(S.whole("abc", 9, 0, 10), 9, "whole gives the default for a word")
+    eq(S.whole(0 / 0, 9), 9, "whole gives the default for NaN")
+
+    -- The schema is well formed.
+    local ids = {}
+    for _, structure in ipairs(S.SCHEMA) do
+        check(not ids[structure.id], "structure id unique: " .. tostring(structure.id))
+        ids[structure.id] = true
+        for _, field in ipairs({ "owner", "carrier", "version" }) do
+            check(type(structure[field]) == "string" and structure[field] ~= "", structure.id .. " states its " .. field)
+        end
+        check(_G[structure.owner] ~= nil, structure.id .. " is owned by a loaded module (" .. structure.owner .. ")")
+        local seen = {}
+        for _, entry in ipairs(structure.keys) do
+            local name = structure.id .. "." .. tostring(entry.key)
+            check(not seen[entry.key], name .. " is declared once")
+            seen[entry.key] = true
+            check(type(entry.type) == "string", name .. " has a type")
+            check(type(entry.repair) == "string" and entry.repair ~= "", name .. " says what happens to a damaged value")
+            if entry.type == "number" and entry.min ~= nil and entry.max ~= nil then
+                local low = type(entry.min) == "function" and entry.min() or entry.min
+                local high = type(entry.max) == "function" and entry.max() or entry.max
+                check(low <= high, name .. " has an ordered range")
+            end
+        end
+        eq(S.getStructure(structure.id), structure, structure.id .. " is found by id")
+    end
+    eq(S.getStructure("nope"), nil, "unknown structure")
+    for _, id in ipairs({ "deposits", "depositsTile", "sample", "kit", "analyzer", "case", "round", "testCartridge" }) do
+        check(ids[id], "structure " .. id .. " is declared")
+    end
+
+    -- Every ModData key the code touches is in the schema. The mod names
+    -- its ModData tables "...data" / "...Data" and the deposits store
+    -- "store" / "record", and writes keys as plain fields.
+    local declared = {}
+    for _, structure in ipairs(S.SCHEMA) do
+        for _, entry in ipairs(structure.keys) do
+            if entry.family then
+                for _, member in ipairs(entry.family) do declared["stored_" .. member.key] = true end
+            else
+                declared[entry.key] = true
+            end
+        end
+    end
+    local used, usedCount = {}, 0
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        if name ~= "shared/AC_SaveData" then
+            local source = readFile(LUA .. name .. ".lua")
+            for variable, key in string.gmatch(source, "([%a_]*[dD]ata)%.([%a_][%w_]*)") do
+                -- The engine's ModData global and event are not tables of ours,
+                -- nor are the mod's own modules whose names end in "Data".
+                if variable ~= "ModData" and variable ~= "OnInitGlobalModData" and variable ~= "craftRecipeData"
+                    and string.sub(variable, 1, 3) ~= "AC_" then
+                    if not used[key] then usedCount = usedCount + 1 end
+                    used[key] = name
+                end
+            end
+            for key in string.gmatch(source, "%f[%w_]store%.([%a_][%w_]*)") do used[key] = name end
+        end
+    end
+    check(usedCount > 40, "the scan found the mod's ModData keys (" .. usedCount .. ")")
+    for key, file in pairs(used) do
+        check(declared[key], "ModData key '" .. key .. "' (used in " .. file .. ".lua) is declared in AC_SaveData.SCHEMA")
+    end
+    -- And nothing is declared that the code no longer uses.
+    local Q = AC_CaseQuality.CONFIG
+    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, copper = true, zinc = true }
+    for key in pairs(AmmoQuality.DEFAULTS) do byConfig[key] = true end
+    for _, structure in ipairs(S.SCHEMA) do
+        for _, entry in ipairs(structure.keys) do
+            if not entry.family then
+                check(used[entry.key] ~= nil or byConfig[entry.key], structure.id .. "." .. entry.key .. " is still used by the code")
+            end
+        end
+    end
+    eq(S.getStructure("case").keys[2].key, Q.qualityKey, "the case's quality key is the one AC_CaseQuality writes")
+    eq(S.getStructure("round").keys[2].key, Q.roundQualityKey, "the round's quality key is the one AC_CaseQuality writes")
+    -- The analyzer's stored copy covers exactly the sample's fields.
+    local sampleKeys = {}
+    for _, entry in ipairs(S.getStructure("sample").keys) do sampleKeys[entry.key] = true end
+    for _, field in ipairs(AC_LaboratoryAnalyzer.SAMPLE_FIELDS or {}) do
+        check(sampleKeys[field], "analyzer stored field " .. field .. " is a declared sample key")
+    end
+
+    -- check(): what the mod itself writes is always in the schema.
+    local function clean(id, data, what)
+        local problems = S.check(id, data)
+        eq(#problems, 0, what .. " matches the schema: " .. table.concat(problems, "; "))
+    end
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    MOCK.clearModData()
+    local x, y = findTile("copper", 2)
+    AC_Deposits.recordExtraction(x, y, "copper", 1)
+    AC_Deposits.markWorked(x, y, "zinc")
+    local store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    MOCK.capturePrint(false)
+    clean("deposits", store, "the deposits store after an extraction")
+    clean("depositsTile", store.tiles[x .. "," .. y], "a worked tile's record")
+    MOCK.capturePrint(true)
+
+    local square = MOCK.newSquare(x, y, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square, x = x, y = y })
+    equipShovel(player)
+    local sample = AC_GeologySampling.createSample(player, square)
+    MOCK.capturePrint(false)
+    check(sample ~= nil, "a sample was dug for the schema check")
+    if sample then
+        clean("sample", sample.modData, "a freshly dug sample")
+        for _, kitType in ipairs({ "AmmoMaking.FieldAssayKit", "AmmoMaking.AdvancedFieldAssayKit" }) do
+            local kit = MOCK.newItem(kitType)
+            MOCK.capturePrint(true)
+            AC_GeologySampling.initializeKit(kit)
+            MOCK.capturePrint(false)
+            clean("kit", kit.modData, "a new " .. kitType)
+            MOCK.capturePrint(true)
+            AC_GeologySampling.analyzeSample(sample, kit)
+            MOCK.capturePrint(false)
+            clean("kit", kit.modData, kitType .. " after one use")
+            clean("sample", sample.modData, "the sample after " .. kitType)
+        end
+        MOCK.capturePrint(true)
+        MOCK.worldHours = 200
+        local labSquare = poweredLabSquare(x + 1, y)
+        local labPlayer = MOCK.newPlayer({ square = labSquare })
+        labPlayer.inventory:addItem(sample)
+        local analyzer = placeAnalyzerObject(labSquare)
+        AC_LaboratoryAnalyzer.getState(analyzer)
+        MOCK.capturePrint(false)
+        clean("analyzer", analyzer.modData, "an idle analyzer")
+        MOCK.capturePrint(true)
+        AC_LaboratoryAnalyzer.startAssay(labPlayer, analyzer, sample)
+        MOCK.capturePrint(false)
+        clean("analyzer", analyzer.modData, "a processing analyzer")
+        MOCK.capturePrint(true)
+        MOCK.worldHours = 200 + AC_LaboratoryAnalyzer.CONFIG.processingHours / 2
+        AC_LaboratoryAnalyzer.getState(analyzer)
+        MOCK.capturePrint(false)
+        clean("analyzer", analyzer.modData, "an analyzer half way through")
+        MOCK.capturePrint(true)
+        MOCK.worldHours = 200 + AC_LaboratoryAnalyzer.CONFIG.processingHours + 1
+        AC_LaboratoryAnalyzer.getState(analyzer)
+        MOCK.capturePrint(false)
+        clean("analyzer", analyzer.modData, "a ready analyzer")
+        MOCK.capturePrint(true)
+        local collected = AC_LaboratoryAnalyzer.collectSample(labPlayer, analyzer)
+        MOCK.capturePrint(false)
+        check(collected ~= nil, "the laboratory sample was collected")
+        if collected then clean("sample", collected.modData, "a sample collected from the laboratory") end
+        clean("analyzer", analyzer.modData, "an analyzer after collection")
+        MOCK.worldHours = 0
+    end
+
+    local nine = AC_Calibres.get("9mm")
+    local case, round = MOCK.newItem(nine.case), MOCK.newItem(nine.round)
+    AC_CaseQuality.onCasesFormed({ getAllCreatedItems = function() return MOCK.arrayList({ case }) end, getAllConsumedItems = function() return MOCK.arrayList({}) end }, MOCK.newPlayer())
+    clean("case", case.modData, "a formed case")
+    AC_CaseQuality.onRoundsAssembled({ getAllCreatedItems = function() return MOCK.arrayList({ round }) end, getAllConsumedItems = function() return MOCK.arrayList({ case }) end })
+    clean("round", round.modData, "an assembled round")
+    local cartridge = MOCK.newItem("AmmoMaking.TestCartridge")
+    MOCK.capturePrint(true)
+    AmmoInspection.inspect(MOCK.newPlayer(), cartridge)
+    MOCK.capturePrint(false)
+    clean("testCartridge", cartridge.modData, "an inspected test cartridge")
+
+    -- check() itself: it reports, it does not change.
+    local damaged = { caseQuality = 900, AmmoMakingCase = "yes", shiny = true }
+    local problems = table.concat(S.check("case", damaged), "; ")
+    check(string.find(problems, "caseQuality: outside 1..100", 1, true) ~= nil, "an out-of-range quality is reported: " .. problems)
+    check(string.find(problems, "AmmoMakingCase: a flag must be true or absent", 1, true) ~= nil, "a damaged flag is reported")
+    check(string.find(problems, "shiny: not a key of case", 1, true) ~= nil, "an unknown key is reported")
+    eq(damaged.caseQuality, 900, "check() changes nothing")
+    eq(#S.check("case", {}), 0, "an empty table has no problems: every key may be absent")
+    eq(S.check("case", "garbage")[1], "case: not a table", "a non-table is reported")
+    eq(S.check("nope", {})[1], "unknown structure nope", "an unknown structure is reported")
+    check(string.find(table.concat(S.check("kit", { assayUsesRemaining = 2.5 }), "; "), "assayUsesRemaining: not a whole number", 1, true) ~= nil, "a fractional count is reported")
+    check(string.find(table.concat(S.check("kit", { assayUsesRemaining = 0 / 0 }), "; "), "assayUsesRemaining: not a finite number", 1, true) ~= nil, "NaN is reported")
+    check(string.find(table.concat(S.check("analyzer", { labAnalyzerState = "banana" }), "; "), "labAnalyzerState: unknown value banana", 1, true) ~= nil, "an unknown state is reported")
+    check(string.find(table.concat(S.check("analyzer", { stored_trueCopper = 250 }), "; "), "stored_trueCopper: outside 0..100", 1, true) ~= nil, "a stored sample field is checked as the sample's own")
+    check(string.find(table.concat(S.check("analyzer", { stored_nonsense = 1 }), "; "), "stored_nonsense: not a key of analyzer", 1, true) ~= nil, "an unknown stored field is reported")
+    check(string.find(table.concat(S.check("sample", { copperGrade = "Splendid" }), "; "), "copperGrade: unknown value Splendid", 1, true) ~= nil, "an unknown grade is reported")
+    eq(#S.check("sample", { copperGrade = "Good", assayRank = 3, trueCopper = 62 }), 0, "valid sample fields pass")
+
+    -- The module only describes: it stores nothing and listens to nothing.
+    local source = readFile(LUA .. "shared/AC_SaveData.lua")
+    check(string.find(source, "getModData(", 1, true) == nil and string.find(source, "ModData.getOrCreate", 1, true) == nil, "AC_SaveData reads no ModData itself")
+    check(string.find(source, "Events%.") == nil, "and registers no event")
+    MOCK.clearModData()
+end
+
+section("Save data fuzz: every persisted key, every kind of damage")
+do
+    -- The mod's own log lines are captured for the whole section; a failed
+    -- check must still be printed.
+    local outerCheck = check
+    local function check(condition, message)
+        if not condition then MOCK.capturePrint(false) end
+        outerCheck(condition, message)
+        if not condition then MOCK.capturePrint(true) end
+    end
+    local function eq(actual, expected, message)
+        check(actual == expected, message .. " (expected " .. tostring(expected) .. ", got " .. tostring(actual) .. ")")
+    end
+    local cases, raised = 0, {}
+    local function attempt(what, fn, ...)
+        cases = cases + 1
+        local results = { pcall(fn, ...) }
+        if not results[1] and #raised < 12 then table.insert(raised, what .. ": " .. tostring(results[2])) end
+        return results[1], results[2], results[3]
+    end
+    -- Text shown to a player never carries a broken number.
+    local function cleanText(text)
+        text = string.lower(tostring(text))
+        return string.find(text, "nan", 1, true) == nil and string.find(text, "inf", 1, true) == nil
+    end
+    local function cleanLines(lines)
+        for _, line in ipairs(lines or {}) do
+            if not cleanText(line) then return false, line end
+        end
+        return true
+    end
+
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+
+    ------------------------------------------------
+    -- The global depletion store
+    ------------------------------------------------
+    local x, y, reserve = findTile("copper", 2)
+    local function freshStore()
+        MOCK.clearModData()
+        local store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+        AC_Deposits.recordExtraction(x, y, "copper", 1)
+        return store
+    end
+    local function useStore(what)
+        attempt(what .. " getRemaining", AC_Deposits.getRemaining, x, y, "copper")
+        attempt(what .. " getExtracted", AC_Deposits.getExtracted, x, y, "zinc")
+        attempt(what .. " hasBeenWorked", AC_Deposits.hasBeenWorked, x, y, "copper")
+        attempt(what .. " isKnownExhausted", AC_Deposits.isKnownExhausted, x, y, "copper")
+        attempt(what .. " getTileInfo", AC_Deposits.getTileInfo, x, y)
+        attempt(what .. " getWorkedTileCount", AC_Deposits.getWorkedTileCount)
+        local player, square = miningSetup(x, y, "Good", "Good", 1)
+        attempt(what .. " mining menu", fillWorldMenu, player, square)
+        for _, metal in ipairs({ "copper", "zinc" }) do
+            local ok, remaining = attempt(what .. " remaining " .. metal, AC_Deposits.getRemaining, x, y, metal)
+            if ok then
+                local initial = AC_Deposits.getInitialReserve(x, y, metal)
+                check(isFinite(remaining) and remaining >= 0 and remaining <= initial, what .. ": remaining " .. metal .. " stays within 0.." .. initial .. " (" .. tostring(remaining) .. ")")
+            end
+            local okE, extracted = attempt(what .. " extracted " .. metal, AC_Deposits.getExtracted, x, y, metal)
+            if okE then check(isFinite(extracted) and extracted >= 0, what .. ": extracted " .. metal .. " is a count (" .. tostring(extracted) .. ")") end
+        end
+        attempt(what .. " recordExtraction", AC_Deposits.recordExtraction, x, y, "copper", 1)
+        local okA, after = attempt(what .. " remaining after a write", AC_Deposits.getRemaining, x, y, "copper")
+        if okA then check(isFinite(after) and after >= 0 and after <= reserve, what .. ": a write after the damage leaves a sane reserve (" .. tostring(after) .. ")") end
+    end
+    for _, damage in ipairs(DAMAGE) do
+        local name, value = damage[1], damage[2]
+        if value == NIL then value = nil end
+        local store = freshStore()
+        store.version = value
+        useStore("deposits version = " .. name)
+        store = freshStore()
+        store.tiles = value
+        useStore("deposits tiles = " .. name)
+        store = freshStore()
+        store.tiles[x .. "," .. y] = value
+        useStore("deposits record = " .. name)
+        for _, metal in ipairs({ "copper", "zinc" }) do
+            store = freshStore()
+            store.tiles[x .. "," .. y][metal] = value
+            useStore("deposits record." .. metal .. " = " .. name)
+        end
+    end
+    do
+        -- Old and unknown fields beside the known ones are ignored.
+        local store = freshStore()
+        store.legacyField, store.tiles.notATile, store.tiles[x .. "," .. y].tin = "old", "junk", 7
+        useStore("deposits with unknown fields")
+        eq(AC_Deposits.getExtracted(x, y, "copper"), 2, "unknown fields do not disturb the count")
+    end
+    MOCK.clearModData()
+
+    ------------------------------------------------
+    -- A geological sample
+    ------------------------------------------------
+    -- The keys come from the schema, so a key added there is fuzzed here.
+    local function schemaKeys(id)
+        local keys = {}
+        for _, entry in ipairs(AC_SaveData.getStructure(id).keys) do
+            if entry.family then
+                for _, member in ipairs(entry.family) do table.insert(keys, "stored_" .. member.key) end
+            else
+                table.insert(keys, entry.key)
+            end
+        end
+        return keys
+    end
+    local sampleKeys = schemaKeys("sample")
+    check(#sampleKeys >= 21, "the sample's keys were taken from the schema (" .. #sampleKeys .. ")")
+    local sx, sy = findTile("copper", 1)
+    local function freshSample(rank)
+        local sample = makeSample(sx, sy, rank or 2, "Good", "Poor")
+        local d = sample.modData
+        d.geologySeed, d.trueCopper, d.trueZinc, d.trueCopperPeak, d.trueZincPeak = 1, 62, 8, 70, 12
+        d.assayType, d.copperMin, d.copperMax, d.zincMin, d.zincMax = "advanced", 55, 70, 0, 15
+        d.labCopperResult, d.labZincResult, d.labStartedAt, d.labReadyAt = 61, 9, 10, 16
+        return sample
+    end
+    local function useSample(what, sample)
+        local square = MOCK.newSquare(sx, sy, 0, GRASS)
+        local player = MOCK.newPlayer({ square = square, x = sx, y = sy })
+        equipPickaxe(player)
+        player.inventory:addItem(sample)
+        for _, kitType in ipairs({ "AmmoMaking.FieldAssayKit", "AmmoMaking.AdvancedFieldAssayKit" }) do
+            player.inventory:addItem(MOCK.newItem(kitType))
+        end
+        attempt(what .. " isSample", AC_GeologySampling.isSample, sample)
+        local okL, lines = attempt(what .. " getResultLines", AC_GeologySampling.getResultLines, sample)
+        if okL and type(lines) == "table" then
+            local clean, bad = cleanLines(lines)
+            check(clean, what .. ": the result panel shows no broken number (" .. tostring(bad) .. ")")
+        end
+        attempt(what .. " inventory menu", fillInventoryMenu, player, sample)
+        attempt(what .. " world menu", fillWorldMenu, player, square)
+        for _, metal in ipairs({ "copper", "zinc" }) do
+            attempt(what .. " findProspect " .. metal, AC_Mining.findProspect, player, square, metal)
+            attempt(what .. " getReportedGrade " .. metal, AC_Mining.getReportedGrade, sample, metal)
+        end
+        attempt(what .. " sampleCoversSquare", AC_Mining.sampleCoversSquare, sample, square)
+        attempt(what .. " canAnalyzeSample", AC_LaboratoryAnalyzer.canAnalyzeSample, sample)
+        attempt(what .. " field assay", AC_GeologySampling.analyzeSample, sample, AC_GeologySampling.findKit(player, "AmmoMaking.FieldAssayKit"))
+        attempt(what .. " advanced assay", AC_GeologySampling.analyzeSample, sample, AC_GeologySampling.findKit(player, "AmmoMaking.AdvancedFieldAssayKit"))
+        local okR, after = attempt(what .. " getResultLines after assays", AC_GeologySampling.getResultLines, sample)
+        if okR and type(after) == "table" then
+            local clean, bad = cleanLines(after)
+            check(clean, what .. ": the result panel is still clean after an assay (" .. tostring(bad) .. ")")
+        end
+        -- The laboratory takes it, finishes and hands it back.
+        local labSquare = poweredLabSquare(sx + 1, sy)
+        local labPlayer = MOCK.newPlayer({ square = labSquare })
+        labPlayer.inventory:addItem(sample)
+        local analyzer = placeAnalyzerObject(labSquare)
+        local okS, started = attempt(what .. " startAssay", AC_LaboratoryAnalyzer.startAssay, labPlayer, analyzer, sample)
+        if okS and started == true then
+            MOCK.worldHours = MOCK.worldHours + AC_LaboratoryAnalyzer.CONFIG.processingHours + 1
+            attempt(what .. " analyzer status", AC_LaboratoryAnalyzer.getStatusInfo, analyzer)
+            local okC, collected = attempt(what .. " collectSample", AC_LaboratoryAnalyzer.collectSample, labPlayer, analyzer)
+            if okC and collected then
+                for _, key in ipairs({ "labCopperResult", "labZincResult" }) do
+                    local result = collected.modData[key]
+                    check(isFinite(result) and result >= 0 and result <= 100, what .. ": " .. key .. " collected from the laboratory is 0..100 (" .. tostring(result) .. ")")
+                end
+            end
+        end
+    end
+    MOCK.worldHours = 100
+    for _, key in ipairs(sampleKeys) do
+        for _, damage in ipairs(DAMAGE) do
+            local value = damage[2]
+            if value == NIL then value = nil end
+            for _, rank in ipairs({ 0, 2 }) do
+                local sample = freshSample(rank)
+                sample.modData[key] = value
+                useSample("sample (rank " .. rank .. ") " .. key .. " = " .. damage[1], sample)
+            end
+        end
+    end
+    do
+        local partial = MOCK.newItem("AmmoMaking.GeologicalSample")
+        useSample("sample with no data at all", partial)
+        local old = freshSample(3)
+        old.modData.sampleGrade, old.modData.legacyAssay = "Rich", { 1, 2 }
+        useSample("sample with old fields", old)
+        local all = freshSample(2)
+        for _, key in ipairs(sampleKeys) do all.modData[key] = "broken" end
+        useSample("sample with every field a word", all)
+    end
+
+    ------------------------------------------------
+    -- An assay kit
+    ------------------------------------------------
+    local kitKeys = schemaKeys("kit")
+    for _, kitType in ipairs({ "AmmoMaking.FieldAssayKit", "AmmoMaking.AdvancedFieldAssayKit" }) do
+        for _, key in ipairs(kitKeys) do
+            for _, damage in ipairs(DAMAGE) do
+                local value = damage[2]
+                if value == NIL then value = nil end
+                local what = kitType .. " " .. key .. " = " .. damage[1]
+                local kit = MOCK.newItem(kitType)
+                AC_GeologySampling.initializeKit(kit)
+                kit.modData[key] = value
+                local square = MOCK.newSquare(sx, sy, 0, GRASS)
+                local player = MOCK.newPlayer({ square = square })
+                local sample = freshSample(0)
+                player.inventory:addItem(sample)
+                player.inventory:addItem(kit)
+                attempt(what .. " initializeKit", AC_GeologySampling.initializeKit, kit)
+                attempt(what .. " updateKitName", AC_GeologySampling.updateKitName, kit)
+                local okU, uses = attempt(what .. " getKitUses", AC_GeologySampling.getKitUses, kit)
+                if okU and uses ~= nil then
+                    local maxUses = math.max(AC_GeologySampling.CONFIG.fieldKitUses or 0, AC_GeologySampling.CONFIG.advancedKitUses or 0, 20)
+                    check(isFinite(uses) and uses >= 0 and uses <= maxUses, what .. ": uses stay within 0.." .. maxUses .. " (" .. tostring(uses) .. ")")
+                end
+                attempt(what .. " inventory menu", fillInventoryMenu, player, sample)
+                attempt(what .. " analyzeSample", AC_GeologySampling.analyzeSample, sample, kit)
+                attempt(what .. " consumeKitUse", AC_GeologySampling.consumeKitUse, kit)
+                if key == "assayMaxUses" or key == "assayUsesRemaining" then
+                    local left = AC_SaveData.check("kit", { assayMaxUses = kit.modData.assayMaxUses, assayUsesRemaining = kit.modData.assayUsesRemaining })
+                    check(#left == 0, what .. ": the kit's counters were repaired in place (" .. table.concat(left, "; ") .. ")")
+                end
+                local okA, afterUses = attempt(what .. " getKitUses after use", AC_GeologySampling.getKitUses, kit)
+                if okA and afterUses ~= nil then
+                    check(isFinite(afterUses) and afterUses >= 0, what .. ": uses never go negative (" .. tostring(afterUses) .. ")")
+                end
+                check(cleanText(kit:getName()), what .. ": the kit's name shows no broken number (" .. tostring(kit:getName()) .. ")")
+            end
+        end
+    end
+
+    ------------------------------------------------
+    -- The laboratory analyzer (placed object)
+    ------------------------------------------------
+    local analyzerKeys = schemaKeys("analyzer")
+    check(#analyzerKeys >= 30, "the analyzer's keys, stored sample fields included, were taken from the schema (" .. #analyzerKeys .. ")")
+    local STATES = { idle = true, processing = true, ready = true }
+    for _, phase in ipairs({ "idle", "processing", "ready" }) do
+        for _, key in ipairs(analyzerKeys) do
+            for _, damage in ipairs(DAMAGE) do
+                local value = damage[2]
+                if value == NIL then value = nil end
+                local what = "analyzer (" .. phase .. ") " .. key .. " = " .. damage[1]
+                MOCK.worldHours = 500
+                local square = poweredLabSquare(sx + 2, sy)
+                local player = MOCK.newPlayer({ square = square })
+                local analyzer = placeAnalyzerObject(square)
+                if phase ~= "idle" then
+                    local sample = freshSample(1)
+                    player.inventory:addItem(sample)
+                    AC_LaboratoryAnalyzer.startAssay(player, analyzer, sample)
+                    if phase == "ready" then
+                        MOCK.worldHours = MOCK.worldHours + AC_LaboratoryAnalyzer.CONFIG.processingHours + 1
+                        AC_LaboratoryAnalyzer.getState(analyzer)
+                    end
+                end
+                analyzer.modData[key] = value
+                local okS, state = attempt(what .. " getState", AC_LaboratoryAnalyzer.getState, analyzer)
+                if okS and key ~= "AmmoMakingLaboratoryAnalyzerWorldObject" then
+                    check(STATES[state] == true, what .. ": the state is one of the three (" .. tostring(state) .. ")")
+                end
+                local okH, hours = attempt(what .. " getHoursRemaining", AC_LaboratoryAnalyzer.getHoursRemaining, analyzer)
+                if okH and hours ~= nil then
+                    check(isFinite(hours) and hours >= 0 and hours <= AC_LaboratoryAnalyzer.CONFIG.processingHours, what .. ": hours remaining stay within 0.." .. AC_LaboratoryAnalyzer.CONFIG.processingHours .. " (" .. tostring(hours) .. ")")
+                end
+                local okI, info = attempt(what .. " getStatusInfo", AC_LaboratoryAnalyzer.getStatusInfo, analyzer)
+                if okI and type(info) == "table" then
+                    for field, text in pairs(info) do
+                        if type(text) == "string" then check(cleanText(text), what .. ": status " .. field .. " shows no broken number (" .. text .. ")") end
+                    end
+                end
+                attempt(what .. " canPickUp", AC_LaboratoryAnalyzer.canPickUp, analyzer)
+                attempt(what .. " isIdleAndEmpty", AC_LaboratoryAnalyzer.isIdleAndEmpty, analyzer)
+                attempt(what .. " menu", fillAnalyzerMenu, player, analyzer)
+                local another = freshSample(0)
+                player.inventory:addItem(another)
+                attempt(what .. " startAssay", AC_LaboratoryAnalyzer.startAssay, player, analyzer, another)
+                MOCK.worldHours = MOCK.worldHours + AC_LaboratoryAnalyzer.CONFIG.processingHours + 1
+                local okC, collected = attempt(what .. " collectSample", AC_LaboratoryAnalyzer.collectSample, player, analyzer)
+                if okC and collected then
+                    for _, resultKey in ipairs({ "labCopperResult", "labZincResult" }) do
+                        local result = collected.modData[resultKey]
+                        check(isFinite(result) and result >= 0 and result <= 100, what .. ": " .. resultKey .. " handed back is 0..100 (" .. tostring(result) .. ")")
+                    end
+                end
+                attempt(what .. " cancelAssay", AC_LaboratoryAnalyzer.cancelAssay, player, analyzer)
+                local okF, final = attempt(what .. " final state", AC_LaboratoryAnalyzer.getState, analyzer)
+                if okF and key ~= "AmmoMakingLaboratoryAnalyzerWorldObject" then
+                    check(STATES[final] == true, what .. ": still one of the three states afterwards (" .. tostring(final) .. ")")
+                end
+            end
+        end
+    end
+    MOCK.worldHours = 0
+
+    ------------------------------------------------
+    -- A case, a hull, a handloaded round
+    ------------------------------------------------
+    local Q = AC_CaseQuality.CONFIG
+    for _, calibre in ipairs({ AC_Calibres.get("9mm"), AC_Calibres.get(".308"), AC_Calibres.get("12 Gauge") }) do
+        for _, kind in ipairs({ "case", "round" }) do
+            local keys = kind == "case" and { Q.qualityKey, Q.flagKey } or { Q.roundQualityKey, Q.roundFlagKey or "AmmoMakingHandloaded" }
+            for _, key in ipairs(keys) do
+                for _, damage in ipairs(DAMAGE) do
+                    local value = damage[2]
+                    if value == NIL then value = nil end
+                    local what = calibre.id .. " " .. kind .. " " .. key .. " = " .. damage[1]
+                    local item = MOCK.newItem(calibre[kind])
+                    if kind == "case" then
+                        AC_CaseQuality.set(item, 80)
+                    else
+                        item.modData[Q.roundQualityKey], item.modData.AmmoMakingHandloaded = 80, true
+                    end
+                    item.modData[key] = value
+                    local reader = kind == "case" and AC_CaseQuality.get or AC_CaseQuality.getRoundQuality
+                    local okQ, quality = attempt(what .. " read", reader, item)
+                    if okQ then
+                        check(quality == nil or (isFinite(quality) and quality >= Q.minQuality and quality <= Q.maxQuality), what .. ": quality is none or " .. Q.minQuality .. ".." .. Q.maxQuality .. " (" .. tostring(quality) .. ")")
+                    end
+                    for _, level in ipairs({ 0, 3, 7 }) do
+                        local player = MOCK.newPlayer()
+                        player.perkLevel = level
+                        local okI, result = attempt(what .. " inspect at level " .. level, AmmoInspection.inspectComponent, player, item)
+                        if okI and result then
+                            local clean, bad = cleanLines(result.lines)
+                            check(clean, what .. ": inspection at level " .. level .. " shows no broken number (" .. tostring(bad) .. ")")
+                            for _, line in ipairs(result.lines) do
+                                local shown = tonumber(string.match(line, "%((%-?%d+)%)"))
+                                check(shown == nil or (shown >= Q.minQuality and shown <= Q.maxQuality), what .. ": inspection never shows a quality outside the range (" .. line .. ")")
+                            end
+                        end
+                        attempt(what .. " menu at level " .. level, fillInventoryMenu, player, item)
+                    end
+                    if kind == "case" then
+                        -- Assembled into a round, the damage is not inherited.
+                        local round = MOCK.newItem(calibre.round)
+                        local data = {
+                            getAllCreatedItems = function() return MOCK.arrayList({ round }) end,
+                            getAllConsumedItems = function() return MOCK.arrayList({ item }) end,
+                        }
+                        attempt(what .. " assembled", AC_CaseQuality.onRoundsAssembled, data)
+                        local inherited = AC_CaseQuality.getRoundQuality(round)
+                        check(inherited == nil or (isFinite(inherited) and inherited >= Q.minQuality and inherited <= Q.maxQuality), what .. ": the round inherits none or " .. Q.minQuality .. ".." .. Q.maxQuality .. " (" .. tostring(inherited) .. ")")
+                        local stored = round.modData[Q.roundQualityKey]
+                        check(stored == nil or (isFinite(stored) and stored >= Q.minQuality and stored <= Q.maxQuality), what .. ": nothing out of range is written to the round (" .. tostring(stored) .. ")")
+                    end
+                end
+            end
+        end
+    end
+
+    ------------------------------------------------
+    -- The prototype test cartridge
+    ------------------------------------------------
+    local cartridgeKeys = schemaKeys("testCartridge")
+    for _, key in ipairs(cartridgeKeys) do
+        for _, damage in ipairs(DAMAGE) do
+            local value = damage[2]
+            if value == NIL then value = nil end
+            local what = "test cartridge " .. key .. " = " .. damage[1]
+            local item = MOCK.newItem("AmmoMaking.TestCartridge")
+            AmmoQuality.initialize(item)
+            item.modData[key] = value
+            for _, level in ipairs({ 0, 4, 9 }) do
+                local player = MOCK.newPlayer()
+                player.perkLevel = level
+                local okI, result = attempt(what .. " inspect at level " .. level, AmmoInspection.inspect, player, item)
+                if okI and result then
+                    local clean, bad = cleanLines(result.lines)
+                    check(clean, what .. ": inspection at level " .. level .. " shows no broken number (" .. tostring(bad) .. ")")
+                end
+                attempt(what .. " menu", fillInventoryMenu, player, item)
+            end
+            for field in pairs(AmmoQuality.DEFAULTS) do
+                check(isFinite(item.modData[field]), what .. ": " .. field .. " is a finite number after inspection (" .. tostring(item.modData[field]) .. ")")
+            end
+            if key ~= "AmmoMakingQualityInitialized" then
+                local left = AC_SaveData.check("testCartridge", item.modData)
+                check(#left == 0, what .. ": the cartridge was repaired in place (" .. table.concat(left, "; ") .. ")")
+            end
+        end
+    end
+
+    MOCK.capturePrint(false)
+    eq(#raised, 0, "no damaged value raised an error: " .. table.concat(raised, " | "))
+    check(cases > 25000, "tens of thousands of damaged reads were run (" .. cases .. ")")
+    print("  Save data fuzz: " .. cases .. " calls on damaged data, " .. #raised .. " raised")
+    MOCK.clearModData()
+end
+
+------------------------------------------------
 -- RECYCLING
 ------------------------------------------------
 

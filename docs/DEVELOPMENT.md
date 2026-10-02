@@ -529,8 +529,30 @@ depletion store was seen working in game.
 
 **Nothing else is persisted.** Geology and seeds are recomputed each session
 from the save's identity (`AC_WorldData`; its `cached*` fields are a runtime
-cache). Ammo Making XP is the engine's perk. Calibres, recipes and balance are
-code, not save data, so changing them never needs a migration.
+cache). Ammo Making XP is the engine's perk. Calibres, recipes, loot weights
+and recycling yields are code, not save data, so changing them never needs a
+migration. Die-set loot changes the game's loot tables in memory each world
+load and stores nothing.
+
+**The tables below are also data.** `AC_SaveData.SCHEMA` declares every
+structure and key: owner, carrier, type, range, default, what happens to a
+damaged value, and whether a version would matter. Three tests hold it to
+the code:
+
+- a scan of the mod's source fails when a ModData key is used that the
+  schema does not declare, or declared and no longer used;
+- everything the mod itself writes (a dug sample, each assay, the analyzer
+  in each state, a formed case, an assembled round) passes
+  `AC_SaveData.check()`;
+- **the fuzz**: every declared key, damaged fifteen ways (missing, wrong
+  type, a word, negative, zero, 900, huge, infinity, NaN, a table, a
+  fraction), is pushed through the menus, the assays, the analyzer, mining
+  and inspection: 28,130 calls. None may raise, and every number that comes
+  back must be in its range and printable.
+
+Persisted numbers are read through `AC_SaveData.number()` / `whole()` /
+`isFinite()`, not bare `tonumber()`: to `tonumber`, NaN and infinity are
+numbers, and 900 is a number that is not a quality.
 
 ### Global: `ModData.getOrCreate("AmmoMakingDeposits")`
 
@@ -541,7 +563,7 @@ lazily by `AC_Deposits.getStore()` on any read; nothing is transmitted.
 |---|---|---|---|
 | `version` | `1` | set when missing; **never read or compared** | restored when nil |
 | `tiles` | table keyed `"x,y"` | created with the store | a non-table is replaced by `{}` with a warning (the records are lost) |
-| `tiles[k].copper`, `.zinc` | units extracted, integer ≥ 0; `0` means "worked, nothing there" | written on the first extraction attempt, only ever increases; removed only by the debug reset | a non-table record reads as unworked; a count is `math.max(0, tonumber(v) or 0)` |
+| `tiles[k].copper`, `.zinc` | units extracted, integer ≥ 0; `0` means "worked, nothing there" | written on the first extraction attempt, only ever increases; removed only by the debug reset | a non-table record reads as unworked; a count is a whole number of 0 or more, anything else (a word, NaN, an infinity) reads as 0 |
 
 Only worked tiles are stored. Reserves come from geology, so a rebalance
 keeps old saves valid: the stored number is what was taken, not what is left.
@@ -551,11 +573,11 @@ keeps old saves valid: the stored number is what was taken, not what is left.
 | Key | Value | Written | Read |
 |---|---|---|---|
 | `sampleX`, `sampleY` | tile coordinates | when dug | prospect lookup (guarded with `tonumber`), result panel, menu labels |
-| `trueCopper`, `trueZinc` | hidden 3x3 average, 0–100 | when dug | every assay (`tonumber(v) or 0`) |
+| `trueCopper`, `trueZinc` | hidden 3x3 average, 0–100 | when dug | every assay, as 0–100 (out of range is clamped; not a finite number is 0) |
 | `assayRank` | 0 none, 1 field, 2 advanced, 3 laboratory | by each assay | everywhere as `tonumber(v) or 0` |
 | `copperGrade`, `zincGrade` | grade name | by each assay | prospect lookup, result panel |
-| `copperMin/Max`, `zincMin/Max` | 0–100, rank 2 only | advanced assay | result panel |
-| `labCopperResult`, `labZincResult` | 0–100 | laboratory collection | result panel |
+| `copperMin/Max`, `zincMin/Max` | 0–100, rank 2 only | advanced assay | result panel (`?` when not 0–100) |
+| `labCopperResult`, `labZincResult` | 0–100 | laboratory collection | result panel (`?` when not 0–100) |
 | `AmmoMakingGeologicalSample`, `geologySeed`, `trueCopperPeak`, `trueZincPeak`, `assayType`, `labStartedAt`, `labReadyAt`, `labProcessing` | markers and records | when dug or assayed | **never read by logic** (`labProcessing` is only ever written `false`) |
 
 A sample that goes into the analyzer is removed; its fields travel as
@@ -569,6 +591,12 @@ cancel.
 first time a kit is looked at, which is when the inventory menu opens on a
 sample.
 
+Damaged counters are repaired in place the next time the kit is looked at
+(`repairKit`): `assayMaxUses` must be a whole number from 1 to the kit
+type's own count, `assayUsesRemaining` from 0 to that. Uses that are not a
+number at all become 0: a damaged kit is an empty kit, never a refilled
+one. Valid data is never written to.
+
 ### Laboratory analyzer: the placed `IsoThumpable`'s ModData, or the dropped item's
 
 Both carriers use the same keys (`AC_LaboratoryAnalyzer.getAnalyzerData`).
@@ -579,9 +607,9 @@ Both carriers use the same keys (`AC_LaboratoryAnalyzer.getAnalyzerData`).
 | `labAnalyzerState` | `idle`, `processing`, `ready` | `normalizeState` repairs an unknown state and logs it |
 | `storedSample` | `true` while a sample is inside | must be exactly `true` |
 | `stored_<field>` | the fifteen sample fields | copied back as they are |
-| `labRemainingHours`, `labLastUpdateAt` | hours | dropped and rebuilt when not a number |
-| `labReadyAt` | hours | read only by the one migration below |
-| `labCopperResult`, `labZincResult` | 0–100, rolled at start | re-rolled from the stored truth when missing |
+| `labRemainingHours`, `labLastUpdateAt` | hours | dropped and rebuilt when not a finite number; the remaining time is kept within 0 and one full run |
+| `labReadyAt` | hours | read only by the one migration below; dropped when not a finite number |
+| `labCopperResult`, `labZincResult` | 0–100, rolled at start | measured again from the stored truth when missing, not a number or not 0–100 |
 | `labStartedAt`, `AmmoMakingLaboratoryAnalyzer` | records | not read by logic |
 
 **The one migration in the mod**: an analyzer saved by the first version, with
@@ -593,16 +621,17 @@ is still supported; placing it copies its state onto the object.
 
 | Key | On | Value | Lifecycle | Malformed data |
 |---|---|---|---|---|
-| `caseQuality` | case | 1–100 | rolled in the forming recipe's `OnCreate`; the case is consumed at assembly | not a number → none; clamped to 1–100 |
+| `caseQuality` | case | 1–100 | rolled in the forming recipe's `OnCreate`; the case is consumed at assembly | not a finite number → none; clamped to 1–100 |
 | `AmmoMakingCase` | case | `true` | with it | never read |
-| `casingQuality` | round | 1–100, the average of the consumed cases | written at assembly; **gone once the round is loaded or boxed** | not a number → none; clamped to 1–100 |
+| `casingQuality` | round | 1–100, the average of the consumed cases | written at assembly; **gone once the round is loaded or boxed** | not a finite number → none; clamped to 1–100 |
 | `AmmoMakingHandloaded` | round | `true` | with it | never read |
 
 ### Item: `AmmoMaking.TestCartridge` (prototype)
 
 `AmmoMakingQualityInitialized`, the four component qualities, `powderLoad`,
 `reloadCount` and the three derived values (`AmmoQuality.DEFAULTS`). A field
-that is missing or not a number gets its default back on the next inspection.
+that is missing or not a finite number gets its default back on the next
+inspection.
 
 **One name, two meanings.** `casingQuality` is a prototype field on the test
 cartridge and the inherited case quality on a real round.
@@ -619,7 +648,22 @@ and a test asserts that inspecting a real component writes nothing.
 | The deposits `version` is written and never read | left: there is one schema; it is there for the first real migration |
 | Several keys are written and never read (table above) | left: harmless, and removing a key from a system confirmed in game buys nothing |
 | `labProcessing` is tested for `true` and only ever written `false` | left: dead state on in-game-confirmed code; noted for the next change to that file |
-| A sample whose grade is damaged into a non-string still counts as a prospect; a kit whose remaining uses are damaged reads as empty; `storedSample` damaged into a truthy non-`true` value loses the stored sample; a sample with damaged coordinates shows a raw placeholder | left: each needs hand-edited or corrupt save data, none raises an error, and geology (not the sample) still decides what a tile yields |
+| A sample whose grade is damaged into a non-string still counts as a prospect; `storedSample` damaged into a truthy non-`true` value loses the stored sample | left: each needs hand-edited or corrupt save data, none raises an error, and geology (not the sample) still decides what a tile yields |
+
+Found by the fuzz on 2026-10-02 (none raised an error; each was a value
+escaping its range) and fixed at the place the value is read:
+
+| Finding | Fix |
+|---|---|
+| A kit whose `assayUsesRemaining` was damaged into 900, 1e15 or infinity had that many assays; a negative one stayed negative | `repairKit`: rewritten into 0..`assayMaxUses` |
+| A kit's name showed `(18/inf)` or `(18/nan)` for a damaged `assayMaxUses` | the same repair |
+| An analyzer's `labRemainingHours` of 900 or infinity meant a run that never finished | kept within 0 and one full run in `updateState` |
+| A damaged `labCopperResult` / `labZincResult` (900, −5, NaN) was handed back on the sample as it was | measured again when not 0–100 |
+| A sample's `trueCopper` of NaN produced NaN measurements and a NaN laboratory result | `measuredValue` and `laboratoryMeasurement` read the truth as 0–100 |
+| The result panel printed `inf`, `nan` or a raw non-string grade for damaged coordinates, ranges and grades | `displayData`: a view for the panel in which each such field is a usable value or `?`; the sample is not changed |
+| A case or round quality of NaN passed the "is it a number" test and reached the inspection text | `AC_SaveData.isFinite` |
+| A test cartridge field of NaN or infinity survived the repair and poisoned the derived values | restored to its default like any other damaged field |
+| A deposits count of infinity or NaN read as infinity or NaN | read as a whole count; not a finite number is 0 |
 
 No schema migration was added: nothing has been renamed since the keys were
 introduced, apart from the `labReadyAt` case that is already handled.

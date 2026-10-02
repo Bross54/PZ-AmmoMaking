@@ -161,9 +161,15 @@ local function measuredValue(
     maximumError
 )
 
+    -- A percentage. A damaged value (not a number, NaN,
+    -- out of range) never reaches the measurement.
     trueValue =
-        tonumber(trueValue)
-        or 0
+        AC_SaveData.number(
+            trueValue,
+            0,
+            0,
+            100
+        )
 
     maximumError =
         tonumber(maximumError)
@@ -675,8 +681,64 @@ end
 
 
 ------------------------------------------------
+-- REPAIR KIT
+------------------------------------------------
+--
+-- A kit that is already set up keeps what it has, unless
+-- its counters are damaged: the full count must be a
+-- whole number between 1 and the kit type's own, and the
+-- uses left a whole number between 0 and that. Anything
+-- else is rewritten to the nearest valid value. Uses
+-- that are not a number at all become 0: a damaged kit
+-- is an empty kit, never a refilled one.
+--
+-- Valid data is never written to.
+------------------------------------------------
+
+local function repairKit(
+    data,
+    kitType
+)
+
+    local full =
+        kitType == "advanced"
+        and AC_GeologySampling.CONFIG.advancedFieldKitUses
+        or AC_GeologySampling.CONFIG.fieldKitUses
+
+
+    local maximum =
+        AC_SaveData.whole(
+            data.assayMaxUses,
+            full,
+            1,
+            full
+        )
+
+
+    if data.assayMaxUses ~= maximum then
+        data.assayMaxUses = maximum
+    end
+
+
+    local uses =
+        AC_SaveData.whole(
+            data.assayUsesRemaining,
+            0,
+            0,
+            maximum
+        )
+
+
+    if data.assayUsesRemaining ~= uses then
+        data.assayUsesRemaining = uses
+    end
+end
+
+
+------------------------------------------------
 -- INITIALIZE KIT
 ------------------------------------------------
+
 
 function AC_GeologySampling.initializeKit(
     kit
@@ -703,6 +765,13 @@ function AC_GeologySampling.initializeKit(
 
 
     if data.AmmoMakingAssayKitInitialized then
+
+        repairKit(
+            data,
+            kitType
+        )
+
+
         return data
     end
 
@@ -1237,6 +1306,86 @@ end
 -- RESULT LINES
 ------------------------------------------------
 
+------------------------------------------------
+-- What the result panel shows of a sample's data: the
+-- displayed fields, each either a usable value or "?".
+-- A damaged save never puts "nan", "inf" or a number
+-- outside 0..100 on the screen. The sample itself is
+-- not changed.
+------------------------------------------------
+
+local function displayData(
+    data
+)
+
+    local view = {
+        assayRank = data.assayRank,
+    }
+
+
+    for _,
+        key
+    in ipairs(
+        { "sampleX", "sampleY" }
+    )
+    do
+
+        local value =
+            AC_SaveData.number(
+                data[key],
+                nil
+            )
+
+
+        view[key] =
+            value ~= nil
+            and math.floor(value)
+            or "?"
+    end
+
+
+    for _,
+        key
+    in ipairs(
+        { "copperMin", "copperMax", "zincMin", "zincMax", "labCopperResult", "labZincResult" }
+    )
+    do
+
+        local value =
+            tonumber(data[key])
+
+
+        if AC_SaveData.isFinite(value)
+            and value >= 0
+            and value <= 100
+        then
+            view[key] = value
+        else
+            view[key] = "?"
+        end
+    end
+
+
+    for _,
+        key
+    in ipairs(
+        { "copperGrade", "zincGrade" }
+    )
+    do
+
+        -- A grade is a word. Anything else is shown as
+        -- unknown, not printed raw.
+        view[key] =
+            type(data[key]) == "string"
+            and data[key]
+            or "?"
+    end
+
+
+    return view
+end
+
+
 function AC_GeologySampling.getResultLines(
     sample
 )
@@ -1244,13 +1393,14 @@ function AC_GeologySampling.getResultLines(
     if not AC_GeologySampling.isSample(
         sample
     ) then
-
         return nil
     end
 
 
     local data =
-        sample:getModData()
+        displayData(
+            sample:getModData()
+        )
 
 
     local rank =
