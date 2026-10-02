@@ -4110,6 +4110,144 @@ do
     end
 end
 
+section("Reloading press recipes: prepared from the model, switched off")
+do
+    local P = AC_Calibres.PRESS
+    local U = AC_Materials.UNITS
+
+    -- Off: the station entity does not exist, so nothing of the press
+    -- reaches the recipe list, the script, the callbacks or the names.
+    eq(P.enabled, false, "the press is switched off")
+    eq(#AC_Calibres.validatePress(), 0, "the press description is sound: " .. table.concat(AC_Calibres.validatePress(), "; "))
+    local script = readFile(SCRIPTS .. "AC_Recipes.txt")
+    check(string.find(script, P.benchTag, 1, true) == nil, "the recipe script names no press bench tag")
+    check(string.find(script, P.idSuffix, 1, true) == nil, "nor any press recipe")
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        check(not recipe.press, recipe.id .. " is not a press recipe")
+        check(recipe.benchTag ~= P.benchTag, recipe.id .. " does not use the press tag")
+    end
+    for key in pairs(AC_Materials) do
+        check(type(key) ~= "string" or string.sub(key, -#P.idSuffix) ~= P.idSuffix, "no press callback is registered: " .. tostring(key))
+    end
+    check(not string.find(P.benchTag, "[^%w]"), "the bench tag has no separator the engine's tag query reads")
+    eq(P.timedAction, "UseHandPress", "the vanilla press timed action")
+
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local name = calibre.id
+        local press = AC_Calibres.buildPressRecipes(calibre)
+        eq(#press, #P.steps, name .. ": one press recipe per hand step")
+        local seen = {}
+        for _, recipe in ipairs(press) do
+            local hand = AC_Materials.getRecipe(recipe.handRecipe)
+            local what = name .. " " .. recipe.step
+            check(hand ~= nil, what .. ": made from a real hand recipe")
+            check(recipe.step ~= "dieSet", what .. ": the die set is forged, not pressed")
+            check(not seen[recipe.step], what .. ": once")
+            seen[recipe.step] = true
+            eq(recipe.id, hand.id .. "AtPress", what .. ": id")
+            eq(recipe.callback, hand.callback .. "AtPress", what .. ": callback name")
+            eq(AC_Materials.getRecipe(recipe.id), nil, what .. ": not in the live recipe list")
+            eq(recipe.benchTag, P.benchTag, what .. ": at the press")
+            eq(recipe.timedAction, P.timedAction, what .. ": press timed action")
+            eq(recipe.calibre, name, what .. ": names its calibre")
+            eq(recipe.press, true, what .. ": marked as a press recipe")
+
+            -- Faster, never free, and still long enough for the engine's
+            -- skill speed-up (time / 20) to do something.
+            eq(recipe.time, math.floor(hand.time / P.timeDivisor), what .. ": time is the hand time divided")
+            check(recipe.time < hand.time, what .. ": the press is faster than the hand")
+            check(recipe.time >= P.minimumTime, what .. ": at least " .. P.minimumTime)
+            check(math.floor(recipe.time / 20) >= 1, what .. ": the skill speed-up still applies")
+
+            -- Exactly the same material, level, XP, effect and outputs.
+            local handIn, handOut = AC_Materials.getRecipeUnits(hand)
+            local pressIn, pressOut = AC_Materials.getRecipeUnits(recipe)
+            for _, material in ipairs({ "brass", "copper", "powder", "compound" }) do
+                eq(pressIn[material], handIn[material], what .. ": consumes the same " .. material)
+                eq(pressOut[material], handOut[material], what .. ": creates the same " .. material)
+            end
+            check(AC_Materials.checkConservation(recipe), what .. ": conserves material")
+            eq(#recipe.outputs, #hand.outputs, what .. ": same output lines")
+            eq(recipe.outputs[1].item, hand.outputs[1].item, what .. ": same output item")
+            eq(recipe.outputs[1].count, hand.outputs[1].count, what .. ": same output count, no bonus")
+            eq(recipe.requiredLevel, hand.requiredLevel, what .. ": same level")
+            eq(recipe.xp, hand.xp, what .. ": same XP per craft")
+            eq(recipe.effect, hand.effect, what .. ": same quality effect")
+
+            -- The same die set, kept; no hammer; every other line unchanged.
+            local dieSets, hammers, consumedLines = 0, 0, 0
+            for _, input in ipairs(recipe.inputs) do
+                if input.items and input.items[1] == calibre.dieSet then
+                    dieSets = dieSets + 1
+                    check(input.keep == true, what .. ": the die set is kept")
+                end
+                if input.tags and input.tags[1] == "base:hammer" then hammers = hammers + 1 end
+                if not input.keep then consumedLines = consumedLines + 1 end
+            end
+            eq(dieSets, 1, what .. ": needs this calibre's own die set")
+            eq(hammers, 0, what .. ": no hammer at the press")
+            local handConsumed, handHammers = 0, 0
+            for _, input in ipairs(hand.inputs) do
+                if not input.keep then handConsumed = handConsumed + 1 end
+                if input.tags and input.tags[1] == "base:hammer" then handHammers = handHammers + 1 end
+            end
+            eq(consumedLines, handConsumed, what .. ": every consumed line of the hand recipe is still there")
+            eq(#recipe.inputs, #hand.inputs - handHammers, what .. ": only the hammer line is gone")
+            for _, other in ipairs(AC_Calibres.LIST) do
+                if other ~= calibre then
+                    for _, input in ipairs(recipe.inputs) do
+                        for _, id in ipairs(input.items or {}) do
+                            check(id ~= other.dieSet and id ~= other.case and id ~= other.bullet, what .. ": takes nothing of " .. other.id)
+                        end
+                    end
+                end
+            end
+
+            -- It renders as a well-formed block, like any recipe.
+            local block = RENDER.renderRecipe(recipe)
+            check(string.find(block, "craftRecipe " .. recipe.id, 1, true) ~= nil, what .. ": renders")
+            check(string.find(block, "Tags = " .. P.benchTag .. ",", 1, true) ~= nil, what .. ": renders the press tag")
+            check(string.find(block, "[" .. calibre.dieSet .. "] mode:keep", 1, true) ~= nil, what .. ": renders the kept die set")
+        end
+        -- The hand recipes are untouched by building the press versions.
+        for _, hand in ipairs(AC_Calibres.buildCalibreRecipes(calibre)) do
+            eq(AC_Materials.getRecipe(hand.id).benchTag, hand.benchTag, hand.id .. " keeps its own bench")
+            check(hand.benchTag ~= P.benchTag, hand.id .. " stays a hand recipe")
+        end
+    end
+
+    -- Switched on, the generator adds three recipes per calibre after that
+    -- calibre's own, and nothing else changes. (Not left on: restored below.)
+    local before = AC_Calibres.buildRecipes()
+    P.enabled = true
+    local after = AC_Calibres.buildRecipes()
+    P.enabled = false
+    eq(#after, #before + #P.steps * #AC_Calibres.LIST, "enabled: three more recipes per calibre")
+    local ids = {}
+    for _, recipe in ipairs(after) do
+        check(not ids[recipe.id], "enabled: recipe id unique: " .. recipe.id)
+        ids[recipe.id] = true
+    end
+    for _, recipe in ipairs(before) do check(ids[recipe.id], "enabled: " .. recipe.id .. " is still there") end
+    eq(#AC_Calibres.buildRecipes(), #before, "switched off again: the list is what it was")
+
+    -- A press that would be too fast for a step is refused.
+    local savedDivisor = P.timeDivisor
+    P.timeDivisor = 4
+    local text = table.concat(AC_Calibres.validatePress(), "; ")
+    P.timeDivisor = 0.5
+    local fractional = table.concat(AC_Calibres.validatePress(), "; ")
+    P.timeDivisor = savedDivisor
+    check(string.find(text, "9mm: press time of assemble is 10, below 20", 1, true) ~= nil, "a divisor that drops a step below the minimum is named: " .. text)
+    check(string.find(fractional, "press: timeDivisor must be a whole number of at least 1", 1, true) ~= nil, "a fractional divisor is refused")
+    local savedTag = P.benchTag
+    P.benchTag = "Ammo-Press"
+    local badTag = table.concat(AC_Calibres.validatePress(), "; ")
+    P.benchTag = savedTag
+    check(string.find(badTag, "press: the bench tag must be letters and digits", 1, true) ~= nil, "a tag with a query separator is refused")
+    eq(#AC_Calibres.validatePress(), 0, "the live press description was restored")
+end
+
 section("Case quality: one code path for every calibre (mocked recipe data)")
 do
     local C = AC_CaseQuality.CONFIG

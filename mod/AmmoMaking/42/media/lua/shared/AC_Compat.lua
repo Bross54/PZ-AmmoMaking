@@ -1251,6 +1251,25 @@ local function checkCalibres(
     end
 
 
+    -- The prepared press recipes: reported only when their
+    -- description is wrong, since the press is not in the
+    -- game yet.
+    for _,
+        problem
+    in ipairs(
+        safe(AC_Calibres.validatePress) or {}
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            "calibre model: " .. problem,
+            "the prepared press recipes would be wrong"
+        )
+    end
+
+
     local manager =
         safe(
             function()

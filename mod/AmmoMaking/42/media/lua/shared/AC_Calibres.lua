@@ -9,6 +9,9 @@
 --   buildRecipes()  the Lua mirror of the craftRecipe
 --                   blocks (AC_Materials appends it to
 --                   AC_Materials.RECIPES)
+--   buildPressRecipes()
+--                   the same steps at the future reloading
+--                   press; prepared, switched off (PRESS)
 --   buildUnits()    what each component contains, for the
 --                   material-conservation checks
 --   getItems()      the item ids to probe and to spawn
@@ -305,6 +308,55 @@ AC_Calibres.PRIMERS = {
 -- material and powder, not a quality penalty. A future
 -- press takes the same die sets.
 ------------------------------------------------
+
+------------------------------------------------
+-- RELOADING PRESS (prepared, switched off)
+------------------------------------------------
+--
+-- The press is a future placed station
+-- (docs/RELOADING_PRESS_DESIGN.md). Its recipes are
+-- already described here so that the day the station
+-- entity exists, they are generated like every other
+-- recipe: the same calibre's case, bullet and assembly
+-- steps, the SAME die set kept, exactly the same
+-- material, less time, and no hammer (the press does the
+-- pressing).
+--
+-- enabled = false: buildRecipes() adds nothing, so the
+-- recipe script, the callbacks and the compatibility
+-- check do not know a press exists. Nothing provides the
+-- bench tag yet, and a recipe nothing can craft would
+-- only be dead weight in the game's recipe list.
+--
+-- timeDivisor: hand time / press time, a whole number.
+-- A press time below 20 is refused: the engine's 5 %
+-- per level speed-up is time / 20 with integer division,
+-- so a shorter recipe would never get faster with skill.
+--
+-- timedAction and the kept-tool line follow vanilla's
+-- own press recipes (PressClayBrick: Tags = HandPress,
+-- timedAction = UseHandPress, the mold mode:keep).
+------------------------------------------------
+
+AC_Calibres.PRESS = {
+
+    enabled = false,
+
+    benchTag = "AmmoMakingReloadingPress",
+
+    timedAction = "UseHandPress",
+
+    timeDivisor = 2,
+
+    minimumTime = 20,
+
+    -- The hand steps that have a press version. The die
+    -- set is forged, not pressed.
+    steps = { "case", "bullet", "assemble" },
+
+    idSuffix = "AtPress",
+}
+
 
 ------------------------------------------------
 -- WADDING
@@ -1448,6 +1500,198 @@ end
 
 
 ------------------------------------------------
+-- PRESS RECIPES OF ONE CALIBRE
+------------------------------------------------
+--
+-- The press version of each hand step in PRESS.steps:
+-- the hand recipe with the press's bench tag and timed
+-- action, its time divided, and its hammer line left
+-- out. Inputs that carry material, the die set, the
+-- outputs, the level, the XP and the effect are the hand
+-- recipe's own, so a press can neither save material nor
+-- skip the die set. "handRecipe" names the recipe it was
+-- made from.
+--
+-- Built whether or not the press is enabled; only
+-- buildRecipes() looks at the switch.
+------------------------------------------------
+
+function AC_Calibres.buildPressRecipes(
+    calibre
+)
+
+    local press =
+        AC_Calibres.PRESS
+
+
+    local wanted = {}
+
+
+    for _,
+        step
+    in ipairs(
+        press.steps
+    )
+    do
+
+        wanted[step] = true
+    end
+
+
+    local recipes = {}
+
+
+    for _,
+        hand
+    in ipairs(
+        AC_Calibres.buildCalibreRecipes(calibre)
+    )
+    do
+
+        if wanted[hand.step] then
+
+            local recipe =
+                copyTable(
+                    hand
+                )
+
+
+            recipe.id =
+                hand.id .. press.idSuffix
+
+            recipe.callback =
+                hand.callback .. press.idSuffix
+
+            recipe.handRecipe =
+                hand.id
+
+            recipe.press = true
+
+            recipe.benchTag =
+                press.benchTag
+
+            recipe.timedAction =
+                press.timedAction
+
+            recipe.time =
+                math.floor(hand.time / press.timeDivisor)
+
+
+            recipe.inputs = {}
+
+
+            for _,
+                input
+            in ipairs(
+                hand.inputs
+            )
+            do
+
+                local isHammer =
+                    input.keep
+                    and input.tags
+                    and input.tags[1] == "base:hammer"
+
+
+                if not isHammer then
+
+                    table.insert(
+                        recipe.inputs,
+                        input
+                    )
+                end
+            end
+
+
+            table.insert(
+                recipes,
+                recipe
+            )
+        end
+    end
+
+
+    return recipes
+end
+
+
+------------------------------------------------
+-- Problems of the press description, in the form of
+-- validate(): empty when it is sound. Checked whether
+-- or not the press is enabled.
+------------------------------------------------
+
+function AC_Calibres.validatePress(
+    list
+)
+
+    list =
+        list or AC_Calibres.LIST
+
+
+    local press =
+        AC_Calibres.PRESS
+
+
+    local problems = {}
+
+
+    if type(press.benchTag) ~= "string"
+        or press.benchTag == ""
+        or string.find(press.benchTag, "[^%w]")
+    then
+
+        -- "-" starts a blacklist and ";" separates tags in
+        -- the engine's tag query.
+        table.insert(problems, "press: the bench tag must be letters and digits")
+    end
+
+
+    if not isWhole(press.timeDivisor, 1) then
+
+        table.insert(problems, "press: timeDivisor must be a whole number of at least 1")
+
+
+        return problems
+    end
+
+
+    for _,
+        calibre
+    in ipairs(
+        list
+    )
+    do
+
+        for _,
+            recipe
+        in ipairs(
+            AC_Calibres.buildPressRecipes(calibre)
+        )
+        do
+
+            if recipe.time < press.minimumTime then
+
+                table.insert(
+                    problems,
+                    tostring(calibre.id)
+                    .. ": press time of "
+                    .. recipe.step
+                    .. " is "
+                    .. recipe.time
+                    .. ", below "
+                    .. press.minimumTime
+                )
+            end
+        end
+    end
+
+
+    return problems
+end
+
+
+------------------------------------------------
 -- RECIPES SHARED BY ALL CALIBRES
 ------------------------------------------------
 --
@@ -1568,7 +1812,8 @@ end
 
 ------------------------------------------------
 -- All ammunition component recipes: the shared ones,
--- then each calibre's.
+-- then each calibre's (and its press versions, once the
+-- press is enabled).
 ------------------------------------------------
 
 function AC_Calibres.buildRecipes()
@@ -1595,6 +1840,24 @@ function AC_Calibres.buildRecipes()
                 recipes,
                 recipe
             )
+        end
+
+
+        -- Off until the press station exists.
+        if AC_Calibres.PRESS.enabled then
+
+            for _,
+                recipe
+            in ipairs(
+                AC_Calibres.buildPressRecipes(calibre)
+            )
+            do
+
+                table.insert(
+                    recipes,
+                    recipe
+                )
+            end
         end
     end
 
