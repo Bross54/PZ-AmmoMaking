@@ -771,7 +771,18 @@ function ISTimedActionQueue.add(action)
 end
 function ISTimedActionQueue.clear() ISTimedActionQueue.queue = {} end
 
-function require(name) end
+-- require "AC_X" loads that mod file at once if it has not been loaded yet,
+-- as the game does; a file is never run twice in one Lua state. Anything
+-- else (vanilla files) is a no-op here.
+function require(name)
+    if not MOCK.luaRoot then return end
+    for _, file in ipairs(MOCK.MOD_FILES) do
+        if string.match(file, "([^/]+)$") == name and not MOCK.loadedFiles[file] then
+            MOCK.loadedFiles[file] = true
+            dofile(MOCK.luaRoot .. file .. ".lua")
+        end
+    end
+end
 
 -- UI panels are not loaded offline; the menus only call open().
 AC_GeologyAssayUI = { opened = 0, open = function() AC_GeologyAssayUI.opened = AC_GeologyAssayUI.opened + 1 end }
@@ -905,7 +916,7 @@ MOCK.MOD_FILES = {
     "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality",
     "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Geology", "shared/AC_GeologySampling",
-    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_Text",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_Recycling", "shared/AC_Text",
     "shared/AC_WorldData",
     "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
     "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
@@ -915,10 +926,18 @@ MOCK.MOD_FILES = {
 }
 
 -- Loads every mod file: shared, then client, then server, each
--- alphabetical. Prints during load are captured.
+-- alphabetical, except that a file another one requires is loaded when it
+-- is required. Prints during load are captured.
 function MOCK.loadMod(luaRoot)
+    MOCK.luaRoot = luaRoot
+    MOCK.loadedFiles = {}
     MOCK.capturePrint(true)
-    for _, name in ipairs(MOCK.MOD_FILES) do dofile(luaRoot .. name .. ".lua") end
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        if not MOCK.loadedFiles[name] then
+            MOCK.loadedFiles[name] = true
+            dofile(luaRoot .. name .. ".lua")
+        end
+    end
     MOCK.capturePrint(false)
 end
 
@@ -938,6 +957,7 @@ function MOCK.resetLuaState()
     AC_CaseQuality = nil
     AC_Compat = nil
     AC_Loot = nil
+    AC_Recycling = nil
     AC_MineOreAction = nil
     AC_PickUpAnalyzerAction = nil
     AC_GeologyDebug = nil

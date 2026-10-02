@@ -36,6 +36,13 @@
    THE BODY OF THIS FILE IS GENERATED. Change AC_Materials.lua / AC_Calibres.lua
    and run tests/write_recipes.lua; this comment is kept.
 
+   Brass recycling, generated from AC_Recycling.lua:
+
+     AmmoMaking_ScrapBrass<units>        <- the cold hammer block of the cup recipe; unwanted
+                                            cups, sheets, cases and hulls in, vanilla
+                                            Base.BrassScrap out, half the brass lost, no XP
+     AmmoMaking_CastBrassIngotFromScrap  <- the casting block, ten brass scrap in
+
    The recipes live in module Base, like every vanilla recipe, so the engine
    handles them exactly as its own; the AmmoMaking_ prefix keeps the ids
    unique. Station attachment is the Tags line only; the furnaces and forges
@@ -1064,6 +1071,80 @@ module Base
         outputs
         {
             item 1 Base.ShotgunShells,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapBrass5
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapBrass5,
+        inputs
+        {
+            item 4 [AmmoMaking.BrassCaseCup;AmmoMaking.Case9mm;AmmoMaking.Case38Special;AmmoMaking.Case45ACP;AmmoMaking.Case357Magnum],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapBrass10
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapBrass10,
+        inputs
+        {
+            item 2 [AmmoMaking.SmallBrassSheet;AmmoMaking.Case44Magnum;AmmoMaking.Case556NATO;AmmoMaking.Case3030Win],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapBrass15
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapBrass15,
+        inputs
+        {
+            item 4 [AmmoMaking.Case308Win;AmmoMaking.Hull12Gauge],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 3 Base.BrassScrap,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBrassIngotFromScrap
+    {
+        time = 200,
+        Tags = Furnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBrassIngotFromScrap,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 4 tags[base:charcoal],
+            item 10 [Base.BrassScrap],
+            item 1 [Base.ClayIngotMold;Base.IronIngotMold;Base.SteelIngotMold] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.BrassIngot,
         }
     }
 }

@@ -1,0 +1,672 @@
+-- Ammo Making - Brass recycling
+-- Project Zomboid Build 42.20
+--
+-- Brass components nobody needs any more - case cups,
+-- small sheets, empty cases and hulls of a calibre the
+-- player has stopped loading - can be hammered into
+-- vanilla brass scrap, and brass scrap can be cast back
+-- into a brass ingot.
+--
+-- Two rules, both enforced by validate() and the tests:
+--
+--   IT LOSES MATERIAL. Scrapping hands back half of the
+--   brass. Making something, scrapping it and making it
+--   again always ends with less brass than it started
+--   with.
+--
+--   IT TEACHES NOTHING. Every recycling recipe awards 0
+--   Ammo Making XP, so scrapping and re-forming is not a
+--   way to grind the skill for free: each round trip costs
+--   half of the brass, a furnace, charcoal and time, and
+--   a case that is scrapped and formed again can never
+--   return the XP its assembly would have given
+--   (docs/LOOT_AND_RECYCLING.md, section 2.4).
+--
+-- What is NOT recycled, deliberately:
+--
+--   finished rounds   vanilla already takes a round apart
+--                     for one use of gunpowder
+--                     (GatherGunpowder, tags[base:ammo]); a
+--                     second way out of a round would be a
+--                     duplication loop
+--   primers           scrapping one would destroy priming
+--                     compound for a unit or two of brass
+--   bullets and shot  they are copper, and two bullets are
+--                     exactly one scrap: nothing to lose
+--
+-- Base.BrassScrap is the vanilla item. No recipe of
+-- vanilla 42.20.4 consumes it and almost none of it is
+-- loot (docs/LOOT_AND_RECYCLING.md), so this is what gives
+-- it a use.
+--
+-- The recipes are ordinary craftRecipe blocks, generated
+-- like every other one (AC_Materials appends them to its
+-- RECIPES; tests/write_recipes.lua renders the script).
+-- Nothing here persists anything.
+
+require "AC_Calibres"
+
+AC_Recycling = AC_Recycling or {}
+
+
+------------------------------------------------
+-- CONFIG
+------------------------------------------------
+--
+-- Tunable. Brass is counted in the units of AC_Materials:
+-- 100 per ingot, 10 per scrap or small sheet, 5 per case
+-- cup.
+--
+-- A scrapping recipe takes a batch of components worth a
+-- whole number of batchUnits and hands back scrapPerBatch
+-- brass scrap for each. With 20 and 1 that is 10 units out
+-- of 20: half recovered, half lost. 50 and 3 would be
+-- three fifths; anything that loses nothing is refused by
+-- validate().
+--
+-- Half is not arbitrary. Above about 58 % a 12 gauge hull
+-- that is scrapped and formed over and over would earn
+-- more XP than loading it into a shell, and recycling
+-- would be the better way to train (the tests pin this).
+------------------------------------------------
+
+AC_Recycling.CONFIG = {
+
+    scrapItem = "Base.BrassScrap",
+
+    ingotItem = "Base.BrassIngot",
+
+    batchUnits = 20,
+
+    scrapPerBatch = 1,
+
+    -- Brass scrap melted into one ingot, with nothing lost:
+    -- the same ten-to-one as copper and zinc scrap.
+    scrapPerIngot = 10,
+
+    -- Brass in one ingot (AC_Materials.CONFIG.unitsPerIngot;
+    -- that file loads after this one).
+    ingotUnits = 100,
+
+    -- Recycling teaches nothing. validate() refuses any
+    -- other value.
+    xp = 0,
+
+    requiredLevel = 0,
+
+    scrapTime = 100,
+
+    castTime = 200,
+
+    castCharcoal = 4,
+
+    idPrefix = "AmmoMaking_ScrapBrass",
+
+    castId = "AmmoMaking_CastBrassIngotFromScrap",
+}
+
+
+local function gcd(
+    a,
+    b
+)
+
+    while b ~= 0 do
+        a, b = b, a % b
+    end
+
+
+    return a
+end
+
+
+------------------------------------------------
+-- WHAT CAN BE SCRAPPED
+------------------------------------------------
+--
+-- item -> brass units, for everything that is nothing but
+-- brass: the case cup, the small sheet, and every
+-- calibre's case or hull. Taken from the calibre model, so
+-- a new calibre's case is recyclable without an edit here.
+------------------------------------------------
+
+function AC_Recycling.getScrappable()
+
+    local config =
+        AC_Calibres.CONFIG
+
+
+    local units = {
+
+        ["AmmoMaking.BrassCaseCup"] = config.cupUnits,
+
+        ["AmmoMaking.SmallBrassSheet"] = config.sheetUnits,
+    }
+
+
+    local order = {
+        "AmmoMaking.BrassCaseCup",
+        "AmmoMaking.SmallBrassSheet",
+    }
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        if units[calibre.case] == nil then
+
+            table.insert(
+                order,
+                calibre.case
+            )
+        end
+
+
+        units[calibre.case] =
+            config.cupUnits * calibre.cupsPerCase
+    end
+
+
+    return units, order
+end
+
+
+------------------------------------------------
+-- GROUPS
+------------------------------------------------
+--
+-- Components of the same brass content share a recipe:
+-- one input line that accepts any of them. A list of
+--
+--   { units, items = { ... }, count, scrap }
+--
+-- sorted by units. count is the fewest components whose
+-- brass is a whole number of batches; scrap is what they
+-- return.
+--
+--   5 units   cup, one-cup cases        4 -> 1 scrap
+--   10 units  small sheet, two-cup      2 -> 1 scrap
+--   15 units  three-cup cases, hull     4 -> 3 scrap
+------------------------------------------------
+
+function AC_Recycling.buildGroups()
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    local units,
+          order =
+        AC_Recycling.getScrappable()
+
+
+    local byUnits = {}
+
+    local groups = {}
+
+
+    for _,
+        itemType
+    in ipairs(
+        order
+    )
+    do
+
+        local value =
+            units[itemType]
+
+
+        local group =
+            byUnits[value]
+
+
+        if not group then
+
+            local count =
+                config.batchUnits / gcd(value, config.batchUnits)
+
+
+            group = {
+
+                units = value,
+
+                items = {},
+
+                count = count,
+
+                scrap = count * value / config.batchUnits * config.scrapPerBatch,
+            }
+
+
+            byUnits[value] = group
+
+
+            table.insert(
+                groups,
+                group
+            )
+        end
+
+
+        table.insert(
+            group.items,
+            itemType
+        )
+    end
+
+
+    table.sort(
+        groups,
+        function(a, b)
+
+            return
+                a.units < b.units
+        end
+    )
+
+
+    return groups
+end
+
+
+------------------------------------------------
+-- RECIPES
+------------------------------------------------
+--
+-- One scrapping recipe per group, cold, on any surface,
+-- with a hammer (the line the cup and case recipes use),
+-- and one furnace recipe that casts ten brass scrap into
+-- an ingot (the lines of the copper and zinc casting
+-- recipes).
+--
+-- recycling = true marks them for the checks; loss = true
+-- marks the ones that must end with less brass than they
+-- took.
+------------------------------------------------
+
+function AC_Recycling.buildRecipes()
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    local recipes = {}
+
+
+    for _,
+        group
+    in ipairs(
+        AC_Recycling.buildGroups()
+    )
+    do
+
+        table.insert(
+            recipes,
+            {
+                id = config.idPrefix .. group.units,
+
+                step = "scrap",
+
+                time = config.scrapTime,
+
+                timedAction = "MakingHammer_Surface",
+
+                benchTag = "AnySurfaceCraft",
+
+                category = "Metalworking",
+
+                callback = "onScrapBrass" .. group.units,
+
+                xp = config.xp,
+
+                requiredLevel = config.requiredLevel,
+
+                recycling = true,
+
+                loss = true,
+
+                inputs = {
+                    { count = group.count, items = group.items },
+                    {
+                        count = 1,
+                        tags = { "base:hammer" },
+                        keep = true,
+                        flags = { "MayDegradeVeryLight" },
+                    },
+                },
+
+                outputs = {
+                    { count = group.scrap, item = config.scrapItem },
+                },
+            }
+        )
+    end
+
+
+    table.insert(
+        recipes,
+        {
+            id = config.castId,
+
+            step = "recast",
+
+            time = config.castTime,
+
+            benchTag = "Furnace",
+
+            category = "Blacksmithing",
+
+            callback = "onCastBrassIngotFromScrap",
+
+            xp = config.xp,
+
+            requiredLevel = config.requiredLevel,
+
+            recycling = true,
+
+            inputs = {
+                {
+                    count = 1,
+                    items = { "Base.CeramicCrucible" },
+                    keep = true,
+                    flags = { "IsEmpty" },
+                },
+                {
+                    count = 1,
+                    tags = { "base:crudetongs", "base:tongs" },
+                    keep = true,
+                    flags = { "MayDegradeLight" },
+                },
+                { count = config.castCharcoal, tags = { "base:charcoal" } },
+                { count = config.scrapPerIngot, items = { config.scrapItem } },
+                {
+                    count = 1,
+                    items = { "Base.ClayIngotMold", "Base.IronIngotMold", "Base.SteelIngotMold" },
+                    keep = true,
+                },
+            },
+
+            outputs = {
+                { count = 1, item = config.ingotItem },
+            },
+        }
+    )
+
+
+    return recipes
+end
+
+
+------------------------------------------------
+-- Share of the brass a scrapping recipe hands back, as a
+-- fraction (0.5 with the values above).
+------------------------------------------------
+
+function AC_Recycling.getRecovery()
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    return
+        config.scrapPerBatch * AC_Calibres.CONFIG.scrapUnits / config.batchUnits
+end
+
+
+------------------------------------------------
+-- VALIDATION (pure)
+------------------------------------------------
+--
+-- Returns a list of problems, empty when recycling is
+-- sound: it loses brass, it awards nothing, and every
+-- amount is a whole number.
+--
+-- recipes defaults to buildRecipes().
+------------------------------------------------
+
+local function isWhole(
+    value,
+    minimum
+)
+
+    return
+        type(value) == "number"
+        and value == math.floor(value)
+        and value >= minimum
+end
+
+
+function AC_Recycling.validate(
+    recipes
+)
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    local scrapUnits =
+        AC_Calibres.CONFIG.scrapUnits
+
+
+    local problems = {}
+
+
+    local function problem(
+        text
+    )
+
+        table.insert(
+            problems,
+            "recycling: " .. text
+        )
+    end
+
+
+    if not isWhole(config.batchUnits, 1)
+        or not isWhole(config.scrapPerBatch, 1)
+        or not isWhole(config.scrapPerIngot, 1)
+    then
+
+        problem("batch and scrap amounts must be whole and positive")
+
+
+        return problems
+    end
+
+
+    if config.scrapPerBatch * scrapUnits >= config.batchUnits then
+
+        problem(
+            "scrapping must lose brass: "
+            .. config.scrapPerBatch * scrapUnits
+            .. " units back for "
+            .. config.batchUnits
+        )
+    end
+
+
+    if config.scrapPerIngot * scrapUnits < config.ingotUnits then
+
+        problem(
+            "an ingot of " .. config.ingotUnits .. " units cannot be cast from "
+            .. config.scrapPerIngot * scrapUnits
+            .. " units of scrap"
+        )
+    end
+
+
+    if config.xp ~= 0 then
+        problem("recycling must award no XP, not " .. tostring(config.xp))
+    end
+
+
+    local units =
+        AC_Recycling.getScrappable()
+
+
+    units[config.scrapItem] = scrapUnits
+
+    units[config.ingotItem] = config.ingotUnits
+
+
+    recipes =
+        recipes or AC_Recycling.buildRecipes()
+
+
+    local covered = {}
+
+
+    for _,
+        recipe
+    in ipairs(
+        recipes
+    )
+    do
+
+        local name =
+            tostring(recipe.id)
+
+
+        if not recipe.recycling then
+            problem(name .. " is not marked as recycling")
+        end
+
+
+        if recipe.xp ~= 0 then
+            problem(name .. " awards XP")
+        end
+
+
+        local brassIn = 0
+
+        local brassOut = 0
+
+
+        for _,
+            input
+        in ipairs(
+            recipe.inputs or {}
+        )
+        do
+
+            if not input.keep
+                and input.items
+            then
+
+                -- Every alternative of a line must hold the same
+                -- brass; the smallest is what the line is worth.
+                local least = nil
+
+
+                for _,
+                    itemType
+                in ipairs(
+                    input.items
+                )
+                do
+
+                    local value =
+                        units[itemType]
+
+
+                    if value == nil then
+
+                        problem(name .. " takes " .. tostring(itemType) .. ", which is not plain brass")
+
+                    else
+
+                        if least ~= nil
+                            and value ~= least
+                        then
+                            problem(name .. " mixes components of different brass content")
+                        end
+
+
+                        if least == nil
+                            or value < least
+                        then
+                            least = value
+                        end
+
+
+                        if recipe.loss then
+                            covered[itemType] = (covered[itemType] or 0) + 1
+                        end
+                    end
+                end
+
+
+                if not isWhole(input.count, 1) then
+                    problem(name .. " takes a fractional number of components")
+                end
+
+
+                brassIn =
+                    brassIn + (least or 0) * (tonumber(input.count) or 0)
+            end
+        end
+
+
+        for _,
+            output
+        in ipairs(
+            recipe.outputs or {}
+        )
+        do
+
+            if units[output.item] == nil then
+                problem(name .. " makes " .. tostring(output.item) .. ", which is not plain brass")
+            end
+
+
+            if not isWhole(output.count, 1) then
+                problem(name .. " makes a fractional number of items")
+            end
+
+
+            brassOut =
+                brassOut + (units[output.item] or 0) * (tonumber(output.count) or 0)
+        end
+
+
+        if brassOut > brassIn then
+
+            problem(name .. " creates brass: " .. brassOut .. " units from " .. brassIn)
+
+        elseif recipe.loss
+            and brassOut >= brassIn
+        then
+
+            problem(name .. " loses no brass: " .. brassOut .. " units from " .. brassIn)
+        end
+    end
+
+
+    -- Each scrappable component is taken by exactly one
+    -- scrapping recipe.
+    for itemType in pairs(
+        AC_Recycling.getScrappable()
+    )
+    do
+
+        if (covered[itemType] or 0) ~= 1 then
+            problem(tostring(itemType) .. " is taken by " .. (covered[itemType] or 0) .. " scrapping recipes")
+        end
+    end
+
+
+    return problems
+end
+
+
+------------------------------------------------
+-- LOAD MESSAGE
+------------------------------------------------
+
+print(
+    "[AmmoMaking] Brass recycling loaded"
+)

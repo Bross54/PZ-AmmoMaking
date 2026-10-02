@@ -2863,8 +2863,9 @@ do
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
-    eq(#AC_Materials.RECIPES, 6 + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST,
-        "metallurgy 4, case stock 2, gunpowder 1, primers per family and source, four per calibre")
+    eq(#AC_Materials.RECIPES, 6 + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST + #AC_Recycling.buildGroups() + 1,
+        "metallurgy 4, case stock 2, gunpowder 1, primers per family and source, four per calibre, one scrapping recipe per brass size and the recast")
+    eq(#AC_Materials.RECIPES, 55, "fifty-five recipes")
 
     -- The script body is exactly what tests/render_recipes.lua makes of the
     -- mirror: the file is generated, never typed.
@@ -2915,11 +2916,17 @@ do
             -- The one material it brings in from untracked raw inputs.
             created[recipe.source] = nil
         end
-        eq(total(created), total(consumed), recipe.id .. " units out equal units in")
-        for material, units in pairs(created) do
-            local parts = AC_Materials.ALLOYS[material]
-            if not parts then
-                eq(units, consumed[material], recipe.id .. " " .. material .. " out equals " .. material .. " in")
+        if recipe.loss then
+            -- Scrapping is the one kind of recipe that must come out short.
+            check(total(created) < total(consumed), recipe.id .. " hands back less than it takes")
+            eq(created.brass, consumed.brass * AC_Recycling.getRecovery(), recipe.id .. " hands back the recycling share of the brass")
+        else
+            eq(total(created), total(consumed), recipe.id .. " units out equal units in")
+            for material, units in pairs(created) do
+                local parts = AC_Materials.ALLOYS[material]
+                if not parts then
+                    eq(units, consumed[material], recipe.id .. " " .. material .. " out equals " .. material .. " in")
+                end
             end
         end
         if recipe.tool then
@@ -2962,7 +2969,7 @@ do
     end
 
     -- Casting recipes keep exactly crucible, tongs and mold.
-    for _, id in ipairs({ "AmmoMaking_CastCopperIngot", "AmmoMaking_CastZincIngot", "AmmoMaking_CastBrassIngots" }) do
+    for _, id in ipairs({ "AmmoMaking_CastCopperIngot", "AmmoMaking_CastZincIngot", "AmmoMaking_CastBrassIngots", "AmmoMaking_CastBrassIngotFromScrap" }) do
         local kept = {}
         for _, input in ipairs(AC_Materials.getRecipe(id).inputs) do
             if input.keep then table.insert(kept, (input.items or input.tags)[1]) end
@@ -3003,7 +3010,12 @@ do
     }), "an either-or input counts as its cheapest alternative")
 
     -- Whole graph, vanilla copper recipes included: every recipe is
-    -- non-increasing and no metal item can be turned back into itself.
+    -- non-increasing, and a metal item can be turned back into itself only
+    -- by way of a recipe that LOSES metal. Brass recycling closes one loop
+    -- (ingot -> sheet -> cup -> case -> scrap -> ingot); the proof that it
+    -- cannot be farmed is in two parts: each scrapping recipe strictly
+    -- loses (checkConservation with recipe.loss), and with those recipes
+    -- taken out the graph has no loop at all.
     local all = {}
     for _, r in ipairs(AC_Materials.RECIPES) do table.insert(all, r) end
     for _, r in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(all, r) end
@@ -3030,24 +3042,32 @@ do
         end
         return false
     end
-    local edges = {}
+    -- edges: without the lossy recipes. lossyEdges: with them.
+    local edges, lossyEdges = {}, {}
+    local lossRecipes = 0
     for _, recipe in ipairs(all) do
         check(AC_Materials.checkConservation(recipe), recipe.id .. " does not create material")
+        if recipe.loss then lossRecipes = lossRecipes + 1 end
         for _, input in ipairs(recipe.inputs) do
             for _, from in ipairs(input.items or {}) do
                 if U[from] and not input.keep then
                     for _, output in ipairs(recipe.outputs) do
                         if movesMetal(from, output.item) then
-                            edges[from] = edges[from] or {}
-                            edges[from][output.item] = true
+                            lossyEdges[from] = lossyEdges[from] or {}
+                            lossyEdges[from][output.item] = true
+                            if not recipe.loss then
+                                edges[from] = edges[from] or {}
+                                edges[from][output.item] = true
+                            end
                         end
                     end
                 end
             end
         end
     end
+    local graph = edges
     local function reaches(from, target, visited)
-        for nextItem in pairs(edges[from] or {}) do
+        for nextItem in pairs(graph[from] or {}) do
             if nextItem == target then return true end
             if not visited[nextItem] then
                 visited[nextItem] = true
@@ -3057,8 +3077,26 @@ do
         return false
     end
     for id in pairs(U) do
-        check(not reaches(id, id, {}), "no recipe loop returns to " .. id)
+        check(not reaches(id, id, {}), "no loop returns to " .. id .. " without a recipe that loses metal")
     end
+    eq(lossRecipes, #AC_Recycling.buildGroups(), "the lossy recipes are the scrapping recipes")
+    -- With them, the loop exists, and it is brass all the way round.
+    graph = lossyEdges
+    check(reaches("Base.BrassIngot", "Base.BrassIngot", {}), "recycling closes the brass loop")
+    for id in pairs(U) do
+        if reaches(id, id, {}) then
+            local entry = U[id]
+            check(entry.metal == "brass" and entry.contents == nil, id .. " is on the recycling loop and is nothing but brass")
+        end
+    end
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(reaches(calibre.case, "Base.BrassScrap", {}), calibre.id .. " cases can be scrapped")
+        check(not reaches(calibre.round, calibre.round, {}), "a finished " .. calibre.id .. " round is on no metal loop")
+        check(not reaches(calibre.bullet, calibre.bullet, {}), "a " .. calibre.id .. " bullet is on no metal loop")
+    end
+    check(lossyEdges["Base.BrassScrap"]["Base.BrassIngot"], "brass scrap is cast back into ingots")
+    check(not reaches("Base.CopperScrap", "Base.CopperScrap", {}) and not reaches("AmmoMaking.ZincScrap", "AmmoMaking.ZincScrap", {}), "copper and zinc are on no loop")
+    graph = edges
     check(reaches("Base.CopperOre", "Base.BrassIngot", {}), "copper ore reaches brass")
     check(reaches("AmmoMaking.ZincOre", "Base.BrassIngot", {}), "zinc ore reaches brass")
     check(reaches("Base.CopperOre", "AmmoMaking.BrassCaseCup", {}), "copper ore reaches case cups")
@@ -3069,8 +3107,8 @@ do
         check(reaches("AmmoMaking.ZincOre", calibre.round, {}), "zinc ore reaches the " .. calibre.id .. " round")
         check(edges[calibre.round] == nil, "no recipe takes metal back out of a " .. calibre.id .. " round")
     end
-    check(not reaches("Base.BrassIngot", "Base.BrassScrap", {}), "no recipe makes brass scrap")
-    check(edges["Base.BrassScrap"] == nil, "brass scrap is reserved for later recycling")
+    check(not reaches("Base.BrassIngot", "Base.BrassScrap", {}), "brass scrap comes only from the scrapping recipes")
+    check(edges["Base.BrassScrap"] ~= nil and edges["Base.BrassScrap"]["Base.BrassIngot"], "brass scrap has one use: the ingot")
 
     -- Run the chain on a pretend inventory. This executes the mirror
     -- table, not the game's crafting system.
@@ -3198,7 +3236,8 @@ do
 
     for _, recipe in ipairs(AC_Materials.RECIPES) do
         local xp = AC_Materials.getRecipeXP(recipe)
-        check(xp > 0, recipe.id .. " awards XP")
+        -- Recycling is the one family that awards nothing.
+        eq(xp > 0, not recipe.recycling, recipe.id .. (recipe.recycling and " awards no XP" or " awards XP"))
         local player = MOCK.newPlayer()
         MOCK.clearPrintLog()
         MOCK.capturePrint(true)
@@ -3215,9 +3254,15 @@ do
         check(ok, recipe.id .. " callback runs: " .. tostring(granted))
         check(not MOCK.printLogContains("WARNING"), recipe.id .. " callback logs no warning")
         eq(granted, xp, recipe.id .. " callback reports the XP")
-        eq(#player.xpLog, 1, recipe.id .. " grants XP exactly once")
-        eq(player.xpLog[1], xp, recipe.id .. " XP amount")
-        check(MOCK.printLogContains("[AmmoMaking] Crafting (" .. recipe.id .. "): +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), recipe.id .. " XP logged")
+        if recipe.recycling then
+            eq(granted, 0, recipe.id .. " callback grants nothing")
+            eq(#player.xpLog, 0, recipe.id .. " never touches the XP")
+            check(not MOCK.printLogContains("Ammo Making XP"), recipe.id .. " logs no XP line")
+        else
+            eq(#player.xpLog, 1, recipe.id .. " grants XP exactly once")
+            eq(player.xpLog[1], xp, recipe.id .. " XP amount")
+            check(MOCK.printLogContains("[AmmoMaking] Crafting (" .. recipe.id .. "): +" .. xp .. " Ammo Making XP (total 0 -> " .. xp .. ")"), recipe.id .. " XP logged")
+        end
 
         MOCK.capturePrint(true)
         check(pcall(AC_Materials[recipe.callback], data, nil), recipe.id .. " callback tolerates a missing character")
@@ -3434,16 +3479,35 @@ end
 
 -- Mirror inventory shared by the sections below. Drainables are held as
 -- uses: an output is a full item unless the mirror marks it oneUse.
+-- An input line that names several items is paid from any of them, in the
+-- order listed, as the engine fills a line from whatever matches.
+local function mirrorHeld(inventory, input)
+    if not input.items then return inventory[input.tags[1]] or 0 end
+    local held = 0
+    for _, id in ipairs(input.items) do held = held + (inventory[id] or 0) end
+    return held
+end
+
+local function mirrorCanCraft(inventory, recipe)
+    for _, input in ipairs(recipe.inputs) do
+        if mirrorHeld(inventory, input) < input.count then return false end
+    end
+    return true
+end
+
 local function mirrorCraft(inventory, recipe)
     local U = AC_Materials.UNITS
-    for _, input in ipairs(recipe.inputs) do
-        local id = input.items and input.items[1] or input.tags[1]
-        if (inventory[id] or 0) < input.count then return false end
-    end
+    if not mirrorCanCraft(inventory, recipe) then return false end
     for _, input in ipairs(recipe.inputs) do
         if not input.keep then
-            local id = input.items and input.items[1] or input.tags[1]
-            inventory[id] = inventory[id] - input.count
+            local owed = input.count
+            for _, id in ipairs(input.items or { input.tags[1] }) do
+                local take = math.min(owed, inventory[id] or 0)
+                if take > 0 then
+                    inventory[id] = inventory[id] - take
+                    owed = owed - take
+                end
+            end
         end
     end
     for _, output in ipairs(recipe.outputs) do
@@ -4755,6 +4819,30 @@ do
     local targets = {}
     for i = 1, CYCLES do targets[i] = cycle().id end
 
+    -- Recycling is not part of the climb: scrapping every leftover cup and
+    -- sheet of the career and casting the scrap adds no XP at any point.
+    do
+        local xpBefore, brassBefore = career.xp, 0
+        for _, id in ipairs({ "AmmoMaking.BrassCaseCup", "AmmoMaking.SmallBrassSheet", "Base.BrassIngot", "Base.BrassScrap" }) do
+            brassBefore = brassBefore + (inv[id] or 0) * AC_Materials.UNITS[id].units
+        end
+        local scrapped = 0
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.recycling then scrapped = scrapped + make(recipe, 100000) end
+        end
+        eq(career.xp, xpBefore, "recycling the career's leftovers earns no XP (" .. scrapped .. " recycling crafts)")
+        eq(career.byFamily.scrap, scrapped > 0 and 0 or nil, "the scrap family holds no XP")
+        local brassAfter = 0
+        for _, id in ipairs({ "AmmoMaking.BrassCaseCup", "AmmoMaking.SmallBrassSheet", "Base.BrassIngot", "Base.BrassScrap" }) do
+            brassAfter = brassAfter + (inv[id] or 0) * AC_Materials.UNITS[id].units
+        end
+        check(brassAfter <= brassBefore, "and never adds brass (" .. brassBefore .. " -> " .. brassAfter .. " units)")
+        career.byFamily.scrap, career.byFamily.recast = nil, nil
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.recycling then career.byRecipe[recipe.id] = nil end
+        end
+    end
+
     -- How much ore each level takes.
     check(career.reached[1] ~= nil and career.reached[1] <= 10, "level 1 within the first brass batch (" .. tostring(career.reached[1]) .. " ore)")
     check(career.reached[3] ~= nil and career.reached[3] <= 20, "level 3 within the first cycle (" .. tostring(career.reached[3]) .. " ore)")
@@ -4837,8 +4925,10 @@ do
     end
 
     -- XP cannot be farmed: every XP-granting recipe destroys something, and
-    -- the only cycle among all items is round <-> gunpowder, which loses
-    -- the case, the primer and the bullet each time round.
+    -- apart from brass recycling (which loses half of the brass per
+    -- round trip and awards nothing; see the recycling section) the only
+    -- cycle among all items is round <-> gunpowder, which loses the case,
+    -- the primer and the bullet each time round.
     local edges = {}
     local all = {}
     for _, r in ipairs(AC_Materials.RECIPES) do table.insert(all, r) end
@@ -4849,8 +4939,10 @@ do
             if not input.keep then
                 consumes = true
                 for _, from in ipairs(input.items or {}) do
-                    edges[from] = edges[from] or {}
-                    for _, output in ipairs(recipe.outputs) do edges[from][output.item] = recipe end
+                    if not recipe.loss then
+                        edges[from] = edges[from] or {}
+                        for _, output in ipairs(recipe.outputs) do edges[from][output.item] = recipe end
+                    end
                 end
             end
         end
@@ -4874,7 +4966,7 @@ do
     local expectedCycle = { "Base.GunPowder" }
     for _, calibre in ipairs(AC_Calibres.LIST) do table.insert(expectedCycle, calibre.round) end
     table.sort(expectedCycle)
-    eq(table.concat(onCycle, ","), table.concat(expectedCycle, ","), "the only reversible items are the rounds and the powder gathered from them")
+    eq(table.concat(onCycle, ","), table.concat(expectedCycle, ","), "scrapping aside, the only reversible items are the rounds and the powder gathered from them")
     for _, calibre in ipairs(AC_Calibres.LIST) do
         -- Ten rounds, taken apart and rebuilt as far as possible, with the
         -- die set at hand: XP earned must be zero, because nothing can be
@@ -5179,21 +5271,18 @@ do
         end
         return totals
     end
-    local function canCraft(inventory, recipe)
-        for _, input in ipairs(recipe.inputs) do
-            local id = input.items and input.items[1] or input.tags[1]
-            if (inventory[id] or 0) < input.count then return false end
-        end
-        return true
-    end
+    local canCraft = mirrorCanCraft
 
     local totalCrafts, totalRounds, classesSeen, calibresSeen = 0, 0, {}, {}
+    -- How often each recipe ran, over every seed.
+    local ran = {}
+    local SEEDS = { 1, 20261002, 987654321, 42, 7, 31337, 1993, 4220420 }
     local violations = {}
     local function violation(text)
         if #violations < 5 then table.insert(violations, text) end
     end
 
-    for _, startSeed in ipairs({ 1, 20261002, 987654321, 42 }) do
+    for _, startSeed in ipairs(SEEDS) do
         local seed = startSeed
         local function nextRandom(n)
             seed = (seed * 1103515245 + 12345) % 2147483648
@@ -5201,6 +5290,10 @@ do
         end
         local inv = {
             ["Base.CopperOre"] = 300, ["AmmoMaking.ZincOre"] = 60,
+            -- A few hulls somebody formed and no longer wants: ten three-cup
+            -- cases rarely pile up by chance, and their scrapping recipe
+            -- should run too.
+            ["AmmoMaking.Hull12Gauge"] = 30,
             ["base:charcoal"] = 50000, ["Base.Fertilizer"] = 2000, ["Base.CapGunCap"] = 20000, ["Base.Matches"] = 2000,
             ["Base.SteelBarQuarter"] = 2 * #AC_Calibres.LIST, [AC_Calibres.WAD.items[1]] = 2000,
             ["Base.CeramicCrucible"] = 1, ["base:crudetongs"] = 1, ["Base.ClayIngotMold"] = 1,
@@ -5227,6 +5320,7 @@ do
             for _, calibre in ipairs(AC_Calibres.LIST) do dieSetsBefore = dieSetsBefore + (inv[calibre.dieSet] or 0) end
             check(mirrorCraft(inv, recipe), "a craftable recipe crafts")
             crafts = crafts + 1
+            ran[recipe.id] = (ran[recipe.id] or 0) + 1
             xp = xp + AC_Materials.getRecipeXP(recipe)
             if recipe.step == "assemble" then
                 local calibre = AC_Calibres.get(recipe.calibre)
@@ -5251,6 +5345,13 @@ do
             end
             -- Metal as a whole never grows.
             if now.copper + now.zinc + now.brass > before.copper + before.zinc + before.brass then violation(what .. " created metal") end
+            -- Scrapping loses exactly half of the brass it takes, and no
+            -- recycling craft earns anything.
+            if recipe.loss then
+                local taken = AC_Materials.getRecipeUnits(recipe).brass
+                if before.brass - now.brass ~= taken / 2 then violation(what .. " did not lose half of its brass") end
+            end
+            if recipe.recycling and AC_Materials.getRecipeXP(recipe) ~= 0 then violation(what .. " earned XP") end
             -- Powder appears only in the mix, one jar at a time.
             if recipe == mix then
                 if now.powder - before.powder ~= AC_Calibres.POWDER.usesPerJar then violation(what .. " mixed another amount than a jar") end
@@ -5291,8 +5392,27 @@ do
     end
     local reached = 0
     for _ in pairs(calibresSeen) do reached = reached + 1 end
-    check(reached >= 6, "most calibres were reached by chance (" .. reached .. " of " .. #AC_Calibres.LIST .. ")")
-    print("  Random crafting: " .. totalCrafts .. " valid crafts over 4 seeds, " .. totalRounds .. " rounds assembled, " .. reached .. " of " .. #AC_Calibres.LIST .. " calibres reached, 0 ledger violations")
+    eq(reached, #AC_Calibres.LIST, "every calibre was assembled in some run")
+    -- Every stage of the chain was exercised: metallurgy, case stock,
+    -- powder, every primer family, the shell, and recycling.
+    local neverRan = {}
+    for _, recipe in ipairs(all) do
+        if not ran[recipe.id] then table.insert(neverRan, recipe.id) end
+    end
+    eq(#neverRan, 0, "every recipe ran at least once: " .. table.concat(neverRan, ", "))
+    for _, primer in ipairs(AC_Calibres.PRIMERS) do
+        local made = 0
+        for _, source in ipairs(AC_Calibres.COMPOUND_SOURCES) do made = made + (ran[primerRecipe(primer, source.id).id] or 0) end
+        check(made > 0, primer.id .. " primers were made (" .. made .. " crafts)")
+    end
+    local recycled = 0
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        if recipe.recycling then recycled = recycled + (ran[recipe.id] or 0) end
+    end
+    check(recycled > 100, "recycling was exercised (" .. recycled .. " crafts)")
+    check((ran["AmmoMaking_CastBrassIngotFromScrap"] or 0) > 0, "scrap was cast back into ingots (" .. tostring(ran["AmmoMaking_CastBrassIngotFromScrap"]) .. " crafts)")
+    check((ran["AmmoMaking_MixGunpowder"] or 0) > 0 and (ran["AmmoMaking_CastBrassIngots"] or 0) > 0, "powder was mixed and brass was cast")
+    print("  Random crafting: " .. totalCrafts .. " valid crafts over " .. #SEEDS .. " seeds, " .. totalRounds .. " rounds assembled, " .. reached .. " of " .. #AC_Calibres.LIST .. " calibres reached, " .. recycled .. " recycling crafts, 0 ledger violations")
 
     -- The ledger itself must be able to fail: a tampered recipe is caught by
     -- the same comparison.
@@ -5456,6 +5576,313 @@ do
     check(MOCK.printLogContains("AmmoMaking_AssembleRound44Magnum [AnySurfaceCraft]: loaded, required skills 1; level 5; XP 4; expected time 40/40; metal conserved"), "the top calibre is listed at its level")
     check(not MOCK.printLogContains("NOT CONSERVED"), "every recipe is reported as conserving")
     MOCK.debug = false
+end
+
+------------------------------------------------
+-- RECYCLING
+------------------------------------------------
+
+section("Brass recycling: loses brass, teaches nothing")
+do
+    local C = AC_Recycling.CONFIG
+    local U = AC_Materials.UNITS
+    local R = AC_Materials.getRecipe
+    eq(#AC_Recycling.validate(), 0, "recycling is sound: " .. table.concat(AC_Recycling.validate(), "; "))
+
+    -- Pinned numbers.
+    eq(C.batchUnits, 20, "a batch is 20 units of brass")
+    eq(C.scrapPerBatch, 1, "and returns one brass scrap")
+    eq(AC_Recycling.getRecovery(), 0.5, "half of the brass comes back")
+    eq(C.xp, 0, "recycling awards no XP")
+    eq(C.requiredLevel, 0, "and needs no level")
+    eq(C.scrapItem, "Base.BrassScrap", "the output is the vanilla brass scrap, not a new item")
+    eq(declaredItems["AmmoMaking.BrassScrap"], nil, "the mod declares no brass scrap of its own")
+    eq(C.ingotUnits, AC_Materials.CONFIG.unitsPerIngot, "an ingot is the accounting ingot")
+    eq(C.scrapPerIngot * U["Base.BrassScrap"].units, U["Base.BrassIngot"].units, "ten scrap are exactly one ingot")
+
+    -- What can be scrapped: plain brass only, every case exactly once.
+    local scrappable, order = AC_Recycling.getScrappable()
+    eq(#order, 2 + #AC_Calibres.LIST, "the cup, the sheet and one case or hull per calibre")
+    for id, units in pairs(scrappable) do
+        check(declaredItems[id] ~= nil, id .. " is a declared mod item")
+        eq(U[id].metal, "brass", id .. " is brass")
+        eq(U[id].contents, nil, id .. " is nothing but brass")
+        eq(U[id].units, units, id .. " is worth what the material table says")
+    end
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        eq(scrappable[calibre.case], AC_Calibres.CONFIG.cupUnits * calibre.cupsPerCase, calibre.id .. " case is scrappable for its cups")
+        for _, kind in ipairs({ "round", "bullet", "dieSet" }) do
+            eq(scrappable[calibre[kind]], nil, calibre.id .. " " .. kind .. " cannot be scrapped")
+        end
+    end
+    for _, primer in ipairs(AC_Calibres.PRIMERS) do
+        eq(scrappable[primer.item], nil, primer.id .. " primers cannot be scrapped")
+    end
+    eq(scrappable["Base.GunPowder"], nil, "powder is not scrap")
+
+    -- Groups: one recipe per brass size.
+    local groups = AC_Recycling.buildGroups()
+    eq(#groups, 3, "three sizes of brass component")
+    local pinned = { { 5, 4, 1 }, { 10, 2, 1 }, { 15, 4, 3 } }
+    local grouped = {}
+    for index, group in ipairs(groups) do
+        eq(group.units, pinned[index][1], "group " .. index .. " units")
+        eq(group.count, pinned[index][2], "group " .. index .. " components per craft")
+        eq(group.scrap, pinned[index][3], "group " .. index .. " scrap per craft")
+        eq(group.count * group.units % C.batchUnits, 0, "group " .. index .. " takes whole batches")
+        eq(group.scrap * U["Base.BrassScrap"].units, group.count * group.units / 2, "group " .. index .. " returns half")
+        for _, id in ipairs(group.items) do
+            eq(scrappable[id], group.units, id .. " is in the group of its own size")
+            check(not grouped[id], id .. " is in one group only")
+            grouped[id] = true
+        end
+    end
+    for id in pairs(scrappable) do check(grouped[id], id .. " is in a group") end
+    check(grouped["AmmoMaking.BrassCaseCup"] and grouped["AmmoMaking.SmallBrassSheet"] and grouped["AmmoMaking.Hull12Gauge"], "cups, sheets and hulls are covered")
+
+    -- The recipes.
+    local recipes = AC_Recycling.buildRecipes()
+    eq(#recipes, #groups + 1, "one scrapping recipe per group and the recast")
+    local scrapRecipes = 0
+    for _, built in ipairs(recipes) do
+        local recipe = R(built.id)
+        check(recipe ~= nil, built.id .. " is in the live recipe list")
+        eq(recipe.recycling, true, built.id .. " is marked as recycling")
+        eq(AC_Materials.getRecipeXP(recipe), 0, built.id .. " awards no XP")
+        eq(AC_Materials.getRequiredLevel(recipe), 0, built.id .. " needs no level")
+        check(AC_Materials.checkConservation(recipe), built.id .. " passes the conservation check")
+        local consumed, created = AC_Materials.getRecipeUnits(recipe)
+        for _, material in ipairs({ "copper", "zinc", "powder", "compound" }) do
+            eq(consumed[material], nil, built.id .. " consumes no " .. material)
+            eq(created[material], nil, built.id .. " creates no " .. material)
+        end
+        if recipe.loss then
+            scrapRecipes = scrapRecipes + 1
+            eq(created.brass * 2, consumed.brass, built.id .. " returns exactly half of the brass")
+            check(created.brass < consumed.brass, built.id .. " loses brass")
+            eq(recipe.outputs[1].item, "Base.BrassScrap", built.id .. " makes vanilla brass scrap")
+            eq(#recipe.outputs, 1, built.id .. " makes nothing else")
+            eq(recipe.benchTag, "AnySurfaceCraft", built.id .. " is cold work on a surface")
+            eq(recipe.inputs[2].tags[1], "base:hammer", built.id .. " needs a hammer")
+            eq(recipe.inputs[2].keep, true, built.id .. " keeps the hammer")
+            eq(#recipe.inputs, 2, built.id .. " takes components and a hammer, nothing else")
+            eq(recipe.inputs[1].flags, nil, built.id .. " accepts a mix of its components")
+        else
+            eq(consumed.brass, created.brass, built.id .. " casts scrap into an ingot with nothing lost or gained")
+            eq(recipe.benchTag, "Furnace", built.id .. " casts where vanilla casts")
+            eq(recipe.timedAction, nil, built.id .. " has no timed action, like vanilla furnace recipes")
+        end
+        -- No finished round, primer, bullet, die set or powder goes in.
+        for _, input in ipairs(recipe.inputs) do
+            for _, id in ipairs(input.items or {}) do
+                local kind = AC_Calibres.identify(id)
+                check(kind == nil or kind == "case", built.id .. " takes no " .. tostring(kind) .. " (" .. id .. ")")
+                check(id ~= AC_Calibres.POWDER.item, built.id .. " takes no gunpowder")
+            end
+            for _, tag in ipairs(input.tags or {}) do
+                check(tag ~= "base:ammo", built.id .. " takes no ammunition by tag")
+            end
+        end
+    end
+    eq(scrapRecipes, #groups, "every scrapping recipe is a lossy one")
+    local recast = R(C.castId)
+    eq(recast.inputs[4].count, 10, "the recast takes ten brass scrap")
+    eq(recast.inputs[4].items[1], "Base.BrassScrap", "of the vanilla item")
+    eq(recast.outputs[1].item, "Base.BrassIngot", "and yields the vanilla brass ingot")
+    eq(recast.outputs[1].count, 1, "one of them")
+    -- The recast is the copper casting recipe with brass in it.
+    local copperCast = R("AmmoMaking_CastCopperIngot")
+    eq(#recast.inputs, #copperCast.inputs, "the recast has the casting recipe's lines")
+    for index, input in ipairs(copperCast.inputs) do
+        if index ~= 4 then
+            eq(RENDER.renderInput(recast.inputs[index]), RENDER.renderInput(input), "recast line " .. index .. " is the casting recipe's")
+        end
+    end
+    eq(recast.time, copperCast.time, "the recast takes as long as casting copper")
+
+    -- Manufacture -> recycle -> manufacture always ends with less brass.
+    local function brassIn(inventory)
+        local sum = 0
+        for id, count in pairs(inventory) do
+            local entry = U[id]
+            if entry and entry.metal == "brass" then sum = sum + entry.units * count end
+        end
+        return sum
+    end
+    local function freshStock(ingots)
+        return {
+            ["Base.BrassIngot"] = ingots, ["base:charcoal"] = 100000, ["base:hammer"] = 1, ["base:tongs"] = 1, ["base:crudetongs"] = 1,
+            ["base:metalworkingpunch"] = 1, ["Base.CeramicCrucible"] = 1, ["Base.ClayIngotMold"] = 1,
+        }
+    end
+    local function drain(inventory, recipe)
+        local crafts = 0
+        while mirrorCraft(inventory, recipe) do crafts = crafts + 1 end
+        return crafts
+    end
+    local forge, punch = R("AmmoMaking_ForgeSmallBrassSheets"), R("AmmoMaking_PunchBrassCaseCups")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local inv = freshStock(30)
+        inv[calibre.dieSet] = 1
+        local form = calibreRecipe(calibre, "case")
+        local start = brassIn(inv)
+        local previous, cycles, xp, firstPassXP = start, 0, 0, nil
+        -- Until not one more case can be formed.
+        while true do
+            local crafted = 0
+            local function run(recipe)
+                local n = drain(inv, recipe)
+                crafted = crafted + n
+                xp = xp + n * AC_Materials.getRecipeXP(recipe)
+                return n
+            end
+            run(forge)
+            run(punch)
+            local cases = run(form)
+            if firstPassXP == nil then firstPassXP = xp end
+            if cases == 0 then break end
+            local formedBrass = brassIn(inv)
+            eq(formedBrass, previous, calibre.id .. " cycle " .. (cycles + 1) .. ": making cases neither adds nor loses brass")
+            local xpBeforeScrap = xp
+            local scrapCrafts = 0
+            for _, recipe in ipairs(AC_Materials.RECIPES) do
+                if recipe.loss then scrapCrafts = scrapCrafts + run(recipe) end
+            end
+            -- Fewer cases than one batch: the brass stays as cases and the
+            -- loop is over.
+            if scrapCrafts == 0 then break end
+            cycles = cycles + 1
+            check(brassIn(inv) < formedBrass, calibre.id .. " cycle " .. cycles .. ": scrapping lost brass")
+            run(recast)
+            eq(xp, xpBeforeScrap, calibre.id .. " cycle " .. cycles .. ": scrapping and recasting earned no XP")
+            local now = brassIn(inv)
+            check(now < previous, calibre.id .. " cycle " .. cycles .. ": less brass than the cycle before (" .. previous .. " -> " .. now .. ")")
+            check(now <= previous * AC_Recycling.getRecovery() + calibre.cupsPerCase * 5 * 4 + 100, calibre.id .. " cycle " .. cycles .. ": at most half survives, leftovers aside")
+            previous = now
+            check(cycles < 50, calibre.id .. ": the loop ends")
+            if cycles >= 50 then break end
+        end
+        check(cycles >= 2, calibre.id .. ": the brass went round more than once (" .. cycles .. " cycles)")
+        check(brassIn(inv) < start * 0.2, calibre.id .. ": most of the brass is gone at the end (" .. brassIn(inv) .. " of " .. start .. ")")
+        -- The XP a fixed stock of brass can ever give is bounded: at most
+        -- 1 / (1 - recovery) times what one pass gives.
+        check(xp <= firstPassXP / (1 - AC_Recycling.getRecovery()) + 1e-9, calibre.id .. ": recycling at most doubles what one pass gives (" .. firstPassXP .. " -> " .. xp .. " XP)")
+
+        -- Recycling is never the better way to train. A case that is
+        -- scrapped and formed again, for ever, returns at most
+        -- recovery / (1 - recovery) times the XP of making it once; loading
+        -- it into a round instead gives the XP of its primer, its bullet,
+        -- its powder and its assembly. The first must stay below the second.
+        local primer = AC_Calibres.getPrimer(calibre.primerFamily)
+        local brass = calibre.cupsPerCase * AC_Calibres.CONFIG.cupUnits
+        local makeOnce = brass / 100 * AC_Materials.CONFIG.xpForgeBrassSheets
+            + calibre.cupsPerCase / 2 * AC_Materials.CONFIG.xpPunchCaseCups
+            + calibre.xp.case
+        local recovery = AC_Recycling.getRecovery()
+        local regained = makeOnce * recovery / (1 - recovery)
+        local forgone = calibre.xp.assemble
+            + primer.xp / primer.perSheet
+            + calibre.xp.bullet / calibre.bulletsPerScrap
+            + AC_Calibres.POWDER.xp * calibre.powderUses / AC_Calibres.POWDER.usesPerJar
+        check(regained < forgone, calibre.id .. ": scrapping a case forgoes more XP than re-forming it can ever return (" .. regained .. " < " .. forgone .. ")")
+        check(xp > firstPassXP, calibre.id .. ": the re-formed cases do earn their forming XP again, by design and at a cost")
+        if calibre.id == "9mm" then
+            print("  Recycling: 30 brass ingots formed into 9mm cases, scrapped and recast until nothing is left: " .. cycles .. " cycles, " .. start .. " -> " .. brassIn(inv) .. " units of brass, " .. firstPassXP .. " XP in one pass, " .. xp .. " XP with every round trip (x" .. string.format("%.2f", xp / firstPassXP) .. ")")
+        end
+    end
+
+    -- The same for stock that never became a case: sheets and cups.
+    for _, id in ipairs({ "AmmoMaking.SmallBrassSheet", "AmmoMaking.BrassCaseCup" }) do
+        local inv = freshStock(0)
+        inv[id] = 1000
+        local start = brassIn(inv)
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.loss then drain(inv, recipe) end
+        end
+        eq(brassIn(inv) * 2, start, id .. ": a thousand scrapped return exactly half")
+        drain(inv, recast)
+        eq(inv["Base.BrassIngot"], start / 2 / 100, id .. ": and recast into that many ingots")
+    end
+
+    -- A mix of components of one size pays for one craft together.
+    local mixed = { ["AmmoMaking.BrassCaseCup"] = 2, ["AmmoMaking.Case9mm"] = 1, ["AmmoMaking.Case38Special"] = 1, ["base:hammer"] = 1 }
+    check(mirrorCraft(mixed, R("AmmoMaking_ScrapBrass5")), "four mixed small components are one batch")
+    eq(mixed["Base.BrassScrap"], 1, "and return one scrap")
+    eq(mixed["AmmoMaking.BrassCaseCup"] + mixed["AmmoMaking.Case9mm"] + mixed["AmmoMaking.Case38Special"], 0, "all four are gone")
+    check(not mirrorCraft({ ["AmmoMaking.BrassCaseCup"] = 3, ["base:hammer"] = 1 }, R("AmmoMaking_ScrapBrass5")), "three are not a batch")
+    check(not mirrorCraft({ ["AmmoMaking.BrassCaseCup"] = 4 }, R("AmmoMaking_ScrapBrass5")), "no scrapping without a hammer")
+    check(not mirrorCraft({ ["Base.BrassScrap"] = 9, ["base:charcoal"] = 4, ["base:crudetongs"] = 1, ["Base.CeramicCrucible"] = 1, ["Base.ClayIngotMold"] = 1 }, recast), "nine scrap are not an ingot")
+
+    -- The validator refuses what it is there to refuse.
+    local function withConfig(key, value)
+        local saved = C[key]
+        C[key] = value
+        local text = table.concat(AC_Recycling.validate(), "; ")
+        C[key] = saved
+        return text
+    end
+    check(string.find(withConfig("scrapPerBatch", 2), "scrapping must lose brass: 20 units back for 20", 1, true) ~= nil, "a lossless scrap yield is refused")
+    check(string.find(withConfig("scrapPerBatch", 3), "scrapping must lose brass: 30 units back for 20", 1, true) ~= nil, "a scrap yield that creates brass is refused")
+    check(string.find(withConfig("scrapPerBatch", 1.5), "must be whole and positive", 1, true) ~= nil, "a fractional scrap yield is refused")
+    check(string.find(withConfig("batchUnits", 10), "scrapping must lose brass: 10 units back for 10", 1, true) ~= nil, "a batch no bigger than its scrap is refused")
+    check(string.find(withConfig("xp", 1), "recycling must award no XP, not 1", 1, true) ~= nil, "recycling XP is refused")
+    check(string.find(withConfig("xp", 1), "AmmoMaking_ScrapBrass5 awards XP", 1, true) ~= nil, "and each recipe that would award it is named")
+    check(string.find(withConfig("scrapPerIngot", 9), "an ingot of 100 units cannot be cast from 90 units of scrap", 1, true) ~= nil, "an ingot from nine scrap is refused")
+    check(string.find(withConfig("scrapPerIngot", 9), "AmmoMaking_CastBrassIngotFromScrap creates brass: 100 units from 90", 1, true) ~= nil, "and the recast is named as creating brass")
+    eq(#AC_Recycling.validate(), 0, "the live recycling model was restored")
+    local function tampered(index, change)
+        local list = AC_Recycling.buildRecipes()
+        change(list[index])
+        return table.concat(AC_Recycling.validate(list), "; ")
+    end
+    check(string.find(tampered(1, function(r) r.outputs[1].count = 2 end), "AmmoMaking_ScrapBrass5 loses no brass: 20 units from 20", 1, true) ~= nil, "a scrapping recipe that returns everything is refused")
+    check(string.find(tampered(1, function(r) r.outputs[1].count = 3 end), "AmmoMaking_ScrapBrass5 creates brass: 30 units from 20", 1, true) ~= nil, "one that returns more than it took is refused")
+    check(string.find(tampered(2, function(r) r.xp = 2 end), "AmmoMaking_ScrapBrass10 awards XP", 1, true) ~= nil, "one that awards XP is refused")
+    check(string.find(tampered(1, function(r) table.insert(r.inputs[1].items, "AmmoMaking.Case308Win") end), "mixes components of different brass content", 1, true) ~= nil, "a line mixing brass sizes is refused")
+    check(string.find(tampered(1, function(r) table.insert(r.inputs[1].items, "AmmoMaking.SmallPistolPrimer") end), "takes AmmoMaking.SmallPistolPrimer, which is not plain brass", 1, true) ~= nil, "a primer in a scrapping recipe is refused")
+    check(string.find(tampered(1, function(r) table.insert(r.inputs[1].items, "Base.Bullets9mm") end), "takes Base.Bullets9mm, which is not plain brass", 1, true) ~= nil, "a finished round in a scrapping recipe is refused")
+    check(string.find(tampered(3, function(r) r.outputs[1].item = "Base.CopperScrap" end), "makes Base.CopperScrap, which is not plain brass", 1, true) ~= nil, "brass cannot be scrapped into copper")
+    check(string.find(tampered(1, function(r) table.remove(r.inputs[1].items, 1) end), "AmmoMaking.BrassCaseCup is taken by 0 scrapping recipes", 1, true) ~= nil, "a component no recipe takes is named")
+    check(string.find(tampered(4, function(r) r.recycling = nil end), "is not marked as recycling", 1, true) ~= nil, "an unmarked recycling recipe is refused")
+
+    -- The general conservation check agrees on the lossy rule.
+    local scrap5 = R("AmmoMaking_ScrapBrass5")
+    local function variant(change)
+        local copy = {}
+        for k, v in pairs(scrap5) do copy[k] = v end
+        for k, v in pairs(change) do copy[k] = v end
+        copy.id = scrap5.id .. "_tampered"
+        return copy
+    end
+    local ok, reason = AC_Materials.checkConservation(variant({ outputs = { { count = 2, item = "Base.BrassScrap" } } }))
+    check(not ok and string.find(reason, "must lose brass: 20 in, 20 out", 1, true) ~= nil, "a lossless scrapping recipe fails the conservation check: " .. tostring(reason))
+    check(not AC_Materials.checkConservation(variant({ outputs = { { count = 3, item = "Base.BrassScrap" } } })), "one that creates brass fails it too")
+    check(AC_Materials.checkConservation(variant({ outputs = { { count = 1, item = "Base.BrassScrap" } } })), "half is a loss")
+    check(AC_Materials.checkConservation(variant({ loss = false, outputs = { { count = 2, item = "Base.BrassScrap" } } })), "the rule comes from the loss mark, not from the item")
+
+    -- docs/LOOT_AND_RECYCLING.md carries the recycling table, rendered from
+    -- the model.
+    local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+    local document = readFile(ROOT .. "/docs/LOOT_AND_RECYCLING.md")
+    local from = string.find(document, BALANCE.RECYCLING_START, 1, true)
+    local _, to = string.find(document, BALANCE.RECYCLING_FINISH, 1, true)
+    check(from ~= nil and to ~= nil and to > from, "the document has the recycling table markers")
+    eq(string.sub(document, from or 1, to or 1), BALANCE.renderRecyclingBlock(), "the recycling table equals the rendered model (run tests/write_recipes.lua)")
+    eq(BALANCE.replaceRecycling(document), document, "regenerating the recycling table changes nothing")
+    local rendered = BALANCE.renderRecycling()
+    for _, built in ipairs(recipes) do
+        check(string.find(rendered, "| `" .. built.id .. "` |", 1, true) ~= nil, built.id .. " has a row in the recycling table")
+    end
+    local savedYield = C.scrapPerBatch
+    C.scrapPerBatch = 2
+    check(BALANCE.renderRecycling() ~= rendered, "a changed yield changes the rendered recycling table")
+    C.scrapPerBatch = savedYield
+    eq(BALANCE.renderRecycling(), rendered, "and restoring it restores the table")
+
+    -- The module is data and arithmetic only.
+    local source = readFile(LUA .. "shared/AC_Recycling.lua")
+    check(string.find(source, "Events%.") == nil, "the recycling module registers no event")
+    check(string.find(source, "getModData", 1, true) == nil, "and persists nothing")
 end
 
 ------------------------------------------------
@@ -5872,6 +6299,24 @@ do
     check(MOCK.printLogContains("OK: calibre .308 complete") and MOCK.printLogContains("OK: calibre 9mm complete"), "other rifle and pistol calibres stay complete")
     check(MOCK.printLogContains("[AmmoMaking] OK: Base.GunPowder holds 10 uses"), "gunpowder uses probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: AC_CaseQuality effects"), "quality effects probed")
+
+    -- Brass recycling: its own rule is checked at game start.
+    check(MOCK.printLogContains("[AmmoMaking] OK: brass recycling (half of the brass comes back, no XP)"), "recycling reported sound")
+    for _, id in ipairs({ "AmmoMaking_ScrapBrass5", "AmmoMaking_ScrapBrass10", "AmmoMaking_ScrapBrass15", "AmmoMaking_CastBrassIngotFromScrap" }) do
+        check(MOCK.printLogContains("[AmmoMaking] OK: recipe " .. id), "recycling recipe probed: " .. id)
+    end
+    check(MOCK.printLogContains("[AmmoMaking] OK: Base.BrassScrap"), "brass scrap probed")
+    do
+        local savedXP = AC_Recycling.CONFIG.xp
+        AC_Recycling.CONFIG.xp = 3
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local _, broken = AC_Compat.run(true)
+        MOCK.capturePrint(false)
+        AC_Recycling.CONFIG.xp = savedXP
+        check(broken.warnings >= 1, "recycling that awards XP is a warning at game start")
+        check(MOCK.printLogContains("WARNING: recycling: recycling must award no XP, not 3 (recycling may create brass or award XP)"), "and names the problem")
+    end
 
     -- Die set loot: what the registration found when the world loaded.
     local function lootRun(change)

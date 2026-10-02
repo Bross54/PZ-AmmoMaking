@@ -5,8 +5,8 @@
 -- Loads the mod against the mocked API, renders every recipe of
 -- AC_Materials.RECIPES with tests/render_recipes.lua and rewrites the body
 -- of AC_Recipes.txt, keeping its leading comment. It also rewrites the
--- generated balance tables of docs/AMMUNITION_DESIGN.md, the loot table of
--- docs/LOOT_AND_RECYCLING.md and the calibre table of README.md, between
+-- generated balance tables of docs/AMMUNITION_DESIGN.md, the loot and
+-- recycling tables of docs/LOOT_AND_RECYCLING.md and the calibre table of README.md, between
 -- their marker comments
 -- (tests/render_balance.lua). Run it after changing a
 -- recipe in AC_Materials.lua or a calibre in AC_Calibres.lua; then run
@@ -56,4 +56,5 @@ rewrite(DOCUMENT, BALANCE.replaceBlock, "balance tables")
 
 local VANILLA = dofile(ROOT .. "/tests/vanilla_snapshot.lua")
 rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", function(text) return BALANCE.replaceLoot(text, VANILLA) end, "loot table")
+rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", BALANCE.replaceRecycling, "recycling table")
 rewrite(ROOT .. "/README.md", BALANCE.replaceSummary, "calibre table")

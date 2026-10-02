@@ -2,7 +2,8 @@
 -- Project Zomboid Build 42.20
 --
 -- Metallurgy (ore to brass), case stock (brass to case
--- cups) and the ammunition components of AC_Calibres extend
+-- cups), the ammunition components of AC_Calibres and the
+-- brass recycling of AC_Recycling extend
 -- the vanilla stations; they are not systems of their own.
 -- The recipes are ordinary craftRecipe blocks
 -- in media/scripts/AC_Recipes.txt, attached to the vanilla
@@ -35,6 +36,7 @@
 -- The component recipes and their units are built from the
 -- calibre definitions, which must be loaded first.
 require "AC_Calibres"
+require "AC_Recycling"
 
 AC_Materials = AC_Materials or {}
 
@@ -136,8 +138,8 @@ AC_Materials.ITEMS = {
 -- turns 1 ore into 10 scrap, and casting takes 10 scrap
 -- per ingot.
 --
--- Base.BrassScrap is listed for the later recycling
--- stage; no recipe touches it yet.
+-- Base.BrassScrap is what the recycling recipes make of
+-- unwanted brass components (AC_Recycling).
 ------------------------------------------------
 
 AC_Materials.UNITS = {
@@ -429,6 +431,22 @@ for _,
     recipe
 in ipairs(
     AC_Calibres.buildRecipes()
+)
+do
+
+    table.insert(
+        AC_Materials.RECIPES,
+        recipe
+    )
+end
+
+
+-- Brass recycling: components to brass scrap, with a loss
+-- and no XP, and brass scrap back to an ingot.
+for _,
+    recipe
+in ipairs(
+    AC_Recycling.buildRecipes()
 )
 do
 
@@ -766,6 +784,10 @@ end
 -- charcoal and fertilizer). Such a recipe must still
 -- consume something.
 --
+-- recipe.loss marks a recipe that must end with LESS of
+-- every material than it took (scrapping brass): coming out
+-- even is a failure there.
+--
 -- Returns ok and a reason string for a failure.
 ------------------------------------------------
 
@@ -832,6 +854,23 @@ function AC_Materials.checkConservation(
                 .. metal
                 .. " from "
                 .. available
+        end
+
+
+        if recipe.loss
+            and units >= available
+        then
+
+            return
+                false,
+                recipe.id
+                .. " must lose "
+                .. metal
+                .. ": "
+                .. available
+                .. " in, "
+                .. units
+                .. " out"
         end
 
 

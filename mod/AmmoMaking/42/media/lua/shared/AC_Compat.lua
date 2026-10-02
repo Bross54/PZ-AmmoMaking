@@ -32,6 +32,7 @@
 
 require "AC_Calibres"
 require "AC_Loot"
+require "AC_Recycling"
 
 AC_Compat = AC_Compat or {}
 
@@ -1554,6 +1555,82 @@ end
 
 
 ------------------------------------------------
+-- Brass recycling (AC_Recycling): it loses brass and
+-- awards nothing. Its recipes and items are probed with
+-- all the others (checkMetallurgyRecipes, REQUIRED_ITEMS);
+-- this is the model's own rule.
+------------------------------------------------
+
+local function checkRecycling(
+    results
+)
+
+    if type(AC_Recycling) ~= "table" then
+
+        addResult(
+            results,
+            "WARNING",
+            "brass recycling",
+            "AC_Recycling is not loaded"
+        )
+
+
+        return
+    end
+
+
+    local problems,
+          err =
+        safe(
+            AC_Recycling.validate
+        )
+
+
+    if err then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "brass recycling model",
+            tostring(err)
+        )
+
+
+        return
+    end
+
+
+    if #problems == 0 then
+
+        addResult(
+            results,
+            "OK",
+            "brass recycling (half of the brass comes back, no XP)"
+        )
+
+
+        return
+    end
+
+
+    for _,
+        problem
+    in ipairs(
+        problems
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "recycling may create brass or award XP"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- Die set loot (AC_Loot): the model is sound, and the
 -- registration that ran when the world loaded found
 -- every list it targets, in use.
@@ -1920,6 +1997,8 @@ function AC_Compat.run(
     checkMetallurgyRecipes(results)
 
     checkCalibres(results)
+
+    checkRecycling(results)
 
     checkLoot(results)
 

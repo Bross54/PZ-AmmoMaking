@@ -49,5 +49,9 @@
     "AmmoMaking_ForgeDieSet12Gauge": "Forge 12 Gauge Handloading Die Set",
     "AmmoMaking_FormCase12Gauge": "Form 12 Gauge Brass Hull",
     "AmmoMaking_SwageBullets12Gauge": "Swage 12 Gauge Copper Shot Charge",
-    "AmmoMaking_AssembleRound12Gauge": "Assemble 12 Gauge Shell"
+    "AmmoMaking_AssembleRound12Gauge": "Assemble 12 Gauge Shell",
+    "AmmoMaking_ScrapBrass5": "Scrap Brass Cups and Small Cases",
+    "AmmoMaking_ScrapBrass10": "Scrap Small Brass Sheets and Medium Cases",
+    "AmmoMaking_ScrapBrass15": "Scrap Large Brass Cases and Hulls",
+    "AmmoMaking_CastBrassIngotFromScrap": "Cast Brass Ingot (Brass Scrap)"
 }
