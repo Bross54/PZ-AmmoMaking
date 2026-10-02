@@ -56,21 +56,21 @@ never move an item into that list.
 | `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology, depletion records in global ModData |
 | `shared/AC_Mining.lua` | shared | Pickaxe rules, prospect lookup, `extract()` (the only mutation point of the mining loop) |
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
-| `shared/AC_Calibres.lua` | shared | Calibre definitions and defaults, primer families, priming-compound sources, powder; builds the component recipes, their material units and the item list from that data |
+| `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the prepared press; builds the component recipes, their material units and the item list from that data; validates it |
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
-| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 47 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 8 |
+| `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 51 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9 |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
 | `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
-| `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype |
+| `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype (test cartridge only), and `AmmoInspection.inspectComponent`: the read-only inspection of real cases and loose handloaded rounds |
 | `client/AC_GeologySamplingContextMenu.lua` | client | Dig / assay / laboratory menus (place, start, cancel, collect, pick up) |
 | `client/AC_DigGeologicalSampleAction.lua` | client | Shovel timed action |
 | `client/AC_PickUpAnalyzerAction.lua` | client | Timed action that picks a placed analyzer up again |
 | `client/AC_MiningContextMenu.lua` | client | Mining options and tooltips |
 | `client/AC_MineOreAction.lua` | client | Pickaxe timed action |
 | `client/AC_GeologyAssayUI.lua`, `client/AC_AmmoInspectionUI.lua` | client | Result panels |
-| `client/AC_GeologyDebug.lua` | client | "Ammo Making Debug" submenu (`-debug` only), including the analyzer inspect / complete tools |
-| `client/AC_AmmoContextMenu.lua` | client | Ammunition inspection and debug presets |
+| `client/AC_GeologyDebug.lua` | client | The "Ammo Making Debug" tree (`-debug` only): Geology, Analyzer, Metallurgy, Ammunition |
+| `client/AC_AmmoContextMenu.lua` | client | *Inspect Ammunition* on cases and loose handloaded rounds; the test cartridge's inspection and debug presets |
 
 Load order is alphabetical within `shared/`, `client/` and `server/`. Modules
 only reference each other from inside functions, so the order does not matter at
@@ -393,7 +393,7 @@ Design, recipe table and vanilla evidence: `docs/METALLURGY_DESIGN.md` and
 Console lines:
 
 ```text
-[AmmoMaking] Station recipes: 47 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
+[AmmoMaking] Station recipes: 51 given the Ammo Making requirement, 0 already had it, 0 not found, 0 unsupported
 [AmmoMaking] Crafting (AmmoMaking_CastBrassIngots): +25 Ammo Making XP (total 40 -> 65)
 [AmmoMaking] WARNING: recipe skill requirements not applied: <error>
 ```
@@ -416,8 +416,11 @@ as their vanilla templates do. The cup has no calibre and no ModData.
 
 ### Ammunition components
 
-Design, recipe table, balance and vanilla evidence:
-`docs/AMMUNITION_DESIGN.md`, `docs/VANILLA_AMMUNITION_RESEARCH.md`.
+Design, recipe table, the generated balance tables and vanilla evidence:
+`docs/AMMUNITION_DESIGN.md`, `docs/VANILLA_AMMUNITION_RESEARCH.md`,
+`docs/RIFLE_AMMUNITION_RESEARCH.md`, `docs/SHOTGUN_AMMUNITION_RESEARCH.md`.
+The planned press: `docs/RELOADING_PRESS_DESIGN.md`. Boxes, loot, magazines
+and recycling: `docs/AMMUNITION_ROADMAP.md`.
 
 - **Data, not code.** `AC_Calibres.LIST` holds one definition per calibre;
   `AC_Calibres.define()` fills everything it leaves out from `DEFAULTS` and
@@ -430,16 +433,33 @@ Design, recipe table, balance and vanilla evidence:
   one in `primerFamily`. Primer recipes are generated per family and
   compound source. No file outside `AC_Calibres.lua` contains a primer item
   id (tested).
-- **Classes.** `class` is `"pistol"` (default) or `"rifle"`.
+- **Classes.** `class` is `"pistol"` (default), `"rifle"` or `"shotgun"`.
   `AC_Calibres.CLASSES[class]` supplies what a definition leaves out, between
-  `DEFAULTS` and the definition; a primer family's `class` must equal its
-  calibre's. Nothing else branches on it: rifle recipes come out of the same
-  generator, and there is no rifle file.
+  `DEFAULTS` and the definition, and a `label` for the summaries. A primer
+  family's `class` must equal its calibre's, unless the calibre's class names
+  another in `primerClass`; only the shotgun class does (`"pistol"`). Nothing
+  else branches on a class: rifle and shell recipes come out of the same
+  generator, and there is no rifle or shotgun file.
+- **The shell** is a calibre whose `case` is the hull and whose `bullet` is
+  the shot charge (explicit item ids), with `wads = 1`: one more assembly
+  input, `AC_Calibres.WAD.items`, written `mode:destroy` (a mirror input with
+  `destroy = true`).
+- **The press** is described and switched off: `AC_Calibres.PRESS`,
+  `buildPressRecipes(calibre)` and `validatePress()`. `buildRecipes()` adds
+  the press recipes only when `PRESS.enabled`; with it off nothing of the
+  press exists outside `AC_Calibres.lua` and the tests.
+- **One place for balance.** `CONFIG`, `POWDER`, `COMPOUND_SOURCES`,
+  `PRIMERS`, `DEFAULTS`, `CLASSES`, `LIST` and `PRESS` in `AC_Calibres.lua`
+  hold every number. `AC_Recipes.txt`, the balance tables of
+  `docs/AMMUNITION_DESIGN.md` §2 and the calibre table of `README.md` are
+  generated from them by `tests/write_recipes.lua`; the suite fails while any
+  of the three differs from the model.
 - **Validation.** `AC_Calibres.validate(list, primers)` is pure and returns
   problems as `"<calibre>: text"`: duplicate ids or suffixes, an unknown
   class, an item used by two calibres or two roles, a non-vanilla round, an
-  unknown primer family, a primer family of the other class,
-  fractional cups / bullets / powder, a component that unlocks after its
+  unknown primer family, a primer family of a class the calibre's class may
+  not take, an unknown `primerClass`, fractional cups / bullets / powder /
+  wads, a shell without a wad, a component that unlocks after its
   round, a primer that does not use exactly one sheet. The suite requires
   the live model to return none and feeds it broken copies; `AC_Compat` runs
   it at game start.
@@ -465,9 +485,10 @@ Design, recipe table, balance and vanilla evidence:
 - **Levels are enforced only through the attached requirement.** The
   compatibility check names every recipe whose requirement is missing and
   what level it should have had.
-- **Compatibility lines for calibres**: `OK: calibre model (8 calibres, 4
+- **Compatibility lines for calibres**: `OK: calibre model (9 calibres, 4
   primer families)`, then `OK: calibre <id> complete` or `WARNING: calibre
-  <id> incomplete (missing …; the other calibres are unaffected)`, and
+  <id> incomplete (missing …; the other calibres are unaffected)`, one
+  summary line per class (`Pistol calibres: 5/5 complete`), and
   `OK: Base.GunPowder holds 10 uses` (read from the item script's
   `getUseDelta()`; a different number is a WARNING because the powder
   accounting assumes ten).
@@ -480,7 +501,7 @@ Design, recipe table, balance and vanilla evidence:
 Console lines:
 
 ```text
-[AmmoMaking] Calibre definitions loaded (8)
+[AmmoMaking] Calibre definitions loaded (9)
 [AmmoMaking] Crafting (AmmoMaking_FormCase9mm): +1 Ammo Making XP (total 80 -> 81)
 [AmmoMaking] WARNING: caseQuality failed for AmmoMaking_FormCase9mm: <error>
 ```
@@ -493,7 +514,160 @@ Console lines:
 - Run `applySkillRequirements()` on the server and on every client.
 - Case quality is written in `OnCreate`, on the server. Whether ModData set
   there reaches clients needs checking before quality is used for anything.
-- Nothing else: there is no custom state, command or timed action.
+- Component inspection is client-side and read-only; it needs nothing.
+- The press, when built, is a vanilla `CraftBench` entity with vanilla
+  authority and persistence (`docs/RELOADING_PRESS_DESIGN.md` §8).
+- Nothing else: the ammunition stage has no custom state, command or timed
+  action. Everything it changes, it changes through vanilla recipes.
+
+## Persisted data (ModData)
+
+Everything the mod stores in a save, reviewed from the code on 2026-10-02.
+Whether item and world-object ModData survive save/reload and chunk unloading
+is engine behaviour and is listed under *REQUIRES IN-GAME VERIFICATION*; the
+depletion store was seen working in game.
+
+**Nothing else is persisted.** Geology and seeds are recomputed each session
+from the save's identity (`AC_WorldData`; its `cached*` fields are a runtime
+cache). Ammo Making XP is the engine's perk. Calibres, recipes and balance are
+code, not save data, so changing them never needs a migration.
+
+### Global: `ModData.getOrCreate("AmmoMakingDeposits")`
+
+The only global table, and the only `ModData.*` call in the mod. Created
+lazily by `AC_Deposits.getStore()` on any read; nothing is transmitted.
+
+| Key | Value | Lifecycle | Malformed data |
+|---|---|---|---|
+| `version` | `1` | set when missing; **never read or compared** | restored when nil |
+| `tiles` | table keyed `"x,y"` | created with the store | a non-table is replaced by `{}` with a warning (the records are lost) |
+| `tiles[k].copper`, `.zinc` | units extracted, integer ≥ 0; `0` means "worked, nothing there" | written on the first extraction attempt, only ever increases; removed only by the debug reset | a non-table record reads as unworked; a count is `math.max(0, tonumber(v) or 0)` |
+
+Only worked tiles are stored. Reserves come from geology, so a rebalance
+keeps old saves valid: the stored number is what was taken, not what is left.
+
+### Item: `AmmoMaking.GeologicalSample`
+
+| Key | Value | Written | Read |
+|---|---|---|---|
+| `sampleX`, `sampleY` | tile coordinates | when dug | prospect lookup (guarded with `tonumber`), result panel, menu labels |
+| `trueCopper`, `trueZinc` | hidden 3x3 average, 0–100 | when dug | every assay (`tonumber(v) or 0`) |
+| `assayRank` | 0 none, 1 field, 2 advanced, 3 laboratory | by each assay | everywhere as `tonumber(v) or 0` |
+| `copperGrade`, `zincGrade` | grade name | by each assay | prospect lookup, result panel |
+| `copperMin/Max`, `zincMin/Max` | 0–100, rank 2 only | advanced assay | result panel |
+| `labCopperResult`, `labZincResult` | 0–100 | laboratory collection | result panel |
+| `AmmoMakingGeologicalSample`, `geologySeed`, `trueCopperPeak`, `trueZincPeak`, `assayType`, `labStartedAt`, `labReadyAt`, `labProcessing` | markers and records | when dug or assayed | **never read by logic** (`labProcessing` is only ever written `false`) |
+
+A sample that goes into the analyzer is removed; its fields travel as
+`stored_<field>` on the analyzer and a new item is created on collect or
+cancel.
+
+### Item: `AmmoMaking.FieldAssayKit`, `AmmoMaking.AdvancedFieldAssayKit`
+
+`AmmoMakingAssayKitInitialized` (flag), `assayKitType` (never read),
+`assayMaxUses` (20 or 10), `assayUsesRemaining` (counts down). Created the
+first time a kit is looked at, which is when the inventory menu opens on a
+sample.
+
+### Laboratory analyzer: the placed `IsoThumpable`'s ModData, or the dropped item's
+
+Both carriers use the same keys (`AC_LaboratoryAnalyzer.getAnalyzerData`).
+
+| Key | Value | Malformed data |
+|---|---|---|
+| `AmmoMakingLaboratoryAnalyzerWorldObject` | `true` on a placed object | falls back to the object name |
+| `labAnalyzerState` | `idle`, `processing`, `ready` | `normalizeState` repairs an unknown state and logs it |
+| `storedSample` | `true` while a sample is inside | must be exactly `true` |
+| `stored_<field>` | the fifteen sample fields | copied back as they are |
+| `labRemainingHours`, `labLastUpdateAt` | hours | dropped and rebuilt when not a number |
+| `labReadyAt` | hours | read only by the one migration below |
+| `labCopperResult`, `labZincResult` | 0–100, rolled at start | re-rolled from the stored truth when missing |
+| `labStartedAt`, `AmmoMakingLaboratoryAnalyzer` | records | not read by logic |
+
+**The one migration in the mod**: an analyzer saved by the first version, with
+`labReadyAt` and no `labRemainingHours`, gets its remaining hours computed
+from `labReadyAt` (`updateState`). The dropped item is the legacy carrier and
+is still supported; placing it copies its state onto the object.
+
+### Item: a calibre's case (or hull) and its round
+
+| Key | On | Value | Lifecycle | Malformed data |
+|---|---|---|---|---|
+| `caseQuality` | case | 1–100 | rolled in the forming recipe's `OnCreate`; the case is consumed at assembly | not a number → none; clamped to 1–100 |
+| `AmmoMakingCase` | case | `true` | with it | never read |
+| `casingQuality` | round | 1–100, the average of the consumed cases | written at assembly; **gone once the round is loaded or boxed** | not a number → none; clamped to 1–100 |
+| `AmmoMakingHandloaded` | round | `true` | with it | never read |
+
+### Item: `AmmoMaking.TestCartridge` (prototype)
+
+`AmmoMakingQualityInitialized`, the four component qualities, `powderLoad`,
+`reloadCount` and the three derived values (`AmmoQuality.DEFAULTS`). A field
+that is missing or not a number gets its default back on the next inspection.
+
+**One name, two meanings.** `casingQuality` is a prototype field on the test
+cartridge and the inherited case quality on a real round.
+`AmmoQuality.initialize` must never be given a real round (it would write
+100 over the round's record); the only caller checks the item type first,
+and a test asserts that inspecting a real component writes nothing.
+
+### What the review found, and what was done
+
+| Finding | Action |
+|---|---|
+| A round's `casingQuality` was returned unclamped: damaged data showed as "Excellent (900)" | **fixed**: clamped like a case's quality |
+| A test cartridge with its flag set and a field missing raised "arithmetic on a nil value" in the menu click | **fixed**: missing or non-numeric fields are restored to their defaults |
+| The deposits `version` is written and never read | left: there is one schema; it is there for the first real migration |
+| Several keys are written and never read (table above) | left: harmless, and removing a key from a system confirmed in game buys nothing |
+| `labProcessing` is tested for `true` and only ever written `false` | left: dead state on in-game-confirmed code; noted for the next change to that file |
+| A sample whose grade is damaged into a non-string still counts as a prospect; a kit whose remaining uses are damaged reads as empty; `storedSample` damaged into a truthy non-`true` value loses the stored sample; a sample with damaged coordinates shows a raw placeholder | left: each needs hand-edited or corrupt save data, none raises an error, and geology (not the sample) still decides what a tile yields |
+
+No schema migration was added: nothing has been renamed since the keys were
+introduced, apart from the `labReadyAt` case that is already handled.
+
+### Reads that write
+
+Not bugs, but worth knowing when adding multiplayer or a "view only" tool:
+
+- Any deposits read creates the global table (never a tile record).
+- Opening a menu on an analyzer runs `updateState`, which credits time,
+  repairs state and may rename a dropped analyzer. The read-only path is
+  `isIdleAndEmpty`.
+- Opening the inventory menu on a sample initialises and renames the kits.
+- Inspecting the **test cartridge** fills in and recomputes its prototype
+  fields. Inspecting a real case or round (`inspectComponent`) only reads.
+
+## Multiplayer hazards (review; nothing is implemented)
+
+Mining and analyzer placement are disabled for multiplayer clients
+(`AC_Mining.isAvailable`, `AC_LaboratoryAnalyzer.isPlacementAvailable`, both
+`not isClient()`); the mining design is in `MULTIPLAYER_MINING.md`. The mod
+has no `sendClientCommand`, no `OnClientCommand` and no `ModData.transmit`.
+State that a server would have to own, as the code stands:
+
+| System | Client-side state change today | Needs |
+|---|---|---|
+| Deposits | the global depletion table, written by `extract` | server-owned store, transmitted (designed) |
+| Seeds | derived from the local world identity | the server's identity on every client |
+| Digging a sample | local `AddItem`, sample ModData, shovel wear | a server command |
+| Field and advanced assay | kit and sample ModData, XP | a server command |
+| Laboratory analyzer | object or item ModData, the sample removed and re-created, XP, and time credited by whichever client opens the menu | server-owned state and `transmitModData`; the lazy timer per client is the main hazard |
+| **Ammunition (this stage)** | **none of its own** | see below |
+
+The ammunition stage was built so that it adds nothing to this list. Every
+change it makes goes through a vanilla `craftRecipe`, which the server
+performs. The two things that happen in `OnCreate` are the open points:
+
+- XP is granted with the single-player call; a server needs vanilla's
+  `addXp(character, perk, amount)`.
+- Case and round quality are written to item ModData in `OnCreate`; whether
+  that reaches clients is unverified. Nothing gameplay-relevant reads it.
+
+`applySkillRequirements()` changes recipe scripts in memory and has to run on
+the server and on every client; it already runs on `OnGameBoot` and
+`OnGameStart`. Inspection is client-side and read-only. The press, when it is
+built, is a vanilla entity with vanilla authority. No networking code was
+added in this pass: there is no current exploit to close, because the
+client-side systems are disabled for clients.
 
 ## Compatibility self-check
 
@@ -633,12 +807,36 @@ run through every recipe to 100 rounds of 9mm with metal unchanged. Further
 sections pin the calibre matrix, check primer-family parity, prove that no
 component or die set of one calibre can be used by another (in the mirror,
 in the generated script text and on an executed inventory), and simulate a
-career from the first ore through pistols and on to rifles, printing the ore
-needed for each level, when the first rifle round is made, and the share of
-XP by family of work. Tampered recipes (two rounds out, no
-case, no primer, no bullet, no powder, an undeclared source, a jar from one
-dismantled round) must be rejected by the conservation check; that is how
-the alloy-parts flaw in an earlier version of the check was found.
+career from the first ore through pistols and shells and on to rifles,
+printing the ore needed for each level, when the first shell and the first
+rifle round are made, and the share of XP by family of work. Tampered recipes
+(two rounds out, no case, no primer, no bullet, no powder, an undeclared
+source, a jar from one dismantled round) must be rejected by the conservation
+check; that is how the alloy-parts flaw in an earlier version of the check
+was found.
+
+Later sections: the generated balance tables (the design document and the
+README equal the rendering of the model), the prepared press recipes (same
+material, same die set, faster, absent from the live list), component
+inspection against items whose ModData refuses every write, and startup cost
+(which events the mod listens to, and that no menu, action or callback
+validates the model or rebuilds a recipe list).
+
+**Source-level mutation run.** On 2026-10-02, 52 single changes were applied
+one at a time to the real mod files (the calibre model, the materials module,
+the compatibility check, the debug and inspection code, the generated script,
+the item script and the translation files), the whole suite was run for each,
+and the file was restored: an extra round or bullet or primer per craft, a
+smaller charge, another calibre's case or bullet, any or the wrong primer
+family, a consumed die set or hammer, XP granted twice, changed cups or
+sheets or alloy yields, a mis-mapped vanilla round or ammo type, a removed
+compatibility probe, a hand-edited script, a kept or missing wad, a shell
+with a rifle primer, a double powder yield, changed levels and XP values, the
+press switched on or keeping its hammer or dropping its die set, a debug menu
+shown in normal play, an inspection that writes to its item, a missing name,
+a removed or duplicated item. Every one made the suite fail. The run is not
+part of the repository; it is a loop over `(file, old text, new text)` around
+the suite.
 
 Static checks worth running after a change (no game needed): the suite, a
 `loadfile` on every `.lua`, `tests/write_recipes.lua` followed by `git diff`
@@ -696,14 +894,25 @@ for a script field or tag that is not in the tests' whitelists.
   - inputs are consumed, crucible / tongs / mold are kept, a clay mold
     breaks, and the outputs are 10 zinc scrap, 1 ingot, 10 `Base.BrassIngot`;
   - the `Crafting (...)` XP line appears once per craft, also in a batch;
-  - the boot line reports 47 recipes given the requirement, the UI shows Ammo
+  - the boot line reports 51 recipes given the requirement, the UI shows Ammo
     Making 0, and a higher level shortens the craft;
   - zinc item names, icons and world models; carrying the 40-weight zinc ore;
   - every metallurgy line of the compatibility check is OK.
 - **Ammunition components** (nothing in it has run in game): the list in
-  `docs/AMMUNITION_DESIGN.md` §12: one round per assembly craft, drainable
+  `docs/AMMUNITION_DESIGN.md` §13: one round per assembly craft, drainable
   inputs taking uses, kept tools, level gates, quality on cases and rounds,
   ModData persistence, a handloaded round firing like a vanilla one.
+- **12 gauge shells**: `docs/SHOTGUN_AMMUNITION_RESEARCH.md` §6 (the
+  `mode:destroy` wad line, one shell per craft, boxing, the shells bandolier,
+  nine pellets).
+- **Component inspection**: *Inspect Ammunition* appears on an empty case and
+  on a loose handloaded round and on nothing else; the window opens; a stack
+  of cases shows the first one's quality.
+- **The compatibility output**: a normal start prints the three class lines
+  and the totals and no `OK:` line; `-debug` prints them all.
+- **The debug tree**: nested submenus open and every leaf acts.
+- **The reloading press**: everything in `docs/RELOADING_PRESS_DESIGN.md` §9;
+  nothing of it is in the game yet.
 - **Case stock** (nothing in it has run in game): Forge Small Brass Sheets
   at a forge gives 10 sheets from one ingot and keeps hammer and tongs; Punch
   Brass Case Cups in the crafting menu at a surface gives 2 cups per sheet and
