@@ -1,195 +1,122 @@
-# Ammunition: groundwork for the next stages
+# Ammunition roadmap
 
-Status: **RESEARCH AND DESIGN ONLY. Nothing in this document is
-implemented.** It records what the installed Build 42.20.4 files say about
-ammo boxes, loot, magazines and recycling, and what follows for this mod.
+Where the ammunition stage stands after the pass of 2026-10-02, and what
+comes next. Everything marked *implemented* is Lua and data checked offline
+only; what the running game has to confirm is collected in each document's
+`REQUIRES FUTURE IN-GAME VERIFICATION` section and summarised in
+`DEVELOPMENT.md`.
 
-Vanilla facts were read on 2026-10-02 (paths relative to `media/`), marked
-**FILE** (read in a script or Lua file), **JAR** (read from
-`projectzomboid.jar`), **INFERRED**, or **WORKSHOP CLUE** (an installed
-Workshop mod; a hint, not proof).
+## 1. Status
 
-## 1. Ammo boxes: nothing to build
+| Area | Status | Where |
+|---|---|---|
+| Geology, sampling, assay, analyzer, mining | implemented, seen working in game | `DEVELOPMENT.md` |
+| Metallurgy, case stock | implemented | `METALLURGY_DESIGN.md` |
+| Nine calibres: cases, bullets, primers, powder, assembly | implemented | `AMMUNITION_DESIGN.md` |
+| **Die sets as rare loot** | **implemented this pass** | `LOOT_AND_RECYCLING.md` 1 |
+| **Brass recycling** | **implemented this pass** | `LOOT_AND_RECYCLING.md` 2 |
+| **Ammo boxes** | **nothing to build**: vanilla boxes handloaded rounds; pinned by tests and probed at game start | `LOOT_AND_RECYCLING.md` 3 |
+| Component loot | deliberately none | `LOOT_AND_RECYCLING.md` 1.3, 4 |
+| **Save data** | **hardened this pass**: schema, fuzz, range repairs | `DEVELOPMENT.md`, `AC_SaveData.lua` |
+| Reloading press | designed; recipes prepared and switched off; **blocked on sprites** | `RELOADING_PRESS_DESIGN.md` |
+| Spent cases | **researched this pass; not implemented** | `SPENT_CASE_RESEARCH.md` |
+| Quality that affects firing | **carrier designed this pass; no effect exists** | `AMMO_QUALITY_RUNTIME_DESIGN.md` |
+| Multiplayer | reviewed, nothing implemented | `DEVELOPMENT.md`, `MULTIPLAYER_MINING.md` |
 
-FILE `scripts/generated/recipes/recipes_ammunition.txt`, the one packing
-recipe, verbatim:
+Numbers: 41 mod items, 55 recipes (51 manufacturing, 3 scrapping, 1 recast),
+22 loot entries in 4 vanilla lists.
+
+## 2. What the research settled
+
+Kept here in one line each; the evidence is in the documents named above.
+
+- **Boxes.** `place_ammo_in_box` takes the nine rounds by item type, with no
+  box item, tool or `OnCreate`. A handloaded round is the vanilla item. The
+  casing-quality record is lost at boxing, as at loading.
+- **Loot.** Lists are Lua tables parsed once per world load, after
+  `OnPreDistributionMerge`; a weight is the percent chance per roll. 184 of
+  the 1,420 procedural lists are used by no container, among them three
+  gun-store lists and several that look usable.
+- **Magazines and firearms.** A round becomes a count when loaded; a
+  magazine item is destroyed on insert and a new one made on eject; nothing
+  vanilla carries ModData between round, magazine and gun.
+- **Firing.** The round is taken in Lua, in vanilla's
+  `OnWeaponSwingHitPoint` handler; there is no spent-case item and ejection
+  is only a sound. Revolvers keep a spent count that is not saved; pump,
+  bolt and lever guns eject at the rack.
+- **Brass in the world.** `Base.BrassScrap` is in no live loot list and no
+  vanilla recipe uses it; gunpowder is foraged or taken from rounds; toy
+  caps exist in one location.
+- **Press sprites.** A second claim on a sprite stops every world from
+  loading; every drawable unclaimed vanilla candidate is on the map. No
+  placeholder is provably safe.
+
+## 3. What comes next, by what it is waiting for
+
+### READY WITHOUT GAME TEST
+
+Work that changes data and Lua the offline suite covers end to end.
+
+| Task | Notes |
+|---|---|
+| Copper recycling (bullets and shot back to scrap) | needs a loss model that fits two bullets per scrap; `AC_Recycling` groups by content already |
+| A debug kit for recycling | a spawn entry in the debug tree, like the other stages' kits |
+| Spent-case **data**: `calibre.spentCase`, items, a resizing recipe, the recycling group | all covered by the model tests and generators; do it together with the hook, not before (`SPENT_CASE_RESEARCH.md` 3–4) |
+| The quality tally as pure functions (`load`, `takeOne`, `moveAll`, `reconcile`) | testable exactly as `AC_CaseQuality` is; no vanilla function touched (`AMMO_QUALITY_RUNTIME_DESIGN.md` 4) |
+| Rare component loot through `AC_Loot` | the mechanism and validation exist; whether to do it is a decision (below) |
+| More calibres or shell variants | one `define{}` entry and three items each |
+
+### READY BUT REQUIRES RUNTIME VALIDATION
+
+Written, or one switch away, and unproven until seen in game.
+
+| Task | What has to be seen |
+|---|---|
+| Die-set loot | the log line and the game-start check; a die set in a gun-store display case; the feel of the weights |
+| Brass recycling | the four recipes at a surface and a furnace; a mixed input line filled from several components |
+| Boxing handloaded rounds | `place_ammo_in_box` offered for rounds carrying ModData |
+| The Ammo Making requirement on recipes | `addRequiredSkill` from Lua, the level shown in the crafting UI (open since the metallurgy stage) |
+| Save-data repairs | nothing new to see; they only act on damaged values |
+| Reloading press recipes | `PRESS.enabled = true` once the station exists |
+
+### BLOCKED ON SOMETHING ELSE
+
+| Task | Blocked on |
+|---|---|
+| **Reloading press entity** | **art**: a tile sheet and pack of the mod's own (`RELOADING_PRESS_DESIGN.md` 2.4, 7). The entity script is drafted. |
+| Multiplayer authority | its own stage; mining and analyzer placement are disabled for clients until then |
+
+### BLOCKED ON A GAMEPLAY DECISION
+
+Each needs the project owner to choose before any code is right.
+
+| Task | The decision |
+|---|---|
+| **Spent cases** | Do factory rounds leave reusable brass? All of it or a share? On the ground or in the inventory? What does resizing cost? It changes the brass economy more than anything so far: a looted carton of 9mm is thirty ingots of cases |
+| **Quality effects, misfires, jams** | Whether quality should matter at the shot at all, and through what: vanilla's own jam chance is the natural lever. The carrier is designed; no effect is |
+| Rare component loot | Whether finding primers or cups should be possible; today the answer is no |
+| Press advantage beyond time | A quality bonus or batch size would make the press mandatory rather than convenient |
+| Recycling yield | Half is the highest safe figure today; a different XP model would allow more |
+
+### FUTURE / OPTIONAL
+
+- Lead and its geology; jacketed and cast bullets.
+- Primer and powder chemistry beyond the present stand-ins.
+- Better presses as further bench tags, as the forges do.
+- Progression polish: a use for levels 6 and above (nothing requires them).
+- An inspection tool for a magazine or firearm, once a quality carrier
+  exists.
+
+## 4. Order of work proposed
 
 ```text
-craftRecipe place_ammo_in_box
-{
-    timedAction = PlaceAmmoInBox,
-    time = 15,
-    category = Packing,
-    Tags = InHandCraft,
-    inputs
-    {
-        item 20 [Base.Bullets44;Base.308Bullets;25:Base.ShotgunShells;Base.556Bullets;50:Base.Bullets9mm;50:Base.Bullets45;50:Base.Bullets38;50:Base.Bullets357;Base.3030Bullets] mappers[ammoType] flags[AllowFavorite;InheritFavorite;IsExclusive],
-    }
-    outputs
-    {
-        item 1 mapper:ammoType,
-    }
-    itemMapper ammoType
-    {
-        Base.Bullets44Box = Base.Bullets44,
-        ...
-    }
-}
+1. In-game validation of this pass   loot, recycling, boxing, the recipe skill gate
+2. Reloading press                   needs a tile sheet; everything else is prepared
+3. Spent cases                       decision first, then data, then the hook, off by default
+4. Quality tally                     pure functions, then the wrapped vanilla functions
+5. Quality effects                   only on a tally seen to stay in step
+6. Multiplayer authority             its own stage
 ```
 
-| Round | Box | Rounds per box | Carton (12 boxes) |
-|---|---|---|---|
-| `Base.Bullets9mm`, `Bullets38`, `Bullets45`, `Bullets357` | `…Box` | 50 | `…Carton` |
-| `Base.Bullets44`, `556Bullets`, `3030Bullets`, `308Bullets` | `Bullets44Box`, `556Box`, `3030Box`, `308Box` | 20 | `…Carton` |
-| `Base.ShotgunShells` | `ShotgunShellsBox` | 25 | `ShotgunShellsCarton` |
-
-- The recipe has one input line: the rounds. No empty box item, no tool, no
-  material, no skill. It matches by item type.
-- INFERRED: a handloaded round **is** the vanilla item, so the nine rounds
-  this mod makes can already be boxed and cartoned
-  (`Place12BoxesInCarton`, `recipes_packing.txt`) with no mod work.
-- A box holds a count. A boxed handloaded round loses its casing-quality
-  record, exactly as a loaded one does (`AC_CaseQuality`): opening a box
-  creates fresh items (`OpenBoxOfBullets50`: `item 50 mapper:ammoTypes`).
-
-**Decision: no box recipes and no box items.** Adding "Box Handloaded Rounds"
-would duplicate a vanilla recipe that already accepts them. The only thing
-worth doing is saying so in the inspection text, which already states that
-the record stays with the loose round.
-
-REQUIRES FUTURE IN-GAME VERIFICATION: that `place_ammo_in_box` accepts
-rounds carrying mod ModData, and what `IsExclusive` does with a mixed stack.
-
-## 2. Loot for die sets
-
-### 2.1 How vanilla loot is defined
-
-- FILE `lua/server/Items/ProceduralDistributions.lua`:
-  `ProceduralDistributions.list.<Name> = { rolls = N, items = { "Item",
-  weight, … }, junk = { … } }`.
-- FILE `lua/server/Items/Distributions.lua`: rooms map containers to those
-  lists (`procList = { { name = "GunStoreAmmunition", min = 0, max = 99,
-  weightChance = 100 }, … }`).
-- FILE `lua/server/Items/SuburbsDistributions.lua`: merge helpers and the
-  `OnPreDistributionMerge` / `OnPostDistributionMerge` hooks. JAR
-  `IsoWorld`: those fire just before `ItemPickerJava.Parse()`.
-- JAR `ItemPickerJava`: item ids resolve through `ScriptManager.FindItem`;
-  an unknown id is logged and skipped.
-- Vanilla Lua contains no example of a mod adding to a list. WORKSHOP CLUE:
-  `table.insert(ProceduralDistributions.list["X"].items, "Mod.Item")` then
-  `table.insert(…, weight)` at file load, after
-  `require "Items/ProceduralDistributions"`.
-
-Weights seen in the same file: ammo boxes 10–20 and cartons 1 in
-`GunStoreAmmunition`; `"SmallPunchSet", 8` and `"MetalworkingPunch", 8` in
-tool lists, 1–4 in others; reloading books 10 / 8 / 6 / 4 / 2 in
-`GunStoreLiterature`; very rare tools 0.01–0.1.
-
-**Three lists are dead.** `GunStoreCounter`, `GunStoreDisplayCase` and
-`GunStoreShelf` exist with `-- DEPRECATED` and no items, and
-`Distributions.lua` references none of them: inserting there spawns nothing.
-
-### 2.2 Should die sets be loot?
-
-Today a die set is only crafted: two steel bar quarters at a forge, at Ammo
-Making 1 to 3. That makes the forge a hard requirement for all ammunition.
-
-| Option | For | Against |
-|---|---|---|
-| A. Crafted only (today) | one obtainable path, fully in the mod's own chain; nothing to balance against loot | a player with brass and no forge can make nothing |
-| **B. Crafted, and rare loot** (proposed) | a die set found in a gun store or a hunter's garage is a reason to start handloading that calibre; the forge stays the reliable path | needs a distribution file and in-game tuning |
-| C. Loot only | scarcity | breaks the "genuine raw-material loop": progress would depend on luck |
-
-Proposed for B, to be tuned in game:
-
-| List | Referenced by `Distributions.lua` | Die sets | Weight each |
-|---|---|---|---|
-| `GunStoreAccessories` | 2 containers | all nine | 1 |
-| `GarageFirearms` | 2 | 9mm, .38 Special, .308, 12 Gauge (the common hunting and home calibres) | 0.5 |
-| `Hunter` | 10 | .308, .30-30, 12 Gauge | 0.5 |
-| `ArmyStorageAmmunition` | 3 | 5.56, 9mm | 0.5 |
-
-The die-set list would come from `AC_Calibres.LIST` (each calibre's `dieSet`),
-with the per-list selection as a small table next to it, so a new calibre
-needs one line. Primers and components would **not** be loot: they are the
-mod's manufacturing content.
-
-Not implemented because nothing about it can be validated offline: whether
-the insert runs before the parse on this build, how the weights feel against
-`rolls` and the sandbox loot settings, and whether a list is actually used
-by a container (`MetalWorkerTools`, for instance, is defined but not named
-in `Distributions.lua`).
-
-## 3. Magazines and firearms: no integration needed, none possible cheaply
-
-- FILE `scripts/generated/items/weapon.txt`: a firearm names `AmmoType`,
-  `AmmoBox`, `MaxAmmo` and, when it has one, `MagazineType`; a magazine item
-  names `AmmoType`, `MaxAmmo` and `GunType`.
-- FILE `lua/shared/TimedActions/ISLoadBulletsInMagazine.lua`:
-  `RemoveOneOf(itemKey, true)` then `setCurrentAmmoCount(count + 1)`.
-  `ISReloadWeaponAction.lua`: `getInventory():Remove(bullet)` then
-  `setCurrentAmmoCount(count + 1)`. `ISEjectMagazine.lua` makes a **new**
-  magazine item (`instanceItem(self.gun:getMagazineType())`) and copies the
-  count onto it; `ISUnloadBulletsFromMagazine.lua` makes a new round item.
-- JAR `InventoryItem`: the only ammunition state on an item is `ammoType`,
-  `maxAmmo`, `currentAmmoCount`.
-
-So handloaded rounds work in every vanilla firearm and magazine as they are,
-and **nothing per round survives** a magazine or a firearm; even ModData on
-the magazine is lost when it is ejected. A quality effect on firing would
-need its own carrier (a per-firearm or per-magazine tally maintained by
-wrapping those four timed actions), which is firearm-mechanics work and stays
-out of scope. This is the reason no misfire, jam or damage effect exists.
-
-## 4. Recycling and spent cases
-
-What vanilla offers (FILE unless marked):
-
-- Firing spawns nothing: `ISReloadWeaponAction.lua` resets
-  `setSpentRoundCount(0)` and plays `ShellFallSound`. There is no spent
-  casing, hull, primer or bullet item anywhere in the item scripts or
-  `ItemName.json`.
-- `GatherGunpowder` (pliers kept, `item 1 tags[base:ammo] mode:destroy`)
-  returns `item 1 Base.GunPowder flags[HasOneUse]`: one use, whatever the
-  round. No vanilla recipe returns metal from a round.
-- `Base.BrassScrap` exists, is loot, and **no recipe uses it**.
-  `Base.GunPowder` is in no procedural loot list (foraging only).
-
-Economics, in the mod's units (one round holds 6 to 17 brass, 5 or 10 copper):
-
-| Recycling path | Would return | Verdict |
-|---|---|---|
-| Spent case from firing | the case, 5–15 brass | needs a hook on firing and a new item per calibre; the single largest design step left, and it changes what a firearm does |
-| Pull a round apart (a mod version of `GatherGunpowder`) | case + bullet + primer + powder | must return **at most** what assembly consumed, one use of powder only if vanilla's own recipe is not also usable on the same round; otherwise it is a duplication loop |
-| Melt cases and brass scrap back to ingots | 10 cases of 5 brass → half an ingot | simple, conservative, and gives `Base.BrassScrap` (already in `AC_Materials.UNITS`, unused) a purpose |
-
-Rules any recycling recipe must obey, all already checkable by
-`AC_Materials.checkConservation` and the metal-flow graph test:
-
-1. No recipe returns more of any material than the consumed item holds.
-2. A loss on the way back (for example nine tenths) is allowed; a gain never.
-3. The graph may gain a cycle (case → brass → case), so the "no loop returns
-   to an item" test becomes "every loop loses material", and XP on a
-   recycling recipe must be zero or the loop farms XP.
-
-## 5. Order of work
-
-```text
-1. Reloading press            the station entity and sprites; recipes are prepared
-                              (RELOADING_PRESS_DESIGN.md)
-2. Die sets as rare loot      one distribution file, tuned in game (§2)
-3. Brass recycling            melt cases and Base.BrassScrap back to ingots, with a
-                              loss and no XP (§4)
-4. Spent cases                a firing hook and a spent-case item per calibre;
-                              resize and reprime instead of forming from cups
-5. Quality that matters       a carrier on the firearm or magazine (§3), then
-                              misfires and jams on vanilla's own jam mechanic
-```
-
-Steps 1 to 3 touch no firearm code. Steps 4 and 5 do, and are the point at
-which the architecture changes; each needs a decision from the project owner
-before it starts.
-
-Not on the list, deliberately: lead and its geology, shell variants
-(vanilla puts the pellet count on the gun), primer and powder chemistry,
-multiplayer authority (its own stage: `MULTIPLAYER_MINING.md`).
+Steps 1 and 2 touch no firearm code. Steps 3 to 5 do, and each begins with a
+decision, not with code.
