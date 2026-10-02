@@ -166,7 +166,7 @@ receives the created items if a later stage wants to mark them.
 | `media/scripts/AC_Items.txt` | zinc ore / scrap / ingot |
 | `media/lua/shared/AC_Materials.lua` | item ids, `UNITS`, `RECIPES` mirror, `VANILLA_RECIPES` (for the loop check), `checkConservation`, `getExpectedTime`, the `OnCreate` callbacks, `applySkillRequirements` |
 | `media/lua/shared/AC_Compat.lua` | probes for the metallurgy item ids, each recipe script, its callback and its requirement |
-| `media/lua/client/AC_GeologyDebug.lua` | Spawn Metallurgy Kit, Inspect Station Recipes |
+| `media/lua/client/AC_GeologyDebug.lua` | Spawn Metallurgy Kit, Inspect Station Recipes, Print Material Ledger |
 | `Translate/EN/Recipes.json`, `ItemName.json` | recipe and item names |
 
 `AC_Materials.CONFIG`: `unitsPerIngot` 100, `xpSmeltZincOre` 3, `xpCastIngot` 5,

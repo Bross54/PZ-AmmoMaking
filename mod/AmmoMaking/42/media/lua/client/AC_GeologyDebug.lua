@@ -1241,6 +1241,172 @@ end
 
 
 ------------------------------------------------
+-- Prints how much tracked material the player carries:
+-- one line per item type that holds any, then the total
+-- per material. Printed before and after a craft, the
+-- totals must be equal (or lower, for a recycling
+-- recipe): the in-game check of the conservation the
+-- offline tests assert. Read-only.
+--
+-- Counts items, with the same inventory call the other
+-- inspectors use. Drainables are not counted (see
+-- AC_Materials.ledger).
+------------------------------------------------
+
+local function printMaterialLedger(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local names = {}
+
+
+    for itemType in pairs(
+        AC_Materials.UNITS
+    )
+    do
+
+        table.insert(
+            names,
+            itemType
+        )
+    end
+
+
+    table.sort(
+        names
+    )
+
+
+    local counts = {}
+
+
+    log("MATERIAL LEDGER (carried items; drainables not counted)")
+
+
+    for _,
+        itemType
+    in ipairs(
+        names
+    )
+    do
+
+        local items =
+            player:getInventory():
+                getItemsFromFullType(
+                    itemType,
+                    true
+                )
+
+
+        local count =
+            items and items:size() or 0
+
+
+        if count > 0
+            and not AC_Materials.UNITS[itemType].uses
+        then
+
+            counts[itemType] = count
+
+
+            local parts = {}
+
+
+            for material,
+                units
+            in pairs(
+                AC_Materials.ledger({ [itemType] = count })
+            )
+            do
+
+                table.insert(
+                    parts,
+                    material .. " " .. tostring(units)
+                )
+            end
+
+
+            table.sort(
+                parts
+            )
+
+
+            log(
+                tostring(count)
+                .. " x "
+                .. itemType
+                .. ": "
+                .. table.concat(parts, ", ")
+            )
+        end
+    end
+
+
+    local totals,
+          kinds =
+        AC_Materials.ledger(counts)
+
+
+    local materials = {}
+
+
+    for material in pairs(
+        totals
+    )
+    do
+
+        table.insert(
+            materials,
+            material
+        )
+    end
+
+
+    table.sort(
+        materials
+    )
+
+
+    local summary = {}
+
+
+    for _,
+        material
+    in ipairs(
+        materials
+    )
+    do
+
+        table.insert(
+            summary,
+            material .. " " .. tostring(totals[material])
+        )
+    end
+
+
+    log(
+        "TOTAL (units; "
+        .. tostring(AC_Materials.CONFIG.unitsPerIngot)
+        .. " per ingot): "
+        .. (#summary > 0 and table.concat(summary, ", ") or "nothing tracked")
+    )
+
+
+    halo(
+        player,
+        "Material ledger: "
+        .. tostring(kinds)
+        .. " kinds of item (see console)"
+    )
+end
+
+
+------------------------------------------------
 -- Prints what the game knows about each of the mod's
 -- station recipes (metallurgy and case stock).
 -- Read-only: it attaches nothing.
@@ -2089,6 +2255,10 @@ AC_GeologyDebug.verifyAmmoDependencies =
 AC_GeologyDebug.inspectAmmoComponents =
     inspectAmmoComponents
 
+AC_GeologyDebug.printMaterialLedger =
+    printMaterialLedger
+
+
 AC_GeologyDebug.inspectMetallurgyRecipes =
     inspectMetallurgyRecipes
 
@@ -2315,6 +2485,8 @@ local function onFillWorldObjectContextMenu(
 
 
     metallurgy:addOption("Inspect Station Recipes", player, inspectMetallurgyRecipes)
+
+    metallurgy:addOption("Print Material Ledger (inventory)", player, printMaterialLedger)
 
 
     ------------------------------------------------

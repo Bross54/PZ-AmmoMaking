@@ -731,6 +731,10 @@ Not bugs, but worth knowing when adding multiplayer or a "view only" tool:
 
 ## Multiplayer hazards (review; nothing is implemented)
 
+The full authority map, each known duplication and how it would be closed,
+and the order of work are in `MULTIPLAYER_DESIGN.md`. What follows is the
+summary that was written with the code.
+
 Mining and analyzer placement are disabled for multiplayer clients
 (`AC_Mining.isAvailable`, `AC_LaboratoryAnalyzer.isPlacementAvailable`, both
 `not isClient()`); the mining design is in `MULTIPLAYER_MINING.md`. The mod
@@ -820,7 +824,8 @@ Ammo Making Debug
 │                Spawn Sampling Kit · Spawn Mining Kit · Spawn Assayed Sample
 ├─ Analyzer      Spawn Laboratory Analyzer · (clicked analyzer:) Inspect Analyzer State ·
 │                Complete Analyzer Job
-├─ Metallurgy    Spawn Metallurgy Kit · Spawn Case Stock Kit · Inspect Station Recipes
+├─ Metallurgy    Spawn Metallurgy Kit · Spawn Case Stock Kit · Spawn Recycling Kit ·
+│                Inspect Station Recipes · Print Material Ledger (inventory)
 ├─ Ammunition    Spawn Calibre Kit ▸ one entry per calibre · Spawn Primer and Powder Kit ·
 │                Print Calibre Definitions · Print Primer Families ·
 │                Verify Ammo Dependencies · Inspect Ammo Components (inventory)
@@ -859,6 +864,13 @@ Everything prints to `console.txt`. From the Lua console:
   vanilla item's `count`, so some vanilla entries may arrive in multiples.
 - **Inspect Ammo Components (inventory)**: every case and round of a known
   calibre the player carries, with its stored quality and label. Read-only.
+- **Print Material Ledger (inventory)**: one console line per kind of
+  carried item that holds tracked material (`2 x Base.BrassIngot: brass
+  200`) and the total per material. It is the in-game form of the
+  conservation rule: print it, craft, print it again; the totals are equal,
+  or lower after a recycling recipe. Drainables (gunpowder, matches,
+  fertilizer) are not counted, because their remaining uses are not read.
+  Read-only.
 - **Inspect Station Recipes**: one console line per recipe: whether the
   script manager knows it, its required-skill count, required level, XP, predicted time at
   the player's level and the conservation verdict. Read-only.
@@ -1188,6 +1200,7 @@ context-menu fills. Nothing per frame, tick or minute.
 | An open result panel | two panels translated their constant strings **every frame** | **fixed**: looked up once per panel |
 | Any menu, action or callback | none calls model validation, recipe building, loot, recycling or the schema check | pinned by the *Startup cost* test |
 | Game start | the calibre recipes are built four times across `AC_Materials`, `AC_Compat` and the press validation; the distribution table is walked once per world load | left: once per load |
+| Any read of the depletion store | since the version check was added, one number comparison per read (`AC_SaveData.upgrade` returns at once for a current layout and consults no step) | none needed; pinned by a test |
 | Mining action | `isValid()` looks the prospect sample up again on each call, a recursive inventory scan | **left**: the action was seen working in game, the lookup is what notices a sample being dropped, and the cost lasts as long as one mining action. Worth revisiting with the game's profiler |
 | Right-click on an analyzer | its state is brought up to date three times for one menu | **left**: analyzer clicks only, on code seen working in game |
 

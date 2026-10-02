@@ -793,6 +793,77 @@ end
 -- Returns ok and a reason string for a failure.
 ------------------------------------------------
 
+------------------------------------------------
+-- LEDGER (pure)
+------------------------------------------------
+--
+-- counts is item type -> number of items. Returns
+-- material -> units of everything in it that the
+-- accounting follows, and the number of item types
+-- counted.
+--
+-- Drainables (a jar of gunpowder, a box of matches) are
+-- left out: what one holds depends on its remaining
+-- uses, which this does not read. What is counted is
+-- metal and what is locked into components and rounds,
+-- so the same inventory gives the same ledger before and
+-- after any craft that is not marked as a loss.
+--
+-- For the -debug material ledger; nothing in normal play
+-- calls it.
+------------------------------------------------
+
+function AC_Materials.ledger(
+    counts
+)
+
+    local totals = {}
+
+    local kinds = 0
+
+
+    for itemType,
+        count
+    in pairs(
+        counts or {}
+    )
+    do
+
+        local entry =
+            AC_Materials.UNITS[itemType]
+
+
+        if entry
+            and not entry.uses
+            and type(count) == "number"
+            and count > 0
+        then
+
+            kinds =
+                kinds + 1
+
+
+            for material,
+                units
+            in pairs(
+                contentsOf(entry)
+            )
+            do
+
+                addUnits(
+                    totals,
+                    material,
+                    units * count
+                )
+            end
+        end
+    end
+
+
+    return totals, kinds
+end
+
+
 function AC_Materials.checkConservation(
     recipe
 )

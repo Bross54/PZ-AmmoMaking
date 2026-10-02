@@ -2314,6 +2314,7 @@ do
             "Spawn Case Stock Kit (brass + forge and punch tools)",
             "Spawn Recycling Kit (one mixed batch per scrapping recipe + one recast)",
             "Inspect Station Recipes",
+            "Print Material Ledger (inventory)",
         } },
         { "Ammunition", {
             "Spawn Calibre Kit", "Spawn Primer and Powder Kit", "Print Calibre Definitions",
@@ -6002,6 +6003,73 @@ do
     check(MOCK.printLogContains(magnum.case .. " (.44 Magnum case): quality 91 (Excellent)"), "the calibre is named for each component")
     eq(AC_CaseQuality.get(good), 84, "the inspector changes nothing")
     check(pcall(AC_GeologyDebug.inspectAmmoComponents, nil), "inspector tolerates no player")
+
+    -- Material ledger: what the carried items hold, per material. The pure
+    -- part first.
+    do
+        local ledger = AC_Materials.ledger
+        local totals, kinds = ledger({ ["Base.BrassIngot"] = 2, ["AmmoMaking.BrassCaseCup"] = 3, ["Base.CopperScrap"] = 4 })
+        eq(totals.brass, 215, "two ingots and three cups are 215 units of brass")
+        eq(totals.copper, 40, "four copper scrap are 40 units of copper")
+        eq(kinds, 3, "three kinds of item counted")
+        local round = ledger({ [nine.round] = 10 })
+        local contents = AC_Materials.UNITS[nine.round].contents
+        eq(round.brass, 10 * contents.brass, "a round's brass is counted")
+        eq(round.copper, 10 * contents.copper, "and its copper")
+        eq(round.powder, 10 * contents.powder, "and the powder locked into it")
+        local none, noKinds = ledger({ ["Base.Plank"] = 9, ["Base.GunPowder"] = 2, ["Base.BrassIngot"] = 0 })
+        eq(next(none), nil, "untracked items, drainables and empty counts hold nothing the ledger follows")
+        eq(noKinds, 0, "and count as no kind")
+        eq(next((ledger(nil))), nil, "no counts, no ledger")
+        -- The ledger of an inventory is unchanged by any craft that is not
+        -- a loss, and lower after one that is: the offline conservation
+        -- rule, restated on what the debug entry prints.
+        local function totalsOf(inventory)
+            local sum = 0
+            for material, units in pairs(ledger(inventory)) do
+                if material == "brass" or material == "copper" or material == "zinc" then sum = sum + units end
+            end
+            return sum
+        end
+        local bag = { ["Base.BrassIngot"] = 1, ["base:charcoal"] = 50, ["base:hammer"] = 1, ["base:tongs"] = 1, ["base:ballpeenhammer"] = 1, ["base:metalworkingpunch"] = 1 }
+        bag[nine.dieSet] = 1
+        local start = totalsOf(bag)
+        eq(start, 100, "an ingot is a hundred units")
+        check(mirrorCraft(bag, AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets")), "the ingot is forged into sheets")
+        eq(totalsOf(bag), start, "forging sheets leaves the ledger as it was")
+        for _ = 1, 10 do mirrorCraft(bag, AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups")) end
+        eq(totalsOf(bag), start, "punching cups leaves it as it was")
+        for _ = 1, 20 do mirrorCraft(bag, calibreRecipe(nine, "case")) end
+        eq(totalsOf(bag), start, "forming cases leaves it as it was")
+        for _ = 1, 5 do mirrorCraft(bag, AC_Materials.getRecipe("AmmoMaking_ScrapBrass5")) end
+        eq(totalsOf(bag), start / 2, "scrapping the cases halves it")
+    end
+    -- The debug entry prints it for the carried inventory.
+    do
+        local carrier = MOCK.newPlayer({ square = MOCK.newSquare(9, 5, 0, GRASS) })
+        for _ = 1, 2 do carrier.inventory:addItem(MOCK.newItem("Base.BrassIngot")) end
+        for _ = 1, 3 do carrier.inventory:addItem(MOCK.newItem("AmmoMaking.BrassCaseCup")) end
+        carrier.inventory:addItem(MOCK.newItem("Base.GunPowder"))
+        carrier.inventory:addItem(MOCK.newItem(nine.dieSet))
+        local before = #carrier.inventory.items
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local ran = pcall(AC_GeologyDebug.printMaterialLedger, carrier)
+        MOCK.capturePrint(false)
+        check(ran, "the material ledger runs")
+        check(MOCK.printLogContains("2 x Base.BrassIngot: brass 200"), "the ingots are listed with their brass")
+        check(MOCK.printLogContains("3 x AmmoMaking.BrassCaseCup: brass 15"), "and the cups")
+        check(MOCK.printLogContains("TOTAL (units; 100 per ingot): brass 215"), "with the total per material")
+        check(not MOCK.printLogContains("Base.GunPowder"), "a drainable is not counted")
+        check(not MOCK.printLogContains(nine.dieSet), "nor a tool")
+        eq(#carrier.inventory.items, before, "the ledger changes nothing")
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        AC_GeologyDebug.printMaterialLedger(MOCK.newPlayer({ square = MOCK.newSquare(9, 6, 0, GRASS) }))
+        MOCK.capturePrint(false)
+        check(MOCK.printLogContains("TOTAL (units; 100 per ingot): nothing tracked"), "an empty inventory has nothing tracked")
+        check(pcall(AC_GeologyDebug.printMaterialLedger, nil), "the ledger tolerates no player")
+    end
 
     -- Calibre definitions printout.
     MOCK.clearPrintLog()
