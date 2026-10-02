@@ -105,6 +105,30 @@ AC_Compat.REQUIRED_ITEMS = {
     "Base.BallPeenHammer",
 
     "Base.MetalworkingPunch",
+
+    -- Geology equipment: what the kit and analyzer recipes
+    -- consume (AC_Materials.EQUIPMENT_RECIPES).
+    "Base.MagnifyingGlass",
+
+    "Base.Tweezers",
+
+    "Base.SheetPaper2",
+
+    "Base.Calculator",
+
+    "Base.ElectronicsScrap",
+
+    "Base.ElectricWire",
+
+    "Base.Amplifier",
+
+    "Base.LightBulb",
+
+    "Base.Screws",
+
+    "Base.SheetMetal",
+
+    "Base.CarBatteryCharger",
 }
 
 

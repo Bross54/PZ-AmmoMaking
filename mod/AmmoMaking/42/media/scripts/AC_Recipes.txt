@@ -16,6 +16,14 @@
                                          scrap-armour recipes, the hammer line and timed
                                          action of NailSpikeWeapon
 
+   Geology equipment, from AC_Materials.EQUIPMENT_RECIPES:
+
+     AmmoMaking_Assemble*AssayKit           <- the mod's own surface block (Making); every
+                                               line a vanilla item by id, nothing kept
+     AmmoMaking_BuildLaboratoryAssayAnalyzer <- MakeImprovisedFlashlight (recipes_electrical.txt):
+                                               MakingElectrical, category Electrical, the kept
+                                               screwdriver line with flags[Prop1]
+
    Ammunition components, generated from AC_Calibres.lua:
 
      AmmoMaking_MixGunpowder          <- hand work of GatherGunpowder, mortar line of
@@ -171,6 +179,70 @@ module Base
         outputs
         {
             item 2 AmmoMaking.BrassCaseCup,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleFieldAssayKit
+    {
+        time = 100,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Miscellaneous,
+        OnCreate = AC_Materials.onAssembleFieldAssayKit,
+        inputs
+        {
+            item 1 [Base.MagnifyingGlass],
+            item 1 [Base.Tweezers],
+            item 5 [Base.SheetPaper2],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.FieldAssayKit,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleAdvancedFieldAssayKit
+    {
+        time = 150,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Miscellaneous,
+        OnCreate = AC_Materials.onAssembleAdvancedFieldAssayKit,
+        inputs
+        {
+            item 1 [Base.MagnifyingGlass],
+            item 1 [Base.Tweezers],
+            item 5 [Base.SheetPaper2],
+            item 1 [Base.Calculator],
+            item 2 [Base.ElectronicsScrap],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.AdvancedFieldAssayKit,
+        }
+    }
+
+    craftRecipe AmmoMaking_BuildLaboratoryAssayAnalyzer
+    {
+        time = 400,
+        timedAction = MakingElectrical,
+        Tags = AnySurfaceCraft,
+        category = Electrical,
+        OnCreate = AC_Materials.onBuildLaboratoryAssayAnalyzer,
+        inputs
+        {
+            item 1 tags[base:screwdriver] mode:keep flags[Prop1],
+            item 4 [Base.SheetMetal],
+            item 1 [Base.CarBatteryCharger],
+            item 8 [Base.ElectronicsScrap],
+            item 3 [Base.ElectricWire],
+            item 1 [Base.Amplifier],
+            item 1 [Base.LightBulb],
+            item 6 [Base.Screws],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.LaboratoryAssayAnalyzer,
         }
     }
 

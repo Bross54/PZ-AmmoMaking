@@ -147,6 +147,21 @@ Sampling and mining share one terrain rule (`AC_Geology.isSurveyableSquare`), so
 
 Geological samples can be analyzed using several levels of equipment.
 
+## Making the equipment
+
+All three are put together at any surface from things found in houses,
+offices and garages. None of it is found ready-made, and making it earns
+no Ammo Making XP: a kit pays per assay.
+
+| Equipment | Ammo Making level | Takes |
+|---|---|---|
+| Field Assay Kit (20 assays) | 0 | a magnifying glass, tweezers, 5 sheets of paper |
+| Advanced Field Assay Kit (10 assays) | 1 | the same, a calculator and 2 electronics scrap |
+| Laboratory Assay Analyzer | 2 | 4 sheet metal, a car battery charger, 8 electronics scrap, 3 electric wire, an amplifier, a light bulb, 6 screws; a screwdriver is kept |
+
+These recipes are new and have not been crafted in the game yet; the
+amounts are a first guess and easy to change (`AC_Materials.EQUIPMENT_RECIPES`).
+
 ## Field Assay Kit
 
 Provides a basic geological grade.
@@ -591,7 +606,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Firing leaves no spent case.** Vanilla has no casing item and ejection is only a sound; recovery is researched, its effect on the brass economy is worked out in numbers, and nothing is built (`docs/SPENT_CASE_RESEARCH.md`).
 - **Multiplayer is not supported.** Mining and analyzer placement are switched off for clients; sampling and assays are not, and change items on the client only. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
 - **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
-- **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
+- **The recipes for the assay kits and the laboratory analyzer have not been crafted in game yet.** They are what makes the chain playable without the debug menu, so they are the first thing to try. They are never loot.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
 - **Placing and picking up the analyzer is single-player only for now.** Multiplayer clients get disabled options; the laboratory itself has no server-side synchronisation yet.
 - Laboratory processing time is only accounted for when the analyzer is interacted with, using the power state at that moment. Analyzers dropped on the floor (the original behaviour) can still be picked up mid-assay through vanilla.

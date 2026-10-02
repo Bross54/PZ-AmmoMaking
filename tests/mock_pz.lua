@@ -277,6 +277,19 @@ function getTimestamp() return 0 end
 -- RANDOM
 ------------------------------------------------
 
+-- One generator for the mock and for every seeded test run: the Lehmer
+-- generator MINSTD (x * 48271 mod 2^31 - 1). The product stays below
+-- 2^47, so it is exact in the doubles Lua 5.1 counts with, and the period
+-- is the full 2^31 - 2.
+--
+-- (What stood here before, x * 1103515245 + 12345 mod 2^31, is a fine
+-- generator in integers. In doubles the product passes 2^53 and loses its
+-- low bits, and every seed fell into the same cycle of 10,466 states: the
+-- "random" runs were far less varied than they claimed.)
+function MOCK.nextRandom(state)
+    return (state * 48271) % 2147483647
+end
+
 local rngState = 12345
 
 function ZombRand(a, b)
@@ -285,7 +298,7 @@ function ZombRand(a, b)
         local v = table.remove(MOCK.randomSequence, 1)
         if v ~= nil then return v end
     end
-    rngState = (rngState * 1103515245 + 12345) % 2147483648
+    rngState = MOCK.nextRandom(rngState)
     if b then
         return a + (rngState % (b - a))
     end
@@ -366,6 +379,11 @@ MOCK.knownScriptItems = {
     ["AmmoMaking.FieldAssayKit"] = true,
     ["AmmoMaking.AdvancedFieldAssayKit"] = true,
     ["AmmoMaking.LaboratoryAssayAnalyzer"] = true,
+    -- What the kits and the analyzer are made from (ids confirmed in the
+    -- installed 42.20.4 scripts; tests/engine_snapshot.lua records them).
+    ["Base.MagnifyingGlass"] = true, ["Base.Tweezers"] = true, ["Base.SheetPaper2"] = true,
+    ["Base.Calculator"] = true, ["Base.ElectronicsScrap"] = true, ["Base.ElectricWire"] = true,
+    ["Base.Amplifier"] = true, ["Base.LightBulb"] = true, ["Base.Screws"] = true, ["Base.SheetMetal"] = true, ["Base.CarBatteryCharger"] = true,
     ["Base.PickAxe"] = true,
     ["Base.PickAxeForged"] = true,
     ["Base.PickAxeHead"] = true,

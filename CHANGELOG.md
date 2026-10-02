@@ -15,8 +15,16 @@ game's files); what the running game has to confirm is listed in
 
 ## 0.9.0 (in development)
 
-One loot change and one fix; otherwise no new gameplay. Foundations,
+Three new recipes, one loot change and one fix. Otherwise foundations,
 tooling and hardening.
+
+- **The assay kits and the laboratory analyzer can be made.** Three
+  recipes at any surface, from vanilla items (magnifying glass, tweezers,
+  paper; a calculator and electronics scrap; sheet metal, a car battery
+  charger and electronics for the analyzer). Until now all three came only
+  from the debug menu, and with them everything after: mining needs an
+  assayed sample, and zinc comes only from mining. No XP for making them.
+  Not crafted in game yet.
 
 - **Quality tally**: the arithmetic for carrying ammunition quality in a
   magazine or firearm (`AC_QualityTally`), as pure functions that nothing
@@ -25,6 +33,10 @@ tooling and hardening.
   with everything the mod relies on and reports PASS, WARNING or BREAKING.
 - **Test mock fidelity**: mocked engine objects now refuse a call the real
   42.20.4 engine would refuse (wrong argument count or type).
+- **Test generator fixed**: the seeded "random" runs of the suite used a
+  generator whose arithmetic overflows Lua's numbers; every seed ended in
+  the same loop of 10,466 values. Replaced by an exact one. Every
+  invariant still holds under it.
 - **Release packaging**: `tools/build_release.py`, this changelog, a version
   in `mod.info`, `versionMin=42.20.0`.
 - **Reloading press, prepared beside the mod**: placeholder sprites, a

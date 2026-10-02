@@ -51,7 +51,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [*]A handloaded round fires exactly like a factory round. Case quality is recorded and shown; it has no effect on shooting.
 [*]No spent cases: firing leaves nothing to pick up.
 [*]No reloading press: everything is done by hand at a surface.
-[*]The assay kits and the laboratory analyzer are not craftable or lootable yet; they come from the debug menu.
+[*]The assay kits and the laboratory analyzer are made at any surface from household and garage finds; they are never loot.
 [/list]
 
 [h2]Multiplayer[/h2]

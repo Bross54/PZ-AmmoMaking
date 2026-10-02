@@ -185,6 +185,18 @@ MUTANTS = [
     ("tests/vanilla_snapshot.lua", "            GunStoreMagsAmmo = { rolls = 4, entries = 34, weight = 360.5, references = 1 },", "            GunStoreMagsAmmo = { rolls = 4, entries = 0, weight = 0, references = 0 },", "the gun store list has become unused in vanilla"),
     ("tests/vanilla_snapshot.lua", "            [\"Base.Bullets9mm\"] = { box = \"Base.Bullets9mmBox\", perBox = 50,", "            [\"Base.Bullets9mm\"] = { box = \"Base.Bullets9mmBox\", perBox = 30,", "vanilla's 9mm box holds thirty"),
     ("mod/AmmoMaking/42/media/scripts/AC_Items.txt", "        DisplayName = Empty 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.005,", "        DisplayName = Empty 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.05,", "a 9mm case heavier than the round it goes into"),
+    # ---- geology equipment (the kits and the analyzer)
+    (SHARED + "AC_Materials.lua", "        callback = \"onAssembleFieldAssayKit\",\n\n        xp = 0,", "        callback = \"onAssembleFieldAssayKit\",\n\n        xp = 5,", "putting a field kit together pays XP"),
+    (SHARED + "AC_Materials.lua", "        callback = \"onAssembleFieldAssayKit\",\n\n        xp = 0,\n\n        requiredLevel = 0,", "        callback = \"onAssembleFieldAssayKit\",\n\n        xp = 0,\n\n        requiredLevel = 3,", "the first kit needs a skill level nobody has yet"),
+    (SHARED + "AC_Materials.lua", "        callback = \"onAssembleAdvancedFieldAssayKit\",\n\n        xp = 0,\n\n        requiredLevel = 1,", "        callback = \"onAssembleAdvancedFieldAssayKit\",\n\n        xp = 0,\n\n        requiredLevel = 0,", "the advanced kit needs no more skill than the field kit"),
+    (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.Calculator\" } },", "            { count = 1, items = { \"AmmoMaking.FieldAssayKit\" } },", "a used-up field kit becomes a fresh advanced kit"),
+    (SHARED + "AC_Materials.lua", "            { count = 4, items = { \"Base.SheetMetal\" } },", "            { count = 1, items = { \"Base.SheetMetal\" } },", "a 12 kg analyzer from 6 kg of parts"),
+    (SHARED + "AC_Materials.lua", "    { count = 5, items = { \"Base.SheetPaper2\" } },", "    { count = 5, items = { \"Base.GunPowder\" } },", "a kit takes uses of a drainable"),
+    (SHARED + "AC_Materials.lua", "    AC_Materials.EQUIPMENT_RECIPES\n)\ndo\n\n    table.insert(\n        AC_Materials.RECIPES,\n        recipe\n    )\nend\n", "    {}\n)\ndo\n\n    table.insert(\n        AC_Materials.RECIPES,\n        recipe\n    )\nend\n", "the equipment recipes never join the recipe list"),
+    (SHARED + "AC_Compat.lua", "    \"Base.CarBatteryCharger\",\n", "", "an ingredient of the analyzer is not probed at game start"),
+
+    # ---- the test harness itself
+    ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]
 
 

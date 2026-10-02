@@ -2788,12 +2788,12 @@ do
     end
 
     -- Only what the vanilla 42.20.4 template recipes use (furnace recipes,
-    -- Forge_Copper_Sheet, the scrap-armour cold work, NailSpikeWeapon),
-    -- plus OnCreate.
+    -- Forge_Copper_Sheet, the scrap-armour cold work, NailSpikeWeapon,
+    -- and MakeImprovisedFlashlight for the analyzer), plus OnCreate.
     local knownFields = { time = true, timedAction = true, Tags = true, category = true, OnCreate = true }
     local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true }
-    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true }
-    local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true }
+    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true }
+    local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true, Electrical = true }
     local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true }
     local destroyLines = 0
     local knownItemTags = {
@@ -2801,7 +2801,7 @@ do
         ["base:hammer"] = true, ["base:clubhammer"] = true, ["base:metalworkingpliers"] = true,
         ["base:metalworkingpunch"] = true, ["base:smallpunch"] = true,
         ["base:ballpeenhammer"] = true, ["base:whetstone"] = true, ["base:file"] = true,
-        ["base:mortarpestle"] = true,
+        ["base:mortarpestle"] = true, ["base:screwdriver"] = true,
     }
     local probed = {}
     for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
@@ -2892,9 +2892,9 @@ do
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
-    eq(#AC_Materials.RECIPES, 6 + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST + #AC_Recycling.buildGroups() + 1,
-        "metallurgy 4, case stock 2, gunpowder 1, primers per family and source, four per calibre, one scrapping recipe per brass size and the recast")
-    eq(#AC_Materials.RECIPES, 55, "fifty-five recipes")
+    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST + #AC_Recycling.buildGroups() + 1,
+        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, one scrapping recipe per brass size and the recast")
+    eq(#AC_Materials.RECIPES, 58, "fifty-eight recipes")
 
     -- The script body is exactly what tests/render_recipes.lua makes of the
     -- mirror: the file is generated, never typed.
@@ -2930,6 +2930,14 @@ do
         -- and every consumed item named by id is tracked or a known untracked input.
         local untracked = { ["Base.SteelBarQuarter"] = true, ["Base.Fertilizer"] = true }
         for _, id in ipairs(AC_Calibres.WAD.items) do untracked[id] = true end
+        -- What a kit or the analyzer is put together from holds no metal
+        -- the accounting follows; only those three recipes may take it.
+        if recipe.step == "equipment" then
+            for _, id in ipairs({ "Base.MagnifyingGlass", "Base.Tweezers", "Base.SheetPaper2", "Base.Calculator", "Base.ElectronicsScrap",
+                "Base.ElectricWire", "Base.Amplifier", "Base.LightBulb", "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger" }) do
+                untracked[id] = true
+            end
+        end
         for _, output in ipairs(recipe.outputs) do
             check(recipe.tool or AC_Materials.UNITS[output.item] ~= nil, recipe.id .. ": its output " .. tostring(output.item) .. " has a material declaration")
             check(output.count >= 1, recipe.id .. ": makes at least one")
@@ -2967,12 +2975,13 @@ do
     end
     eq(families.metallurgy, 4, "four metallurgy recipes")
     eq(families.caseStock, 2, "two case-stock recipes")
+    eq(families.equipment, 3, "three geology equipment recipes: two kits and the analyzer")
     eq(families.powder, 1, "one gunpowder recipe")
     eq(families.primer, 8, "eight primer recipes")
     for _, step in ipairs({ "dieSet", "case", "bullet", "assemble" }) do eq(families[step], #AC_Calibres.LIST, "one " .. step .. " recipe per calibre") end
     eq(families.scrap, 3, "three scrapping recipes")
     eq(families.recast, 1, "one recast")
-    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **55** |", 1, true) ~= nil, "the audit table counts 55 recipes")
+    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **58** |", 1, true) ~= nil, "the audit table counts 58 recipes")
 end
 
 section("Material conservation: no recipe or chain creates metal")
@@ -3289,10 +3298,13 @@ do
     -- Any order of any recipes never increases the metal in the inventory.
     local seed = 12345
     local function nextRandom(n)
-        seed = (seed * 1103515245 + 12345) % 2147483648
+        seed = MOCK.nextRandom(seed)
         return (seed % n) + 1
     end
     inv = freshInventory()
+    -- Enough charcoal that it is the fertilizer, not the fuel, that stops
+    -- the mixing, whichever order the draws come in.
+    inv["base:charcoal"] = 5000
     inv["Base.SteelBarQuarter"] = 4
     inv["base:ballpeenhammer"] = 1
     inv["base:metalworkingpliers"] = 1
@@ -3331,8 +3343,10 @@ do
 
     for _, recipe in ipairs(AC_Materials.RECIPES) do
         local xp = AC_Materials.getRecipeXP(recipe)
-        -- Recycling is the one family that awards nothing.
-        eq(xp > 0, not recipe.recycling, recipe.id .. (recipe.recycling and " awards no XP" or " awards XP"))
+        -- Two families award nothing: recycling, and the geology equipment
+        -- (a kit pays its XP per assay, not when it is put together).
+        local unpaid = recipe.recycling == true or recipe.step == "equipment"
+        eq(xp > 0, not unpaid, recipe.id .. (unpaid and " awards no XP" or " awards XP"))
         local player = MOCK.newPlayer()
         MOCK.clearPrintLog()
         MOCK.capturePrint(true)
@@ -3349,7 +3363,7 @@ do
         check(ok, recipe.id .. " callback runs: " .. tostring(granted))
         check(not MOCK.printLogContains("WARNING"), recipe.id .. " callback logs no warning")
         eq(granted, xp, recipe.id .. " callback reports the XP")
-        if recipe.recycling then
+        if unpaid then
             eq(granted, 0, recipe.id .. " callback grants nothing")
             eq(#player.xpLog, 0, recipe.id .. " never touches the XP")
             check(not MOCK.printLogContains("Ammo Making XP"), recipe.id .. " logs no XP line")
@@ -4468,7 +4482,7 @@ do
         local built = 0
         local realBuild = AC_Recycling.buildRecipes
         reloadMod()
-        eq(#AC_Materials.RECIPES, 55, "the reloaded mod has its 55 recipes")
+        eq(#AC_Materials.RECIPES, 58, "the reloaded mod has its 58 recipes")
         eq(type(AC_Loot.lastSummary), "nil", "loading the mod registers no loot by itself")
         check(realBuild ~= nil and built == 0, "the counters above were removed before the reload")
     end
@@ -5785,7 +5799,7 @@ do
     for _, startSeed in ipairs(SEEDS) do
         local seed = startSeed
         local function nextRandom(n)
-            seed = (seed * 1103515245 + 12345) % 2147483648
+            seed = MOCK.nextRandom(seed)
             return (math.floor(seed / 65536) % n) + 1
         end
         local inv = {
@@ -5799,6 +5813,10 @@ do
             ["Base.CeramicCrucible"] = 1, ["base:crudetongs"] = 1, ["Base.ClayIngotMold"] = 1,
             ["base:hammer"] = 1, ["base:tongs"] = 1, ["base:metalworkingpunch"] = 1, ["base:ballpeenhammer"] = 1,
             ["base:metalworkingpliers"] = 1, ["base:whetstone"] = 1, ["base:mortarpestle"] = 1, ["base:pliers"] = 1,
+            -- Parts for two of each kit and two analyzers.
+            ["base:screwdriver"] = 1, ["Base.MagnifyingGlass"] = 4, ["Base.Tweezers"] = 4, ["Base.SheetPaper2"] = 20,
+            ["Base.Calculator"] = 2, ["Base.ElectronicsScrap"] = 20, ["Base.ElectricWire"] = 6, ["Base.Amplifier"] = 2,
+            ["Base.LightBulb"] = 2, ["Base.Screws"] = 12, ["Base.SheetMetal"] = 8, ["Base.CarBatteryCharger"] = 2,
         }
         local tools = {}
         for id, count in pairs(inv) do
@@ -7686,7 +7704,7 @@ do
     do
         local seed = 20261002
         local function random(n)
-            seed = (seed * 1103515245 + 12345) % 2147483648
+            seed = MOCK.nextRandom(seed)
             return math.floor(seed / 65536) % n
         end
         local operations, violations = 0, {}
@@ -9486,6 +9504,108 @@ do
 end
 
 ------------------------------------------------
+-- GEOLOGY EQUIPMENT RECIPES
+------------------------------------------------
+
+section("Geology equipment: the kits and the analyzer can be made, and making them pays nothing")
+do
+    -- Mining needs an assayed sample, an assay needs a kit or the analyzer,
+    -- and zinc comes only from mining. Until these three recipes existed
+    -- the chain from a shovel to a round started in the debug menu.
+    local E = AC_Materials.EQUIPMENT_RECIPES
+    eq(#E, 3, "three equipment recipes")
+    local made = {}
+    for _, recipe in ipairs(E) do
+        local what = recipe.id
+        eq(recipe.step, "equipment", what .. " is marked as equipment")
+        eq(AC_Materials.getRecipe(recipe.id), recipe, what .. " is in the recipe list")
+        eq(#recipe.outputs, 1, what .. " makes one thing")
+        eq(recipe.outputs[1].count, 1, what .. " makes one of it")
+        made[recipe.outputs[1].item] = recipe
+
+        -- No XP for the craft: a kit pays per assay. Paying for the kit too
+        -- would pay twice for the same samples.
+        eq(AC_Materials.getRecipeXP(recipe), 0, what .. " awards no XP")
+        eq(recipe.tool, true, what .. " is a tool, outside the metal accounting")
+        local consumed, created = AC_Materials.getRecipeUnits(recipe)
+        check(next(consumed) == nil and next(created) == nil, what .. " moves no tracked material")
+
+        -- A surface, like vanilla's own small assemblies.
+        eq(recipe.benchTag, "AnySurfaceCraft", what .. " needs only a surface")
+
+        local weightIn = 0
+        for _, input in ipairs(recipe.inputs) do
+            if input.keep then
+                check(input.tags ~= nil, what .. ": a kept line is a tool tag")
+            else
+                -- By id, one id per line, vanilla, never one of the mod's own
+                -- items: a used-up kit must not be an ingredient of a new one.
+                check(input.items ~= nil and #input.items == 1, what .. ": a consumed line names exactly one item")
+                local id = input.items and input.items[1] or "?"
+                eq(string.sub(id, 1, 5), "Base.", what .. ": " .. id .. " is a vanilla item")
+                local recorded = ENGINE.items[id]
+                check(type(recorded) == "table", what .. ": " .. id .. " is in the installed scripts")
+                if type(recorded) == "table" then
+                    -- Nothing that holds a fluid or counts uses: an input line
+                    -- of a drainable counts uses, not items.
+                    check(recorded.type == "base:normal" or recorded.type == "base:literature", what .. ": " .. id .. " is a plain item (" .. tostring(recorded.type) .. ")")
+                    eq(recorded.uses, nil, what .. ": " .. id .. " is not a drainable")
+                    weightIn = weightIn + recorded.weight * input.count
+                end
+            end
+        end
+        -- Nothing heavy appears from light parts.
+        local weightOut = tonumber(declaredItems[recipe.outputs[1].item].fields.Weight)
+        check(weightIn >= weightOut - 1e-9, what .. ": its parts weigh at least what it does (" .. weightIn .. " in, " .. weightOut .. " out)")
+        check(weightIn <= 2 * weightOut, what .. ": and not more than twice that (" .. weightIn .. " in, " .. weightOut .. " out)")
+    end
+
+    local G = AC_GeologySampling
+    local field, advanced, analyzer = made[G.ITEMS.FieldKit], made[G.ITEMS.AdvancedFieldKit], made[AC_LaboratoryAnalyzer.ITEMS.Analyzer]
+    check(field ~= nil and advanced ~= nil and analyzer ~= nil, "the field kit, the advanced kit and the analyzer each have a recipe")
+
+    -- The ladder. The first kit needs no skill: it is where the chain
+    -- starts. Each better instrument needs more and costs more.
+    eq(AC_Materials.getRequiredLevel(field), 0, "the field kit needs no Ammo Making level")
+    check(AC_Materials.getRequiredLevel(advanced) > AC_Materials.getRequiredLevel(field), "the advanced kit needs more skill than the field kit")
+    check(AC_Materials.getRequiredLevel(analyzer) > AC_Materials.getRequiredLevel(advanced), "the analyzer needs more skill than the advanced kit")
+    check(field.time < advanced.time and advanced.time < analyzer.time, "and each takes longer to make")
+    local function parts(recipe)
+        local count = 0
+        for _, input in ipairs(recipe.inputs) do
+            if not input.keep then count = count + input.count end
+        end
+        return count
+    end
+    check(parts(field) < parts(advanced) and parts(advanced) < parts(analyzer), "and takes more parts")
+    -- The advanced kit is the field kit and more: every line of the one is
+    -- a line of the other.
+    for i, input in ipairs(field.inputs) do
+        eq(advanced.inputs[i], input, "the advanced kit takes what the field kit takes (line " .. i .. ")")
+    end
+
+    -- A kit that has just been made has no ModData. It starts full, and
+    -- its XP is what its uses pay, once each: the recipe adds none.
+    for _, case in ipairs({
+        { G.ITEMS.FieldKit, G.CONFIG.fieldKitUses, G.CONFIG.fieldAssayXP },
+        { G.ITEMS.AdvancedFieldKit, G.CONFIG.advancedFieldKitUses, G.CONFIG.advancedAssayXP },
+    }) do
+        local kit = MOCK.newItem(case[1])
+        eq(next(kit.modData), nil, case[1] .. ": a new kit carries no data")
+        eq(G.getKitUses(kit), case[2], case[1] .. ": and starts with its full uses")
+        eq(G.getAssayXP(kit), case[3], case[1] .. ": each use pays the assay's XP")
+    end
+    -- What a made kit is worth in XP, in all: the same for both, so the
+    -- advanced kit buys accuracy, not XP.
+    eq(G.CONFIG.fieldKitUses * G.CONFIG.fieldAssayXP, 60, "a field kit is worth 60 XP of assays")
+    eq(G.CONFIG.advancedFieldKitUses * G.CONFIG.advancedAssayXP, 60, "an advanced kit is worth 60 XP of assays")
+    -- The analyzer has no uses to run out; its XP is bounded by time: one
+    -- sample at a time, a day of power each.
+    check(AC_LaboratoryAnalyzer.CONFIG.processingHours >= 24, "the analyzer takes at least a day per sample")
+    check(AC_LaboratoryAnalyzer.CONFIG.assayXP <= 10, "and pays at most 10 XP for it")
+end
+
+------------------------------------------------
 -- ITEM AUDIT
 ------------------------------------------------
 
@@ -9554,17 +9674,21 @@ do
     table.sort(unused)
     eq(#unused, 0, "no item is declared and used by nothing: " .. table.concat(unused, ", "))
 
-    -- Every item that can be made, found, dug up or mined, and the four
-    -- that cannot: the kits and the analyzer have no recipe and no loot yet
-    -- (a known limitation, README), and the prototype cartridge never will.
+    -- Every item can be made, found, dug up or mined, except one: the
+    -- prototype cartridge, which only the debug menu hands out. (The kits
+    -- and the analyzer were debug-only too until they got recipes; with
+    -- them the chain from a shovel to a round needs no debug menu.)
     local debugOnly = {}
     for _, id in ipairs(noSource) do
         -- The sample is created by digging, the ore by mining.
         if not (id == "AmmoMaking.GeologicalSample" or id == AC_Mining.getOreItemType("zinc")) then table.insert(debugOnly, id) end
     end
     table.sort(debugOnly)
-    eq(table.concat(debugOnly, ", "), "AmmoMaking.AdvancedFieldAssayKit, AmmoMaking.FieldAssayKit, AmmoMaking.LaboratoryAssayAnalyzer, AmmoMaking.TestCartridge",
-        "exactly four items have no recipe and no loot (the debug menu hands them out)")
+    eq(table.concat(debugOnly, ", "), "AmmoMaking.TestCartridge",
+        "only the prototype cartridge has no recipe and no loot")
+    for _, id in ipairs({ "AmmoMaking.FieldAssayKit", "AmmoMaking.AdvancedFieldAssayKit", "AmmoMaking.LaboratoryAssayAnalyzer" }) do
+        check(produced[id] ~= nil and looted[id] == nil, id .. " is made, never found")
+    end
     -- A die set is the only item with two sources.
     for _, calibre in ipairs(AC_Calibres.LIST) do
         check(produced[calibre.dieSet] ~= nil and looted[calibre.dieSet] ~= nil, calibre.id .. ": its die set can be forged and found")
@@ -9735,6 +9859,33 @@ end
 ------------------------------------------------
 -- MOCK FIDELITY (last: it looks back over the whole run)
 ------------------------------------------------
+
+section("Test generator: seeded runs are exact arithmetic, not a short loop")
+do
+    -- Every seeded run above draws from MOCK.nextRandom. It is MINSTD, and
+    -- must be it exactly: the published check value is the 10,000th number
+    -- from seed 1. A generator that loses bits in Lua's doubles fails this,
+    -- and also falls into a short cycle, which the second check looks for
+    -- directly (Brent's cycle search, bounded).
+    local state = 1
+    for _ = 1, 10000 do state = MOCK.nextRandom(state) end
+    eq(state, 399268537, "the 10,000th MINSTD number from seed 1")
+    for _, seed in ipairs({ 1, 7, 42, 1993, 12345, 31337, 4220420, 20261002, 987654321 }) do
+        local power, length = 1, 1
+        local tortoise, hare = seed, MOCK.nextRandom(seed)
+        local steps = 0
+        while tortoise ~= hare and steps < 200000 do
+            if power == length then
+                tortoise, power, length = hare, power * 2, 0
+            end
+            hare = MOCK.nextRandom(hare)
+            length = length + 1
+            steps = steps + 1
+        end
+        check(tortoise ~= hare, "seed " .. seed .. ": no cycle within 200,000 draws")
+        check(hare > 0 and hare < 2147483647 and hare == math.floor(hare), "seed " .. seed .. ": the state stays a whole number in range")
+    end
+end
 
 section("Mock fidelity: the mocked engine answers as the installed build does")
 do

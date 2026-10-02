@@ -25,7 +25,8 @@ what the running game has to confirm is collected in each document's
 | Game-update check | **`tools/pz_compat.py`** | `DEVELOPMENT.md` |
 | Release | **`tools/build_release.py`, version 0.9.0, changelog, Workshop text**; nothing published | `CHANGELOG.md`, `WORKSHOP_DESCRIPTION.md` |
 
-Numbers: 41 mod items, 55 recipes (51 manufacturing, 3 scrapping, 1 recast),
+Numbers: 41 mod items, 58 recipes (51 manufacturing, 3 for the geology
+equipment, 3 scrapping, 1 recast),
 22 loot entries in 4 vanilla lists.
 
 ## 2. What the research settled
@@ -71,7 +72,6 @@ Kept here in one line each; the evidence is in the documents named above.
 |---|---|
 | Copper recycling (bullets and shot back to scrap) | a second entry in `AC_Recycling.getSources()` with its own loss; the XP-potential test says at once whether it opens a loop |
 | More calibres or shell variants | one `define{}` entry and three items each |
-| Recipes or loot for the assay kits and the analyzer | the four items with no source in normal play; needs a decision on what they cost |
 | A second tier of press recipes, batch sizes | data in `AC_Calibres.PRESS`; a decision first (below) |
 
 ### READY BUT REQUIRES RUNTIME VALIDATION
@@ -111,7 +111,7 @@ Each needs the project owner to choose before any code is right.
 | Press advantage beyond time | a quality bonus or batch size would make the press mandatory | time only |
 | Recycling yield | half is the highest safe figure | keep |
 | How generous a gun store is | one die set in twelve stores today | decide after playing |
-| A source for the assay kits and the analyzer | recipe, loot, or both | – |
+| What the assay kits and the analyzer cost | they have recipes now (third pass); the parts and levels are a first guess | play one start from a shovel, then tune `AC_Materials.EQUIPMENT_RECIPES` |
 
 ### FUTURE / OPTIONAL
 

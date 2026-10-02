@@ -1097,7 +1097,18 @@ once, and the run used to hang).
 `check` only verifies that every fault still applies. See the header of the
 file; it must not run while anything else reads the repository.
 
-After the second pass of 2026-10-02 the list holds 130 faults, all killed.
+After the third pass of 2026-10-02 the list holds 139 faults, all killed.
+
+**The seeded runs draw from one exact generator.** `MOCK.nextRandom` is
+MINSTD (`x * 48271 mod 2^31 - 1`), whose product stays below 2^53. The
+generator it replaced, `x * 1103515245 + 12345 mod 2^31`, is fine in
+integers and wrong in Lua 5.1's doubles: the product loses its low bits,
+and every seed fell into the same cycle of 10,466 states, so "eight seeds"
+were one sequence entered at eight points and the mocked `ZombRand` could
+return only those values. The section *Test generator* pins the published
+check value (the 10,000th number from seed 1 is 399268537) and searches
+for a cycle. No invariant failed when the generator was replaced; one test
+had to be given enough charcoal to no longer depend on the order of draws.
 The 32 added then: the quality tally (a contradiction trusted, quality
 created at unloading, a later release's record overwritten), calls the
 engine would refuse (the mock checks them against the recorded overloads),
@@ -1163,6 +1174,7 @@ files, every Lua file and the installed game's item scripts.
 |---|---|---|---|---|---|---|---|---|
 | Metallurgy (ore to brass) | 4 | `PrimitiveFurnace`, `Furnace` | 0 | 3 to 25 | 200 | 0 to 3 | 2 to 3 | 1 |
 | Case stock (sheets, cups) | 2 | `PrimitiveForge`, `AnySurfaceCraft` | 0 | 1 to 5 | 100 to 200 | 2 | 1 to 2 | 1 |
+| Geology equipment (kits, analyzer) | 3 | `AnySurfaceCraft` | 0 to 2 | 0 | 100 to 400 | 0 to 1 | 3 to 7 | 1 |
 | Gunpowder | 1 | `AnySurfaceCraft` | 3 | 5 | 150 | 1 | 2 | 1 |
 | Primers | 8 | `AnySurfaceCraft` | 2 to 4 | 2 to 3 | 120 to 150 | 2 | 2 | 1 |
 | Die sets | 9 | `Forge` | 1 to 3 | 10 | 300 to 400 | 3 | 2 | 1 |
@@ -1171,11 +1183,11 @@ files, every Lua file and the installed game's item scripts.
 | Assembly | 9 | `AnySurfaceCraft` | 3 to 5 | 2 to 5 | 40 to 80 | 1 | 4 to 5 | 1 |
 | Scrapping brass | 3 | `AnySurfaceCraft` | 0 | 0 | 100 | 1 | 1 | 1 |
 | Recasting brass scrap | 1 | `Furnace` | 0 | 0 | 200 | 3 | 2 | 1 |
-| **All** | **55** | | | | | | | |
+| **All** | **58** | | | | | | | |
 
 <!-- END RECIPE AUDIT TABLE -->
 
-Checked for each of the 55, by name, in the section *Station recipes*:
+Checked for each of the 58, by name, in the section *Station recipes*:
 
 | Property | What the suite asserts |
 |---|---|
@@ -1184,12 +1196,34 @@ Checked for each of the 55, by name, in the section *Station recipes*:
 | Keep and destroy | a kept line is `mode:keep` in both; every tool named by tag and every die set is kept; `mode:destroy` only on the wad line |
 | Outputs | count and item, script against mirror; the item exists |
 | Skill gate | no `SkillRequired` line (the engine would drop it); the level in the mirror is what `applySkillRequirements` attaches |
-| XP callback | the `OnCreate` target exists, grants once, and grants the mirror's amount (0 for recycling) |
+| XP callback | the `OnCreate` target exists, grants once, and grants the mirror's amount (0 for recycling and for the geology equipment) |
 | Time | at least 20, so the engine's skill speed-up applies |
 | Station | a vanilla bench tag; furnace recipes have no timed action, like vanilla's |
 | Translation | a name in `Recipes.json`, and no name without a recipe |
 | Dependency | every item in a recipe is in `AC_Compat.REQUIRED_ITEMS` |
 | Material accounting | every output has a material declaration (or the recipe is a declared tool recipe); every consumed item is tracked or a known untracked input; conservation per material; a loss where one is required |
+
+The three **geology equipment** recipes (third pass of 2026-10-02) have a
+section of their own, *Geology equipment*. They are data in
+`AC_Materials.EQUIPMENT_RECIPES`, and beyond the table above the suite
+holds them to this:
+
+| Rule | Why |
+|---|---|
+| No XP for the craft | a kit pays per assay; paying for the kit too would pay twice |
+| Every consumed line is one vanilla item by id, `base:normal` or paper, never a drainable | an input line of a drainable counts uses, and a fluid container is a different mechanism; neither is needed |
+| No item of the mod is an ingredient | a used-up kit must not become a fresh one |
+| The parts weigh at least what the result does, and at most twice that | the analyzer is 12 kg; it is built into sheet metal around a car battery charger, not conjured from scrap |
+| Field kit at level 0; advanced kit and analyzer each need more skill, time and parts than the one before | the first kit is where the chain starts |
+| A kit that was just made starts with its full uses | it has no ModData until it is first looked at (`initializeKit`) |
+
+The analyzer follows vanilla `MakeImprovisedFlashlight`
+(`recipes_electrical.txt`): `MakingElectrical` on a surface, category
+`Electrical`, a kept screwdriver by tag with `flags[Prop1]`. The kits
+follow the mod's own surface recipes (`Making`, `Miscellaneous`). Vanilla
+has no recipe that consumes a magnifying glass, tweezers, a calculator or
+a car battery charger by id; that an `item N [Base.X]` line takes them is
+how every such line works, and is still **REQUIRES IN-GAME VERIFICATION**.
 
 ### Items
 
@@ -1203,20 +1237,21 @@ one-off script compared each with the installed game:
   `base:heavyitem`, `base:ingot`) and `DisplayCategory` (`Ammo`, `Material`,
   `Tool`) vanilla's; every item is `ItemType = base:normal` with a positive
   weight and a name in `ItemName.json` equal to its `DisplayName`;
-- 36 are in recipes; the sample, the two kits and the analyzer are handled
-  by the geology code; `AmmoMaking.TestCartridge` by the quality prototype;
+- 39 are in recipes (the two kits and the analyzer as outputs, since the
+  third pass); those three and the sample are handled by the geology code;
+  `AmmoMaking.TestCartridge` by the quality prototype;
 - none is referenced only by tests, and none is in no recipe and no Lua;
 - every item is probed at game start except the prototype cartridge;
 - every item has a source in normal play (a recipe, loot, digging or
-  mining) except exactly four: the two kits, the analyzer and the test
-  cartridge;
+  mining) except one, the test cartridge;
 - the five items of the geology stage name no `WorldStaticModel`; the 36
   of the later stages all do.
 
 Known and intended:
 
-- The **assay kits and the analyzer** are created by nothing but the debug
-  menu (no recipe, no loot). The README lists it as a limitation.
+- The **assay kits and the analyzer** have recipes and no loot. Until the
+  third pass they came only from the debug menu, which still hands them
+  out.
 - The **test cartridge** is created by no mod code at all; it comes from the
   game's own debug item list. It is the only carrier of the multi-quality
   prototype (`AmmoInspection.inspect`, `AmmoQuality.*`, the debug presets
@@ -1333,7 +1368,7 @@ session got none. It now resets on `OnInitGlobalModData`.
   - inputs are consumed, crucible / tongs / mold are kept, a clay mold
     breaks, and the outputs are 10 zinc scrap, 1 ingot, 10 `Base.BrassIngot`;
   - the `Crafting (...)` XP line appears once per craft, also in a batch;
-  - the boot line reports 55 recipes given the requirement, the UI shows Ammo
+  - the boot line reports 58 recipes given the requirement, the UI shows Ammo
     Making 0, and a higher level shortens the craft;
   - zinc item names, icons and world models; carrying the 40-weight zinc ore;
   - every metallurgy line of the compatibility check is OK.
@@ -1399,3 +1434,18 @@ session got none. It now resets on `OnInitGlobalModData`.
     behaves differently;
   - the reloading press, when it is switched on: `art/reloading_press/
     README.md` and `RELOADING_PRESS_DESIGN.md` 9.
+- **Added in the third pass of 2026-10-02** (none of it seen in game):
+  - *Assemble Field Assay Kit*, *Assemble Advanced Field Assay Kit* and
+    *Build Laboratory Assay Analyzer* appear in the crafting window at a
+    surface (the first two under Miscellaneous, the analyzer under
+    Electrical), show Ammo Making 0, 1 and 2, take exactly their parts
+    and keep the screwdriver;
+  - a kit that was just made reads `(20/20)` or `(10/10)` the first time
+    the menu opens on a sample, and the made analyzer can be placed like
+    the debug one;
+  - no `Crafting (...)` XP line is printed for any of the three;
+  - the boot check lists the eleven new vanilla ids as present
+    (`Base.MagnifyingGlass`, `Base.Tweezers`, `Base.SheetPaper2`,
+    `Base.Calculator`, `Base.ElectronicsScrap`, `Base.ElectricWire`,
+    `Base.Amplifier`, `Base.LightBulb`, `Base.Screws`, `Base.SheetMetal`,
+    `Base.CarBatteryCharger`).

@@ -733,6 +733,7 @@ B.AUDIT_FINISH = "<!-- END RECIPE AUDIT TABLE -->"
 local FAMILIES = {
     { "metallurgy", "Metallurgy (ore to brass)" },
     { "caseStock", "Case stock (sheets, cups)" },
+    { "equipment", "Geology equipment (kits, analyzer)" },
     { "powder", "Gunpowder" },
     { "primer", "Primers" },
     { "dieSet", "Die sets" },

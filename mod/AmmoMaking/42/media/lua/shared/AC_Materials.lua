@@ -426,6 +426,178 @@ AC_Materials.RECIPES = {
 }
 
 
+------------------------------------------------
+-- GEOLOGY EQUIPMENT
+------------------------------------------------
+--
+-- The two assay kits and the laboratory analyzer. Mining
+-- needs an assayed sample and zinc comes only from mining,
+-- so without a way to make these the whole chain is open
+-- only from the debug menu.
+--
+-- Every amount below is a first guess to be tuned: none
+-- of it has been crafted in game. What is fixed is the
+-- shape:
+--
+--   * every consumed line names items by id that vanilla
+--     recipes either consume by id themselves (paper,
+--     electronics scrap, wire, light bulb, amplifier,
+--     screws, sheet metal) or that are plain base:normal
+--     items (magnifying glass, tweezers, calculator, car
+--     battery charger). No fluid container, no drainable;
+--   * what goes in weighs at least what comes out: the
+--     analyzer is a 12 kg machine, so it is built into a
+--     sheet metal cabinet around a car battery charger
+--     (the item whose icon it borrows), not conjured from
+--     a handful of scrap;
+--   * no XP for the craft. A kit already pays XP once per
+--     assay; paying for the kit too would pay twice;
+--   * a kit is never an ingredient of another kit, so a
+--     used-up kit cannot be turned into a fresh one;
+--   * the analyzer follows vanilla MakeImprovisedFlashlight
+--     (recipes_electrical.txt): MakingElectrical on a
+--     surface, a kept screwdriver with flags[Prop1].
+--
+-- "tool = true": like a die set, not a product the metal
+-- accounting follows.
+--
+-- REQUIRES FUTURE IN-GAME VERIFICATION: that the three
+-- recipes appear in the crafting window, take what they
+-- say and hand over a kit that starts with its full uses.
+------------------------------------------------
+
+local KIT_OPTICS = {
+    { count = 1, items = { "Base.MagnifyingGlass" } },
+    { count = 1, items = { "Base.Tweezers" } },
+    { count = 5, items = { "Base.SheetPaper2" } },
+}
+
+AC_Materials.EQUIPMENT_RECIPES = {
+
+    {
+        id = "AmmoMaking_AssembleFieldAssayKit",
+
+        step = "equipment",
+
+        time = 100,
+
+        timedAction = "Making",
+
+        benchTag = "AnySurfaceCraft",
+
+        category = "Miscellaneous",
+
+        callback = "onAssembleFieldAssayKit",
+
+        xp = 0,
+
+        requiredLevel = 0,
+
+        tool = true,
+
+        inputs = {
+            KIT_OPTICS[1],
+            KIT_OPTICS[2],
+            KIT_OPTICS[3],
+        },
+
+        outputs = {
+            { count = 1, item = "AmmoMaking.FieldAssayKit" },
+        },
+    },
+
+    {
+        id = "AmmoMaking_AssembleAdvancedFieldAssayKit",
+
+        step = "equipment",
+
+        time = 150,
+
+        timedAction = "Making",
+
+        benchTag = "AnySurfaceCraft",
+
+        category = "Miscellaneous",
+
+        callback = "onAssembleAdvancedFieldAssayKit",
+
+        xp = 0,
+
+        requiredLevel = 1,
+
+        tool = true,
+
+        inputs = {
+            KIT_OPTICS[1],
+            KIT_OPTICS[2],
+            KIT_OPTICS[3],
+            { count = 1, items = { "Base.Calculator" } },
+            { count = 2, items = { "Base.ElectronicsScrap" } },
+        },
+
+        outputs = {
+            { count = 1, item = "AmmoMaking.AdvancedFieldAssayKit" },
+        },
+    },
+
+    {
+        id = "AmmoMaking_BuildLaboratoryAssayAnalyzer",
+
+        step = "equipment",
+
+        time = 400,
+
+        timedAction = "MakingElectrical",
+
+        benchTag = "AnySurfaceCraft",
+
+        category = "Electrical",
+
+        callback = "onBuildLaboratoryAssayAnalyzer",
+
+        xp = 0,
+
+        requiredLevel = 2,
+
+        tool = true,
+
+        inputs = {
+            {
+                count = 1,
+                tags = { "base:screwdriver" },
+                keep = true,
+                flags = { "Prop1" },
+            },
+            { count = 4, items = { "Base.SheetMetal" } },
+            { count = 1, items = { "Base.CarBatteryCharger" } },
+            { count = 8, items = { "Base.ElectronicsScrap" } },
+            { count = 3, items = { "Base.ElectricWire" } },
+            { count = 1, items = { "Base.Amplifier" } },
+            { count = 1, items = { "Base.LightBulb" } },
+            { count = 6, items = { "Base.Screws" } },
+        },
+
+        outputs = {
+            { count = 1, item = "AmmoMaking.LaboratoryAssayAnalyzer" },
+        },
+    },
+}
+
+
+for _,
+    recipe
+in ipairs(
+    AC_Materials.EQUIPMENT_RECIPES
+)
+do
+
+    table.insert(
+        AC_Materials.RECIPES,
+        recipe
+    )
+end
+
+
 -- Ammunition components (docs/AMMUNITION_DESIGN.md):
 -- gunpowder, primers, and per calibre the die set, case,
 -- bullets and assembly.

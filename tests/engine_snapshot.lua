@@ -762,6 +762,7 @@ return {
         ["base:metalworkingpliers"] = 2,
         ["base:metalworkingpunch"] = 1,
         ["base:mortarpestle"] = 2,
+        ["base:screwdriver"] = 5,
         ["base:smallpunch"] = 1,
         ["base:tongs"] = 1,
         ["base:whetstone"] = 2,
@@ -793,6 +794,11 @@ return {
             tags = "base:ammo",
             type = "base:normal",
             weight = 0.035,
+        },
+        ["Base.Amplifier"] = {
+            tags = "base:hasmetal;base:showcondition",
+            type = "base:normal",
+            weight = 0.3,
         },
         ["Base.BallPeenHammer"] = {
             tags = "base:ballpeenhammer;base:hammer;base:hasmetal;base:hastoolhead;base:killanimal;base:repairwithglue;base:repairwithtape;base:smithinghammer",
@@ -854,9 +860,18 @@ return {
             type = "base:normal",
             weight = 0.8,
         },
+        ["Base.Calculator"] = {
+            tags = "base:hasmetal;base:miscelectronic",
+            type = "base:normal",
+            weight = 0.3,
+        },
         ["Base.CapGunCap"] = {
             type = "base:normal",
             weight = 0.005,
+        },
+        ["Base.CarBatteryCharger"] = {
+            type = "base:normal",
+            weight = 2,
         },
         ["Base.CeramicCrucible"] = {
             type = "base:normal",
@@ -896,6 +911,15 @@ return {
             type = "base:normal",
             weight = 0.1,
         },
+        ["Base.ElectricWire"] = {
+            tags = "base:hasmetal",
+            type = "base:normal",
+            weight = 0.1,
+        },
+        ["Base.ElectronicsScrap"] = {
+            type = "base:normal",
+            weight = 0.1,
+        },
         ["Base.Fertilizer"] = {
             tags = "base:fertilizer",
             type = "base:drainable",
@@ -920,6 +944,16 @@ return {
         ["Base.IronIngotMold"] = {
             type = "base:normal",
             weight = 6,
+        },
+        ["Base.LightBulb"] = {
+            tags = "base:hasmetal;base:showcondition",
+            type = "base:normal",
+            weight = 0.3,
+        },
+        ["Base.MagnifyingGlass"] = {
+            tags = "base:hasmetal;base:magnifier",
+            type = "base:normal",
+            weight = 0.5,
         },
         ["Base.Matchbox"] = {
             tags = "base:ignorezombiedensity;base:lessfull;base:startfire",
@@ -963,6 +997,20 @@ return {
             type = "base:normal",
             weight = 0.1,
         },
+        ["Base.Screws"] = {
+            tags = "base:hasmetal",
+            type = "base:normal",
+            weight = 0.05,
+        },
+        ["Base.SheetMetal"] = {
+            tags = "base:hasmetal;base:smeltablesteellarge",
+            type = "base:normal",
+            weight = 2,
+        },
+        ["Base.SheetPaper2"] = {
+            type = "base:literature",
+            weight = 0.1,
+        },
         ["Base.ShotgunShells"] = {
             tags = "base:ammo;base:shotgunshell",
             type = "base:normal",
@@ -999,6 +1047,11 @@ return {
             tags = "base:hasmetal;base:showcondition;base:smeltableironmedium;base:tongs",
             type = "base:normal",
             weight = 1,
+        },
+        ["Base.Tweezers"] = {
+            tags = "base:removebullet;base:removeglass;base:tweezers",
+            type = "base:normal",
+            weight = 0.1,
         },
     },
     luaMethods = {
@@ -1140,6 +1193,7 @@ return {
     timedActions = {
         HammerMetalStanding = true,
         Making = true,
+        MakingElectrical = true,
         MakingHammer_Surface = true,
         UseHandPress = true,
     },
