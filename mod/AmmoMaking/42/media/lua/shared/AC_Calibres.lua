@@ -266,6 +266,9 @@ AC_Calibres.PRIMERS = {
 -- bulletsPerScrap
 --          copper bullets swaged from one Base.CopperScrap
 -- wads     pieces of wadding per round (shells only)
+-- lootTier how rare the calibre's die set is as loot: a
+--          key of AC_Loot.CONFIG.tierWeight ("common",
+--          "uncommon", "rare"). Crafting is unaffected.
 -- powderUses
 --          uses of Base.GunPowder per round: the charge.
 --          A whole number, never below 1: the engine has
@@ -397,6 +400,10 @@ AC_Calibres.DEFAULTS = {
     -- has any.
     wads = 0,
 
+    -- The service and house-gun calibres are the common
+    -- dies; a magnum or a long gun says otherwise.
+    lootTier = "common",
+
     assembleLevel = 3,
 
     xp = {
@@ -455,6 +462,8 @@ AC_Calibres.CLASSES = {
 
         wads = 1,
 
+        lootTier = "rare",
+
         assembleLevel = 4,
 
         xp = {
@@ -474,6 +483,8 @@ AC_Calibres.CLASSES = {
         bulletsPerScrap = 1,
 
         powderUses = 4,
+
+        lootTier = "rare",
 
         assembleLevel = 5,
 
@@ -592,7 +603,7 @@ function AC_Calibres.define(
     for _,
         key
     in ipairs(
-        { "primerFamily", "cupsPerCase", "bulletsPerScrap", "powderUses", "wads", "assembleLevel" }
+        { "primerFamily", "cupsPerCase", "bulletsPerScrap", "powderUses", "wads", "lootTier", "assembleLevel" }
     )
     do
 
@@ -699,6 +710,8 @@ AC_Calibres.LIST = {
 
         bulletsPerScrap = 1,
 
+        lootTier = "uncommon",
+
         assembleLevel = 4,
 
         xp = { assemble = 3 },
@@ -715,6 +728,8 @@ AC_Calibres.LIST = {
         ammoType = "base:bullets_357",
 
         powderUses = 2,
+
+        lootTier = "uncommon",
 
         assembleLevel = 4,
 
@@ -738,6 +753,8 @@ AC_Calibres.LIST = {
         bulletsPerScrap = 1,
 
         powderUses = 3,
+
+        lootTier = "uncommon",
 
         assembleLevel = 5,
 

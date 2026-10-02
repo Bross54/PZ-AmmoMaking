@@ -4137,6 +4137,8 @@ do
     local allowed = {
         OnFillWorldObjectContextMenu = true, OnFillInventoryObjectContextMenu = true,
         OnGameStart = true, OnGameBoot = true, OnInitGlobalModData = true,
+        -- Once per world load, just before the engine parses the loot tables.
+        OnPreDistributionMerge = true,
     }
     local registrations = 0
     local heavy = { "AC_Calibres.validate", "AC_Calibres.buildRecipes", "AC_Calibres.buildUnits", "AC_Calibres.getItems", "AC_Compat.run", "applySkillRequirements" }
@@ -5457,6 +5459,363 @@ do
 end
 
 ------------------------------------------------
+-- LOOT
+------------------------------------------------
+--
+-- tests/vanilla_snapshot.lua is what tests/snapshot_vanilla.lua read from
+-- the installed 42.20.4 files: which procedural loot lists exist and which
+-- a container names. The sections below prove the mod's loot model against
+-- that record and against a mocked ProceduralDistributions table. They do
+-- NOT prove that the game spawns a die set: that is the engine's roll.
+
+local VANILLA = dofile(ROOT .. "/tests/vanilla_snapshot.lua")
+
+-- A stand-in for ProceduralDistributions.list holding the snapshot's lists,
+-- each with as many placeholder entries as the real one has.
+local function mockProceduralLists()
+    local lists = {}
+    for name, facts in pairs(VANILLA.loot.lists) do
+        local items = {}
+        for index = 1, facts.entries do
+            table.insert(items, "Vanilla" .. index)
+            table.insert(items, 1)
+        end
+        lists[name] = { rolls = facts.rolls, items = items }
+    end
+    return lists
+end
+
+-- A stand-in for Distributions[1] in which a container names every list
+-- the snapshot records as referenced.
+local function mockDistribution()
+    local procList = {}
+    for name, facts in pairs(VANILLA.loot.lists) do
+        if facts.references > 0 then table.insert(procList, { name = name, min = 0, max = 99 }) end
+    end
+    return { gunstore = { displaycase = { procedural = true, procList = procList } }, all = { crate = { rolls = 1, items = { "Nails", 1 }, junk = { rolls = 1, items = {} } } } }
+end
+
+section("Die set loot: rare, centralised, only in lists the game uses")
+do
+    local C = AC_Loot.CONFIG
+    eq(VANILLA.version, "42.20.4", "the snapshot is of the build the mod targets")
+    eq(#AC_Loot.validate(), 0, "the loot model is sound: " .. table.concat(AC_Loot.validate(), "; "))
+    eq(C.enabled, true, "die set loot is switched on")
+
+    local dead = {}
+    for _, name in ipairs(VANILLA.loot.unreferenced) do dead[name] = true end
+    check(dead.GunStoreCounter and dead.GunStoreDisplayCase and dead.GunStoreShelf, "the three deprecated gun-store lists are recorded as unused")
+    check(#VANILLA.loot.unreferenced > 100, "vanilla carries many lists no container names (" .. #VANILLA.loot.unreferenced .. ")")
+
+    -- Every target is a list that exists, has entries and is named by a container.
+    local targetNames = {}
+    for _, target in ipairs(AC_Loot.TARGETS) do
+        local facts = VANILLA.loot.lists[target.list]
+        check(facts ~= nil, target.list .. " is a vanilla procedural list recorded in the snapshot")
+        check(not dead[target.list], target.list .. " is not one of the unused lists")
+        if facts then
+            check(facts.references > 0, target.list .. " is named by a container (" .. facts.references .. ")")
+            check(facts.entries > 0, target.list .. " has not been emptied")
+            eq(facts.rolls, 4, target.list .. " rolls four times, as the documented chances assume")
+        end
+        check(not targetNames[target.list], target.list .. " is targeted once")
+        targetNames[target.list] = true
+    end
+    eq(#AC_Loot.TARGETS, 4, "four lists, not everywhere")
+
+    -- The entries: die sets only, each a real item with a forging recipe.
+    local entries = AC_Loot.buildEntries()
+    local perList, perItem, pairsSeen = {}, {}, {}
+    for _, entry in ipairs(entries) do
+        local kind, calibre = AC_Calibres.identify(entry.item)
+        eq(kind, "dieSet", entry.item .. " is a die set")
+        check(declaredItems[entry.item] ~= nil, entry.item .. " is declared in AC_Items.txt")
+        eq(calibre and calibre.id, entry.calibre, entry.item .. " belongs to the calibre the entry names")
+        check(targetNames[entry.list], entry.item .. " goes to a declared target (" .. entry.list .. ")")
+        check(not pairsSeen[entry.list .. entry.item], entry.item .. " is in " .. entry.list .. " once")
+        pairsSeen[entry.list .. entry.item] = true
+        perList[entry.list] = (perList[entry.list] or 0) + entry.weight
+        perItem[entry.item] = (perItem[entry.item] or 0) + 1
+
+        local target
+        for _, t in ipairs(AC_Loot.TARGETS) do if t.list == entry.list then target = t end end
+        eq(entry.weight, C.tierWeight[calibre.lootTier] * target.scale, entry.item .. " weight is tier times scale in " .. entry.list)
+        if target.classes then
+            local wanted = {}
+            for _, class in ipairs(target.classes) do wanted[class] = true end
+            check(wanted[calibre.class], entry.item .. " is of a class " .. entry.list .. " takes")
+        end
+        check(entry.weight > 0 and entry.weight <= C.maxWeight, entry.item .. " weighs at most " .. C.maxWeight .. " in " .. entry.list)
+        -- At most about a 4 % chance per container, at default settings.
+        local chance = AC_Loot.chancePerContainer(entry.weight, VANILLA.loot.lists[entry.list].rolls)
+        check(chance > 0 and chance < 4, entry.item .. " is rare in " .. entry.list .. " (" .. string.format("%.2f", chance) .. " %)")
+    end
+    for _, item in ipairs({ "AmmoMaking.SmallPistolPrimer", "AmmoMaking.BrassCaseCup", "AmmoMaking.SmallBrassSheet", "AmmoMaking.Case9mm", "AmmoMaking.Bullet9mm", "Base.GunPowder" }) do
+        check(perItem[item] == nil, item .. " is not loot: components are manufactured")
+    end
+
+    -- Looting is an alternative, never the only way: every lootable die set
+    -- is still forged from vanilla materials, and no recipe asks how a die
+    -- set was obtained (an item type, kept, no flag).
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check((perItem[calibre.dieSet] or 0) >= 1, calibre.id .. " die set can be found")
+        check((perItem[calibre.dieSet] or 0) <= C.maxListsPerCalibre, calibre.id .. " die set is in at most " .. C.maxListsPerCalibre .. " lists")
+        check(pairsSeen["GunStoreAccessories" .. calibre.dieSet], calibre.id .. " die set is in the gun store list")
+        local forge = AC_Materials.getRecipe("AmmoMaking_ForgeDieSet" .. calibre.suffix)
+        check(forge ~= nil and forge.outputs[1].item == calibre.dieSet, calibre.id .. " die set can still be forged")
+        for _, input in ipairs(forge.inputs) do
+            for _, id in ipairs(input.items or {}) do
+                eq(string.sub(id, 1, 5), "Base.", calibre.id .. " die set is forged from vanilla items only (" .. id .. ")")
+            end
+        end
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            for _, input in ipairs(recipe.inputs) do
+                if input.items and input.items[1] == calibre.dieSet then
+                    eq(#input.items, 1, recipe.id .. " names the die set by item type alone")
+                    eq(input.keep, true, recipe.id .. " keeps the die set")
+                    eq(input.flags, nil, recipe.id .. " puts no condition on the die set: found, forged or spawned all work")
+                end
+            end
+        end
+        -- Finding the tool does not open the recipes: the level gates stay.
+        check(calibre.levels.case >= 1 and calibre.levels.assemble >= 3, calibre.id .. " recipes keep their Ammo Making levels whatever the die set's origin")
+    end
+
+    -- Pinned numbers: a change to any loot probability shows here.
+    eq(C.tierWeight.common, 1, "common tier weight")
+    eq(C.tierWeight.uncommon, 0.6, "uncommon tier weight")
+    eq(C.tierWeight.rare, 0.3, "rare tier weight")
+    check(C.tierWeight.common > C.tierWeight.uncommon and C.tierWeight.uncommon > C.tierWeight.rare, "the tiers are ordered")
+    local pinned = { GunStoreAccessories = 5.0, GarageFirearms = 1.9, Hunter = 0.6, HuntingLockers = 0.6 }
+    for name, expected in pairs(pinned) do
+        check(math.abs((perList[name] or 0) - expected) < 1e-9, name .. " holds a die set weight of " .. expected .. " in all (got " .. tostring(perList[name]) .. ")")
+        check(perList[name] <= C.maxListWeight, name .. " stays under the per-list cap")
+        -- Next to what the list already holds, die sets are a sliver.
+        check(perList[name] / VANILLA.loot.lists[name].weight < 0.03, name .. ": die sets add under 3 % to the list's weight")
+    end
+    eq(#entries, 9 + 5 + 4 + 4, "twenty-two entries in all")
+    local tierCount = { common = 0, uncommon = 0, rare = 0 }
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local tier = calibre.lootTier
+        tierCount[tier] = tierCount[tier] + 1
+        if calibre.class ~= "pistol" then eq(tier, "rare", calibre.id .. ": rifle and shotgun dies are the rare find") end
+        -- Handgun dies in the garage gun locker, long-gun dies with a hunter's things.
+        eq(pairsSeen["GarageFirearms" .. calibre.dieSet] == true, calibre.class == "pistol", calibre.id .. ": in the garage list only if it is a handgun calibre")
+        eq(pairsSeen["Hunter" .. calibre.dieSet] == true, calibre.class ~= "pistol", calibre.id .. ": in the hunter list only if it is a long-gun calibre")
+        eq(pairsSeen["HuntingLockers" .. calibre.dieSet] == true, calibre.class ~= "pistol", calibre.id .. ": in the hunting lockers only if it is a long-gun calibre")
+    end
+    eq(AC_Calibres.get("9mm").lootTier, "common", "9mm dies are common")
+    eq(AC_Calibres.get(".38 Special").lootTier, "common", ".38 Special dies are common")
+    eq(AC_Calibres.get(".44 Magnum").lootTier, "uncommon", ".44 Magnum dies are uncommon")
+    eq(tierCount.common, 2, "two common dies")
+    eq(tierCount.uncommon, 3, "three uncommon dies")
+    eq(tierCount.rare, 4, "four rare dies")
+    check(math.abs(AC_Loot.chancePerContainer(1, 4) - 3.940399) < 1e-5, "a weight of 1 over four rolls is 3.94 % per container")
+    check(math.abs(AC_Loot.chancePerContainer(5, 4) - 18.549375) < 1e-5, "all nine in the gun store list: 18.5 % that one display case holds a die set")
+
+    -- The validator refuses what it is there to refuse.
+    local function problemsWith(change)
+        local targets, calibres = {}, {}
+        for _, t in ipairs(AC_Loot.TARGETS) do
+            table.insert(targets, { list = t.list, scale = t.scale, classes = t.classes })
+        end
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            local copy = {}
+            for key, value in pairs(calibre) do copy[key] = value end
+            table.insert(calibres, copy)
+        end
+        change(targets, calibres)
+        return table.concat(AC_Loot.validate(targets, calibres), "; ")
+    end
+    local function refuses(what, change, text)
+        local found = problemsWith(change)
+        check(string.find(found, text, 1, true) ~= nil, what .. " is refused (" .. found .. ")")
+    end
+    refuses("a scale above 1", function(t) t[1].scale = 4 end, "must have a scale above 0 and at most 1")
+    refuses("a zero scale", function(t) t[2].scale = 0 end, "must have a scale above 0 and at most 1")
+    refuses("an unknown class", function(t) t[2].classes = { "pistol", "cannon" } end, "names an unknown class cannon")
+    refuses("a class named twice", function(t) t[3].classes = { "rifle", "rifle" } end, "names rifle twice")
+    refuses("a list targeted twice", function(t) t[4].list = t[1].list end, "is targeted twice")
+    refuses("a target without classes", function(t) t[2].classes = {} end, "names no classes")
+    refuses("a target without a list", function(t) t[2].list = nil end, "a target has no list name")
+    refuses("a calibre without a tier", function(_, calibres) calibres[8].lootTier = nil end, ".308 has no loot tier")
+    refuses("an unknown tier", function(_, calibres) calibres[1].lootTier = "everywhere" end, "9mm has an unknown loot tier everywhere")
+    refuses("a die set in no list", function(t) t[1].classes = { "rifle" } t[2].classes = { "shotgun" } end, "9mm die set is in no list")
+    refuses("a die set in too many lists", function(t)
+        for index = 1, 5 do t[index] = { list = "List" .. index, scale = 0.1 } end
+    end, "9mm die set is in 5 lists, above 4")
+    local saved = C.tierWeight.common
+    C.tierWeight.common = 25
+    local heavy = table.concat(AC_Loot.validate(), "; ")
+    C.tierWeight.common = saved
+    check(string.find(heavy, "tier common must weigh more than 0 and at most 1", 1, true) ~= nil, "a tier weight of 25 is refused: " .. heavy)
+    local savedCap = C.maxListWeight
+    C.maxListWeight = 4
+    local crowded = table.concat(AC_Loot.validate(), "; ")
+    C.maxListWeight = savedCap
+    check(string.find(crowded, "die sets weigh 5 in GunStoreAccessories, above 4", 1, true) ~= nil, "a list over its cap is refused: " .. crowded)
+    eq(#AC_Loot.validate(), 0, "the live loot model was restored")
+
+    -- docs/LOOT_AND_RECYCLING.md carries the loot table, rendered from
+    -- AC_Loot and the snapshot's roll counts; no weight is typed by hand.
+    local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+    local document = readFile(ROOT .. "/docs/LOOT_AND_RECYCLING.md")
+    local from = string.find(document, BALANCE.LOOT_START, 1, true)
+    local _, to = string.find(document, BALANCE.LOOT_FINISH, 1, true)
+    check(from ~= nil and to ~= nil and to > from, "the loot document has the loot table markers")
+    eq(string.sub(document, from or 1, to or 1), BALANCE.renderLootBlock(VANILLA), "the loot table equals the rendered model (run tests/write_recipes.lua)")
+    eq(BALANCE.replaceLoot(document, VANILLA), document, "regenerating the loot table changes nothing")
+    local rendered = BALANCE.renderLoot(VANILLA)
+    for _, target in ipairs(AC_Loot.TARGETS) do
+        check(string.find(rendered, "| `" .. target.list .. "` | " .. target.where .. " |", 1, true) ~= nil, target.list .. " has a loot row")
+    end
+    local savedScale = AC_Loot.TARGETS[1].scale
+    AC_Loot.TARGETS[1].scale = 0.25
+    check(BALANCE.renderLoot(VANILLA) ~= rendered, "a changed scale changes the rendered loot table")
+    AC_Loot.TARGETS[1].scale = savedScale
+    eq(BALANCE.renderLoot(VANILLA), rendered, "and restoring it restores the table")
+end
+
+section("Die set loot registration (mocked ProceduralDistributions; the engine's parse and roll are not run)")
+do
+    local entries = AC_Loot.buildEntries()
+    local lists = mockProceduralLists()
+    local before = {}
+    for name, list in pairs(lists) do before[name] = #list.items end
+
+    local summary = AC_Loot.register(lists, mockDistribution())
+    eq(summary.added, #entries, "every entry is inserted")
+    eq(summary.present, 0, "nothing was there before")
+    eq(#summary.missing + #summary.empty + #summary.unreferenced, 0, "every target exists, is used and has entries")
+    for name, list in pairs(lists) do
+        local added = 0
+        for _, entry in ipairs(entries) do if entry.list == name then added = added + 1 end end
+        eq(#list.items, before[name] + 2 * added, name .. " grew by its entries only")
+        eq(#list.items % 2, 0, name .. " keeps the item, weight pairing")
+        for index = 1, #list.items, 2 do
+            eq(type(list.items[index]), "string", name .. " item name at an odd index")
+            eq(type(list.items[index + 1]), "number", name .. " weight at an even index")
+        end
+    end
+    for _, entry in ipairs(entries) do
+        local count, weight = 0, nil
+        local items = lists[entry.list].items
+        for index = 1, #items, 2 do
+            if items[index] == entry.item then
+                count = count + 1
+                weight = items[index + 1]
+            end
+        end
+        eq(count, 1, entry.item .. " is in " .. entry.list .. " exactly once")
+        eq(weight, entry.weight, entry.item .. " carries its weight in " .. entry.list)
+    end
+    for _, name in ipairs({ "GunStoreCounter", "GunStoreDisplayCase", "GunStoreShelf", "GunStoreAmmunition", "PoliceStorageAmmunition", "MetalWorkerTools" }) do
+        eq(#lists[name].items, before[name], name .. " is left alone")
+    end
+
+    -- A second and third world load in the same Lua state add nothing.
+    for _ = 1, 2 do
+        local again = AC_Loot.register(lists, mockDistribution())
+        eq(again.added, 0, "a repeated registration adds nothing")
+        eq(again.present, #entries, "and finds every entry present")
+    end
+    for name, list in pairs(lists) do
+        local added = 0
+        for _, entry in ipairs(entries) do if entry.list == name then added = added + 1 end end
+        eq(#list.items, before[name] + 2 * added, name .. " did not grow on re-registration")
+    end
+
+    -- A list this build does not have is never created.
+    lists = mockProceduralLists()
+    lists.Hunter = nil
+    summary = AC_Loot.register(lists, mockDistribution())
+    eq(lists.Hunter, nil, "a missing list is not created")
+    eq(table.concat(summary.missing, ","), "Hunter", "and is reported once")
+    eq(summary.added, #entries - 4, "the other lists still get their entries")
+
+    -- A list vanilla has emptied, and a list no container names, are reported.
+    lists = mockProceduralLists()
+    lists.HuntingLockers.items = {}
+    local distribution = mockDistribution()
+    local procList = distribution.gunstore.displaycase.procList
+    for index = #procList, 1, -1 do
+        if procList[index].name == "GarageFirearms" then table.remove(procList, index) end
+    end
+    summary = AC_Loot.register(lists, distribution)
+    eq(table.concat(summary.empty, ","), "HuntingLockers", "an emptied list is reported")
+    eq(table.concat(summary.unreferenced, ","), "GarageFirearms", "a list no container names is reported")
+
+    -- The dead lists of 42.20.4 would be caught at run time as well.
+    local savedTargets = AC_Loot.TARGETS
+    AC_Loot.TARGETS = { { list = "GunStoreDisplayCase", scale = 1, calibres = "all" } }
+    lists = mockProceduralLists()
+    summary = AC_Loot.register(lists, mockDistribution())
+    AC_Loot.TARGETS = savedTargets
+    eq(table.concat(summary.empty, ","), "GunStoreDisplayCase", "the deprecated display-case list is flagged as emptied")
+    eq(table.concat(summary.unreferenced, ","), "GunStoreDisplayCase", "and as used by no container")
+
+    -- Switched off, or with a broken model, nothing is touched.
+    lists = mockProceduralLists()
+    AC_Loot.CONFIG.enabled = false
+    summary = AC_Loot.register(lists, mockDistribution())
+    AC_Loot.CONFIG.enabled = true
+    eq(summary.added, 0, "switched off: nothing is added")
+    for name, list in pairs(lists) do eq(#list.items, before[name], name .. " untouched when switched off") end
+    local savedWeight = AC_Loot.CONFIG.tierWeight.rare
+    AC_Loot.CONFIG.tierWeight.rare = 50
+    summary = AC_Loot.register(lists, mockDistribution())
+    AC_Loot.CONFIG.tierWeight.rare = savedWeight
+    eq(summary.added, 0, "a model the validator refuses adds nothing")
+    for name, list in pairs(lists) do eq(#list.items, before[name], name .. " untouched by a refused model") end
+
+    -- Malformed tables do not raise.
+    check(pcall(AC_Loot.register, nil, nil), "no ProceduralDistributions: no error")
+    eq(AC_Loot.register(nil, nil).unavailable, true, "and the summary says the tables were not there")
+    eq(AC_Loot.register(mockProceduralLists(), mockDistribution()).unavailable, nil, "a normal registration is not marked unavailable")
+    check(pcall(AC_Loot.register, { Hunter = "not a table", GarageFirearms = { items = 7 } }, "not a table"), "malformed lists: no error")
+    eq(next(AC_Loot.findReferencedLists(nil, { "Hunter" })), nil, "no distribution table: nothing referenced")
+    local cyclic = { a = {} }
+    cyclic.a.back = cyclic
+    cyclic.a.procList = { { name = "Hunter" }, "junk", { name = "Other" } }
+    local found = AC_Loot.findReferencedLists(cyclic, { "Hunter" })
+    check(found.Hunter == true and found.Other == nil, "the walk survives a cycle and finds only what was asked for")
+
+    -- The event handler: the globals the engine provides at that moment.
+    local savedProcedural, savedDistributions = ProceduralDistributions, Distributions
+    ProceduralDistributions = { list = mockProceduralLists() }
+    Distributions = { mockDistribution() }
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    Events.OnPreDistributionMerge.fire()
+    Events.OnPreDistributionMerge.fire()
+    MOCK.capturePrint(false)
+    eq(AC_Loot.lastSummary.added, 0, "the second firing added nothing")
+    eq(AC_Loot.lastSummary.present, #entries, "the first had added every entry")
+    check(MOCK.printLogContains("[AmmoMaking] Die set loot: " .. #entries .. " entries added, 0 already present; lists missing: 0, empty: 0, used by no container: 0"), "the registration is logged once")
+    local lines = 0
+    for _, line in ipairs(MOCK.printLog) do
+        if string.find(line, "Die set loot:", 1, true) then lines = lines + 1 end
+    end
+    eq(lines, 1, "the no-op second firing logs nothing")
+    ProceduralDistributions, Distributions = nil, nil
+    MOCK.capturePrint(true)
+    local okFire = pcall(Events.OnPreDistributionMerge.fire)
+    MOCK.capturePrint(false)
+    check(okFire, "the handler does not raise without the loot tables")
+    ProceduralDistributions, Distributions = savedProcedural, savedDistributions
+
+    -- Where it is registered: once per world load, nowhere else.
+    local source = readFile(LUA .. "shared/AC_Loot.lua")
+    local registrations = 0
+    for event in string.gmatch(source, "Events%.([%w_]+)%.Add") do
+        registrations = registrations + 1
+        eq(event, "OnPreDistributionMerge", "the loot handler listens to the pre-merge event")
+    end
+    eq(registrations, 1, "one registration")
+    check(string.find(source, "ProceduralDistributions.list[", 1, true) == nil, "no list is indexed at file load")
+end
+
+------------------------------------------------
 -- COMPATIBILITY CHECK
 ------------------------------------------------
 
@@ -5469,6 +5828,8 @@ do
         ["IGUI_perks_Ammo Making_Description1"] = "level one",
     }
     MOCK.translations = fullTranslations
+    -- As after a world load: the loot registration has run.
+    AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
 
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
@@ -5511,6 +5872,41 @@ do
     check(MOCK.printLogContains("OK: calibre .308 complete") and MOCK.printLogContains("OK: calibre 9mm complete"), "other rifle and pistol calibres stay complete")
     check(MOCK.printLogContains("[AmmoMaking] OK: Base.GunPowder holds 10 uses"), "gunpowder uses probed")
     check(MOCK.printLogContains("[AmmoMaking] OK: AC_CaseQuality effects"), "quality effects probed")
+
+    -- Die set loot: what the registration found when the world loaded.
+    local function lootRun(change)
+        local savedSummary = AC_Loot.lastSummary
+        change()
+        MOCK.clearPrintLog()
+        MOCK.capturePrint(true)
+        local _, lootSummary = AC_Compat.run(true)
+        MOCK.capturePrint(false)
+        AC_Loot.lastSummary = savedSummary
+        return lootSummary
+    end
+    local lootEntries = #AC_Loot.buildEntries()
+    eq(lootRun(function() end).warnings, 0, "registered loot raises no warning")
+    check(MOCK.printLogContains("[AmmoMaking] OK: die set loot (" .. lootEntries .. " entries in 4 lists)"), "the registered loot is reported")
+    eq(lootRun(function() AC_Loot.lastSummary = nil end).warnings, 1, "loot that never registered is one warning")
+    check(MOCK.printLogContains("WARNING: die set loot was not registered (OnPreDistributionMerge did not reach the mod; die sets can only be forged)"), "and says what follows")
+    eq(lootRun(function()
+        AC_Loot.lastSummary = { added = lootEntries - 4, present = 0, missing = { "Hunter" }, empty = { "GunStoreAccessories" }, unreferenced = { "GarageFirearms" } }
+    end).warnings, 3, "a missing, an emptied and an unused list are one warning each")
+    check(MOCK.printLogContains("WARNING: loot list Hunter does not exist on this build (die sets will not be found there; they can still be forged)"), "missing list named")
+    check(MOCK.printLogContains("WARNING: loot list GunStoreAccessories has been emptied by vanilla"), "emptied list named")
+    check(MOCK.printLogContains("WARNING: loot list GarageFirearms is used by no container"), "unused list named")
+    eq(lootRun(function() AC_Loot.lastSummary = AC_Loot.register(nil, nil) end).warnings, 1, "loot tables that were not there are one warning")
+    check(MOCK.printLogContains("WARNING: die set loot was not registered (ProceduralDistributions.list was not there when the loot tables were merged; die sets can only be forged)"), "and says so")
+    AC_Loot.CONFIG.enabled = false
+    eq(lootRun(function() AC_Loot.lastSummary = nil end).warnings, 0, "switched off: no warning")
+    AC_Loot.CONFIG.enabled = true
+    check(MOCK.printLogContains("[AmmoMaking] OK: die set loot is switched off"), "switched off is reported as such")
+    local savedRare = AC_Loot.CONFIG.tierWeight.rare
+    AC_Loot.CONFIG.tierWeight.rare = 9
+    local brokenLoot = lootRun(function() end)
+    AC_Loot.CONFIG.tierWeight.rare = savedRare
+    check(brokenLoot.warnings >= 1, "a broken loot model is a warning")
+    check(MOCK.printLogContains("WARNING: loot: tier rare must weigh more than 0 and at most 1 (no die set is added to any loot list)"), "and names the problem")
 
     -- Concise by default: a normal game start prints no OK line per probe,
     -- only the class summaries and the totals. -debug mode prints them all.

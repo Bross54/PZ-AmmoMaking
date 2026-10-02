@@ -24,13 +24,14 @@
 --     [AmmoMaking] Pistol calibres: 5/5 complete
 --     [AmmoMaking] Rifle calibres: 3/3 complete
 --     [AmmoMaking] Shotgun shells: 1/1 complete
---     [AmmoMaking] Compatibility check: 170 ok, 0 warnings, 0 unverified
+--     [AmmoMaking] Compatibility check: 171 ok, 0 warnings, 0 unverified
 --
 -- It never changes game state and never raises: every
 -- probe is pcall-guarded. It runs once per game start;
 -- the debug menu can run it again on demand.
 
 require "AC_Calibres"
+require "AC_Loot"
 
 AC_Compat = AC_Compat or {}
 
@@ -1553,6 +1554,166 @@ end
 
 
 ------------------------------------------------
+-- Die set loot (AC_Loot): the model is sound, and the
+-- registration that ran when the world loaded found
+-- every list it targets, in use.
+--
+-- A list that is missing, emptied or named by no
+-- container means vanilla has reorganised its loot:
+-- die sets are then crafted only, which still works.
+------------------------------------------------
+
+local function checkLoot(
+    results
+)
+
+    if type(AC_Loot) ~= "table" then
+
+        addResult(
+            results,
+            "WARNING",
+            "die set loot",
+            "AC_Loot is not loaded"
+        )
+
+
+        return
+    end
+
+
+    local problems,
+          err =
+        safe(
+            AC_Loot.validate
+        )
+
+
+    if err then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "die set loot model",
+            tostring(err)
+        )
+
+
+        return
+    end
+
+
+    for _,
+        problem
+    in ipairs(
+        problems
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "no die set is added to any loot list"
+        )
+    end
+
+
+    if #problems > 0 then
+        return
+    end
+
+
+    if not AC_Loot.CONFIG.enabled then
+
+        addResult(
+            results,
+            "OK",
+            "die set loot is switched off"
+        )
+
+
+        return
+    end
+
+
+    local summary =
+        AC_Loot.lastSummary
+
+
+    if type(summary) ~= "table" then
+
+        addResult(
+            results,
+            "WARNING",
+            "die set loot was not registered",
+            "OnPreDistributionMerge did not reach the mod; die sets can only be forged"
+        )
+
+
+        return
+    end
+
+
+    if summary.unavailable then
+
+        addResult(
+            results,
+            "WARNING",
+            "die set loot was not registered",
+            "ProceduralDistributions.list was not there when the loot tables were merged; die sets can only be forged"
+        )
+
+
+        return
+    end
+
+
+    local clean = true
+
+
+    for _,
+        bucket
+    in ipairs(
+        {
+            { "missing", "does not exist on this build" },
+            { "empty", "has been emptied by vanilla" },
+            { "unreferenced", "is used by no container" },
+        }
+    )
+    do
+
+        for _,
+            name
+        in ipairs(
+            summary[bucket[1]] or {}
+        )
+        do
+
+            clean = false
+
+
+            addResult(
+                results,
+                "WARNING",
+                "loot list " .. tostring(name) .. " " .. bucket[2],
+                "die sets will not be found there; they can still be forged"
+            )
+        end
+    end
+
+
+    if clean then
+
+        addResult(
+            results,
+            "OK",
+            "die set loot (" .. (summary.added + summary.present) .. " entries in " .. #AC_Loot.TARGETS .. " lists)"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- RUN
 ------------------------------------------------
 --
@@ -1759,6 +1920,8 @@ function AC_Compat.run(
     checkMetallurgyRecipes(results)
 
     checkCalibres(results)
+
+    checkLoot(results)
 
 
     local summary =
