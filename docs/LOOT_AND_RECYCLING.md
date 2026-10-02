@@ -1,4 +1,4 @@
-# Loot and recycling
+# Loot, recycling and ammo boxes
 
 Status: **implemented in Lua and data, checked offline only.** Whether the
 game spawns a die set, and how often one is met, is
@@ -220,13 +220,109 @@ scrapped and recast until nothing is left take six round trips, end with 50
 of 3,000 units of brass, and earn 2,065 XP against 1,050 for one pass. The
 bound is a factor of two, reached only by destroying all the brass.
 
+## 3. Ammo boxes: nothing to build
+
+**Vanilla already boxes handloaded rounds. The mod adds no box recipe and no
+box item**, and a test fails if one appears.
+
+FILE `scripts/generated/recipes/recipes_ammunition.txt`, the one packing
+recipe, in full:
+
+```text
+craftRecipe place_ammo_in_box
+{
+    timedAction = PlaceAmmoInBox,
+    time = 15,
+    category = Packing,
+    Tags = InHandCraft,
+    inputs
+    {
+        item 20 [Base.Bullets44;Base.308Bullets;25:Base.ShotgunShells;Base.556Bullets;50:Base.Bullets9mm;50:Base.Bullets45;50:Base.Bullets38;50:Base.Bullets357;Base.3030Bullets] mappers[ammoType] flags[AllowFavorite;InheritFavorite;IsExclusive],
+    }
+    outputs
+    {
+        item 1 mapper:ammoType,
+    }
+    itemMapper ammoType { Base.Bullets44Box = Base.Bullets44, … }
+}
+```
+
+| Round | Box | Rounds per box | Carton (12 boxes) |
+|---|---|---|---|
+| `Base.Bullets9mm`, `Bullets38`, `Bullets45`, `Bullets357` | `…Box` | 50 | `…Carton` |
+| `Base.Bullets44`, `556Bullets`, `3030Bullets`, `308Bullets` | `Bullets44Box`, `556Box`, `3030Box`, `308Box` | 20 | `…Carton` |
+| `Base.ShotgunShells` | `ShotgunShellsBox` | 25 | `ShotgunShellsCarton` |
+
+What follows from the files:
+
+- **It matches by item type and nothing else.** One input line: the rounds.
+  No empty box item, no tool, no skill, no `OnCreate`. JAR
+  `CraftRecipeData.canOfferInputItem` / `offerInputItem`: an item is
+  accepted on a line by the line's item list and flags; nothing reads an
+  item's ModData. A handloaded round **is** `Base.Bullets9mm` (the assembly
+  recipe's output is the vanilla type), so all nine rounds the mod makes
+  can be boxed, and cartoned (`Place12BoxesInCarton`,
+  `recipes_packing.txt`), with no mod code.
+- **`IsExclusive`**: JAR `CraftRecipeData.offerInputItem` drops what is
+  already on the line when an item of another full type is offered. One
+  round type per box. Handloaded and factory rounds of one calibre are the
+  same full type and mix freely.
+- **Unboxing** (`OpenBoxOfBullets50`, `OpenBoxOfBullets20`,
+  `OpenBoxOfShotgunShells`): `item 50 mapper:ammoTypes` and so on. The
+  rounds that come out are **new items**.
+
+### 3.1 Where the casing-quality record is lost
+
+A handloaded round carries its casing quality in the item's ModData
+(`AC_CaseQuality`). The record lives on the loose item only:
+
+| Step | What vanilla does | Record |
+|---|---|---|
+| Round lies in an inventory or container | the item is saved with its ModData (JAR `InventoryItem.save`) | kept |
+| `place_ammo_in_box` | consumes the round items, creates one box item; no `OnCreate` copies anything | **lost here** |
+| `OpenBoxOf…` | creates 50, 20 or 25 fresh round items | nothing to restore |
+| Loaded into a magazine or firearm | the round item is removed, a counter goes up (`ISLoadBulletsInMagazine`, `ISReloadWeaponAction`) | **lost here** |
+| Unloaded | a fresh round item per count (`instanceItem`) | nothing to restore |
+
+No attempt is made to carry the record through a box. A box holds a count,
+exactly as a magazine does, and the box item is created by the engine with
+no hook the mod could use without replacing vanilla's recipe. The
+inspection text says so: "This record stays with the loose round; loading
+or boxing it keeps only a count." Where quality could live once it is meant
+to matter is in `AMMO_QUALITY_RUNTIME_DESIGN.md`.
+
+### 3.2 What the mod does about boxes
+
+- `calibre.box` and `calibre.roundsPerBox` in `AC_Calibres.lua` record
+  vanilla's box for each round. Reference data: no recipe uses them.
+- `tests/vanilla_snapshot.lua` records the recipe's item list, counts,
+  mapper, `IsExclusive`, the absence of `OnCreate`, the unboxing recipes and
+  the cartons; the tests compare the model with it and assert that the mod
+  defines no box item, no box recipe, and no item tagged `base:ammo`.
+- The game-start check probes each box item and the recipe id
+  `place_ammo_in_box`, and reports `vanilla ammo boxes changed` if a build
+  renames one. That affects boxing only; making and firing are untouched.
+
+## 4. Component loot
+
+Nothing beyond the die sets. See section 1.3: the components are the
+manufacturing content, and their raw materials are vanilla loot already.
+If rare component loot is ever wanted, `AC_Loot` is where it would go (an
+entry is an item, a list and a weight), behind the same validation.
+
 ## 5. REQUIRES FUTURE IN-GAME VERIFICATION
+
+- That `place_ammo_in_box` is offered for a stack of handloaded rounds
+  (rounds carrying ModData), and for a stack that mixes them with factory
+  rounds of the same calibre. Everything in the installed files says it
+  is; it has not been seen.
 
 - That an input line naming several items (`item 4 [A;B;C]`, no
   `IsExclusive` flag) is filled from a mix of them, as the scrapping
-  recipes assume. Vanilla uses `IsExclusive` where it wants one type only
-  (`place_ammo_in_box`), which is why it is INFERRED that a line without it
-  mixes. If it does not, a craft simply needs four of one component.
+  recipes assume. JAR `CraftRecipeData.offerInputItem` only refuses a
+  second item type on a line when the line is `IsExclusive`, so a line
+  without the flag should mix. If it does not, a craft simply needs four of
+  one component.
 - That the four recycling recipes show at a surface and at a furnace and
   hand back the scrap and the ingot.
 
