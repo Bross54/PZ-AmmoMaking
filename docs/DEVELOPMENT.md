@@ -971,6 +971,21 @@ Added on 2026-10-02:
 the install, so it runs anywhere; re-run the generator after a game
 update (`tools/pz_compat.py --update` does it, see below).
 
+### Tile sheets: `tools/build_tiles.py`
+
+```text
+python tools/build_tiles.py --selftest
+python tools/build_tiles.py --verify --install "<Project Zomboid install>"
+python tools/build_tiles.py art/reloading_press/tiles.json
+```
+
+Reads and writes the game's `.tiles` and `.pack` formats and builds a tile
+sheet from PNGs and a JSON description. `--verify` writes vanilla's own
+files back byte for byte; `--selftest` (needs Pillow) builds a sheet and
+compares it pixel for pixel. It writes into the description's `build/`
+folder and never into `mod/`. Used for the prepared reloading press
+(`RELOADING_PRESS_DESIGN.md` 7.2).
+
 ### After a game update: `tools/pz_compat.py`
 
 ```text

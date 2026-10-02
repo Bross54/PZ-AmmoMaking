@@ -247,6 +247,33 @@ def mod_item_art():
     return art
 
 
+def press_draft():
+    """What the prepared (not shipped) press entity and tile sheet name."""
+    folder = ROOT + "/art/reloading_press/"
+    if not os.path.isfile(folder + "AC_ReloadingPress.txt"):
+        return None
+    import json
+    script = re.sub(r"/\*.*?\*/", "", read(folder + "AC_ReloadingPress.txt"), flags=re.S)
+    with io.open(folder + "tiles.json", encoding="utf-8") as handle:
+        sheet = json.load(handle)
+    entity = re.search(r"(?m)^\s*entity\s+(\w+)", script)
+    bench = re.search(r"Recipes\s*=\s*([\w;]+)", script)
+    action = re.search(r"timedAction\s*=\s*(\w+)", script)
+    sprites = ["%s_%d" % (tileset["name"], tile["index"]) for tileset in sheet["tilesets"] for tile in tileset["tiles"]]
+    return {
+        "entity": entity.group(1) if entity else "",
+        "benchTag": bench.group(1) if bench else "",
+        "timedAction": action.group(1) if action else "",
+        "items": sorted(set(re.findall(r"\[(Base\.\w+)\]", script))),
+        "tags": sorted(set(re.findall(r"tags\[([\w:]+)\]", script))),
+        "rows": re.findall(r"row\s*=\s*(\w+)", script),
+        "sprites": sprites,
+        "tilesets": [tileset["name"] for tileset in sheet["tilesets"]],
+        "properties": sorted(set(key for tileset in sheet["tilesets"] for tile in tileset["tiles"] for key in tile.get("properties", {}))),
+        "fileNumber": sheet["fileNumber"],
+    }
+
+
 def mod_sources():
     files = sorted(glob.glob(MOD_LUA + "**/*.lua", recursive=True))
     return {path.replace("\\", "/")[len(MOD_LUA):]: read(path) for path in files}
@@ -811,6 +838,29 @@ def build_snapshot(install, jar, facts, calls):
     sounds = install.sounds()
     snapshot["sounds"] = {name: name in sounds for name in sorted(facts["sounds"])}
 
+    # The prepared press: what its draft entity names, and the vanilla tile
+    # it is modelled on. Nothing of it is in the mod.
+    draft = facts.get("pressDraft")
+    snapshot["pressDraft"] = {}
+    if draft:
+        reference = install.tile("crafted_01_72") or {}
+        vanilla_tilesets = set()
+        for path in sorted(glob.glob(install.root + "/media/*.tiles.txt")):
+            vanilla_tilesets.update(re.findall(r"(?m)^\s*file\s*=\s*(\S+)", read(path)))
+        tagged = {}
+        for script in items.values():
+            for tag in (script.get("Tags") or "").split(";"):
+                tagged[tag.strip()] = True
+        snapshot["pressDraft"] = {
+            "timedAction": draft["timedAction"] in actions,
+            "items": {item: item in items for item in draft["items"]},
+            "tags": {tag: tag in tagged for tag in draft["tags"]},
+            "entityNameFree": draft["entity"] not in entities,
+            "tilesetNamesFree": not any(name in vanilla_tilesets for name in draft["tilesets"]),
+            "spritesUnclaimed": not any(sprite in claimed for sprite in draft["sprites"]),
+            "handPressTileProperties": sorted(key for key in reference if key != "xy"),
+        }
+
     lua_names, lua_members = install.lua_index()
     snapshot["design"] = {name: (name in lua_members) for name in DESIGN_LUA}
     # Methods of the vanilla Lua classes the mod itself uses (and of their
@@ -1074,6 +1124,23 @@ def judge(snapshot, facts, calls, recorded, have_jar):
                 findings.append(("WARNING", "%s %s is used by no vanilla item or model script any more (item %s)" % (word, name, facts["art"][group][name])))
     report.group("icons, models, categories and tags the mod's items borrow (%d)" % sum(len(group) for group in snapshot["art"].values()), findings)
 
+    findings = []
+    draft = snapshot.get("pressDraft") or {}
+    if draft:
+        if not draft["timedAction"]:
+            findings.append(("WARNING", "the press draft's build timed action no longer exists"))
+        for group in ("items", "tags"):
+            for name, present in draft[group].items():
+                if not present:
+                    findings.append(("WARNING", "the press draft's build recipe names %s, which no longer exists" % name))
+        if not draft["entityNameFree"]:
+            findings.append(("WARNING", "vanilla now has an entity with the press draft's name"))
+        if not draft["tilesetNamesFree"]:
+            findings.append(("WARNING", "vanilla now has a tileset with the press sheet's name"))
+        if not draft["spritesUnclaimed"]:
+            findings.append(("WARNING", "a vanilla entity now claims one of the press's sprite names"))
+    report.group("the prepared press entity and tile sheet (not shipped)", findings)
+
     findings = [("WARNING", "%s is gone: the firearm designs rely on it" % name) for name, present in snapshot["design"].items() if not present]
     report.group("vanilla firearm Lua the designs rely on (%d)" % len(snapshot["design"]), findings)
 
@@ -1182,7 +1249,7 @@ def judge(snapshot, facts, calls, recorded, have_jar):
     else:
         if have_jar and recorded.get("version") != snapshot["version"]:
             findings.append(("WARNING", "game version %s, recorded %s" % (snapshot["version"], recorded.get("version"))))
-        for section in ("items", "art", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
+        for section in ("items", "art", "pressDraft", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
             for line in difference(recorded.get(section) or {}, snapshot[section] or {}, section):
                 findings.append(("WARNING", line))
     report.group("the installed game against the recorded snapshot", findings)
@@ -1241,6 +1308,7 @@ def main():
 
     facts = mod_facts()
     facts["art"] = mod_item_art()
+    facts["pressDraft"] = press_draft()
     calls = mod_calls(mod_sources())
     snapshot = build_snapshot(install, jar, facts, calls)
 

@@ -1101,6 +1101,21 @@ return {
         ["UIFont.Small"] = true,
         ["luautils.walkAdj"] = true,
     },
+    pressDraft = {
+        entityNameFree = true,
+        handPressTileProperties = { "BlocksPlacement", "CustomName", "Facing", "GroupName", "IsMoveAble", "PickUpWeight", "solidtrans" },
+        items = {
+            ["Base.Nails"] = true,
+            ["Base.Plank"] = true,
+            ["Base.SteelBarHalf"] = true,
+        },
+        spritesUnclaimed = true,
+        tags = {
+            ["base:hammer"] = true,
+        },
+        tilesetNamesFree = true,
+        timedAction = true,
+    },
     recipes = {
         Forge_Copper_Sheet = "acf456342afc",
         Forge_Small_Copper_Sheet = "853ce0f8856f",

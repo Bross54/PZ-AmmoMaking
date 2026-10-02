@@ -1,0 +1,89 @@
+/* Ammo Making - the reloading press as a placed station. DRAFT, NOT IN THE MOD.
+
+   This file is not under mod/ and the game never sees it. It becomes
+   mod/AmmoMaking/42/media/scripts/AC_ReloadingPress.txt on the day the
+   press is switched on (art/reloading_press/README.md), in a session with
+   the game: a sprite claimed by two entity scripts, or a malformed entity,
+   stops every world from loading (docs/RELOADING_PRESS_DESIGN.md 2.4).
+
+   It follows vanilla's Hand_Press field for field
+   (media/scripts/generated/entities/pottery/workstations/entity_hand_press.txt
+   and media/scripts/xui/defaultskin/x_entity_hand_press.txt, 42.20.4):
+   a CraftBench whose Recipes tag is the press's own, two faces, a build
+   recipe. The sprites are the mod's own (art/reloading_press/tiles.json),
+   so no other entity can claim them.
+
+   The build recipe's skill is a vanilla one: the Ammo Making perk is
+   registered from Lua after scripts are parsed, and the engine drops a
+   skill name it does not know. Its inputs are a first guess. */
+
+module Base
+{
+    entity AmmoMaking_ReloadingPress
+    {
+        component UiConfig
+        {
+            xuiSkin = default,
+            entityStyle = ES_AmmoMaking_ReloadingPress,
+            uiEnabled = true,
+        }
+        component CraftBench
+        {
+            Recipes = AmmoMakingReloadingPress,
+        }
+        component SpriteConfig
+        {
+            health = 100,
+            skillBaseHealth = 20,
+            face S
+            {
+                layer
+                {
+                    row = ammomaking_press_01_0,
+                }
+            }
+            face E
+            {
+                layer
+                {
+                    row = ammomaking_press_01_1,
+                }
+            }
+        }
+        component CraftRecipe
+        {
+            timedAction = BuildWallHammer,
+            time = 100,
+            category = Blacksmithing,
+            SkillRequired = MetalWelding:2,
+            xpAward = MetalWelding:10,
+            inputs
+            {
+                item 1 tags[base:hammer] mode:keep flags[Prop1;MayDegradeVeryLight],
+                item 2 [Base.SteelBarHalf],
+                item 4 [Base.Plank],
+                item 8 [Base.Nails],
+            }
+        }
+    }
+
+    xuiSkin default
+    {
+        entity ES_AmmoMaking_ReloadingPress
+        {
+            LuaWindowClass      = ISEntityWindow,
+            DisplayName         = Reloading Press,
+            Icon                = Build_Handpress,
+
+            components
+            {
+                CraftLogic
+                {
+                    LuaPanelClass           = ISCraftDefaultPanel,
+                    DisplayName             = Press,
+                    Icon                    = Build_Handpress,
+                }
+            }
+        }
+    }
+}

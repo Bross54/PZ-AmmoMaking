@@ -124,6 +124,7 @@ recorded = tool.read_snapshot()
 check(recorded is not None, "tests/engine_snapshot.lua exists")
 facts = tool.mod_facts()
 facts["art"] = tool.mod_item_art()
+facts["pressDraft"] = tool.press_draft()
 calls = tool.mod_calls(tool.mod_sources())
 
 
@@ -215,6 +216,11 @@ check(len(facts["art"]["icons"]) >= 10 and "IronOre" in facts["art"]["models"], 
 warning("the analyzer's tile becoming a moveable", set_path("sprites", "industry_03_61", "moveable", True), "is now a vanilla moveable")
 warning("the press's tag taken by vanilla", set_path("benchTags", "AmmoMakingReloadingPress", {"stations": 1, "vanillaRecipes": 0}), "the press's own tag, is now used by vanilla")
 warning("the press's timed action removed", set_path("timedActions", "UseHandPress", False), "timed action UseHandPress does not exist")
+warning("a build input of the press draft removed", set_path("pressDraft", "items", "Base.SteelBarHalf", False), "the press draft's build recipe names Base.SteelBarHalf")
+warning("a vanilla entity taking the press draft's name", set_path("pressDraft", "entityNameFree", False), "vanilla now has an entity with the press draft's name")
+warning("a vanilla entity claiming a press sprite", set_path("pressDraft", "spritesUnclaimed", False), "a vanilla entity now claims one of the press's sprite names")
+check(facts["pressDraft"]["benchTag"] == facts["press"]["benchTag"], "the press draft's CraftBench tag is the calibre model's")
+check(facts["pressDraft"]["rows"] == facts["pressDraft"]["sprites"], "the press draft's faces are the tile sheet's sprites, in order")
 warning("a new overload on a method the mod calls", set_path("classes", "IsoGridSquare", "methods", "hasWater", ["", "boolean"]), "classes.IsoGridSquare.methods.hasWater changed")
 
 no_jar = tool.judge(copy.deepcopy(recorded), facts, calls, recorded, False)

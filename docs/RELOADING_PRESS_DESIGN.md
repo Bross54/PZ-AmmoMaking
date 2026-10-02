@@ -1,10 +1,13 @@
 # Reloading press: research and design
 
-Status: **DESIGNED. The station is not built.** The press *recipes* are
-prepared in the calibre model and switched off; nothing of the press is in
-the game's scripts. A second sprite survey (2026-10-02, §2.4) confirmed that
-no vanilla sprite can be shown to be a safe placeholder, so the world object
-still waits for art and a session with the game.
+Status: **PREPARED, SWITCHED OFF. The station is not in the mod.** The press
+*recipes* are generated in the calibre model and switched off. A tile sheet
+of the mod's own (placeholder art, a verified builder for the game's two
+binary tile formats) and the entity script exist **beside** the mod, in
+`art/reloading_press/`, and nothing of them is shipped or loaded. A second
+sprite survey (2026-10-02, §2.4) confirmed that no vanilla sprite can be
+shown to be a safe placeholder, which is why the sheet is the mod's own.
+What is left is a session with the game (§7.2, §9).
 
 Vanilla facts were read on 2026-10-02 from the installed Build 42.20.4
 scripts, Lua and `projectzomboid.jar` (paths relative to the install root).
@@ -328,19 +331,20 @@ C is rejected: no vanilla tag fits, and reusing one puts ammunition in
 another station's list. A stays the fallback if B's runtime checks fail: it
 needs only an item and the same recipes with `AnySurfaceCraft`.
 
-**It is not implemented**, for one reason: §2.4. The entity cannot exist
-without sprites, and no way of getting them can be shown to be safe from the
-files:
+**It is not switched on**, for one reason: §2.4. The entity cannot exist
+without sprites, and a wrong step there stops every world from loading:
 
-- new art is the only collision-free choice, and is not something an
-  offline pass can produce or look at;
 - every drawable unclaimed vanilla sprite is on the map, so claiming it
   alters existing map objects in a way only the game can show, and stops the
-  world loading the day vanilla or another mod claims it too.
+  world loading the day vanilla or another mod claims it too;
+- sprites of the mod's own are the only collision-free choice. They now
+  exist as placeholder art with a tile sheet built from them (§7.2), but
+  whether the game loads that sheet, draws it and places it correctly can
+  only be seen in game.
 
 That is the "uncertain world-object engine behaviour" case, so the world
 object waits for a session that can run the game. `PRESS.enabled` stays
-`false`; nothing of the press is in the scripts.
+`false`; nothing of the press is in the mod's scripts or its `mod.info`.
 
 ## 6. What is prepared
 
@@ -420,6 +424,9 @@ calibre; and that each press recipe's name can be derived from its hand
 recipe's and collides with nothing.
 
 ## 7. Building the first prototype (next session with the game)
+
+The files for steps 1 and 2 now exist (§7.2); the steps themselves are
+spelled out in `art/reloading_press/README.md`.
 
 1. **Sprites.** Ship a tile sheet: a `.tiles` definition and a `.pack`,
    declared in `mod.info` (`pack=<name>`, `tiledef=<name> <number>`), with
@@ -532,6 +539,44 @@ What cannot be specified from files and has to be looked at in game: how
 the sprite sits on the tile (the offsets), whether the lever reads at the
 game's zoom levels, and the choice of the tile-definition number.
 
+### 7.2 What exists: `art/reloading_press/` and `tools/build_tiles.py`
+
+Prepared on 2026-10-02, beside the mod and not in it:
+
+- **Placeholder sprites**, drawn by `art/reloading_press/make_art.py` from
+  boxes and a line: a bench press on a wooden stand, facing south and
+  facing east, 128 x 256 each. Original programmer art; it copies no
+  vanilla or third-party pixel. It can be replaced by better art under the
+  same file names.
+- **A builder for the game's two tile formats**, `tools/build_tiles.py`.
+  The `.tiles` and `.pack` layouts were read from the installed files and
+  are checked the hard way: `--verify` parses vanilla's
+  `newtiledefinitions.tiles` (425 tilesets, 3 MB), its erosion sheet and
+  two of its texture packs and writes each back **byte for byte**. An
+  installed Workshop mod's sheet parses with the same reader (a clue, not
+  proof). `--selftest` builds a sheet from generated sprites and compares
+  every name, property, rectangle and pixel.
+- **The sheet**, `tiles.json`: tileset `ammomaking_press_01`, sprites
+  `ammomaking_press_01_0` (S) and `_1` (E), each with exactly the tile
+  properties of vanilla's Hand Press (the suite compares them with the
+  installed tile definitions).
+- **The entity script**, `AC_ReloadingPress.txt`: the draft of §7 with the
+  sheet's sprite names. Every vanilla name in it (timed action, build
+  inputs, tool tag) is checked against the installed scripts by
+  `tools/pz_compat.py`, which also reports if vanilla ever takes the
+  entity's name, the tileset's name or one of the sprite names.
+- **The steps to switch it on**, in `art/reloading_press/README.md`: copy
+  two built files, add two `mod.info` lines, copy the entity script, set
+  `PRESS.enabled`, regenerate, name 27 recipes.
+
+The suite pins that none of this has leaked into the mod: the press is
+off, `mod.info` names no pack and no tile definition, no script of the mod
+defines an entity, and no Lua file names a press sprite.
+
+So the press is no longer blocked on art in the sense of "nothing to
+draw with". It is blocked on **seeing it in game**, and better art is a
+wish, not a requirement.
+
 ## 8. Multiplayer
 
 Nothing custom is planned: the entity, its persistence and the recipes are
@@ -561,4 +606,7 @@ None of the following can be established offline:
   not a hazard of a mod tag in particular, but it has not been seen;
 - an unknown sprite name does not stop the world loading and shows as an
   invisible station (§2.4), so a typo in the tile sheet's names is noticed;
-- claiming the mod's own sprites alters no map object.
+- claiming the mod's own sprites alters no map object;
+- the tile-definition number chosen (6142) collides with no other enabled
+  mod's tile sheet, and what the game does when two do collide;
+- the placeholder sprites sit on the tile as intended, at every zoom.

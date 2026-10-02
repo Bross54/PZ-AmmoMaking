@@ -1,0 +1,41 @@
+{
+    "pack": "AmmoMakingPress",
+    "tiledef": "ammomaking_press",
+    "fileNumber": 6142,
+    "tilesets": [
+        {
+            "name": "ammomaking_press_01",
+            "columns": 8,
+            "rows": 1,
+            "id": 1,
+            "tiles": [
+                {
+                    "index": 0,
+                    "image": "src/ammomaking_press_01_0.png",
+                    "properties": {
+                        "BlocksPlacement": "",
+                        "CustomName": "Press",
+                        "Facing": "S",
+                        "GroupName": "Reloading",
+                        "IsMoveAble": "",
+                        "PickUpWeight": 400,
+                        "solidtrans": ""
+                    }
+                },
+                {
+                    "index": 1,
+                    "image": "src/ammomaking_press_01_1.png",
+                    "properties": {
+                        "BlocksPlacement": "",
+                        "CustomName": "Press",
+                        "Facing": "E",
+                        "GroupName": "Reloading",
+                        "IsMoveAble": "",
+                        "PickUpWeight": 400,
+                        "solidtrans": ""
+                    }
+                }
+            ]
+        }
+    ]
+}

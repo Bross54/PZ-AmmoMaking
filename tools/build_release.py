@@ -263,6 +263,11 @@ def main():
             raise Failure("tools/test_pz_compat.py fails: " + last)
         print("PASS     drift tool self-test: " + last)
 
+        code, last, _ = gate_python("tools/build_tiles.py", "tile builder", "--selftest")
+        if code != 0:
+            raise Failure("tools/build_tiles.py --selftest fails: " + last)
+        print("PASS     " + last)
+
         code, last, output = gate_python("tests/run_mutants.py", "mutants", *([] if arguments.mutants else ["check"]))
         if code != 0:
             raise Failure("tests/run_mutants.py: " + last + "\n" + output[-800:])
