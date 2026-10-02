@@ -1,3 +1,5 @@
 name=Ammo Making
 id=AmmoMaking
+modversion=0.9.0
+versionMin=42.20.0
 description=Advanced ammunition manufacturing, mining and metallurgy for Project Zomboid Build 42.

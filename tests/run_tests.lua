@@ -8559,6 +8559,53 @@ do
 end
 
 ------------------------------------------------
+-- RELEASE METADATA
+------------------------------------------------
+
+section("Release metadata: one version, a changelog entry, nothing shipped that should not be")
+do
+    local info = {}
+    local infoText = readFile(ROOT .. "/mod/AmmoMaking/42/mod.info")
+    for key, value in string.gmatch(infoText, "([%w_]+)=([^\r\n]*)") do info[key] = value end
+    eq(info.id, "AmmoMaking", "mod.info id is the folder name")
+    check(type(info.name) == "string" and info.name ~= "", "mod.info has a name")
+    check(type(info.description) == "string" and info.description ~= "", "mod.info has a description")
+    check(type(info.modversion) == "string" and string.match(info.modversion, "^%d+%.%d+%.%d+$") ~= nil, "mod.info has a MAJOR.MINOR.PATCH version (" .. tostring(info.modversion) .. ")")
+    -- Below 1.0 until the chain has been made in game.
+    check(tonumber(string.match(info.modversion or "", "^(%d+)")) == 0, "the version is a development version (0.x)")
+    -- versionMin is the build the snapshots were taken from: GameVersion
+    -- compares major and minor (42.20), so the patch number is always 0.
+    local major, minor = string.match(ENGINE.version, "^(%d+)%.(%d+)")
+    eq(info.versionMin, major .. "." .. minor .. ".0", "versionMin is the game build the mod was checked against")
+    eq(info.require, nil, "the mod requires no other mod")
+    eq(info.poster, nil, "no poster is named while there is no art to ship")
+    eq(info.pack, nil, "no texture pack is named: the mod ships no tile sheet")
+    eq(info.tiledef, nil, "and no tile definition")
+
+    -- The version is written once. Other files may name it only where they
+    -- are told to follow it.
+    local changelog = readFile(ROOT .. "/CHANGELOG.md")
+    check(string.find(changelog, "\n## " .. string.gsub(info.modversion, "%.", "%%.") .. "[ \n(]") ~= nil, "CHANGELOG.md has an entry for " .. info.modversion)
+    local first = string.match(changelog, "\n## (%d+%.%d+%.%d+)")
+    eq(first, info.modversion, "and it is the newest entry")
+    for _, name in ipairs(MOCK.MOD_FILES) do
+        check(string.find(readFile(LUA .. name .. ".lua"), info.modversion, 1, true) == nil, name .. ".lua does not repeat the version number")
+    end
+
+    -- The workshop text claims no dependency and no feature the mod lacks.
+    local workshop = readFile(ROOT .. "/docs/WORKSHOP_DESCRIPTION.md")
+    check(string.find(workshop, "NOT PUBLISHED", 1, true) ~= nil, "the Workshop material says it is not published")
+    check(string.find(workshop, info.description, 1, true) ~= nil, "its short description is mod.info's")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local shown = calibre.id == "12 Gauge" and "12 gauge" or calibre.id
+        check(string.find(workshop, shown, 1, true) ~= nil, "the Workshop text names " .. calibre.id)
+    end
+    check(string.find(workshop, "fires exactly like a factory round", 1, true) ~= nil, "it says quality has no effect on shooting")
+    check(string.find(workshop, "Not supported", 1, true) ~= nil, "it says multiplayer is not supported")
+    eq(AC_Calibres.PRESS.enabled, false, "(the press is off, as the Workshop text says)")
+end
+
+------------------------------------------------
 -- MOCK FIDELITY (last: it looks back over the whole run)
 ------------------------------------------------
 

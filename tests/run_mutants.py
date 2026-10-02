@@ -154,6 +154,10 @@ MUTANTS = [
     (CLIENT + "AC_AmmoInspectionUI.lua", "    self.titleText =\n        self.titleText\n        or AC_Text.get(", "    self.titleText =\n        AC_Text.get(", "the inspection panel translates its title every frame"),
     (SHARED + "AC_Mining.lua", "    if samples == nil then\n", "    if not samples then\n", "an explicit 'no samples' makes findProspect scan again"),
 
+    # ---- release metadata
+    ("mod/AmmoMaking/42/mod.info", "modversion=0.9.0", "modversion=1.0.0", "the mod calls itself 1.0 with no changelog entry"),
+    ("mod/AmmoMaking/42/mod.info", "versionMin=42.20.0", "versionMin=41.78.0", "the mod claims to run on Build 41"),
+
     # ---- data files
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json", "    \"AmmoMaking_ScrapBrass10\": \"Scrap Small Brass Sheets and Medium Cases\",\n", "", "a recipe has no name"),
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/IG_UI.json", "This record stays with the loose round; loading or boxing it keeps only a count.", "This record stays with the round.", "the inspection text no longer states the limit"),
