@@ -176,6 +176,58 @@ end
 
 
 ------------------------------------------------
+-- SOURCES
+------------------------------------------------
+--
+-- A source is one kind of brass that can be scrapped,
+-- with its own recovery. Everything below (groups,
+-- recipes, validation) takes a source as data, so a
+-- second kind is a second entry here and no second copy
+-- of the logic:
+--
+--   id             names the source
+--   idPrefix       recipe ids are idPrefix .. brass units
+--   callbackPrefix the OnCreate names, likewise
+--   batchUnits, scrapPerBatch
+--                  the recovery: scrapPerBatch brass scrap
+--                  for every batchUnits of brass
+--   components     function returning item -> units, and
+--                  the items in a stable order
+--
+-- Listed cleanest first. There is ONE today: unused
+-- components, at the recovery of CONFIG. Spent cases, if
+-- they ever exist (docs/SPENT_CASE_RESEARCH.md), would be
+-- a second entry with a lower recovery, and validate()
+-- already refuses a later source that returns more than
+-- an earlier one. Nothing is prepared beyond that: no
+-- spent-case item is defined.
+------------------------------------------------
+
+function AC_Recycling.getSources()
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    return {
+        {
+            id = "clean",
+
+            idPrefix = config.idPrefix,
+
+            callbackPrefix = "onScrapBrass",
+
+            batchUnits = config.batchUnits,
+
+            scrapPerBatch = config.scrapPerBatch,
+
+            components = AC_Recycling.getScrappable,
+        },
+    }
+end
+
+
+------------------------------------------------
 -- GROUPS
 ------------------------------------------------
 --
@@ -191,17 +243,21 @@ end
 --   5 units   cup, one-cup cases        4 -> 1 scrap
 --   10 units  small sheet, two-cup      2 -> 1 scrap
 --   15 units  three-cup cases, hull     4 -> 3 scrap
+--
+-- source defaults to the first of getSources().
 ------------------------------------------------
 
-function AC_Recycling.buildGroups()
+function AC_Recycling.buildGroups(
+    source
+)
 
     local config =
-        AC_Recycling.CONFIG
+        source or AC_Recycling.getSources()[1]
 
 
     local units,
           order =
-        AC_Recycling.getScrappable()
+        config.components()
 
 
     local byUnits = {}
@@ -277,18 +333,74 @@ end
 -- RECIPES
 ------------------------------------------------
 --
--- One scrapping recipe per group, cold, on any surface,
--- with a hammer (the line the cup and case recipes use),
--- and one furnace recipe that casts ten brass scrap into
--- an ingot (the lines of the copper and zinc casting
--- recipes).
+-- One scrapping recipe per group of each source, cold,
+-- on any surface, with a hammer (the line the cup and
+-- case recipes use), and one furnace recipe that casts
+-- ten brass scrap into an ingot (the lines of the copper
+-- and zinc casting recipes).
 --
 -- recycling = true marks them for the checks; loss = true
 -- marks the ones that must end with less brass than they
--- took.
+-- took; recyclingSource names the source a scrapping
+-- recipe belongs to.
+--
+-- sources defaults to getSources().
 ------------------------------------------------
 
-function AC_Recycling.buildRecipes()
+local function scrapRecipe(
+    source,
+    group
+)
+
+    local config =
+        AC_Recycling.CONFIG
+
+
+    return {
+        id = source.idPrefix .. group.units,
+
+        step = "scrap",
+
+        time = config.scrapTime,
+
+        timedAction = "MakingHammer_Surface",
+
+        benchTag = "AnySurfaceCraft",
+
+        category = "Metalworking",
+
+        callback = source.callbackPrefix .. group.units,
+
+        xp = config.xp,
+
+        requiredLevel = config.requiredLevel,
+
+        recycling = true,
+
+        recyclingSource = source.id,
+
+        loss = true,
+
+        inputs = {
+            { count = group.count, items = group.items },
+            {
+                count = 1,
+                tags = { "base:hammer" },
+                keep = true,
+                flags = { "MayDegradeVeryLight" },
+            },
+        },
+
+        outputs = {
+            { count = group.scrap, item = config.scrapItem },
+        },
+    }
+end
+
+
+function AC_Recycling.buildRecipes(
+    sources
+)
 
     local config =
         AC_Recycling.CONFIG
@@ -298,52 +410,27 @@ function AC_Recycling.buildRecipes()
 
 
     for _,
-        group
+        source
     in ipairs(
-        AC_Recycling.buildGroups()
+        sources or AC_Recycling.getSources()
     )
     do
 
-        table.insert(
-            recipes,
-            {
-                id = config.idPrefix .. group.units,
-
-                step = "scrap",
-
-                time = config.scrapTime,
-
-                timedAction = "MakingHammer_Surface",
-
-                benchTag = "AnySurfaceCraft",
-
-                category = "Metalworking",
-
-                callback = "onScrapBrass" .. group.units,
-
-                xp = config.xp,
-
-                requiredLevel = config.requiredLevel,
-
-                recycling = true,
-
-                loss = true,
-
-                inputs = {
-                    { count = group.count, items = group.items },
-                    {
-                        count = 1,
-                        tags = { "base:hammer" },
-                        keep = true,
-                        flags = { "MayDegradeVeryLight" },
-                    },
-                },
-
-                outputs = {
-                    { count = group.scrap, item = config.scrapItem },
-                },
-            }
+        for _,
+            group
+        in ipairs(
+            AC_Recycling.buildGroups(source)
         )
+        do
+
+            table.insert(
+                recipes,
+                scrapRecipe(
+                    source,
+                    group
+                )
+            )
+        end
     end
 
 
@@ -402,14 +489,17 @@ end
 
 
 ------------------------------------------------
--- Share of the brass a scrapping recipe hands back, as a
--- fraction (0.5 with the values above).
+-- Share of the brass a source's scrapping recipes hand
+-- back, as a fraction (0.5 with the values above).
+-- source defaults to the first of getSources().
 ------------------------------------------------
 
-function AC_Recycling.getRecovery()
+function AC_Recycling.getRecovery(
+    source
+)
 
     local config =
-        AC_Recycling.CONFIG
+        source or AC_Recycling.getSources()[1]
 
 
     return
@@ -425,7 +515,8 @@ end
 -- sound: it loses brass, it awards nothing, and every
 -- amount is a whole number.
 --
--- recipes defaults to buildRecipes().
+-- recipes defaults to buildRecipes(sources), sources to
+-- getSources().
 ------------------------------------------------
 
 local function isWhole(
@@ -441,11 +532,16 @@ end
 
 
 function AC_Recycling.validate(
-    recipes
+    recipes,
+    sources
 )
 
     local config =
         AC_Recycling.CONFIG
+
+
+    sources =
+        sources or AC_Recycling.getSources()
 
 
     local scrapUnits =
@@ -466,10 +562,7 @@ function AC_Recycling.validate(
     end
 
 
-    if not isWhole(config.batchUnits, 1)
-        or not isWhole(config.scrapPerBatch, 1)
-        or not isWhole(config.scrapPerIngot, 1)
-    then
+    if not isWhole(config.scrapPerIngot, 1) then
 
         problem("batch and scrap amounts must be whole and positive")
 
@@ -478,14 +571,66 @@ function AC_Recycling.validate(
     end
 
 
-    if config.scrapPerBatch * scrapUnits >= config.batchUnits then
+    -- Every source loses brass, and a source listed later
+    -- (dirtier) never returns more than one listed earlier.
+    local previous = nil
 
-        problem(
-            "scrapping must lose brass: "
-            .. config.scrapPerBatch * scrapUnits
-            .. " units back for "
-            .. config.batchUnits
-        )
+    local sourceIds = {}
+
+
+    for _,
+        source
+    in ipairs(
+        sources
+    )
+    do
+
+        local label =
+            tostring(source.id)
+
+
+        if sourceIds[label] then
+            problem("source " .. label .. " is listed twice")
+        end
+
+
+        sourceIds[label] = true
+
+
+        if not isWhole(source.batchUnits, 1)
+            or not isWhole(source.scrapPerBatch, 1)
+        then
+
+            problem("batch and scrap amounts must be whole and positive")
+
+
+            return problems
+        end
+
+
+        if source.scrapPerBatch * scrapUnits >= source.batchUnits then
+
+            problem(
+                "scrapping must lose brass: "
+                .. source.scrapPerBatch * scrapUnits
+                .. " units back for "
+                .. source.batchUnits
+            )
+        end
+
+
+        local recovery =
+            AC_Recycling.getRecovery(source)
+
+
+        if previous ~= nil
+            and recovery > previous
+        then
+            problem("source " .. label .. " returns more brass than a cleaner source")
+        end
+
+
+        previous = recovery
     end
 
 
@@ -504,8 +649,37 @@ function AC_Recycling.validate(
     end
 
 
-    local units =
-        AC_Recycling.getScrappable()
+    -- Plain brass: every source's components, the scrap
+    -- and the ingot.
+    local units = {}
+
+    local scrappable = {}
+
+
+    for _,
+        source
+    in ipairs(
+        sources
+    )
+    do
+
+        for itemType,
+            value
+        in pairs(
+            source.components()
+        )
+        do
+
+            if units[itemType] ~= nil then
+                problem(tostring(itemType) .. " belongs to two sources")
+            end
+
+
+            units[itemType] = value
+
+            scrappable[itemType] = true
+        end
+    end
 
 
     units[config.scrapItem] = scrapUnits
@@ -514,7 +688,7 @@ function AC_Recycling.validate(
 
 
     recipes =
-        recipes or AC_Recycling.buildRecipes()
+        recipes or AC_Recycling.buildRecipes(sources)
 
 
     local covered = {}
@@ -649,7 +823,7 @@ function AC_Recycling.validate(
     -- Each scrappable component is taken by exactly one
     -- scrapping recipe.
     for itemType in pairs(
-        AC_Recycling.getScrappable()
+        scrappable
     )
     do
 

@@ -325,7 +325,13 @@ written):
 | a magazine out of a gun | `transfer(gun, nil, the magazine's count)`; the chambered round stays |
 | rounds unloaded, or racked out | `unload(record, n)`, then `AC_CaseQuality` writes each quality on a new round item |
 | a shot | `consume(record)` |
-| before any of them | `reconcile(record, the game's count)` |
+| before any of them | `reconcile(record, live rounds)` |
+
+"Live rounds" is `getCurrentAmmoCount()` plus one when `isRoundChambered()`:
+what the gun holds. The bare count falls when a round is chambered, not
+when one is fired, so it is the wrong number to follow for any gun with a
+chamber (`SPENT_CASE_RESEARCH.md` 1.6). A magazine item has no chamber; its
+count is its live rounds.
 
 The suite proves, without the game:
 

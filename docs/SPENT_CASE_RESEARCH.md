@@ -146,6 +146,51 @@ Four behaviours follow from `onShoot`:
 - JAR `syncHandWeaponFields`: server to owning client only; it carries the
   ammo count, chamber and spent state, and the weapon's ModData.
 
+### 1.6 The matrix: what happens when, by firearm class
+
+Everything a hook would have to follow, in one place. "Count" is
+`getCurrentAmmoCount()`; **"live rounds" is the count plus one when
+`isRoundChambered()`**, which is what the gun actually holds. FILE and JAR
+as above.
+
+| | Self-loading pistol or rifle (magazine) | Revolver | Double barrel | Pump, bolt, lever |
+|---|---|---|---|---|
+| Rounds live in | a magazine item out of the gun; the gun's count, plus one chambered | the gun's count | the gun's count | the gun's count, plus one chambered |
+| Loading | `ISLoadBulletsInMagazine` (round into magazine), `ISInsertMagazine` (magazine item destroyed, count copied) | `ISReloadWeaponAction:loadAmmo`, one round per animation event, or all at once (`isInsertAllBulletsReload`) | the same | the same |
+| Chambering (`ISRackFirearm:rackBullet`, `:47-80`) | count − 1, chamber set: live rounds unchanged | no chamber | no chamber | the same as a self-loader, after each shot |
+| Racking a gun that has a live round chambered | that round is handed back as a **new item** (`removeBullet`), then the next is chambered: live rounds − 1 | a round is handed back and count − 1 | the same | as a self-loader |
+| At the shot (`OnWeaponSwingHitPoint`, vanilla's `onShoot`) | chamber emptied and refilled from the count, count − 1, shell-fall sound | count − 1, spent count + 1, no sound | count − 1, shell-fall sound | chamber emptied and marked spent; count unchanged |
+| **Live rounds fall by one** | **at the shot** | **at the shot** | **at the shot** | **at the shot** (the count itself only falls at the rack that follows, queued by `OnPlayerAttackFinished`) |
+| The case leaves the gun | at the shot | when the cylinder is opened (`ejectSpentRounds` at the start of a reload or rack): all at once | at the shot, as far as vanilla models it | at that rack (`ejectSpentRounds`) |
+| Unloading | `ISEjectMagazine` (new magazine item, count copied), `ISUnloadBulletsFromMagazine`; `ISRackFirearm:removeBullet` for the chambered round | `ISUnloadBulletsFromFirearm` | the same | the same, and `removeBullet` |
+| Spent state survives a save | – | **no** (`spentRoundCount` is not saved) | – | **no** (`spentRoundChambered` is not saved) |
+| Tally step (`AMMO_QUALITY_RUNTIME_DESIGN.md` 8) | `addHandloaded` per round into the magazine, `merge` at insert, `transfer` at eject, `consume` per shot, `unload` of one at a rack-out | `addHandloaded`, `consume`, `unload` | the same | the same as a revolver, and `unload` of one at a rack-out |
+
+Two things follow for any hook, tally or spent case:
+
+- **A listener on `OnWeaponSwingHitPoint` runs after vanilla's `onShoot`.**
+  JAR `zombie.Lua.Event#trigger` walks its callbacks in an `ArrayList`, in
+  the order they were added; vanilla's shared Lua registers `onShoot` when
+  `ISReloadWeaponAction.lua` loads, before any mod file (INFERRED from the
+  loading order of vanilla and mod Lua, not re-read here). So a mod
+  listener sees the gun **after** vanilla has taken the round.
+- **Live rounds are the thing to follow, not the event and not the bare
+  count.** `getCurrentAmmoCount()` alone misleads for a chambered gun: it
+  falls when a round moves into the chamber, not when one is fired, so a
+  pump gun's count is unchanged at the shot and falls at the rack. Count
+  plus chamber falls by exactly one at the shot for every class. A hook
+  that compares the live rounds it last recorded with the live rounds it
+  sees needs no knowledge of the firearm class at all. That is what
+  `AC_QualityTally` is built around (its record carries the number of
+  rounds it describes), and it is why the same code serves a revolver and
+  a pump gun. The firearm class only matters for **where the spent case
+  appears**, which is the table above.
+- **A racked-out live round is an unload, not a shot**: vanilla makes a new
+  round item (`removeBullet`). A hook that only watches live rounds sees
+  one round fewer and nothing else; unless `removeBullet` itself is
+  wrapped, that round leaves as a factory round and the record follows by
+  `reconcile` (doubt resolves toward factory).
+
 ## 2. Design options
 
 One fired round yields at most one case, whatever the gun: the options
@@ -208,9 +253,101 @@ And two things that are not engineering questions:
    being the way to brass for anyone with a stock of factory ammunition.
    Whether factory rounds leave reusable cases, whether all are recovered or
    a share, and what resizing costs are decisions for the project owner.
+   Section 4.1 puts numbers on five answers and recommends one.
 2. **World items.** A case on the ground per shot is hundreds of world
    objects after a fight. Thinning (a recovery chance), or putting cases in
    the inventory, are both gameplay choices.
+
+### 4.1 The economy of each policy, in numbers
+
+Five ways to answer "does a fired round leave reusable brass", each with
+what it would do to the brass economy. The parameters are those of the
+calculation (`tests/render_balance.lua`, `SPENT_POLICIES`), chosen to show
+the range; none is a value of the mod.
+
+| | Policy | Parameters used below |
+|---|---|---|
+| **A** | Every fired round leaves a clean case | all cases recovered; scrap returns half; one spent case resizes into one case |
+| **B** | Factory cases exist but are poor scrap and cannot be reloaded | factory: scrap returns a quarter, no resizing. Handloaded: three cases from four |
+| **C** | Only rounds the player made leave a case | factory: nothing. Handloaded: three cases from four, scrap a quarter |
+| **D** | Every round leaves a case; half are lost, the rest are dirty | half recovered; three from four resize; scrap a quarter |
+| **E** | No spent cases | the mod as it is |
+
+<!-- SPENT CASE POLICY TABLE: generated by tests/write_recipes.lua from the calibre model. Do not edit. -->
+
+Looted factory ammunition as a source of brass, per hundred rounds fired:
+
+| Policy | 100 looted 9mm: cases, ingots if scrapped, ingots' worth if reloaded | 100 looted .308: cases, ingots if scrapped, ingots' worth if reloaded | 100 looted 12 Gauge: cases, ingots if scrapped, ingots' worth if reloaded |
+|---|---|---|---|
+| **A**: every fired round leaves a clean case | 100, 2.5, 5 | 100, 7.5, 15 | 100, 7.5, 15 |
+| **B**: factory cases are poor scrap and cannot be reloaded | 100, 1.3, 0 | 100, 3.8, 0 | 100, 3.8, 0 |
+| **C**: only handloaded rounds leave a case | 0, 0, 0 | 0, 0, 0 | 0, 0, 0 |
+| **D**: every round leaves a case; half are lost, the rest are dirty | 50, 0.6, 1.9 | 50, 1.9, 5.6 | 50, 1.9, 5.6 |
+| **E**: no spent cases | 0, 0, 0 | 0, 0, 0 | 0, 0, 0 |
+
+The player's own rounds, fired and reloaded: what the next hundred cost:
+
+| Policy | the next 100 9mm: cases back, brass ingots still needed (of), ore (of) | the next 100 .308: cases back, brass ingots still needed (of), ore (of) | the next 100 12 Gauge: cases back, brass ingots still needed (of), ore (of) |
+|---|---|---|---|
+| **A** | 100, 1 (6), 6 (11) | 100, 2 (17), 12 (27) | 100, 2 (17), 12 (27) |
+| **B** | 75, 2.3 (6), 7.3 (11) | 75, 5.8 (17), 15.8 (27) | 75, 5.8 (17), 15.8 (27) |
+| **C** | 75, 2.3 (6), 7.3 (11) | 75, 5.8 (17), 15.8 (27) | 75, 5.8 (17), 15.8 (27) |
+| **D** | 37.5, 4.1 (6), 9.1 (11) | 37.5, 11.4 (17), 21.4 (27) | 37.5, 11.4 (17), 21.4 (27) |
+| **E** | 0, 6 (6), 11 (11) | 0, 17 (17), 27 (27) | 0, 17 (17), 27 (27) |
+
+<!-- END SPENT CASE POLICY TABLE -->
+
+Reading it:
+
+- **A makes looted ammunition a brass mine.** A hundred looted .308 fired
+  are fifteen ingots' worth of ready cases: more than half of what a
+  hundred new .308 need in ore (15 of 27), for no mining, smelting, forging
+  or punching. A 50-round box of 9mm is two and a half ingots of cases. Ore,
+  the furnace and the forge stop mattering for anyone with a stock of
+  factory ammunition, and all three are what the mod is built on.
+- **B closes the reloading shortcut and leaves a trickle**: looted rounds
+  give scrap only, 1.3 to 3.8 ingots per hundred. That is still brass from
+  nothing, on the scale of one or two ore per hundred shots, with a world
+  item per shot to pick up.
+- **C gives looted ammunition no value at all** and makes the player's own
+  brass last: with three cases in four coming back, the next hundred 9mm
+  cost 2.3 ingots instead of 6, the next hundred .308 5.8 instead of 17.
+  No brass enters the world that was not mined.
+- **D** is A at about three eighths strength for looted rounds (half are
+  found, three in four of those resize), and a weaker loop for the
+  player's own.
+- **E** is today.
+
+**C needs to know which rounds are handloaded, and vanilla does not keep
+that**: a loaded round is a count (`AMMO_QUALITY_RUNTIME_DESIGN.md` 1).
+The quality tally is exactly that knowledge. `AC_QualityTally.consume`
+answers, for each shot, "a handloaded round" or "a factory round", without
+a random number, and counts exactly as many handloaded shots as handloaded
+rounds were loaded. So C is not infeasible, as an earlier version of this
+document assumed; it is **blocked on the tally being wired to the
+firearms**, which is the in-game-verified step of that design.
+
+A round that has lost its record (boxed, or loaded by a path the tally did
+not see) counts as a factory round and leaves nothing. That is the tally's
+rule everywhere: doubt resolves toward factory.
+
+**Recommendation, for the project owner to decide:**
+
+1. **E until the tally is wired and seen to stay in step in game.**
+2. **Then C**, with a loss at resizing (three from four is the figure
+   used here) and a low scrap recovery for spent brass. It is the only
+   policy under which brass still has to be mined, and it rewards exactly
+   the thing the mod is about: the player's own ammunition.
+3. **Not A, at any setting.** B and D differ from it in degree, not in
+   kind: any policy that turns factory ammunition into brass competes with
+   the mine.
+
+Under C the conservation rule is simple and testable offline: a spent case
+holds no more brass than the case that was formed, at most one comes back
+per handloaded round fired, and resizing loses some. No loop creates brass.
+`AC_Recycling` already takes a second source of brass with its own recovery
+as data, and refuses one that returns more than unused components do
+(`getSources()`; the suite builds an invented spent source through it).
 
 So the hook stays unwritten and the items undefined. Defining nine spent-case
 items that nothing produces and nothing consumes would add dead data to the
@@ -233,7 +370,8 @@ table in section 3 is what a future pass needs.
 ## 6. REQUIRES FUTURE IN-GAME VERIFICATION
 
 - How many times `OnWeaponSwingHitPoint` fires per round in automatic fire.
-- Whether a mod listener on it runs before or after vanilla's `onShoot`.
+- That a mod listener on it runs after vanilla's `onShoot` (section 1.6:
+  the callback order is read from the jar, the load order is inferred).
 - Whether the event reaches the server for a shot that hits nothing.
 - Whether `serverStart()` of the reload and rack actions ever runs in single
   player (it decides where a wrapped `ejectSpentRounds` would be called).
