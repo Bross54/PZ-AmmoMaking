@@ -5125,6 +5125,168 @@ do
     eq(metal(inv), startMetal, "not one unit of metal was created or lost from ore to round")
 end
 
+section("Whole-chain random crafting: thousands of valid crafts, one ledger per material")
+do
+    -- Every mod recipe and every modelled vanilla recipe, crafted in random
+    -- order from ore to finished rounds. At each step one of the recipes
+    -- that CAN run is picked, so the run goes deep instead of failing most
+    -- draws. After every craft, each material is compared with the step
+    -- before: nothing may appear that the craft's own definition does not
+    -- account for. This executes the mirror table, not the game.
+    local U = AC_Materials.UNITS
+    local all = {}
+    for _, r in ipairs(AC_Materials.RECIPES) do table.insert(all, r) end
+    for _, r in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(all, r) end
+    local brassRecipe = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")
+    local mix = AC_Materials.getRecipe("AmmoMaking_MixGunpowder")
+    local MATERIALS = { "copper", "zinc", "brass", "compound", "powder" }
+
+    local function ledger(inventory)
+        local totals = { copper = 0, zinc = 0, brass = 0, compound = 0, powder = 0 }
+        for id, count in pairs(inventory) do
+            local entry = U[id]
+            if entry then
+                for material, units in pairs(entry.contents or { [entry.metal] = entry.units }) do
+                    totals[material] = totals[material] + units * count
+                end
+            end
+        end
+        return totals
+    end
+    local function canCraft(inventory, recipe)
+        for _, input in ipairs(recipe.inputs) do
+            local id = input.items and input.items[1] or input.tags[1]
+            if (inventory[id] or 0) < input.count then return false end
+        end
+        return true
+    end
+
+    local totalCrafts, totalRounds, classesSeen, calibresSeen = 0, 0, {}, {}
+    local violations = {}
+    local function violation(text)
+        if #violations < 5 then table.insert(violations, text) end
+    end
+
+    for _, startSeed in ipairs({ 1, 20261002, 987654321, 42 }) do
+        local seed = startSeed
+        local function nextRandom(n)
+            seed = (seed * 1103515245 + 12345) % 2147483648
+            return (math.floor(seed / 65536) % n) + 1
+        end
+        local inv = {
+            ["Base.CopperOre"] = 300, ["AmmoMaking.ZincOre"] = 60,
+            ["base:charcoal"] = 50000, ["Base.Fertilizer"] = 2000, ["Base.CapGunCap"] = 20000, ["Base.Matches"] = 2000,
+            ["Base.SteelBarQuarter"] = 2 * #AC_Calibres.LIST, [AC_Calibres.WAD.items[1]] = 2000,
+            ["Base.CeramicCrucible"] = 1, ["base:crudetongs"] = 1, ["Base.ClayIngotMold"] = 1,
+            ["base:hammer"] = 1, ["base:tongs"] = 1, ["base:metalworkingpunch"] = 1, ["base:ballpeenhammer"] = 1,
+            ["base:metalworkingpliers"] = 1, ["base:whetstone"] = 1, ["base:mortarpestle"] = 1, ["base:pliers"] = 1,
+        }
+        local tools = {}
+        for id, count in pairs(inv) do
+            if string.sub(id, 1, 5) == "base:" and id ~= "base:charcoal" then tools[id] = count end
+        end
+        tools["Base.CeramicCrucible"], tools["Base.ClayIngotMold"] = 1, 1
+
+        local before = ledger(inv)
+        local start = before
+        local xp, expectedXP, crafts, assembled = 0, 0, 0, 0
+        for _ = 1, 6000 do
+            local able = {}
+            for _, recipe in ipairs(all) do
+                if canCraft(inv, recipe) then table.insert(able, recipe) end
+            end
+            if #able == 0 then break end
+            local recipe = able[nextRandom(#able)]
+            local dieSetsBefore = 0
+            for _, calibre in ipairs(AC_Calibres.LIST) do dieSetsBefore = dieSetsBefore + (inv[calibre.dieSet] or 0) end
+            check(mirrorCraft(inv, recipe), "a craftable recipe crafts")
+            crafts = crafts + 1
+            xp = xp + AC_Materials.getRecipeXP(recipe)
+            if recipe.step == "assemble" then
+                local calibre = AC_Calibres.get(recipe.calibre)
+                assembled = assembled + 1
+                classesSeen[calibre.class] = true
+                calibresSeen[calibre.id] = true
+            end
+            expectedXP = expectedXP + (tonumber(recipe.xp) or tonumber(AC_Materials.CONFIG[recipe.xpKey]) or 0)
+
+            local now = ledger(inv)
+            local what = recipe.id .. " (seed " .. startSeed .. ", craft " .. crafts .. ")"
+            -- Copper, zinc and priming compound are never created by anything.
+            for _, material in ipairs({ "copper", "zinc", "compound" }) do
+                if now[material] > before[material] then violation(what .. " created " .. material) end
+            end
+            -- Brass appears only in the alloy recipe, and then exactly as much
+            -- as the copper and zinc that went in.
+            if recipe == brassRecipe then
+                if now.brass - before.brass ~= (before.copper - now.copper) + (before.zinc - now.zinc) then violation(what .. " alloy is not exact") end
+            elseif now.brass > before.brass then
+                violation(what .. " created brass")
+            end
+            -- Metal as a whole never grows.
+            if now.copper + now.zinc + now.brass > before.copper + before.zinc + before.brass then violation(what .. " created metal") end
+            -- Powder appears only in the mix, one jar at a time.
+            if recipe == mix then
+                if now.powder - before.powder ~= AC_Calibres.POWDER.usesPerJar then violation(what .. " mixed another amount than a jar") end
+            elseif now.powder > before.powder then
+                violation(what .. " created powder")
+            end
+            -- Kept tools are all still there; a die set is never lost.
+            for id, count in pairs(tools) do
+                if inv[id] ~= count then violation(what .. " changed the tool " .. id) end
+            end
+            local dieSetsNow = 0
+            for _, calibre in ipairs(AC_Calibres.LIST) do dieSetsNow = dieSetsNow + (inv[calibre.dieSet] or 0) end
+            if dieSetsNow < dieSetsBefore then violation(what .. " consumed a die set") end
+            -- Nothing goes negative, and nothing is fractional.
+            for id, count in pairs(inv) do
+                if count < 0 or count ~= math.floor(count) then violation(what .. " left " .. tostring(count) .. " of " .. id) end
+            end
+            before = now
+        end
+
+        check(crafts >= 3000, "seed " .. startSeed .. ": thousands of valid crafts ran (" .. crafts .. ")")
+        eq(xp, expectedXP, "seed " .. startSeed .. ": XP is exactly the sum of one grant per craft")
+        local finish = ledger(inv)
+        for _, material in ipairs({ "copper", "zinc", "compound" }) do
+            check(finish[material] <= start[material], "seed " .. startSeed .. ": no more " .. material .. " at the end than at the start")
+        end
+        check(finish.copper + finish.zinc + finish.brass <= start.copper + start.zinc + start.brass, "seed " .. startSeed .. ": no more metal at the end than at the start")
+        -- Rounds are counted as they are assembled: vanilla's Gather
+        -- Gunpowder is one of the recipes drawn, and takes them apart again.
+        check(assembled > 0, "seed " .. startSeed .. ": the run reached finished ammunition (" .. assembled .. " rounds assembled)")
+        totalCrafts = totalCrafts + crafts
+        totalRounds = totalRounds + assembled
+    end
+
+    eq(#violations, 0, "no craft broke a material ledger: " .. table.concat(violations, "; "))
+    for _, class in ipairs({ "pistol", "rifle", "shotgun" }) do
+        check(classesSeen[class], "the random runs assembled " .. class .. " ammunition")
+    end
+    local reached = 0
+    for _ in pairs(calibresSeen) do reached = reached + 1 end
+    check(reached >= 6, "most calibres were reached by chance (" .. reached .. " of " .. #AC_Calibres.LIST .. ")")
+    print("  Random crafting: " .. totalCrafts .. " valid crafts over 4 seeds, " .. totalRounds .. " rounds assembled, " .. reached .. " of " .. #AC_Calibres.LIST .. " calibres reached, 0 ledger violations")
+
+    -- The ledger itself must be able to fail: a tampered recipe is caught by
+    -- the same comparison.
+    local function tamperedRun(change)
+        local inv = { ["AmmoMaking.BrassCaseCup"] = 10, ["Base.CopperScrap"] = 10, ["base:hammer"] = 1 }
+        local nine = AC_Calibres.get("9mm")
+        inv[nine.dieSet] = 1
+        local recipe = {}
+        for k, v in pairs(calibreRecipe(nine, change.step)) do recipe[k] = v end
+        recipe.outputs = change.outputs(nine)
+        local before = ledger(inv)
+        mirrorCraft(inv, recipe)
+        local now = ledger(inv)
+        return now[change.material] > before[change.material]
+    end
+    check(tamperedRun({ step = "case", material = "brass", outputs = function(c) return { { count = 2, item = c.case } } end }), "the ledger sees brass created by a doubled case output")
+    check(tamperedRun({ step = "bullet", material = "copper", outputs = function(c) return { { count = 3, item = c.bullet } } end }), "the ledger sees copper created by a third bullet")
+    check(not tamperedRun({ step = "case", material = "brass", outputs = function(c) return { { count = 1, item = c.case } } end }), "and sees nothing for the real recipe")
+end
+
 section("Ammunition component debug tools")
 do
     MOCK.debug = true

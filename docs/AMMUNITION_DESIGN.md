@@ -408,7 +408,13 @@ Invariants (all asserted, for every calibre):
 5. Vanilla `GatherGunpowder` is modelled per calibre: one use, never a jar.
 6. Over 3000 random crafts across every mod and modelled vanilla recipe, no
    metal and no priming compound is created, and powder rises only by ten
-   uses per mix.
+   uses per mix. A second run draws only recipes that can currently run, from
+   ore to finished rounds: about 22 000 valid crafts over four seeds, reaching
+   all nine calibres, with one ledger per material checked after every craft
+   (copper, zinc and priming compound never rise; brass rises only in the
+   alloy recipe and exactly by the copper and zinc consumed; powder rises only
+   by one jar per mix; no tool or die set is lost; XP is exactly one grant per
+   craft).
 7. No component or die set fits another calibre; no primer fits another
    family; no pistol primer fits a rifle round and no rifle primer a shell.
 8. Fifteen ore run through every recipe to 100 rounds of 9mm ends with the
@@ -427,7 +433,7 @@ What catches what, when a definition or recipe is tampered with:
 | fractional cups, bullets, powder or wads; zero amounts | `validate` |
 | a shell without a wad | `validate`, and the recipe refusing to run |
 | a consumed die set or tool (`mode:keep` removed) | the keep assertions over every recipe, and script-equals-mirror |
-| metal, powder or priming compound created by any sequence | 3000 random crafts over every mod and modelled vanilla recipe |
+| metal, powder or priming compound created by any sequence | the two random runs over every mod and modelled vanilla recipe (invariant 6) |
 | cross-calibre conversion | the metal-flow graph: no edge leaves a round, no loop returns to an item |
 | XP granted twice, or by a loop | one grant per `OnCreate`; the only item cycle is round ↔ powder and earns nothing |
 | a mis-mapped vanilla round id or ammo type | the pinned matrix and the recorded vanilla id lists |

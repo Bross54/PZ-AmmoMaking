@@ -815,8 +815,10 @@ source, a jar from one dismantled round) must be rejected by the conservation
 check; that is how the alloy-parts flaw in an earlier version of the check
 was found.
 
-Later sections: the generated balance tables (the design document and the
-README equal the rendering of the model), the prepared press recipes (same
+Later sections: whole-chain random crafting (thousands of valid crafts from
+ore to rounds over several seeds, one ledger per material checked after every
+craft), the generated balance tables (the design document and the README
+equal the rendering of the model), the prepared press recipes (same
 material, same die set, faster, absent from the live list), component
 inspection against items whose ModData refuses every write, and startup cost
 (which events the mod listens to, and that no menu, action or callback
