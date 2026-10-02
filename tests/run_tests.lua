@@ -7982,7 +7982,7 @@ do
     for _, calibre in ipairs(AC_Calibres.LIST) do
         check((perItem[calibre.dieSet] or 0) >= 1, calibre.id .. " die set can be found")
         check((perItem[calibre.dieSet] or 0) <= C.maxListsPerCalibre, calibre.id .. " die set is in at most " .. C.maxListsPerCalibre .. " lists")
-        check(pairsSeen["GunStoreAccessories" .. calibre.dieSet], calibre.id .. " die set is in the gun store list")
+        check(pairsSeen["GunStoreMagsAmmo" .. calibre.dieSet], calibre.id .. " die set is in the gun store list")
         local forge = AC_Materials.getRecipe("AmmoMaking_ForgeDieSet" .. calibre.suffix)
         check(forge ~= nil and forge.outputs[1].item == calibre.dieSet, calibre.id .. " die set can still be forged")
         for _, input in ipairs(forge.inputs) do
@@ -8011,7 +8011,7 @@ do
     eq(C.tierWeight.uncommon, 0.6, "uncommon tier weight")
     eq(C.tierWeight.rare, 0.3, "rare tier weight")
     check(C.tierWeight.common > C.tierWeight.uncommon and C.tierWeight.uncommon > C.tierWeight.rare, "the tiers are ordered")
-    local pinned = { GunStoreAccessories = 5.0, GarageFirearms = 1.9, Hunter = 0.6, HuntingLockers = 0.6 }
+    local pinned = { GunStoreMagsAmmo = 5.0, GarageFirearms = 1.9, Hunter = 0.6, HuntingLockers = 0.6 }
     for name, expected in pairs(pinned) do
         check(math.abs((perList[name] or 0) - expected) < 1e-9, name .. " holds a die set weight of " .. expected .. " in all (got " .. tostring(perList[name]) .. ")")
         check(perList[name] <= C.maxListWeight, name .. " stays under the per-list cap")
@@ -8037,6 +8037,83 @@ do
     eq(tierCount.rare, 4, "four rare dies")
     check(math.abs(AC_Loot.chancePerContainer(1, 4) - 3.940399) < 1e-5, "a weight of 1 over four rolls is 3.94 % per container")
     check(math.abs(AC_Loot.chancePerContainer(5, 4) - 18.549375) < 1e-5, "all nine in the gun store list: 18.5 % that one display case holds a die set")
+
+    -- Availability per ROOM, not per container. A container names several
+    -- lists and is filled from one of them, by the engine's own rule
+    -- (ItemPickerJava.rollProceduralItemInternal, mirrored by
+    -- render_balance.expectedUses); the snapshot records each container's
+    -- lists. A weight that looks small can still stock a whole room when
+    -- its list is the only one left to fill the containers from.
+    do
+        local BALANCE = dofile(ROOT .. "/tests/render_balance.lua")
+        local uses = BALANCE.expectedUses
+        local function near(a, b) return math.abs(a - b) < 1e-9 end
+
+        -- The rule itself, on small rooms worked out by hand.
+        local two = { { "A", 0, 99, 20, false }, { "B", 0, 99, 100, false } }
+        check(near(uses(two, "A", 1), 20 / 120), "two unlimited lists: one container is A with A's share of the weight")
+        check(near(uses(two, "A", 6), 6 * 20 / 120), "and six containers are six such draws")
+        local once = { { "A", 0, 1, 50, false }, { "B", 0, 99, 50, false } }
+        check(near(uses(once, "A", 1), 0.5), "a list usable once: half of one container")
+        check(near(uses(once, "A", 2), 0.75), "of two containers, 0.75 are A: it can only be used once")
+        check(uses(once, "A", 50) <= 1, "and never more than once, however many containers")
+        local needed = { { "A", 1, 1, 10, false }, { "B", 0, 99, 1000, false } }
+        check(near(uses(needed, "A", 1), 1), "a list with min = 1 is used before any other, whatever its weight")
+        check(near(uses(needed, "A", 5), 1), "exactly once when its max is 1")
+        local unweighted = { { "A", 0, 99, 0, false } }
+        check(near(uses(unweighted, "A", 7), 7), "the only list fills every container (a weight of 0 counts as 1)")
+        local forced = { { "A", 0, 99, 0, true }, { "B", 0, 99, 100, false } }
+        local all, how = uses(forced, "A", 7)
+        check(all == 7 and how == "forced", "a forced list fills every container of the rooms it is forced for")
+        check(near(uses(forced, "B", 7), 7), "and elsewhere it is not offered at all")
+        local used, usedHow = uses(two, "A", 3)
+        eq(usedHow, "exact", "small lists are worked out exactly")
+
+        -- The two display-case rooms, as recorded from the installed game.
+        local gunStore, armySurplus
+        for _, user in ipairs(VANILLA.loot.users.GunStoreAccessories) do
+            if user.container == "gunstore.displaycase" then gunStore = user.lists end
+            if user.container == "armysurplus.displaycase" then armySurplus = user.lists end
+        end
+        check(gunStore ~= nil and armySurplus ~= nil, "the snapshot records both display-case rooms")
+        eq(uses(gunStore, "GunStoreAccessories", 3), 0, "a gun store's first three display cases are its pistols, rifles and shotguns")
+        check(near(uses(gunStore, "GunStoreAccessories", 4), 40 / 420), "the fourth is the accessories case with 40 of 420")
+        check(near(uses(gunStore, "GunStoreMagsAmmo", 8), uses(gunStore, "GunStoreAccessories", 8)), "in a gun store the magazine case and the accessories case are the same bet")
+        check(uses(gunStore, "GunStoreMagsAmmo", 40) <= 1, "and there is at most one, however large the store")
+        -- Why the gun-store die sets are NOT in GunStoreAccessories.
+        check(math.abs(uses(armySurplus, "GunStoreAccessories", 8) - 5) < 0.001, "an army surplus store with eight display cases fills five of them from GunStoreAccessories")
+        check(uses(armySurplus, "GunStoreAccessories", 12) > 8, "and with twelve, nine")
+        eq(#VANILLA.loot.users.GunStoreMagsAmmo, 1, "GunStoreMagsAmmo is named by one container in the whole game")
+        eq(VANILLA.loot.users.GunStoreMagsAmmo[1].container, "gunstore.displaycase", "a gun store's display case")
+
+        -- Every target, every container that can be filled from it: no
+        -- room of twelve such containers is expected to hold a die set,
+        -- and every target is recorded with its users.
+        local rows = BALANCE.lootAvailability(VANILLA)
+        check(#rows >= 14, "every container of every target list is in the table (" .. #rows .. ")")
+        local seenLists, most, mostWhere = {}, 0, ""
+        for _, row in ipairs(rows) do
+            seenLists[row.list] = true
+            local twelve = row.dieSets[#row.dieSets]
+            check(twelve <= 1, row.list .. " in " .. row.container .. ": twelve such containers in a room hold at most one die set on average (" .. string.format("%.3f", twelve) .. ")")
+            for index = 2, #row.dieSets do
+                check(row.dieSets[index] >= row.dieSets[index - 1], row.list .. " in " .. row.container .. ": more containers never mean fewer die sets")
+            end
+            if twelve > most then most, mostWhere = twelve, row.container end
+        end
+        for _, target in ipairs(AC_Loot.TARGETS) do
+            check(seenLists[target.list], target.list .. " has its users in the snapshot")
+            check(#VANILLA.loot.users[target.list] >= 1, target.list .. " is named by at least one container")
+        end
+        -- The gun store, the place the dies are meant to be found.
+        local store = uses(gunStore, "GunStoreMagsAmmo", 8) * BALANCE.dieSetsPerContainer(AC_Loot.TARGETS[1], VANILLA)
+        check(store > 0.05 and store < 0.15, "a gun store of eight display cases holds a die set about one time in twelve (" .. string.format("%.3f", store) .. ")")
+        -- With the die sets in GunStoreAccessories instead, the army
+        -- surplus store would have been the place to find them.
+        local surplus = uses(armySurplus, "GunStoreAccessories", 8) * BALANCE.dieSetsPerContainer(AC_Loot.TARGETS[1], VANILLA)
+        check(surplus > 10 * store, "the same weights in GunStoreAccessories would stock an army surplus store with more than ten times that (" .. string.format("%.2f", surplus) .. ")")
+        print(string.format("  Loot: a gun store of 8 display cases holds %.3f die sets on average; the fullest room of twelve is %s at %.2f", store, mostWhere, most))
+    end
 
     -- The validator refuses what it is there to refuse.
     local function problemsWith(change)
@@ -8078,7 +8155,7 @@ do
     C.maxListWeight = 4
     local crowded = table.concat(AC_Loot.validate(), "; ")
     C.maxListWeight = savedCap
-    check(string.find(crowded, "die sets weigh 5 in GunStoreAccessories, above 4", 1, true) ~= nil, "a list over its cap is refused: " .. crowded)
+    check(string.find(crowded, "die sets weigh 5 in GunStoreMagsAmmo, above 4", 1, true) ~= nil, "a list over its cap is refused: " .. crowded)
     eq(#AC_Loot.validate(), 0, "the live loot model was restored")
 
     -- docs/LOOT_AND_RECYCLING.md carries the loot table, rendered from
@@ -8454,10 +8531,10 @@ do
     eq(lootRun(function() AC_Loot.lastSummary = nil end).warnings, 1, "loot that never registered is one warning")
     check(MOCK.printLogContains("WARNING: die set loot was not registered (OnPreDistributionMerge did not reach the mod; die sets can only be forged)"), "and says what follows")
     eq(lootRun(function()
-        AC_Loot.lastSummary = { added = lootEntries - 4, present = 0, missing = { "Hunter" }, empty = { "GunStoreAccessories" }, unreferenced = { "GarageFirearms" } }
+        AC_Loot.lastSummary = { added = lootEntries - 4, present = 0, missing = { "Hunter" }, empty = { "GunStoreMagsAmmo" }, unreferenced = { "GarageFirearms" } }
     end).warnings, 3, "a missing, an emptied and an unused list are one warning each")
     check(MOCK.printLogContains("WARNING: loot list Hunter does not exist on this build (die sets will not be found there; they can still be forged)"), "missing list named")
-    check(MOCK.printLogContains("WARNING: loot list GunStoreAccessories has been emptied by vanilla"), "emptied list named")
+    check(MOCK.printLogContains("WARNING: loot list GunStoreMagsAmmo has been emptied by vanilla"), "emptied list named")
     check(MOCK.printLogContains("WARNING: loot list GarageFirearms is used by no container"), "unused list named")
     eq(lootRun(function() AC_Loot.lastSummary = AC_Loot.register(nil, nil) end).warnings, 1, "loot tables that were not there are one warning")
     check(MOCK.printLogContains("WARNING: die set loot was not registered (ProceduralDistributions.list was not there when the loot tables were merged; die sets can only be forged)"), "and says so")

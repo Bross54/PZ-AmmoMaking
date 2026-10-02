@@ -99,11 +99,44 @@ end
 -- The lists the mod adds die sets to, the three dead gun-store lists it
 -- must not use, and a few to compare weights with.
 local DETAILED = {
-    "GunStoreAccessories", "GarageFirearms", "Hunter", "HuntingLockers",
+    "GunStoreAccessories", "GunStoreMagsAmmo", "GarageFirearms", "Hunter", "HuntingLockers",
     "GunStoreCounter", "GunStoreDisplayCase", "GunStoreShelf",
     "GunStoreAmmunition", "GunStoreLiterature", "ArmyStorageAmmunition",
     "PoliceStorageAmmunition", "MetalWorkerTools", "ToolFactoryTools",
 }
+-- Lists whose users are recorded in full: for each container that names
+-- the list, every list that container can be filled from. The engine fills
+-- a container from ONE of them (ItemPickerJava.rollProceduralItemInternal),
+-- so how often a list is used depends on its neighbours, not on itself.
+local WITH_USERS = { "GunStoreAccessories", "GunStoreMagsAmmo", "GarageFirearms", "Hunter", "HuntingLockers" }
+
+-- { container = "room.container", lists = { { name, min, max, weight, forced }, ... } }
+local function usersOf(listName)
+    local found = {}
+    for room, containers in pairs(Distributions[1]) do
+        if type(containers) == "table" then
+            for container, definition in pairs(containers) do
+                if type(definition) == "table" and type(definition.procList) == "table" then
+                    local named = false
+                    for _, entry in ipairs(definition.procList) do
+                        if entry.name == listName then named = true end
+                    end
+                    if named then
+                        local lists = {}
+                        for _, entry in ipairs(definition.procList) do
+                            local forced = entry.forceForItems ~= nil or entry.forceForZones ~= nil or entry.forceForTiles ~= nil or entry.forceForRooms ~= nil
+                            table.insert(lists, { entry.name, entry.min or 0, entry.max or 0, entry.weightChance or 0, forced })
+                        end
+                        table.insert(found, { container = room .. "." .. container, lists = lists })
+                    end
+                end
+            end
+        end
+    end
+    table.sort(found, function(a, b) return a.container < b.container end)
+    return found
+end
+
 -- Vanilla items the mod's recipes consume.
 local RAW_INPUTS = {
     "Base.BrassScrap", "Base.CopperScrap", "Base.GunPowder", "Base.CapGunCap", "Base.CapGunCapBox",
@@ -230,6 +263,21 @@ for _, name in ipairs(DETAILED) do
     local facts = listFacts(name)
     emit(string.format("            %s = { rolls = %s, entries = %d, weight = %s, references = %d },",
         name, number(facts.rolls), facts.entries, number(facts.weight), facts.references))
+end
+emit("        },")
+emit("        -- For each of these lists: the containers that name it, each with every")
+emit("        -- list it can be filled from, as { name, min, max, weightChance, forced }.")
+emit("        users = {")
+for _, name in ipairs(WITH_USERS) do
+    emit("            " .. name .. " = {")
+    for _, user in ipairs(usersOf(name)) do
+        local parts = {}
+        for _, list in ipairs(user.lists) do
+            table.insert(parts, string.format("{ %s, %d, %d, %d, %s }", quote(list[1]), list[2], list[3], list[4], tostring(list[5])))
+        end
+        emit("                { container = " .. quote(user.container) .. ", lists = { " .. table.concat(parts, ", ") .. " } },")
+    end
+    emit("            },")
 end
 emit("        },")
 emit("        -- Referenced lists that hold each vanilla item the mod consumes.")

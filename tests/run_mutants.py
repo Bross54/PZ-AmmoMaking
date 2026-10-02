@@ -52,7 +52,8 @@ MUTANTS = [
     (SHARED + "AC_Loot.lua", "        common = 1.0,", "        common = 10.0,", "common die sets ten times as likely"),
     (SHARED + "AC_Loot.lua", "        rare = 0.3,", "        rare = 0.9,", "rare die sets three times as likely"),
     (SHARED + "AC_Loot.lua", "        uncommon = 0.6,", "        uncommon = 0.2,", "uncommon die sets rarer than rare ones"),
-    (SHARED + "AC_Loot.lua", "        list = \"GunStoreAccessories\",", "        list = \"GunStoreDisplayCase\",", "die sets in a deprecated, unused list"),
+    (SHARED + "AC_Loot.lua", "        list = \"GunStoreMagsAmmo\",", "        list = \"GunStoreDisplayCase\",", "die sets in a deprecated, unused list"),
+    (SHARED + "AC_Loot.lua", "        list = \"GunStoreMagsAmmo\",", "        list = \"GunStoreAccessories\",", "die sets in the list an army surplus store fills most of its display cases from"),
     (SHARED + "AC_Loot.lua", "        list = \"GarageFirearms\",", "        list = \"PoliceStorageAmmunition\",", "die sets in a list no container names"),
     (SHARED + "AC_Loot.lua", "        list = \"Hunter\",\n\n        scale = 0.5,", "        list = \"Hunter\",\n\n        scale = 1,", "the hunter list twice as generous"),
     (SHARED + "AC_Loot.lua", "                        item = calibre.dieSet,", "                        item = calibre.case,", "the loot is a case, not a die set"),
@@ -170,7 +171,7 @@ MUTANTS = [
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/IG_UI.json", "This record stays with the loose round; loading or boxing it keeps only a count.", "This record stays with the round.", "the inspection text no longer states the limit"),
     ("mod/AmmoMaking/42/media/scripts/AC_Recipes.txt", "            item 1 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapBrass10", "            item 2 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapBrass10", "the script was edited by hand to return all the brass"),
     ("mod/AmmoMaking/42/media/scripts/AC_Items.txt", "    item DieSet9mm", "    item DieSet38Special", "a duplicate item id"),
-    ("tests/vanilla_snapshot.lua", "            GunStoreAccessories = { rolls = 4, entries = 25, weight = 176.5, references = 2 },", "            GunStoreAccessories = { rolls = 4, entries = 0, weight = 0, references = 0 },", "the gun store list has become unused in vanilla"),
+    ("tests/vanilla_snapshot.lua", "            GunStoreMagsAmmo = { rolls = 4, entries = 34, weight = 360.5, references = 1 },", "            GunStoreMagsAmmo = { rolls = 4, entries = 0, weight = 0, references = 0 },", "the gun store list has become unused in vanilla"),
     ("tests/vanilla_snapshot.lua", "            [\"Base.Bullets9mm\"] = { box = \"Base.Bullets9mmBox\", perBox = 50,", "            [\"Base.Bullets9mm\"] = { box = \"Base.Bullets9mmBox\", perBox = 30,", "vanilla's 9mm box holds thirty"),
     ("mod/AmmoMaking/42/media/scripts/AC_Items.txt", "        DisplayName = Empty 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.005,", "        DisplayName = Empty 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.05,", "a 9mm case heavier than the round it goes into"),
 ]

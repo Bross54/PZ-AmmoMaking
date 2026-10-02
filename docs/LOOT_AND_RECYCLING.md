@@ -24,8 +24,18 @@ early (the Ammo Making levels are on the recipes, not on the tool).
   `ProceduralDistributions.list.<Name> = { rolls = N, items = { "Item",
   weight, … } }`. 1,420 lists.
 - FILE `lua/server/Items/Distributions.lua`: a room's container names lists
-  (`procList = { { name = "GunStoreAccessories", min = 0, max = 1,
+  (`procList = { { name = "GunStoreMagsAmmo", min = 0, max = 1,
   weightChance = 40 }, … }`).
+- JAR `ItemPickerJava.rollProceduralItemInternal`: **a container is filled
+  from one of the lists it names**, chosen per room. A list with `min = 1`
+  that no container of the room has used yet goes first (among several, by
+  `weightChance`); otherwise the choice is by `weightChance` among the
+  lists used fewer than `max` times in that room (a weight of 0 or none
+  counts as 1). A list with a `forceForRooms` / `forceForTiles` /
+  `forceForZones` / `forceForItems` condition is used for every container
+  where the condition holds and is not offered elsewhere. So how often a
+  list is used depends on its neighbours in the `procList`, and on how many
+  such containers the room has.
 - JAR `IsoWorld` (world init): triggers `OnPreDistributionMerge`,
   `OnDistributionMerge`, `OnPostDistributionMerge`, then `OnInitWorld`, then
   calls `ItemPickerJava.Parse()`, which reads the Lua tables once. JAR
@@ -72,30 +82,82 @@ classes it takes) and `calibre.lootTier` in `AC_Calibres.lua`. A weight is
 
 | Loot list | Filled from it | Die sets | Weight each | Chance per container, each | Chance per container, any die set |
 |---|---|---|---|---|---|
-| `GunStoreAccessories` | one display case of a gun store or an army surplus store | 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308, 12 Gauge | 1 / 0.6 / 0.3 | 3.94 % / 2.38 % / 1.19 % | 18.55 % |
+| `GunStoreMagsAmmo` | at most one display case of a gun store | 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308, 12 Gauge | 1 / 0.6 / 0.3 | 3.94 % / 2.38 % / 1.19 % | 18.55 % |
 | `GarageFirearms` | the gun locker of a garage storage room; military lockers | 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum | 0.5 / 0.3 | 1.99 % / 1.19 % | 7.39 % |
 | `Hunter` | a hunter's things in an attic, closet, hall, living room, storage unit or garage | 5.56, .30-30, .308, 12 Gauge | 0.15 | 0.60 % | 2.38 % |
 | `HuntingLockers` | the lockers of a hunting store's changing room and of a hunter's storage | 5.56, .30-30, .308, 12 Gauge | 0.15 | 0.60 % | 2.38 % |
 
 | Die set | Tier | Lists |
 |---|---|---|
-| 9mm | common | `GunStoreAccessories` 1, `GarageFirearms` 0.5 |
-| .38 Special | common | `GunStoreAccessories` 1, `GarageFirearms` 0.5 |
-| .45 ACP | uncommon | `GunStoreAccessories` 0.6, `GarageFirearms` 0.3 |
-| .357 Magnum | uncommon | `GunStoreAccessories` 0.6, `GarageFirearms` 0.3 |
-| .44 Magnum | uncommon | `GunStoreAccessories` 0.6, `GarageFirearms` 0.3 |
-| 5.56 | rare | `GunStoreAccessories` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
-| .30-30 | rare | `GunStoreAccessories` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
-| .308 | rare | `GunStoreAccessories` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
-| 12 Gauge | rare | `GunStoreAccessories` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
+| 9mm | common | `GunStoreMagsAmmo` 1, `GarageFirearms` 0.5 |
+| .38 Special | common | `GunStoreMagsAmmo` 1, `GarageFirearms` 0.5 |
+| .45 ACP | uncommon | `GunStoreMagsAmmo` 0.6, `GarageFirearms` 0.3 |
+| .357 Magnum | uncommon | `GunStoreMagsAmmo` 0.6, `GarageFirearms` 0.3 |
+| .44 Magnum | uncommon | `GunStoreMagsAmmo` 0.6, `GarageFirearms` 0.3 |
+| 5.56 | rare | `GunStoreMagsAmmo` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
+| .30-30 | rare | `GunStoreMagsAmmo` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
+| .308 | rare | `GunStoreMagsAmmo` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
+| 12 Gauge | rare | `GunStoreMagsAmmo` 0.3, `Hunter` 0.15, `HuntingLockers` 0.15 |
+
+| Loot list | Container (room.container) | Lists it can be filled from | Of 4 / 8 / 12 such containers in a room, filled from this list | Die sets expected in that room |
+|---|---|---|---|---|
+| `GunStoreMagsAmmo` | `gunstore.displaycase` | 6 | 0.1 / 0.42 / 0.64 | 0.019 / 0.083 / 0.127 |
+| `GarageFirearms` | `all.militarylocker` | 1 | 4 / 8 / 12 | 0.304 / 0.608 / 0.912 |
+| `GarageFirearms` | `garagestorage.locker` | 3 | 0.67 / 1.33 / 2 | 0.051 / 0.101 / 0.152 |
+| `Hunter` | `attic.cardboardbox` | 47 | 0.02 / 0.04 / 0.06 (about) | 0 / 0.001 / 0.001 |
+| `Hunter` | `attic.crate` | 46 | 0.02 / 0.04 / 0.06 (about) | 0 / 0.001 / 0.001 |
+| `Hunter` | `attic.other` | 41 | 0.02 / 0.05 / 0.07 (about) | 0.001 / 0.001 / 0.002 |
+| `Hunter` | `closet.locker` | 24 | 0.04 / 0.09 / 0.13 (about) | 0.001 / 0.002 / 0.003 |
+| `Hunter` | `closet.other` | 50 | 0.02 / 0.03 / 0.05 (about) | 0 / 0.001 / 0.001 |
+| `Hunter` | `garagestorage.other` | 43 | 0.07 / 0.13 / 0.2 (about) | 0.002 / 0.003 / 0.005 |
+| `Hunter` | `hall.other` | 50 | 0.02 / 0.04 / 0.06 (about) | 0 / 0.001 / 0.001 |
+| `Hunter` | `livingroom.locker` | 24 | 0.04 / 0.09 / 0.13 (about) | 0.001 / 0.002 / 0.003 |
+| `Hunter` | `livingroom.other` | 39 | 0.03 / 0.05 / 0.08 (about) | 0.001 / 0.001 / 0.002 |
+| `Hunter` | `storageunit.other` | 53 | 0.01 / 0.02 / 0.02 (about) | 0 / 0 / 0.001 |
+| `HuntingLockers` | `changeroom.locker` | 8 | 4 / 8 / 12 (all of them) | 0.096 / 0.192 / 0.288 |
+| `HuntingLockers` | `hunterstorage.locker` | 1 | 4 / 8 / 12 | 0.096 / 0.192 / 0.288 |
 
 <!-- END LOOT TABLE -->
 
-The chances are per container that vanilla fills from that list, at default
-sandbox settings and before the zombie-density bonus. A container is filled
-from one of several lists, and `GunStoreAccessories` is used for at most one
-display case per store (`max = 1`), so a die set is a find, not a stock item:
-roughly one gun store in five holds any die set at all.
+The first table's chances are per container **that vanilla fills from that
+list**, at default sandbox settings and before the zombie-density bonus. The
+third table is what that means for a room: how many of its containers are
+filled from the list at all (by the engine's rule above, from each
+container's recorded `procList`), and the die sets to expect there. The
+number of such containers in a real building is map data and was not
+counted; the columns are for rooms of 4, 8 and 12.
+
+What the numbers say:
+
+- **A gun store** holds a die set about one time in twelve (0.083 for
+  eight display cases). Its first three display cases are always pistols,
+  rifles and shotguns; the magazine-and-ammunition case exists at most
+  once, and in under half of the stores. A die set is a find, not a stock
+  item. An earlier version of this document said one store in five: that
+  figure took the case for granted.
+- **Military lockers** are the most generous place: every one is filled
+  from `GarageFirearms`, so a room of twelve holds 0.9 handgun die sets on
+  average. That is a guarded, late-game place full of firearms, and it was
+  left as it is; the tests cap any room of twelve at one die set.
+- **A garage gun locker** is one locker in six, and one of those in
+  thirteen has a die set: 0.013 per locker.
+- **A hunter's things** almost never include one: the `Hunter` crate is one
+  list among forty or fifty and usable once per room, so a room has a
+  thousandth of a die set. The entry is harmless and nearly idle.
+- **Hunting stores and hunters' storage** fill every locker from
+  `HuntingLockers`: 0.024 per locker, long-gun dies only.
+
+**Corrected in this pass.** The gun-store die sets were in
+`GunStoreAccessories`, which reads as "one display case of a gun store". It
+is that, in a gun store. But an army surplus store names the same list with
+`max = 99` beside three lists that can each be used once, so every display
+case after its third is an accessories case: eight cases there would have
+held a whole die set on average, twelve times a gun store's share, in the
+wrong shop. They are now in `GunStoreMagsAmmo`, which only a gun store's
+display case names, with the same weight and the same once-per-store limit.
+For a gun store nothing changed; an army surplus store has none. No weight
+was changed. Whether a gun store should be more generous than one in twelve
+is a question for play, not for this table.
 
 For comparison, in the same lists: a reloading skill book weighs 1 to 0.2,
 `x8Scope` 6, a punch set 2 to 8.
@@ -339,6 +401,9 @@ entry is an item, a list and a weight), behind the same validation.
   check (`OK: die set loot (22 entries in 4 lists)`) say whether it did.
 - That a die set actually appears in the four lists' containers, and how the
   weights feel against the sandbox loot settings.
+- How many display cases and lockers the real buildings have: the third
+  loot table is per room of 4, 8 or 12 containers, and the map was not
+  counted.
 - Containers generated before the mod was added keep what they have: only
   unexplored ones can hold a die set (INFERRED from loot being rolled when a
   container is first filled).

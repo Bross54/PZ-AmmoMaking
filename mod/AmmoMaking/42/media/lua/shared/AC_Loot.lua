@@ -117,12 +117,22 @@ AC_Loot.CONFIG = {
 
 AC_Loot.TARGETS = {
 
+    -- GunStoreMagsAmmo, not GunStoreAccessories. Both are
+    -- offered to a gun store's display cases with the
+    -- same weight and at most once per store, so for a
+    -- gun store the two are the same bet. But an army
+    -- surplus store fills nearly every display case
+    -- after its third from GunStoreAccessories (max =
+    -- 99, and its other lists are used up): eight cases
+    -- there would hold a whole die set on average,
+    -- twelve times a gun store's share
+    -- (docs/LOOT_AND_RECYCLING.md, 1.2).
     {
-        list = "GunStoreAccessories",
+        list = "GunStoreMagsAmmo",
 
         scale = 1,
 
-        where = "one display case of a gun store or an army surplus store",
+        where = "at most one display case of a gun store",
     },
 
     {

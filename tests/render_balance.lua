@@ -487,6 +487,112 @@ local function percent(value)
 end
 
 -- vanilla: the table tests/vanilla_snapshot.lua returns.
+------------------------------------------------
+-- How many of the containers of one room are filled from a list.
+--
+-- A container names several lists and the engine fills it from ONE, chosen
+-- as ItemPickerJava.rollProceduralItemInternal does (42.20.4 jar), per
+-- room:
+--
+--   a list with min = 1 that no container of the room has used yet is
+--     chosen first (among several such, by weight);
+--   otherwise one of the lists used fewer than max times, by weight
+--     (a weight of 0 counts as 1);
+--   a list with a forceFor... condition is used for every container when
+--     the condition holds (a hunting store's lockers) and never otherwise.
+--
+-- lists is the snapshot's { name, min, max, weight, forced } array. Returns
+-- the expected number of the room's containers filled from target, and
+-- "exact", "forced" or "about". "about" is for the long house lists
+-- (some forty crates, each usable once): there the first container's
+-- chance times the number of containers, at most max.
+------------------------------------------------
+
+function B.expectedUses(lists, target, containers)
+    local usable = {}
+    for _, list in ipairs(lists) do
+        if list[5] then
+            if list[1] == target then return containers, "forced" end
+        else
+            table.insert(usable, list)
+        end
+    end
+    local function weightOf(list) return list[4] > 0 and list[4] or 1 end
+
+    if #usable > 8 then
+        local total, weight, limit = 0, 0, 0
+        for _, list in ipairs(usable) do
+            total = total + weightOf(list)
+            if list[1] == target then weight, limit = weightOf(list), list[3] end
+        end
+        return math.min(limit, containers * weight / total), "about"
+    end
+
+    local memo = {}
+    local counts = {}
+    for index = 1, #usable do counts[index] = 0 end
+    local function go(left)
+        if left == 0 then return 0 end
+        local key = table.concat(counts, ",") .. ":" .. left
+        if memo[key] then return memo[key] end
+        local priority = false
+        for index, list in ipairs(usable) do
+            if list[2] == 1 and counts[index] == 0 then priority = true end
+        end
+        local pool, total = {}, 0
+        for index, list in ipairs(usable) do
+            local offered
+            if priority then
+                offered = list[2] == 1 and counts[index] == 0
+            else
+                offered = counts[index] < list[3]
+            end
+            if offered then
+                table.insert(pool, index)
+                total = total + weightOf(list)
+            end
+        end
+        local value = 0
+        for _, index in ipairs(pool) do
+            counts[index] = counts[index] + 1
+            value = value + weightOf(usable[index]) / total * ((usable[index][1] == target and 1 or 0) + go(left - 1))
+            counts[index] = counts[index] - 1
+        end
+        memo[key] = value
+        return value
+    end
+    return go(containers), "exact"
+end
+
+-- Die sets expected in one container that is filled from the target's
+-- list: rolls times the summed weights (each roll tries every entry).
+function B.dieSetsPerContainer(target, vanilla)
+    local total = 0
+    for _, entry in ipairs(AC_Loot.buildEntries({ target })) do total = total + entry.weight end
+    return vanilla.loot.lists[target.list].rolls * total / 100
+end
+
+B.LOOT_ROOM_SIZES = { 4, 8, 12 }
+
+-- One row per container that can be filled from a target list.
+function B.lootAvailability(vanilla)
+    local rows = {}
+    for _, target in ipairs(AC_Loot.TARGETS) do
+        local each = B.dieSetsPerContainer(target, vanilla)
+        for _, user in ipairs(vanilla.loot.users[target.list] or {}) do
+            local row = { list = target.list, container = user.container, alternatives = #user.lists, each = each, uses = {}, dieSets = {} }
+            for _, size in ipairs(B.LOOT_ROOM_SIZES) do
+                local uses, how = B.expectedUses(user.lists, target.list, size)
+                row.how = how
+                table.insert(row.uses, uses)
+                table.insert(row.dieSets, uses * each)
+            end
+            table.insert(rows, row)
+        end
+    end
+    return rows
+end
+
 function B.renderLoot(vanilla)
     local lines = {
         "| Loot list | Filled from it | Die sets | Weight each | Chance per container, each | Chance per container, any die set |",
@@ -527,7 +633,32 @@ function B.renderLoot(vanilla)
         end
         table.insert(tiers, "| " .. calibre.id .. " | " .. tostring(calibre.lootTier) .. " | " .. table.concat(lists, ", ") .. " |")
     end
-    return table.concat(lines, "\n") .. "\n\n" .. table.concat(tiers, "\n")
+
+    -- Where a list is actually used: per room, not per container.
+    local function fixed(value, places)
+        return (string.gsub(string.gsub(string.format("%." .. places .. "f", value), "0+$", ""), "%.$", ""))
+    end
+    local sizes = table.concat(B.LOOT_ROOM_SIZES, " / ")
+    local rooms = {
+        "| Loot list | Container (room.container) | Lists it can be filled from | Of " .. sizes .. " such containers in a room, filled from this list | Die sets expected in that room |",
+        "|---|---|---|---|---|",
+    }
+    for _, row in ipairs(B.lootAvailability(vanilla)) do
+        local uses, dieSets = {}, {}
+        for index in ipairs(B.LOOT_ROOM_SIZES) do
+            table.insert(uses, fixed(row.uses[index], 2))
+            table.insert(dieSets, fixed(row.dieSets[index], 3))
+        end
+        local note = row.how == "about" and " (about)" or (row.how == "forced" and " (all of them)" or "")
+        table.insert(rooms, "| " .. table.concat({
+            "`" .. row.list .. "`",
+            "`" .. row.container .. "`",
+            tostring(row.alternatives),
+            table.concat(uses, " / ") .. note,
+            table.concat(dieSets, " / "),
+        }, " | ") .. " |")
+    end
+    return table.concat(lines, "\n") .. "\n\n" .. table.concat(tiers, "\n") .. "\n\n" .. table.concat(rooms, "\n")
 end
 
 function B.renderLootBlock(vanilla)

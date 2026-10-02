@@ -41,7 +41,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [*][b]Mining.[/b] Inside an assayed area, a pickaxe takes ore from the ground. Deposits are finite and stay depleted.
 [*][b]Metallurgy[/b] on the vanilla furnaces and forge: zinc and copper ingots, brass (7 copper + 3 zinc), small brass sheets, case cups.
 [*][b]Ammunition.[/b] Die sets, cases, copper bullets, four kinds of primer, gunpowder from charcoal and fertilizer, and assembly into the [b]vanilla[/b] rounds: 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308 and 12 gauge shells. Vanilla firearms, magazines and ammo boxes work with them unchanged.
-[*][b]Die sets as rare loot[/b] in gun stores, garage gun lockers and hunters' things. They can always be forged instead.
+[*][b]Die sets as rare loot[/b] in gun stores, gun lockers and hunting stores. They can always be forged instead.
 [*][b]Brass recycling.[/b] Unwanted brass parts become brass scrap at half the brass, and scrap is recast into ingots.
 [*][b]Inspection.[/b] Empty cases and loose handloaded rounds show their calibre and case quality.
 [/list]
