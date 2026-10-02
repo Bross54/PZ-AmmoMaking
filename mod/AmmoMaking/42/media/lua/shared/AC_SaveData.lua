@@ -134,14 +134,20 @@ end
 --              forward
 --   "newer"    written by a LATER release. Not ours to
 --              repair, reset or stamp: an owner reads
---              what it understands and writes nothing it
---              does not
---   "damaged"  not a whole number of 1 or more
+--              what it understands, and writes only in
+--              the form it understands, or not at all
+--   "damaged"  not a whole number from 1 to MAX_VERSION.
+--              A version of 1e300 is not a later
+--              release; it is a broken number
 --
 -- What "missing" and "damaged" mean is the owner's
 -- business (the deposits store was written without a
 -- version by nobody: it stamps 1).
 ------------------------------------------------
+
+-- No structure of the mod will see a million layouts.
+AC_SaveData.MAX_VERSION = 1000000
+
 
 function AC_SaveData.versionStatus(
     value,
@@ -156,6 +162,7 @@ function AC_SaveData.versionStatus(
     if not AC_SaveData.isFinite(value)
         or value ~= math.floor(value)
         or value < 1
+        or value > AC_SaveData.MAX_VERSION
     then
         return "damaged"
     end
@@ -202,6 +209,14 @@ end
 -- tolerate its own partial result; it converts and never
 -- resets; and it creates nothing a player can hold.
 --
+-- The version is this function's to set, not the step's:
+-- whatever a step does to data.version is overwritten
+-- (one layout up when it returns, back to where it was
+-- when it raises), so a step cannot skip a layout, run
+-- twice or make the loop run for ever. data that is not
+-- a table, or a current that is not a number, is
+-- "damaged" and nothing is touched.
+--
 -- No structure of the mod has a second layout yet, so no
 -- step exists. This is here so that the first one is a
 -- function in a table and not a design.
@@ -212,6 +227,13 @@ function AC_SaveData.upgrade(
     current,
     steps
 )
+
+    if type(data) ~= "table"
+        or type(current) ~= "number"
+    then
+        return "damaged", 0
+    end
+
 
     local status =
         AC_SaveData.versionStatus(
@@ -227,11 +249,14 @@ function AC_SaveData.upgrade(
 
     local applied = 0
 
+    local layout =
+        data.version
 
-    while data.version < current do
+
+    while layout < current do
 
         local step =
-            steps and steps[data.version]
+            type(steps) == "table" and steps[layout]
 
 
         if type(step) ~= "function" then
@@ -249,9 +274,12 @@ function AC_SaveData.upgrade(
 
         if not ok then
 
+            data.version = layout
+
+
             print(
                 "[AmmoMaking] WARNING: save data upgrade from layout "
-                .. tostring(data.version)
+                .. tostring(layout)
                 .. " failed: "
                 .. tostring(problem)
             )
@@ -261,8 +289,10 @@ function AC_SaveData.upgrade(
         end
 
 
-        data.version =
-            data.version + 1
+        layout =
+            layout + 1
+
+        data.version = layout
 
         applied =
             applied + 1

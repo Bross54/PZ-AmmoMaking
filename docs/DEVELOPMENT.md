@@ -702,7 +702,7 @@ The rules, each asserted by the section *Save data versions*:
 | An older valid save stays valid | steps convert, they never reset; a field no step knows is kept |
 | A migration is idempotent | the version is advanced only after a step returns, and a current structure runs nothing |
 | A failed step does not corrupt | the version stays where it was and the step runs again at the next load; a step must tolerate its own partial result |
-| A save from a **later** release is not damaged by an earlier one | `newer`: nothing is repaired, reset or stamped. The depletion store is read where it is understood (a later store's `tiles` table is used as it is; anything else reads as unworked ground and is left alone), with one warning per world load |
+| A save from a **later** release is not damaged by an earlier one | `newer`: nothing is repaired, reset or stamped. The depletion store is read and written where it is understood (a later store's `tiles` table is used as it is); a store whose records cannot be read is left alone and yields no ore; one warning per world load |
 | Not run every frame | there is no event: the check is one comparison inside the store accessor |
 | No duplication | a step moves or converts data and creates no item; the suite's fuzz still requires every count to stay within its range after any damage |
 
@@ -713,9 +713,19 @@ runner, its failure behaviour and the later-release rule are already
 tested, with an invented three-layout structure.
 
 One limit worth knowing: on a later release's store whose records this
-release cannot read, an extraction is not recorded (there is nowhere it
-could safely be written), so that tile's depletion would not persist. That
-can only happen after downgrading the mod across a change of layout.
+release cannot read, nothing can be recorded (there is nowhere it could
+safely be written). **So nothing can be mined there**: every tile reads as
+holding no ore until the save is opened by a version that understands it.
+The first version of this code read such a store as untouched ground and
+dropped every write, which would have been ore without end; an independent
+review found it. It can only arise by downgrading the mod across a change
+of layout. A version that is a broken number (1e300, a word) is damage, not
+a later release, and the store is then repaired as a damaged one always
+was.
+
+A step may not manage the version itself: `upgrade` sets it (one layout up
+when a step returns, back where it was when a step raises), whatever the
+step did to it.
 
 ### Reads that write
 
@@ -1079,19 +1089,25 @@ is in the installed scripts. A mocked object is still a Lua table: its
 Java class is not checked, and nothing here says what a method does.
 
 **Mutation run, now in the repository.** `python tests/run_mutants.py`
-applies each fault of its list to the real file, runs the suite in a fresh
-Lua state, restores the file and reports any fault the suite did not notice.
+applies each fault of its list to the real file, runs the suite in a
+process of its own, restores the file and reports any fault the suite did
+not notice. A suite that does not finish in two minutes counts as having
+noticed (a fault can turn a bounded loop into an endless one; that happened
+once, and the run used to hang).
 `check` only verifies that every fault still applies. See the header of the
 file; it must not run while anything else reads the repository.
 
-After the second pass of 2026-10-02 the list holds 124 faults, all killed.
-The 26 added then: the quality tally (a contradiction trusted, quality
+After the second pass of 2026-10-02 the list holds 130 faults, all killed.
+The 32 added then: the quality tally (a contradiction trusted, quality
 created at unloading, a later release's record overwritten), calls the
 engine would refuse (the mock checks them against the recorded overloads),
 save-data layouts (a later layout taken for an older one, a failed step
 that still advances), recycling sources, the die sets back in the list an
 army surplus store fills its cases from, a sprite probe that accepts a
-sprite made on the spot, a version of 1.0. One of them, the ammunition-only
+sprite made on the spot, a version of 1.0, and the faults a review of this
+pass's own code found (the majority kind of round leaving first, ore from a
+save whose depletion cannot be recorded, a migration step that stamps its
+own version). One of them, the ammunition-only
 check counting as the once-per-start check, would have **survived** the
 suite as it was: the test meant to catch it compared a flag with itself.
 
@@ -1338,9 +1354,11 @@ session got none. It now resets on `OnInitGlobalModData`.
   nothing of it is in the game yet.
 - **Die-set loot** (`LOOT_AND_RECYCLING.md` 5): the line `[AmmoMaking] Die
   set loot: 22 entries added, …` at world load and `OK: die set loot (22
-  entries in 4 lists)` in the check; a die set actually found in a gun-store
-  display case, a garage gun locker or a hunter's things; the feel of the
-  weights against the sandbox loot settings; the same on a dedicated server.
+  entries in 4 lists)` in the check; a die set actually found in a gun
+  store's magazine-and-ammunition display case (`GunStoreMagsAmmo` since
+  the second pass of 2026-10-02), a garage or military gun locker, or a
+  hunting store's lockers; the feel of the weights against the sandbox loot
+  settings; the same on a dedicated server.
 - **Brass recycling**: the three scrapping recipes at a surface and the
   recast at a furnace; a mixed input line filled from several components
   (the debug Recycling Kit is built for exactly that); no XP line for any of
@@ -1364,3 +1382,20 @@ session got none. It now resets on `OnInitGlobalModData`.
   at a forge gives 10 sheets from one ingot and keeps hammer and tongs; Punch
   Brass Case Cups in the crafting menu at a surface gives 2 cups per sheet and
   keeps punch and hammer; the hammering animations; names, icons and models.
+- **Added in the second pass of 2026-10-02** (none of it seen in game):
+  - `mod.info`: the mod list shows version 0.9.0 and accepts
+    `versionMin=42.20.0` on 42.20.4;
+  - the analyzer's sprite probe prints `OK: analyzer world sprite
+    (industry_03_61)` with `-debug` (it now rests on `IsoSprite:getID()`);
+  - *Ammo Making Debug > Metallurgy > Print Material Ledger*: the totals
+    are equal before and after a craft, and halved by a scrapping recipe;
+  - the depletion store still reads and writes as before (its version is
+    now compared on every read; for an ordinary save that is one
+    comparison and no other change);
+  - the folder built by `tools/build_release.py` (LF line endings, as git
+    stores them) loads exactly as the repository's `mod/AmmoMaking` does;
+  - nothing of the quality tally can be seen: it is loaded and unused. The
+    console shows `[AmmoMaking] Quality tally loaded` and no firearm
+    behaves differently;
+  - the reloading press, when it is switched on: `art/reloading_press/
+    README.md` and `RELOADING_PRESS_DESIGN.md` 9.

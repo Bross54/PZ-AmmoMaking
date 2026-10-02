@@ -39,12 +39,17 @@ local RENDER = dofile(ROOT .. "/tests/render_recipes.lua")
 local passed, failed = 0, 0
 local currentSection = ""
 
+-- A failure is always shown. Many sections capture the mod's own log lines
+-- by replacing the global print (MOCK.capturePrint); a check that fails
+-- while that is on used to be counted and never printed.
+local show = print
+
 local function check(condition, message)
     if condition then
         passed = passed + 1
     else
         failed = failed + 1
-        print("  FAIL [" .. currentSection .. "]: " .. tostring(message))
+        show("  FAIL [" .. currentSection .. "]: " .. tostring(message))
     end
 end
 
@@ -6402,9 +6407,10 @@ do
     eq(S.versionStatus(1, 1), "current", "this release's layout")
     eq(S.versionStatus(1, 3), "older", "an earlier layout")
     eq(S.versionStatus(4, 3), "newer", "a later release's layout")
-    for _, bad in ipairs({ 0, -1, 1.5, "1", "one", true, {}, 0 / 0, math.huge, -math.huge }) do
+    for _, bad in ipairs({ 0, -1, 1.5, "1", "one", true, {}, 0 / 0, math.huge, -math.huge, 1e300, S.MAX_VERSION + 1 }) do
         eq(S.versionStatus(bad, 1), "damaged", "a version of " .. tostring(bad) .. " is damage")
     end
+    eq(S.versionStatus(S.MAX_VERSION, 1), "newer", "the largest version that is still a version")
 
     -- upgrade(): an invented structure with three layouts. Layout 1 kept a
     -- count as a string, layout 2 as a number, layout 3 under another name.
@@ -6486,6 +6492,47 @@ do
     eq(S.upgrade({ version = 1 }, 2, nil), "stuck", "no steps at all: stuck, not an error")
     eq(S.upgrade({ version = 2 }, 2, nil), "current", "the usual case needs no steps table")
 
+    -- The version is the runner's to set, whatever a step does to it. (A
+    -- review found that the first version trusted the step: one that set
+    -- the new version itself was counted twice, one that cleared it raised
+    -- outside the guarded call, one that lowered it never ended.)
+    do
+        local selfStamped = { version = 1 }
+        local status, applied = S.upgrade(selfStamped, 2, { [1] = function(data) data.version = 2 end })
+        eq(status, "upgraded", "a step that stamps the new version itself is an ordinary upgrade")
+        eq(selfStamped.version, 2, "and ends at the current layout, not one beyond it")
+        eq(applied, 1, "having run once")
+        local cleared = { version = 1 }
+        local okCleared, clearedStatus = pcall(S.upgrade, cleared, 2, { [1] = function(data) data.version = nil end })
+        check(okCleared and clearedStatus == "upgraded", "a step that clears the version does not raise")
+        eq(cleared.version, 2, "and the version is set for it")
+        local worded = { version = 1 }
+        check(pcall(S.upgrade, worded, 3, { [1] = function(data) data.version = "two" end, [2] = function() end }), "a step that leaves a word as the version does not raise")
+        eq(worded.version, 3, "and both steps ran")
+        local runs = 0
+        local lowered = { version = 2 }
+        status, applied = S.upgrade(lowered, 3, { [1] = function() runs = runs + 1 end, [2] = function(data) runs = runs + 1 data.version = 1 end })
+        eq(status, "upgraded", "a step that lowers the version cannot send the runner round again")
+        eq(runs, 1, "it ran once")
+        eq(lowered.version, 3, "and the layout is the current one")
+        MOCK.capturePrint(true)
+        local bumped = { version = 1 }
+        status = S.upgrade(bumped, 2, { [1] = function(data) data.version = 2 error("after stamping") end })
+        MOCK.capturePrint(false)
+        eq(status, "failed", "a step that stamps and then fails has failed")
+        eq(bumped.version, 1, "and is put back, so it runs again at the next load")
+        -- What is not a structure at all is damage, not an error.
+        for _, bad in ipairs({ 5, "abc", true }) do
+            local okBad, badStatus = pcall(S.upgrade, bad, 2, {})
+            check(okBad and badStatus == "damaged", "upgrade(" .. tostring(bad) .. ") is damage, not an error")
+        end
+        local okNil, nilStatus = pcall(S.upgrade, nil, 2, {})
+        check(okNil and nilStatus == "damaged", "upgrade(nil) is damage, not an error")
+        local okCurrent, currentStatus = pcall(S.upgrade, { version = 1 }, nil, {})
+        check(okCurrent and currentStatus == "damaged", "a missing current layout is damage, not an error")
+        eq(S.upgrade({ version = 1 }, 2, "not a table"), "stuck", "steps that are not a table: stuck")
+    end
+
     -- The depletion store: the one versioned structure in a save.
     eq(AC_Deposits.CONFIG.version, 1, "the depletion store's layout is 1")
     local stepCount = 0
@@ -6512,31 +6559,63 @@ do
     eq(store.version, 2, "its version is not stamped down")
     eq(store.regions.north, true, "its unknown fields are kept")
     eq(store.tiles[x .. "," .. y].tin, 4, "inside a record too")
-    local warnings = 0
-    for _, line in ipairs(MOCK.printLog) do
-        if string.find(line, "written by a later version of Ammo Making", 1, true) then warnings = warnings + 1 end
+    local function layoutWarnings()
+        local found = 0
+        for _, line in ipairs(MOCK.printLog) do
+            if string.find(line, "the depletion records of this save have layout", 1, true) then found = found + 1 end
+        end
+        return found
     end
-    eq(warnings, 1, "one warning for the whole world load, not one per read")
+    eq(layoutWarnings(), 1, "one warning for the whole world load, not one per read")
+    check(MOCK.printLogContains("reads as far as it understands them and does not repair"), "saying the records are read")
     AC_Deposits.getTileInfo(x, y)
     AC_Deposits.getWorkedTileCount()
-    warnings = 0
-    for _, line in ipairs(MOCK.printLog) do
-        if string.find(line, "written by a later version of Ammo Making", 1, true) then warnings = warnings + 1 end
-    end
-    eq(warnings, 1, "further reads add no warning")
+    eq(layoutWarnings(), 1, "further reads add no warning")
+    -- A readable later store is written to in the form this release knows.
+    AC_Deposits.recordExtraction(x, y, "copper", 1)
+    eq(store.tiles[x .. "," .. y].copper, 2, "an extraction is recorded in a later store whose records are readable")
+    eq(store.version, 2, "still without stamping its version")
 
     -- A later store whose tiles this release cannot read: left alone.
     MOCK.clearModData()
     store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
     store.version = 3
     store.tiles = "packed:AAECAw=="
-    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "an unreadable later store reads as unworked ground")
-    eq(AC_Deposits.getRemaining(x, y, "copper"), reserve, "with the full reserve")
-    eq(AC_Deposits.getWorkedTileCount(), 0, "and no worked tiles")
+    -- Nothing could be recorded there, so nothing may be mined there: the
+    -- reserve reads as none. (A review found the first version reported
+    -- the FULL reserve and then dropped every write: ore without end.)
+    MOCK.clearPrintLog()
+    eq(AC_Deposits.getExtracted(x, y, "copper"), 0, "an unreadable later store has no record this release can read")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), 0, "and no ore can be taken while that is so")
+    eq(AC_Deposits.getRemaining(x, y, "zinc"), 0, "of either metal")
+    eq(AC_Deposits.getWorkedTileCount(), 0, "no worked tiles are listed")
     local okWrite = pcall(AC_Deposits.recordExtraction, x, y, "copper", 1)
     check(okWrite, "an extraction on it does not raise")
+    eq(AC_Deposits.getRemaining(x, y, "copper"), 0, "and still nothing is workable")
     eq(store.tiles, "packed:AAECAw==", "the later release's data is not reset")
     eq(store.version, 3, "nor is its version")
+    eq(layoutWarnings(), 1, "one warning")
+    check(MOCK.printLogContains("no ore can be mined"), "which says that no ore can be mined")
+    -- The whole mining loop on such a save: the action finds no ore, and
+    -- nothing is dropped on the ground.
+    do
+        local miner, minerSquare = miningSetup(x, y, "Good", "Good", 1)
+        local item, reason = AC_Mining.extract(miner, minerSquare, "copper", miner.primary)
+        eq(item, nil, "mining a tile of an unreadable store yields no ore")
+        eq(#minerSquare.worldItems, 0, "and drops nothing")
+        check(reason ~= nil, "with a reason (" .. tostring(reason) .. ")")
+        eq(store.tiles, "packed:AAECAw==", "and the later release's data is still untouched")
+    end
+    -- A version that is a broken number is damage, not a later release: the
+    -- store is repaired as a damaged one always was, and mining works.
+    MOCK.clearModData()
+    store = ModData.getOrCreate(AC_Deposits.CONFIG.modDataKey)
+    store.version = 1e300
+    store.tiles = "garbage"
+    eq(AC_Deposits.getRemaining(x, y, "copper"), reserve, "a store with a broken version and broken records reads as untouched ground")
+    eq(type(store.tiles), "table", "its records are reset, as for any damaged store")
+    AC_Deposits.recordExtraction(x, y, "copper", 1)
+    eq(AC_Deposits.getRemaining(x, y, "copper"), reserve - 1, "and an extraction depletes it")
     -- This release's own store, damaged the same way, IS reset: that is the
     -- difference the version makes.
     MOCK.clearModData()
@@ -7310,7 +7389,18 @@ do
         eq(#problems, 0, what .. " obeys the rules: " .. table.concat(problems, "; "))
     end
     local function same(a, b)
-        return a.count == b.count and a.handloaded == b.handloaded and a.qualitySum == b.qualitySum and a.version == b.version
+        return a.count == b.count and a.handloaded == b.handloaded and a.qualitySum == b.qualitySum and a.version == b.version and a.phase == b.phase
+    end
+    -- The kinds of round a record hands out, one shot at a time.
+    local function fired(record)
+        local kinds = {}
+        while true do
+            local round
+            record, round = T.consume(record)
+            if not round then break end
+            table.insert(kinds, round.handloaded and "H" or "F")
+        end
+        return table.concat(kinds)
     end
     local function load(tally, handloaded, quality, factory)
         for _ = 1, handloaded do tally = T.addHandloaded(tally, quality) end
@@ -7364,28 +7454,57 @@ do
         sound(rest, "the magazine after a shot")
         if round.handloaded then eq(round.quality, 80, "a fired handloaded round has the mean quality") end
     end
-    eq(table.concat(kinds), "FHFHFHFHFH", "a half-and-half magazine fires factory and handloaded rounds in turn")
+    eq(table.concat(kinds), "HFFHHFFHHF", "a half-and-half magazine fires five of each, never more than two of a kind in a row")
     eq(rest.count, 0, "ten shots empty it")
     local afterEmpty, nothing = T.consume(rest)
     eq(nothing, nil, "an empty magazine fires nothing")
     eq(afterEmpty.count, 0, "and stays empty")
     do
-        local one = load(nil, 1, 60, 9)
-        local order = {}
-        for _ = 1, 10 do
-            local round
-            one, round = T.consume(one)
-            table.insert(order, round.handloaded and "H" or "F")
+        -- The mix leaves evenly, whatever it is. (An earlier version took
+        -- the majority kind first until the mix was half and half: a
+        -- magazine of ten handloaded and twenty factory rounds fired
+        -- eleven factory rounds before its first handloaded one. A review
+        -- found it; these pin the fix.)
+        eq(fired(load(nil, 1, 60, 9)), "FFFFHFFFFF", "one handloaded round among nine factory rounds is fired in the middle")
+        eq(fired(load(nil, 9, 60, 1)), "HHHHFHHHHH", "one factory round among nine handloaded ones likewise")
+        eq(fired(load(nil, 10, 60, 20)), "FHFFHFFHFFHFFHFFHFFHFFHFFHFFHF", "a third handloaded: every third round")
+        eq(fired(load(nil, 20, 60, 10)), "HFHHFHHFHHFHHFHHFHHFHHFHHFHHFH", "two thirds handloaded: two in every three")
+        eq(fired(load(nil, 3, 60, 27)), "FFFFHFFFFFFFFFHFFFFFFFFFHFFFFF", "three among thirty: one in every ten")
+        eq(fired(load(nil, 0, 0, 4)), "FFFF", "all factory")
+        eq(fired(load(nil, 4, 60, 0)), "HHHH", "all handloaded")
+        -- In any window of the firing order the handloaded count is within
+        -- one of its fair share, for every mix up to thirty rounds.
+        local uneven = 0
+        for count = 1, 30 do
+            for handloaded = 0, count do
+                local order = fired(load(nil, handloaded, 60, count - handloaded))
+                local seen = 0
+                for index = 1, count do
+                    if string.sub(order, index, index) == "H" then seen = seen + 1 end
+                    if math.abs(seen - index * handloaded / count) > 1.0000001 then uneven = uneven + 1 end
+                end
+            end
         end
-        eq(table.concat(order), "FFFFFFFFFH", "one handloaded round among nine factory rounds is fired last")
-        local nine = load(nil, 9, 60, 1)
-        order = {}
-        for _ = 1, 10 do
-            local round
-            nine, round = T.consume(nine)
-            table.insert(order, round.handloaded and "H" or "F")
+        eq(uneven, 0, "at every point of every magazine the handloaded rounds fired are within one of their fair share")
+        -- One at a time or several at once: the same rounds, in every number.
+        local chunked = 0
+        for count = 1, 24 do
+            for handloaded = 0, count do
+                for size = 1, count do
+                    local start = T.empty(count - handloaded)
+                    for index = 1, handloaded do start = T.addHandloaded(start, 30 + index * 2) end
+                    local atOnce, restAtOnce = T.split(start, size)
+                    local stepped, taken = start, T.empty()
+                    for _ = 1, size do
+                        local one
+                        one, stepped = T.split(stepped, 1)
+                        taken = T.merge(taken, one)
+                    end
+                    if atOnce.handloaded ~= taken.handloaded or atOnce.qualitySum ~= taken.qualitySum or not same(restAtOnce, stepped) then chunked = chunked + 1 end
+                end
+            end
         end
-        eq(table.concat(order), "HHHHHHHHFH", "one factory round among nine handloaded ones leaves near the end, never first")
+        eq(chunked, 0, "taking rounds one at a time and several at once take the same rounds and leave the same record")
     end
     do
         local taken, stay = T.split(mag, 4)
@@ -7463,21 +7582,26 @@ do
             { "a word", "garbage", 0 },
             { "a number", 42, 0 },
             { "an empty table", {}, 0 },
-            { "no version", { count = 10, handloaded = 5, qualitySum = 400 }, 10 },
-            { "version 0", { version = 0, count = 10, handloaded = 5, qualitySum = 400 }, 10 },
-            { "a fractional version", { version = 1.5, count = 10, handloaded = 5, qualitySum = 400 }, 10 },
-            { "more handloaded than rounds", { version = 1, count = 3, handloaded = 5, qualitySum = 400 }, 3 },
-            { "a quality sum of 900 on five rounds", { version = 1, count = 10, handloaded = 5, qualitySum = 900 }, 10 },
-            { "a quality sum below the minimum", { version = 1, count = 10, handloaded = 5, qualitySum = 4 }, 10 },
-            { "quality without handloaded rounds", { version = 1, count = 10, handloaded = 0, qualitySum = 50 }, 10 },
-            { "a negative handloaded count", { version = 1, count = 10, handloaded = -2, qualitySum = 0 }, 10 },
-            { "a fractional handloaded count", { version = 1, count = 10, handloaded = 2.5, qualitySum = 200 }, 10 },
-            { "a NaN quality sum", { version = 1, count = 10, handloaded = 5, qualitySum = 0 / 0 }, 10 },
-            { "an infinite quality sum", { version = 1, count = 10, handloaded = 5, qualitySum = math.huge }, 10 },
-            { "a NaN count", { version = 1, count = 0 / 0, handloaded = 5, qualitySum = 400 }, 0 },
-            { "a negative count", { version = 1, count = -4, handloaded = 0, qualitySum = 0 }, 0 },
-            { "a count as a string", { version = 1, count = "10", handloaded = 5, qualitySum = 400 }, 0 },
-            { "a count above the limit", { version = 1, count = 1e15, handloaded = 5, qualitySum = 400 }, T.CONFIG.maxRounds },
+            { "no version", { count = 10, handloaded = 5, qualitySum = 400, phase = 0.5 }, 10 },
+            { "version 0", { version = 0, count = 10, handloaded = 5, qualitySum = 400, phase = 0.5 }, 10 },
+            { "a fractional version", { version = 1.5, count = 10, handloaded = 5, qualitySum = 400, phase = 0.5 }, 10 },
+            { "a version that is a broken number, not a later release", { version = 1e300, count = 10, handloaded = 5, qualitySum = 400, phase = 0.5 }, 10 },
+            { "more handloaded than rounds", { version = 1, count = 3, handloaded = 5, qualitySum = 400, phase = 0.5 }, 3 },
+            { "a quality sum of 900 on five rounds", { version = 1, count = 10, handloaded = 5, qualitySum = 900, phase = 0.5 }, 10 },
+            { "a quality sum below the minimum", { version = 1, count = 10, handloaded = 5, qualitySum = 4, phase = 0.5 }, 10 },
+            { "quality without handloaded rounds", { version = 1, count = 10, handloaded = 0, qualitySum = 50, phase = 0.5 }, 10 },
+            { "a negative handloaded count", { version = 1, count = 10, handloaded = -2, qualitySum = 0, phase = 0.5 }, 10 },
+            { "a fractional handloaded count", { version = 1, count = 10, handloaded = 2.5, qualitySum = 200, phase = 0.5 }, 10 },
+            { "a NaN quality sum", { version = 1, count = 10, handloaded = 5, qualitySum = 0 / 0, phase = 0.5 }, 10 },
+            { "an infinite quality sum", { version = 1, count = 10, handloaded = 5, qualitySum = math.huge, phase = 0.5 }, 10 },
+            { "a NaN count", { version = 1, count = 0 / 0, handloaded = 5, qualitySum = 400, phase = 0.5 }, 0 },
+            { "a negative count", { version = 1, count = -4, handloaded = 0, qualitySum = 0, phase = 0.5 }, 0 },
+            { "a count as a string", { version = 1, count = "10", handloaded = 5, qualitySum = 400, phase = 0.5 }, 0 },
+            { "a count above the limit", { version = 1, count = 1e15, handloaded = 5, qualitySum = 400, phase = 0.5 }, T.CONFIG.maxRounds },
+            { "no phase", { version = 1, count = 10, handloaded = 5, qualitySum = 400 }, 10 },
+            { "a phase of 1", { version = 1, count = 10, handloaded = 5, qualitySum = 400, phase = 1 }, 10 },
+            { "a negative phase", { version = 1, count = 10, handloaded = 5, qualitySum = 400, phase = -0.1 }, 10 },
+            { "a NaN phase", { version = 1, count = 10, handloaded = 5, qualitySum = 400, phase = 0 / 0 }, 10 },
         }) do
             local repaired, how = T.repair(case[2])
             eq(how, T.REPAIRED, case[1] .. " is damage")
@@ -7486,10 +7610,44 @@ do
             eq(repaired.qualitySum, 0, case[1] .. " carries no quality")
             eq(repaired.count, case[3], case[1] .. " keeps a usable count")
         end
+        -- The sound form of that record, for comparison.
+        local soundRecord, soundStatus = T.repair({ version = 1, count = 10, handloaded = 5, qualitySum = 400, phase = 0.5 })
+        eq(soundStatus, T.OK, "with every field in order the same record is sound")
+        eq(soundRecord.handloaded, 5, "and keeps its handloaded rounds")
         -- A later release's record is not ours to rewrite.
-        local newer, newerStatus = T.repair({ version = 2, count = 10, handloaded = 5, qualitySum = 400, queue = { 80, 80 } })
+        local foreign = { version = 2, count = 10, handloaded = 5, qualitySum = 400, queue = { 80, 80 } }
+        local newer, newerStatus = T.repair(foreign)
         eq(newerStatus, T.NEWER, "a higher version is reported as newer")
         eq(newer.handloaded, 0, "and read as nothing known")
+        -- Every function that would hand back a record hands back the later
+        -- release's own, untouched, never a record of this layout made from
+        -- it. (A review found the first version returned a fresh version 1
+        -- record, which a caller storing the result would have written over
+        -- the newer one.)
+        check(rawequal(T.addFactory(foreign, 3), foreign), "addFactory hands a later record back as it is")
+        check(rawequal(T.addHandloaded(foreign, 80), foreign), "addHandloaded too")
+        local takenForeign, restForeign = T.split(foreign, 4)
+        eq(takenForeign.count, 0, "nothing can be split off a later record")
+        check(rawequal(restForeign, foreign), "which stays as it is")
+        local mergedForeign, fitted = T.merge(foreign, mag)
+        check(rawequal(mergedForeign, foreign) and fitted == false, "nothing is merged into a later record")
+        local intoSound, fittedSound = T.merge(mag, foreign)
+        check(same(intoSound, mag) and fittedSound == false, "nor a later record into a sound one")
+        local fromForeign, toSound = T.transfer(foreign, mag, 3)
+        check(rawequal(fromForeign, foreign) and same(toSound, mag), "a transfer out of a later record moves nothing")
+        local fromSound, toForeign = T.transfer(mag, foreign, 3)
+        check(same(fromSound, mag) and rawequal(toForeign, foreign), "nor does a transfer into one")
+        local afterShot, shot = T.consume(foreign)
+        check(rawequal(afterShot, foreign) and shot == nil, "a shot from a later record says nothing about the round")
+        local afterUnload, unloaded = T.unload(foreign, 5)
+        check(rawequal(afterUnload, foreign) and unloaded.factory == 0 and #unloaded.qualities == 0, "an unload from it describes no round")
+        eq(foreign.count, 10, "and through all of it the later record was not changed")
+        eq(#foreign.queue, 2, "(nor its unknown fields)")
+        eq(T.getFactory(foreign), 0, "its derived values read as nothing known")
+        -- A record transferred into itself: nothing moves, nothing is created.
+        local selfFrom, selfTo = T.transfer(mag, mag, 3)
+        check(same(selfFrom, mag) and same(selfTo, mag), "a record transferred into itself is unchanged")
+        eq(selfFrom.count + selfTo.count, 2 * mag.count, "(two copies of the same ten rounds, not thirteen and seven)")
         local kept, keptStatus = T.reconcile({ version = 7, count = 3 }, 10)
         eq(keptStatus, T.NEWER, "reconcile reports it too")
         eq(kept.count, 0, "and does not pretend to know the load")
@@ -7612,9 +7770,9 @@ do
                 elseif op == 8 then
                     -- Damage: a field is overwritten in the stored record.
                     local old = records[which]
-                    local broken = { version = old.version, count = old.count, handloaded = old.handloaded, qualitySum = old.qualitySum }
-                    local field = ({ "version", "count", "handloaded", "qualitySum" })[1 + random(4)]
-                    broken[field] = ({ -1, 900, 0 / 0, math.huge, "x", 2.5, 1e15 })[1 + random(7)]
+                    local broken = { version = old.version, count = old.count, handloaded = old.handloaded, qualitySum = old.qualitySum, phase = old.phase }
+                    local field = ({ "version", "count", "handloaded", "qualitySum", "phase" })[1 + random(5)]
+                    broken[field] = ({ -1, 1e300, 0 / 0, math.huge, "x", 2.5, 1e15 })[1 + random(7)]
                     records[which] = T.reconcile(broken, old.count)
                     exact = false
                     if records[which].handloaded > old.handloaded then violation("damage to " .. field .. " created a handloaded round") end
@@ -7672,9 +7830,11 @@ do
     -- handloaded rounds or quality than the sound record did.
     do
         local calls, raised, advantages = 0, {}, {}
-        local base = { version = 1, count = 10, handloaded = 5, qualitySum = 400 }
+        local base = { version = 1, count = 10, handloaded = 5, qualitySum = 400, phase = 0.5 }
+        eq(#T.check(base), 0, "the record the fuzz damages is sound to begin with")
         local function attempt(what, fn, ...)
             calls = calls + 1
+            local inputs = { ... }
             local results = { pcall(fn, ...) }
             if not results[1] then
                 if #raised < 8 then table.insert(raised, what .. ": " .. tostring(results[2])) end
@@ -7682,19 +7842,25 @@ do
             end
             for index = 2, #results do
                 local result = results[index]
-                if type(result) == "table" and result.count ~= nil then
+                -- A later release's record is handed back as it is; that
+                -- very table is not ours to judge.
+                local handedBack = false
+                for _, input in pairs(inputs) do
+                    if rawequal(input, result) then handedBack = true end
+                end
+                if type(result) == "table" and result.count ~= nil and not handedBack then
                     local problems = T.check(result)
                     if #problems > 0 and #advantages < 8 then table.insert(advantages, what .. " returned an unsound record: " .. problems[1]) end
                 end
             end
             return results[2], results[3]
         end
-        for _, field in ipairs({ "version", "count", "handloaded", "qualitySum" }) do
+        for _, field in ipairs({ "version", "count", "handloaded", "qualitySum", "phase" }) do
             for _, damage in ipairs(DAMAGE) do
                 local value = damage[2]
                 if value == NIL then value = nil end
                 local function broken()
-                    local record = { version = base.version, count = base.count, handloaded = base.handloaded, qualitySum = base.qualitySum }
+                    local record = { version = base.version, count = base.count, handloaded = base.handloaded, qualitySum = base.qualitySum, phase = base.phase }
                     record[field] = value
                     return record
                 end
@@ -7704,7 +7870,8 @@ do
                     if repaired.handloaded > base.handloaded or repaired.qualitySum > base.qualitySum then
                         table.insert(advantages, what .. ": the repair holds more than the record did")
                     end
-                    -- A record wrong in one field is not trusted for the others.
+                    -- A record wrong in one field is not trusted for the others
+                    -- (zero is a sound phase, so that one damage is no damage).
                     if #T.check(broken()) > 0 and repaired.handloaded ~= 0 then
                         table.insert(advantages, what .. ": a damaged record still reads as handloaded")
                     end

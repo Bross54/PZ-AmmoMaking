@@ -192,11 +192,16 @@ local function getStore()
     -- forward by MIGRATIONS (none exists yet).
     --
     -- A store written by a LATER release is not ours to
-    -- repair: it is read as far as it is understood, and
-    -- never reset or stamped. If even its tiles are not
-    -- a table, the answer comes from an empty one that
-    -- is not stored: the tile reads as unworked, and the
-    -- later release's data is left alone.
+    -- repair: it is never reset or stamped. If its tiles
+    -- are a table, they are read and written as this
+    -- release understands them. If they are not, or if
+    -- an older layout could not be brought forward,
+    -- there is nowhere a depletion could be recorded:
+    -- the answer then comes from a table that is not
+    -- stored and is marked unreadable, and getRemaining
+    -- reports NO ORE anywhere. Mining stops; nothing is
+    -- destroyed, and nothing can be mined without being
+    -- counted.
     ------------------------------------------------
 
     local layout =
@@ -207,26 +212,42 @@ local function getStore()
         )
 
 
-    if layout == "newer" then
+    if layout == "newer"
+        or layout == "stuck"
+        or layout == "failed"
+    then
 
-        if AC_Deposits.warnedNewerStore ~= store then
+        local readable =
+            layout == "newer"
+            and type(store.tiles) == "table"
 
-            AC_Deposits.warnedNewerStore = store
+
+        if AC_Deposits.warnedStore ~= store then
+
+            AC_Deposits.warnedStore = store
 
 
             print(
-                "[AmmoMaking] WARNING: the depletion records of this save were written by a later version of Ammo Making (layout "
+                "[AmmoMaking] WARNING: the depletion records of this save have layout "
                 .. tostring(store.version)
-                .. "); they are read as far as this version understands them and are not repaired"
+                .. ", which this version of Ammo Making ("
+                .. tostring(AC_Deposits.CONFIG.version)
+                .. ") "
+                .. (
+                    readable
+                    and "reads as far as it understands them and does not repair"
+                    or "cannot read: they are left as they are and no ore can be mined"
+                )
             )
         end
 
 
-        if type(store.tiles) ~= "table" then
+        if not readable then
 
             return {
                 version = store.version,
                 tiles = {},
+                unreadable = true,
             }
         end
 
@@ -438,6 +459,13 @@ function AC_Deposits.getRemaining(
     y,
     metal
 )
+
+    -- Records that cannot be read cannot be written
+    -- either: nothing is workable until they can.
+    if getStore().unreadable then
+        return 0
+    end
+
 
     return
         math.max(

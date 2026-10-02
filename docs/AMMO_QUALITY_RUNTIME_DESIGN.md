@@ -152,6 +152,8 @@ one record per weapon or loose magazine (the ModData key is not chosen yet)
   count       rounds the record describes
   handloaded  handloaded rounds among them     0 .. count
   qualitySum  sum of their casing qualities    handloaded * 1 .. handloaded * 100
+  phase       0 to below 1: how far the record is towards handing out its
+              next handloaded round (section 7); bookkeeping, not provenance
 factory rounds = count - handloaded, at a fixed nominal quality
 ```
 
@@ -233,8 +235,8 @@ answer. Five ways to give one:
 
 | | 1. Probability | 2. FIFO queue | 3. Deterministic proportion | 4. Factory first | 5. Effect from the mix |
 |---|---|---|---|---|---|
-| Rule | each shot is handloaded with chance `handloaded / count` | the record is an ordered list; the shot pops it | the kind that leaves is whichever keeps the remaining mix closest to the original | factory rounds leave until only handloaded ones are left | a shot has no kind: an effect is computed from the whole load's mean |
-| State | the tally | one entry per round | the tally | the tally | the tally |
+| Rule | each shot is handloaded with chance `handloaded / count` | the record is an ordered list; the shot pops it | the kinds leave evenly spread: a running fraction (the phase) gains the handloaded share with every round, and a handloaded round leaves each time it reaches 1 | factory rounds leave until only handloaded ones are left | a shot has no kind: an effect is computed from the whole load's mean |
+| State | the tally | one entry per round | the tally, and one fraction | the tally | the tally |
 | Random numbers | one per shot; client and server must draw the same, or only the server draws | none | none | none | none (the effect may still roll) |
 | Exact over a whole magazine | only on average: ten shots from a half-and-half magazine can remove seven handloaded rounds from the record | yes | yes: firing every round removes exactly the handloaded rounds and exactly the quality sum | yes | nothing is removed by kind, so the tally needs rule 3 or 4 for its counts anyway |
 | A path the mod missed | tally repairs by clamping | **list and count disagree**; padding it invents rounds, cutting it guesses | tally repairs toward factory | the same | the same |
@@ -245,10 +247,24 @@ answer. Five ways to give one:
 **Chosen: 3 for the record, 5 for any future effect.**
 
 - The record changes by **deterministic proportion** (`AC_QualityTally
-  .split`). Of a half-and-half magazine every second round that leaves is
-  handloaded; one handloaded round among nine factory rounds leaves last.
+  .split`). Of a magazine that is a third handloaded, every third round
+  that leaves is handloaded; one handloaded round among nine factory rounds
+  leaves fifth. At every point of every magazine up to thirty rounds the
+  handloaded rounds handed out are within one of their fair share (tested).
   No random number, so two machines holding the same record always agree,
   and no order, so nothing can get an order wrong.
+- That takes one more number than the counts, the **phase**. A rule that
+  looked only at `handloaded` and `count` cannot spread anything: it has to
+  hand out the majority kind every time until the mix is half and half,
+  because it cannot remember what it handed out last. The first version of
+  the module did exactly that (ten handloaded rounds among thirty came out
+  after eleven factory rounds) while this document said "evenly"; an
+  independent review of the code found the difference. The phase is
+  bookkeeping: damage to it loses the record like damage to any field, but
+  it carries no quality and no provenance.
+- Rounds leave one at a time inside `split`, so taking five rounds at once
+  and taking one round five times are the same thing in every number
+  (tested for every mix and every size up to twenty-four rounds).
 - A future effect should read **the mix** (the mean quality and the
   handloaded share of what is loaded), not the identity of one round. The
   record's notion of "this round was a handloaded one" is bookkeeping, not
@@ -290,7 +306,8 @@ itself, the answer moves toward "factory, no effect":
 | A round with no usable quality is loaded | a factory round |
 | The game holds fewer rounds than the record | the handloaded share shrinks in proportion, rounded **down**, and the quality sum with it (the mean never rises) |
 | The game holds more rounds than the record | the extra rounds are factory rounds |
-| The record was written by a later release (`version` higher) | read as "nothing known" and reported as `newer`, so the caller does not overwrite it |
+| The record was written by a later release (`version` higher) | read as "nothing known" and reported as `newer`; every function that would return a record hands that record back **as it is**, never a record of this layout made from it, so a caller that stores what it gets back overwrites nothing |
+| The version is a broken number (1e300) | damage, not a later release: all factory |
 
 A damaged 900 on five rounds is not clamped to 500. A record that is wrong
 in one field is not evidence for the others, and clamping would hand out
@@ -347,6 +364,10 @@ The suite proves, without the game:
   which only loading a round may add;
 - `reconcile` and `repair` never increase the handloaded count, the
   quality sum or the mean;
+- the rounds leave evenly (within one of the fair share at every point),
+  and one at a time or several at once take the same rounds;
+- a later release's record comes back untouched from every function, and
+  a record transferred into itself is unchanged;
 - the file registers no event, touches no ModData and no engine object,
   and no other file of the mod refers to it. That last test is the switch:
   it fails the day the tally is wired, which must be a deliberate step

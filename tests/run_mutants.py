@@ -20,6 +20,7 @@ suite does: the Lua logic and the data, not the game.
 
 import io
 import os
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))).replace("\\", "/")
@@ -83,9 +84,12 @@ MUTANTS = [
 
     # ---- save data
     (SHARED + "AC_SaveData.lua", "    if value > current then\n        return \"newer\"\n    end\n", "", "a later release's layout is taken for an older one"),
-    (SHARED + "AC_SaveData.lua", "        data.version =\n            data.version + 1\n", "        data.version =\n            current\n", "an upgrade stamps the newest layout after its first step"),
+    (SHARED + "AC_SaveData.lua", "        layout =\n            layout + 1\n", "        layout =\n            current\n", "an upgrade stamps the newest layout after its first step"),
     (SHARED + "AC_SaveData.lua", "        if not ok then\n", "        if false then\n", "a failed upgrade step still advances the layout"),
-    (SHARED + "AC_Deposits.lua", "        if type(store.tiles) ~= \"table\" then\n\n            return {\n                version = store.version,\n                tiles = {},\n            }\n        end\n\n\n        return store\n    end\n", "    end\n", "a later release's depletion store is reset like a damaged one"),
+    (SHARED + "AC_SaveData.lua", "        if not ok then\n\n            data.version = layout\n", "        if not ok then\n", "a step that stamps and then fails is not run again"),
+    (SHARED + "AC_SaveData.lua", "        or value > AC_SaveData.MAX_VERSION\n", "", "a broken number counts as a later release"),
+    (SHARED + "AC_Deposits.lua", "        if not readable then\n\n            return {\n                version = store.version,\n                tiles = {},\n                unreadable = true,\n            }\n        end\n\n\n        return store\n    end\n", "    end\n", "a later release's depletion store is reset like a damaged one"),
+    (SHARED + "AC_Deposits.lua", "    if getStore().unreadable then\n        return 0\n    end\n", "", "ore can be mined from a save whose depletion cannot be recorded"),
     (SHARED + "AC_SaveData.lua", "        and value == value\n", "", "NaN counts as a finite number"),
     (SHARED + "AC_SaveData.lua", "        and value ~= math.huge\n", "", "infinity counts as a finite number"),
     (SHARED + "AC_SaveData.lua", "    if maximum ~= nil\n        and number > maximum\n    then\n        return maximum\n    end\n", "", "a stored number is not clamped at its maximum"),
@@ -106,13 +110,16 @@ MUTANTS = [
     # ---- quality tally (pure arithmetic)
     (SHARED + "AC_QualityTally.lua", "    local handloaded =\n        math.floor(tally.handloaded * actual / tally.count)", "    local handloaded =\n        math.ceil(tally.handloaded * actual / tally.count)", "rounds lost unseen are assumed to have been factory rounds"),
     (SHARED + "AC_QualityTally.lua", "    if #AC_QualityTally.check(value) == 0 then", "    if type(value.count) == \"number\" and type(value.handloaded) == \"number\" and type(value.qualitySum) == \"number\" then", "a tally that contradicts itself is trusted"),
-    (SHARED + "AC_QualityTally.lua", "    if not AC_SaveData.isFinite(quality) then\n\n        return\n            make(\n                tally.count + 1,\n                tally.handloaded,\n                tally.qualitySum\n            )\n    end\n", "", "a round of unknown quality is loaded as a handloaded one"),
-    (SHARED + "AC_QualityTally.lua", "            (2 * tally.handloaded * staying + tally.count)\n", "            (2 * tally.handloaded * staying)\n", "handloaded rounds always leave first"),
-    (SHARED + "AC_QualityTally.lua", "            tally.qualitySum - qualityLeaving\n", "            tally.qualitySum\n", "the quality of a round that leaves also stays behind"),
-    (SHARED + "AC_QualityTally.lua", "            math.floor(tally.qualitySum * handloadedLeaving / tally.handloaded)", "            math.ceil(tally.qualitySum * handloadedLeaving / tally.handloaded) + 1", "a round that leaves takes more than its share of quality"),
-    (SHARED + "AC_QualityTally.lua", "    if AC_SaveData.versionStatus(value.version, config.version) == \"newer\" then\n        return AC_QualityTally.empty(0), AC_QualityTally.NEWER\n    end\n", "", "a later release's tally is treated as damage and overwritten"),
+    (SHARED + "AC_QualityTally.lua", "    if not AC_SaveData.isFinite(quality) then\n\n        return\n            make(\n                tally.count + 1,\n                tally.handloaded,\n                tally.qualitySum,\n                tally.phase\n            )\n    end\n", "", "a round of unknown quality is loaded as a handloaded one"),
+    (SHARED + "AC_QualityTally.lua", "            and (phase >= 1 - 1e-9 or handloaded == count)\n", "            and handloaded * 2 > count\n", "the majority kind of round leaves first (the fault a review found)"),
+    (SHARED + "AC_QualityTally.lua", "            and (phase >= 1 - 1e-9 or handloaded == count)\n", "\n", "handloaded rounds always leave first"),
+    (SHARED + "AC_QualityTally.lua", "            qualitySum =\n                qualitySum - quality\n", "", "the quality of a round that leaves also stays behind"),
+    (SHARED + "AC_QualityTally.lua", "            local quality =\n                math.floor(qualitySum / handloaded)", "            local quality =\n                math.ceil(qualitySum / handloaded) + 1", "a round that leaves takes more than its share of quality"),
+    (SHARED + "AC_QualityTally.lua", "    if isNewer(value) then\n        return AC_QualityTally.empty(0), value\n    end\n", "", "a split turns a later release's tally into one of this layout"),
+    (SHARED + "AC_QualityTally.lua", "    if (from ~= nil and rawequal(from, to))\n        or isNewer(from)", "    if isNewer(from)", "a record transferred into itself gains rounds"),
+    (SHARED + "AC_QualityTally.lua", "    if isNewer(value) then\n        return AC_QualityTally.empty(0), AC_QualityTally.NEWER\n    end\n", "", "a later release's tally is treated as damage and overwritten"),
     (SHARED + "AC_QualityTally.lua", "    if a.count + b.count > AC_QualityTally.CONFIG.maxRounds then\n        return a, false\n    end\n", "", "a merge may exceed the round limit"),
-    (SHARED + "AC_QualityTally.lua", "    if actual > tally.count\n        or tally.handloaded == 0\n    then\n\n        return\n            make(\n                actual,\n                tally.handloaded,\n                tally.qualitySum\n            ),\n            status\n    end", "    if tally.handloaded == 0 then\n\n        return\n            make(\n                actual,\n                tally.handloaded,\n                tally.qualitySum\n            ),\n            status\n    end", "rounds that arrive unseen are counted as handloaded in proportion"),
+    (SHARED + "AC_QualityTally.lua", "    if actual > tally.count\n        or tally.handloaded == 0\n    then\n", "    if tally.handloaded == 0 then\n", "rounds that arrive unseen are counted as handloaded in proportion"),
     (SHARED + "AC_QualityTally.lua", "    local whole =\n        AC_SaveData.whole(\n            quality,\n            minimum,\n            minimum,\n            maximum\n        )", "    local whole =\n        quality", "a loaded round's quality is taken as given (900 stays 900)"),
     (SHARED + "AC_QualityTally.lua", "        if index <= extra then\n            list[index] = base + 1\n        else\n            list[index] = base\n        end", "        list[index] = base + 1", "unloaded rounds are each rounded up, creating quality"),
 
@@ -204,7 +211,31 @@ def apply(text, old, new):
     return mutated.replace("\n", "\r\n") if crlf else mutated
 
 
+# A healthy run takes a few seconds. A mutant can turn a bounded loop into
+# an endless one; that is a fault the suite noticed, not a run to wait for.
+TIMEOUT = 120
+
+
 def run_suite():
+    """Runs the suite in a process of its own. Returns (passed, failed, error).
+
+    A process, so that a suite which never ends can be stopped: the file is
+    then restored by the caller as for any other mutant.
+    """
+    try:
+        result = subprocess.run([sys.executable, os.path.abspath(__file__), "--suite"], capture_output=True, text=True, errors="replace", timeout=TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return None, None, "the suite did not finish in %d seconds" % TIMEOUT
+    line = (result.stdout.strip().splitlines() or [""])[-1]
+    parts = line.split("\t")
+    if len(parts) != 3:
+        return None, None, "the suite process ended without a result: %s" % (result.stderr.strip().splitlines() or [line])[-1][:200]
+    passed = int(parts[0]) if parts[0] != "None" else None
+    failed = int(parts[1]) if parts[1] != "None" else None
+    return passed, failed, (parts[2] or None)
+
+
+def run_suite_here():
     """Runs tests/run_tests.lua in a fresh Lua state. Returns (passed, failed, error)."""
     from lupa.lua51 import LuaRuntime
 
@@ -234,6 +265,10 @@ def run_suite():
 
 def main():
     arguments = sys.argv[1:]
+    if arguments == ["--suite"]:
+        passed, failed, error = run_suite_here()
+        print("%s\t%s\t%s" % (passed, failed, (error or "").replace("\t", " ").replace("\n", " ")))
+        return 0
     invalid = []
     for index, (path, old, new, what) in enumerate(MUTANTS, 1):
         if apply(read(path), old, new) is None:

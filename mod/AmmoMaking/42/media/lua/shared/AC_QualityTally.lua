@@ -24,6 +24,10 @@
 --   handloaded  how many of them are handloaded rounds
 --               with a known quality
 --   qualitySum  the sum of those rounds' qualities
+--   phase       0 or more and below 1: how far the record
+--               is towards handing out its next
+--               handloaded round (see SPLIT). It is
+--               bookkeeping, not provenance.
 --
 -- Everything else is derived: factory = count -
 -- handloaded, mean quality = qualitySum / handloaded.
@@ -41,17 +45,24 @@
 --
 --   0 <= handloaded <= count
 --   handloaded * min <= qualitySum <= handloaded * max
---   every number is whole and finite
+--   count, handloaded and qualitySum are whole and
+--     finite
 --   no function creates a round, a handloaded round or
 --     quality: split + merge and transfer conserve all
 --     three exactly, and the only way a sum grows is
 --     addHandloaded()
+--   taking rounds one at a time, or several at once,
+--     takes the same rounds
 --   whatever is passed in - nil, a word, NaN, a record
 --     that contradicts itself - what comes out obeys the
 --     rules above
 --   doubt resolves toward FACTORY. A record that cannot
 --     be trusted reads as "no handloaded rounds", never
 --     as good ones. Damaged data cannot improve a load.
+--   a record written by a LATER release is not ours: it
+--     is read as "nothing known" and reported as
+--     "newer", and every function hands it back
+--     untouched instead of a record of this layout.
 --
 -- Every function returns new tables and changes none of
 -- its arguments.
@@ -77,6 +88,11 @@ AC_QualityTally.CONFIG = {
     -- and it keeps every product below far inside the
     -- range where a Lua number is exact.
     maxRounds = 10000,
+
+    -- The phase of a record that is all factory or all
+    -- handloaded, and so of every new one: half-way, so
+    -- that neither kind is favoured when a mix begins.
+    startPhase = 0.5,
 }
 
 
@@ -121,8 +137,19 @@ end
 local function make(
     count,
     handloaded,
-    qualitySum
+    qualitySum,
+    phase
 )
+
+    -- A record without a mix is not part-way towards
+    -- anything.
+    if phase == nil
+        or handloaded == 0
+        or handloaded == count
+    then
+        phase = AC_QualityTally.CONFIG.startPhase
+    end
+
 
     return {
 
@@ -133,24 +160,66 @@ local function make(
         handloaded = handloaded,
 
         qualitySum = qualitySum,
+
+        phase = phase,
     }
+end
+
+
+-- Is this a record written by a later release?
+local function isNewer(
+    value
+)
+
+    return
+        type(value) == "table"
+        and AC_SaveData.versionStatus(
+            value.version,
+            AC_QualityTally.CONFIG.version
+        ) == "newer"
 end
 
 
 -- A number of rounds asked for by a caller: whole, not
 -- negative, at most limit. Anything unusable is 0.
+--
+-- The limits are applied here as well as by the reader:
+-- split() runs a loop this many times, and a loop must
+-- not depend on another file's clamp for its end.
 local function roundsWanted(
     value,
     limit
 )
 
-    return
+    local rounds =
         AC_SaveData.whole(
             value,
             0,
             0,
             limit
         )
+
+
+    if not AC_SaveData.isFinite(rounds)
+        or rounds < 0
+    then
+        return 0
+    end
+
+
+    limit =
+        math.min(
+            limit,
+            AC_QualityTally.CONFIG.maxRounds
+        )
+
+
+    if rounds > limit then
+        return math.max(0, limit)
+    end
+
+
+    return rounds
 end
 
 
@@ -224,6 +293,14 @@ function AC_QualityTally.check(
     end
 
 
+    if not AC_SaveData.isFinite(value.phase)
+        or value.phase < 0
+        or value.phase >= 1
+    then
+        table.insert(problems, "phase is not a number from 0 to below 1")
+    end
+
+
     if #problems > 0 then
         return problems
     end
@@ -270,8 +347,9 @@ end
 --   count above the limit        the limit
 --   version missing or unusable  all factory
 --   handloaded or qualitySum not a whole number of 0 or
---     more, more handloaded than rounds, or a quality sum
---     the handloaded rounds cannot hold
+--     more, more handloaded than rounds, a quality sum
+--     the handloaded rounds cannot hold, or a phase that
+--     is not a number from 0 to below 1
 --                                all factory
 --
 -- "All factory" keeps the count and forgets the rest. It
@@ -299,7 +377,7 @@ function AC_QualityTally.repair(
     end
 
 
-    if AC_SaveData.versionStatus(value.version, config.version) == "newer" then
+    if isNewer(value) then
         return AC_QualityTally.empty(0), AC_QualityTally.NEWER
     end
 
@@ -310,7 +388,8 @@ function AC_QualityTally.repair(
             make(
                 value.count,
                 value.handloaded,
-                value.qualitySum
+                value.qualitySum,
+                value.phase
             ),
             AC_QualityTally.OK
     end
@@ -403,7 +482,8 @@ function AC_QualityTally.reconcile(
             make(
                 actual,
                 tally.handloaded,
-                tally.qualitySum
+                tally.qualitySum,
+                tally.phase
             ),
             status
     end
@@ -420,7 +500,8 @@ function AC_QualityTally.reconcile(
         make(
             actual,
             handloaded,
-            qualitySum
+            qualitySum,
+            tally.phase
         ),
         status
 end
@@ -436,6 +517,11 @@ function AC_QualityTally.addFactory(
     value,
     rounds
 )
+
+    if isNewer(value) then
+        return value
+    end
+
 
     local tally =
         AC_QualityTally.repair(value)
@@ -457,7 +543,8 @@ function AC_QualityTally.addFactory(
         make(
             tally.count + added,
             tally.handloaded,
-            tally.qualitySum
+            tally.qualitySum,
+            tally.phase
         )
 end
 
@@ -478,6 +565,11 @@ function AC_QualityTally.addHandloaded(
     quality
 )
 
+    if isNewer(value) then
+        return value
+    end
+
+
     local tally =
         AC_QualityTally.repair(value)
 
@@ -493,7 +585,8 @@ function AC_QualityTally.addHandloaded(
             make(
                 tally.count + 1,
                 tally.handloaded,
-                tally.qualitySum
+                tally.qualitySum,
+                tally.phase
             )
     end
 
@@ -516,7 +609,8 @@ function AC_QualityTally.addHandloaded(
         make(
             tally.count + 1,
             tally.handloaded + 1,
-            tally.qualitySum + whole
+            tally.qualitySum + whole,
+            tally.phase
         )
 end
 
@@ -530,25 +624,48 @@ end
 -- are exactly the record that was given: no round, no
 -- handloaded round and no quality appears or is lost.
 --
--- Which rounds leave: the mix, as evenly as whole rounds
--- allow. Of a magazine that is half handloaded, every
--- second round that leaves is a handloaded one. The
--- number that STAYS is the proportional share rounded to
--- the nearest whole round (a half rounds up, so on a tie
--- a factory round leaves first).
+-- Which rounds leave: the mix, spread evenly. Rounds
+-- leave one at a time. Each adds the handloaded share
+-- of what is still there (handloaded / count) to the
+-- record's phase; when the phase reaches 1 the round
+-- that leaves is a handloaded one and the phase drops
+-- by 1, otherwise it is a factory round. Of a magazine
+-- that is a third handloaded, every third round that
+-- leaves is a handloaded one; of one that is half
+-- handloaded, five of any ten, never more than two of
+-- a kind in a row; and a single handloaded round among
+-- many leaves in the middle, not first and not last.
+--
+-- The phase is what makes that even. A rule that looked
+-- only at the two counts would have to hand out the
+-- majority kind, every time, until the mix was half and
+-- half: it could not remember that it had just handed
+-- out a factory round.
+--
+-- Because rounds leave one at a time, taking five rounds
+-- at once and taking one round five times are the same
+-- thing, in every number.
 --
 -- A handloaded round that leaves takes the mean quality
--- with it, rounded down; the rounding stays behind. No
--- individual round is remembered, so no selection is
--- possible: a player cannot unload "the good ones".
+-- of the handloaded rounds still there, rounded down;
+-- the rounding stays behind. No individual round is
+-- remembered, so no selection is possible: a player
+-- cannot unload "the good ones".
 --
 -- Asking for more rounds than there are takes them all.
+-- A later release's record gives nothing and is handed
+-- back as it is.
 ------------------------------------------------
 
 function AC_QualityTally.split(
     value,
     rounds
 )
+
+    if isNewer(value) then
+        return AC_QualityTally.empty(0), value
+    end
+
 
     local tally =
         AC_QualityTally.repair(value)
@@ -561,33 +678,63 @@ function AC_QualityTally.split(
         )
 
 
-    if leaving == 0 then
-        return AC_QualityTally.empty(0), tally
-    end
+    local count =
+        tally.count
 
+    local handloaded =
+        tally.handloaded
 
-    local staying =
-        tally.count - leaving
+    local qualitySum =
+        tally.qualitySum
 
+    local phase =
+        tally.phase
 
-    local handloadedStaying =
-        math.floor(
-            (2 * tally.handloaded * staying + tally.count)
-            / (2 * tally.count)
-        )
-
-
-    local handloadedLeaving =
-        tally.handloaded - handloadedStaying
-
+    local handloadedLeaving = 0
 
     local qualityLeaving = 0
 
 
-    if handloadedLeaving > 0 then
+    for _ = 1, leaving do
 
-        qualityLeaving =
-            math.floor(tally.qualitySum * handloadedLeaving / tally.handloaded)
+        phase =
+            phase + handloaded / count
+
+
+        -- The small allowance is for sums such as three
+        -- thirds, which fall a hair short of 1.
+        if handloaded > 0
+            and (phase >= 1 - 1e-9 or handloaded == count)
+        then
+
+            local quality =
+                math.floor(qualitySum / handloaded)
+
+
+            qualitySum =
+                qualitySum - quality
+
+            handloaded =
+                handloaded - 1
+
+            handloadedLeaving =
+                handloadedLeaving + 1
+
+            qualityLeaving =
+                qualityLeaving + quality
+
+            phase =
+                math.max(0, phase - 1)
+        end
+
+
+        count =
+            count - 1
+    end
+
+
+    if phase >= 1 then
+        phase = AC_QualityTally.CONFIG.startPhase
     end
 
 
@@ -598,9 +745,10 @@ function AC_QualityTally.split(
             qualityLeaving
         ),
         make(
-            staying,
-            handloadedStaying,
-            tally.qualitySum - qualityLeaving
+            count,
+            handloaded,
+            qualitySum,
+            phase
         )
 end
 
@@ -611,15 +759,28 @@ end
 --
 -- Two records become one: a magazine goes into a gun
 -- that has a round chambered, two part loads are
--- combined. What would exceed the limit is refused
--- whole: the result is then the first record alone and
--- the second return value is false.
+-- combined. The result keeps the first record's phase.
+-- What would exceed the limit is refused whole: the
+-- result is then the first record alone and the second
+-- return value is false. So is a merge that involves a
+-- later release's record: nothing is merged, and such a
+-- first record is handed back as it is.
 ------------------------------------------------
 
 function AC_QualityTally.merge(
     first,
     second
 )
+
+    if isNewer(first) then
+        return first, false
+    end
+
+
+    if isNewer(second) then
+        return AC_QualityTally.repair(first), false
+    end
+
 
     local a =
         AC_QualityTally.repair(first)
@@ -637,7 +798,8 @@ function AC_QualityTally.merge(
         make(
             a.count + b.count,
             a.handloaded + b.handloaded,
-            a.qualitySum + b.qualitySum
+            a.qualitySum + b.qualitySum,
+            a.phase
         ),
         true
 end
@@ -652,7 +814,9 @@ end
 -- leaving the chambered round behind. Returns the new
 -- source and the new destination. Nothing is created or
 -- lost between them; when the destination cannot take
--- the rounds, nothing moves.
+-- the rounds, nothing moves. Nothing moves either when
+-- source and destination are the same record, or when
+-- one of them is a later release's.
 ------------------------------------------------
 
 function AC_QualityTally.transfer(
@@ -660,6 +824,30 @@ function AC_QualityTally.transfer(
     to,
     rounds
 )
+
+    local function untouched(
+        value
+    )
+
+        if isNewer(value) then
+            return value
+        end
+
+
+        return (AC_QualityTally.repair(value))
+    end
+
+
+    if (from ~= nil and rawequal(from, to))
+        or isNewer(from)
+        or isNewer(to)
+    then
+
+        return
+            untouched(from),
+            untouched(to)
+    end
+
 
     local taken,
           rest =

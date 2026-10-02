@@ -37,7 +37,8 @@ tooling and hardening.
 - **Fixed**: the game-start check of the analyzer's sprite could never
   fail (the engine's `getSprite` never returns nil). It now does its job.
 - **Save data**: a layout version on the depletion store, an upgrade
-  runner, and a save written by a later version is never reset.
+  runner, and a save written by a later version is never reset (and
+  yields no ore while its records cannot be read).
 - **Brass recycling**: sources of brass are data (one today).
 - **Debug**: a material ledger of the carried inventory.
 - **Economy tables**: all nine calibres, four loadouts, craft counts, hand
