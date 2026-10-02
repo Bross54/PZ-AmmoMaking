@@ -1,8 +1,10 @@
 # Ammunition quality at run time: where it could live
 
-Status: **DESIGN ONLY. Nothing here is implemented, and no combat effect
-exists or is proposed for this stage.** No misfire, jam or damage change is
-part of the mod.
+Status: **THE ARITHMETIC IS WRITTEN; NOTHING IS WIRED.** The tally of
+section 4 exists as pure functions (`AC_QualityTally.lua`, section 8) that
+no other file calls. No vanilla function is wrapped, nothing is stored on a
+firearm or magazine, and no combat effect exists or is proposed for this
+stage: no misfire, jam or damage change is part of the mod.
 
 Today a handloaded round carries its casing quality in the loose item's
 ModData (`AC_CaseQuality`). The record is lost the moment vanilla turns the
@@ -145,12 +147,21 @@ By firearm class:
 on the magazine item while they are in a loose magazine.**
 
 ```text
-item ModData, key "AmmoMakingLoad" (weapon or magazine)
-  v   schema version
-  n   handloaded rounds among the loaded ones    0 .. count
-  q   sum of their casing qualities              0 .. n * 100
-factory rounds = count - n, at a fixed nominal quality
+one record per weapon or loose magazine (the ModData key is not chosen yet)
+  version     layout of the record
+  count       rounds the record describes
+  handloaded  handloaded rounds among them     0 .. count
+  qualitySum  sum of their casing qualities    handloaded * 1 .. handloaded * 100
+factory rounds = count - handloaded, at a fixed nominal quality
 ```
+
+`count` repeats what vanilla already keeps (`getCurrentAmmoCount()`), on
+purpose. Vanilla's number is the authority; the copy is how the record
+notices that it was not told about something. Without it, a gun that lost
+six of ten rounds through another mod's action would still claim its five
+handloaded rounds among the four that are left. With it, `reconcile()` sees
+ten become four and takes the handloaded share down with the rest
+(section 8).
 
 Why this one:
 
@@ -159,9 +170,9 @@ Why this one:
   padded or cut, and both are guesses.
 - **It is the same code for every firearm.** A revolver and a magazine
   rifle differ only in which item holds the two numbers.
-- **It is small enough to verify offline.** The tally is pure arithmetic
-  (`load`, `takeOne`, `moveAll`, `reconcile`), testable exactly as
-  `AC_CaseQuality` is today, before any vanilla function is wrapped.
+- **It is small enough to verify offline.** The tally is pure arithmetic,
+  testable exactly as `AC_CaseQuality` is, before any vanilla function is
+  wrapped. That part is now done (section 8).
 - **It fits what the mod records.** The only quality that exists is one
   number per case; there is nothing per round worth an ordered list.
 - **Multiplayer has a path.** Two numbers ride on packets vanilla already
@@ -174,9 +185,10 @@ with the aggregate as its repair rule.
 
 Rules a future implementation must keep:
 
-1. `0 <= n <= count` and `0 <= q <= n * 100` after every operation; a
-   record that breaks them is clamped, never trusted (the save-data rules
-   of `DEVELOPMENT.md`).
+1. `0 <= handloaded <= count` and `handloaded <= qualitySum <= handloaded *
+   100` after every operation; a record that breaks them is read as all
+   factory, never trusted and never clamped into something plausible (the
+   save-data rules of `DEVELOPMENT.md`).
 2. The tally is written only where vanilla writes the count, and only
    after vanilla's own change has happened.
 3. Unloading hands back round items whose casing quality is the mean, and
@@ -207,3 +219,131 @@ gameplay decision.
   a queue is ever wanted.
 - That no vanilla path changes `currentAmmoCount` outside the functions
   listed in section 1.
+- That every path which changes `currentAmmoCount` is one the wrapped
+  functions see. `AC_QualityTally.reconcile` makes a missed path harmless
+  (the record follows the count and loses handloaded rounds, never gains
+  them), but how often it has to act can only be seen in game.
+
+## 7. Mixed ammunition: which round is next?
+
+A magazine can hold factory rounds, handloaded rounds, and handloaded
+rounds of different quality. A tally knows the mix and not the order, so
+"is the round being fired a handloaded one, and how good" has no true
+answer. Five ways to give one:
+
+| | 1. Probability | 2. FIFO queue | 3. Deterministic proportion | 4. Factory first | 5. Effect from the mix |
+|---|---|---|---|---|---|
+| Rule | each shot is handloaded with chance `handloaded / count` | the record is an ordered list; the shot pops it | the kind that leaves is whichever keeps the remaining mix closest to the original | factory rounds leave until only handloaded ones are left | a shot has no kind: an effect is computed from the whole load's mean |
+| State | the tally | one entry per round | the tally | the tally | the tally |
+| Random numbers | one per shot; client and server must draw the same, or only the server draws | none | none | none | none (the effect may still roll) |
+| Exact over a whole magazine | only on average: ten shots from a half-and-half magazine can remove seven handloaded rounds from the record | yes | yes: firing every round removes exactly the handloaded rounds and exactly the quality sum | yes | nothing is removed by kind, so the tally needs rule 3 or 4 for its counts anyway |
+| A path the mod missed | tally repairs by clamping | **list and count disagree**; padding it invents rounds, cutting it guesses | tally repairs toward factory | the same | the same |
+| Partial unload | a draw per round | must decide which entries leave | the mix, evenly | hands out every factory round first: a magazine can be stripped down to "pure handloaded" for free | as rule 3 |
+| What the player can exploit | unload and reload until the draw suits, if the kind is ever visible | nothing | nothing: there is no choice to make | ordering: top a magazine up with one factory round and the next shot is always that one | nothing |
+| Complexity | low, plus a synchronised random source | high (seven wrapped functions, each keeping an order right) | low | lowest | low |
+
+**Chosen: 3 for the record, 5 for any future effect.**
+
+- The record changes by **deterministic proportion** (`AC_QualityTally
+  .split`). Of a half-and-half magazine every second round that leaves is
+  handloaded; one handloaded round among nine factory rounds leaves last.
+  No random number, so two machines holding the same record always agree,
+  and no order, so nothing can get an order wrong.
+- A future effect should read **the mix** (the mean quality and the
+  handloaded share of what is loaded), not the identity of one round. The
+  record's notion of "this round was a handloaded one" is bookkeeping, not
+  a fact about the round in the chamber.
+- A queue stays possible later, on top: the tally is then its repair rule.
+
+### 7.1 What averaging costs, and the rule it puts on effects
+
+A round that leaves the record takes the **mean** quality. Two handloaded
+rounds of 90 and 10, loaded and unloaded again, come back as two rounds of
+50. The sum is conserved, the individual rounds are not.
+
+That is harmless for an effect that is **linear in quality**: the total
+effect over the load depends only on `qualitySum` and `handloaded`, which
+loading and unloading never change. It is an exploit for an effect with a
+threshold, or any curve that punishes a bad round more than it rewards a
+good one ("a misfire below 30"): one loads the bad round together with good
+ones, unloads, and the bad round is gone.
+
+**Rule for any future effect: it must be a linear function of quality, or
+be computed from the load's mean for every shot of that load.** Then
+averaging is neutral, and there is nothing to gain by mixing and unmixing.
+If per-round identity ever has to matter (a dud that is a property of one
+cartridge), the aggregate is the wrong carrier and the queue of section 2
+is needed.
+
+Factory rounds are not averaged into anything: a handloaded round stays a
+handloaded round, a factory round stays a factory round, and only the
+counts and the one sum move.
+
+### 7.2 Doubt resolves toward factory
+
+Whenever the record and the game disagree, or the record contradicts
+itself, the answer moves toward "factory, no effect":
+
+| Situation | Result |
+|---|---|
+| The record is damaged (a word, NaN, more handloaded rounds than rounds, a quality sum the rounds cannot hold) | all factory; the count is kept if it is usable |
+| A round with no usable quality is loaded | a factory round |
+| The game holds fewer rounds than the record | the handloaded share shrinks in proportion, rounded **down**, and the quality sum with it (the mean never rises) |
+| The game holds more rounds than the record | the extra rounds are factory rounds |
+| The record was written by a later release (`version` higher) | read as "nothing known" and reported as `newer`, so the caller does not overwrite it |
+
+A damaged 900 on five rounds is not clamped to 500. A record that is wrong
+in one field is not evidence for the others, and clamping would hand out
+the best possible ammunition for damaged data.
+
+## 8. What is implemented: `AC_QualityTally.lua`
+
+Pure functions on plain tables. Each returns new records and changes none
+of its arguments.
+
+| Function | What it is for |
+|---|---|
+| `empty(count)` | a record of factory rounds |
+| `check(value)` | the list of what is wrong with a record; read only |
+| `repair(value)` | any value to a sound record, and `ok` / `repaired` / `newer` |
+| `reconcile(value, actualCount)` | the record brought into step with the game's own count |
+| `addFactory(value, rounds)`, `addHandloaded(value, quality)` | a round is loaded |
+| `split(value, rounds)` | rounds leave: what left, and what stayed |
+| `merge(a, b)` | a magazine into a gun with a round chambered |
+| `transfer(from, to, rounds)` | split and merge, for insert and eject |
+| `consume(value)` | one shot: what stayed, and what the round was |
+| `unload(value, rounds)`, `qualities(value)` | rounds back to loose items: how many factory rounds, and a quality for each handloaded one, adding up to the sum exactly |
+| `getFactory`, `getMeanQuality`, `getHandloadedShare` | derived values |
+
+How the touch points of section 1 map onto them (the wiring itself is not
+written):
+
+| Vanilla step | Tally |
+|---|---|
+| a round into a magazine or gun | `addHandloaded(record, AC_CaseQuality.getRoundQuality(round))` |
+| a magazine into a gun | `merge(gun, magazine)` |
+| a magazine out of a gun | `transfer(gun, nil, the magazine's count)`; the chambered round stays |
+| rounds unloaded, or racked out | `unload(record, n)`, then `AC_CaseQuality` writes each quality on a new round item |
+| a shot | `consume(record)` |
+| before any of them | `reconcile(record, the game's count)` |
+
+The suite proves, without the game:
+
+- every result obeys the rules of section 4, for sound and for damaged
+  input (each field damaged fifteen ways, through every function);
+- `split` then `merge`, and `transfer`, conserve rounds, handloaded rounds
+  and quality **exactly**; firing a load one round at a time hands out
+  exactly its rounds, its handloaded rounds and its quality sum, for every
+  mix of up to thirty rounds;
+- 16,000 random operations over three records and a pool of loose rounds,
+  including counts that move unseen and fields that are overwritten: one
+  ledger over everything that exists and everything that was fired, in
+  which only loading a round may add;
+- `reconcile` and `repair` never increase the handloaded count, the
+  quality sum or the mean;
+- the file registers no event, touches no ModData and no engine object,
+  and no other file of the mod refers to it. That last test is the switch:
+  it fails the day the tally is wired, which must be a deliberate step
+  taken with the game running.
+
+What it does not prove is everything in section 6.

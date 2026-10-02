@@ -95,6 +95,19 @@ MUTANTS = [
     (SHARED + "AC_AmmoQuality.lua", "            if not AC_SaveData.isFinite(data[key]) then", "            if type(data[key]) ~= \"number\" then", "a NaN field on the test cartridge is kept"),
     (SHARED + "AC_Deposits.lua", "        AC_SaveData.whole(\n            record[metal],\n            0,\n            0\n        )", "        (tonumber(record[metal]) or 0)", "a negative or broken depletion count is trusted"),
 
+    # ---- quality tally (pure arithmetic)
+    (SHARED + "AC_QualityTally.lua", "    local handloaded =\n        math.floor(tally.handloaded * actual / tally.count)", "    local handloaded =\n        math.ceil(tally.handloaded * actual / tally.count)", "rounds lost unseen are assumed to have been factory rounds"),
+    (SHARED + "AC_QualityTally.lua", "    if #AC_QualityTally.check(value) == 0 then", "    if type(value.count) == \"number\" and type(value.handloaded) == \"number\" and type(value.qualitySum) == \"number\" then", "a tally that contradicts itself is trusted"),
+    (SHARED + "AC_QualityTally.lua", "    if not AC_SaveData.isFinite(quality) then\n\n        return\n            make(\n                tally.count + 1,\n                tally.handloaded,\n                tally.qualitySum\n            )\n    end\n", "", "a round of unknown quality is loaded as a handloaded one"),
+    (SHARED + "AC_QualityTally.lua", "            (2 * tally.handloaded * staying + tally.count)\n", "            (2 * tally.handloaded * staying)\n", "handloaded rounds always leave first"),
+    (SHARED + "AC_QualityTally.lua", "            tally.qualitySum - qualityLeaving\n", "            tally.qualitySum\n", "the quality of a round that leaves also stays behind"),
+    (SHARED + "AC_QualityTally.lua", "            math.floor(tally.qualitySum * handloadedLeaving / tally.handloaded)", "            math.ceil(tally.qualitySum * handloadedLeaving / tally.handloaded) + 1", "a round that leaves takes more than its share of quality"),
+    (SHARED + "AC_QualityTally.lua", "    if isWhole(value.version)\n        and value.version > config.version\n    then\n        return AC_QualityTally.empty(0), AC_QualityTally.NEWER\n    end\n", "", "a later release's tally is treated as damage and overwritten"),
+    (SHARED + "AC_QualityTally.lua", "    if a.count + b.count > AC_QualityTally.CONFIG.maxRounds then\n        return a, false\n    end\n", "", "a merge may exceed the round limit"),
+    (SHARED + "AC_QualityTally.lua", "    if actual > tally.count\n        or tally.handloaded == 0\n    then\n\n        return\n            make(\n                actual,\n                tally.handloaded,\n                tally.qualitySum\n            ),\n            status\n    end", "    if tally.handloaded == 0 then\n\n        return\n            make(\n                actual,\n                tally.handloaded,\n                tally.qualitySum\n            ),\n            status\n    end", "rounds that arrive unseen are counted as handloaded in proportion"),
+    (SHARED + "AC_QualityTally.lua", "    local whole =\n        AC_SaveData.whole(\n            quality,\n            minimum,\n            minimum,\n            maximum\n        )", "    local whole =\n        quality", "a loaded round's quality is taken as given (900 stays 900)"),
+    (SHARED + "AC_QualityTally.lua", "        if index <= extra then\n            list[index] = base + 1\n        else\n            list[index] = base\n        end", "        list[index] = base + 1", "unloaded rounds are each rounded up, creating quality"),
+
     # ---- the calibre model and the chain (the faults earlier passes guarded against)
     (SHARED + "AC_Calibres.lua", "    cupUnits = 5,", "    cupUnits = 4,", "a case cup holds less brass than the sheet gives"),
     (SHARED + "AC_Calibres.lua", "    usesPerJar = 10,", "    usesPerJar = 12,", "a jar of powder holds twelve uses"),

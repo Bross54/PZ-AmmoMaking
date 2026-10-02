@@ -6635,6 +6635,489 @@ do
 end
 
 ------------------------------------------------
+-- QUALITY TALLY (pure arithmetic; no firearm, no save)
+------------------------------------------------
+
+section("Quality tally: pure arithmetic, conserving, doubt resolves toward factory")
+do
+    local T = AC_QualityTally
+    local Q = AC_CaseQuality.CONFIG
+    local function sound(tally, what)
+        local problems = T.check(tally)
+        eq(#problems, 0, what .. " obeys the rules: " .. table.concat(problems, "; "))
+    end
+    local function same(a, b)
+        return a.count == b.count and a.handloaded == b.handloaded and a.qualitySum == b.qualitySum and a.version == b.version
+    end
+    local function load(tally, handloaded, quality, factory)
+        for _ = 1, handloaded do tally = T.addHandloaded(tally, quality) end
+        return T.addFactory(tally, factory)
+    end
+
+    -- Pinned shape.
+    eq(T.CONFIG.version, 1, "the record's layout is version 1")
+    eq(Q.minQuality, 1, "a round's quality starts at 1")
+    eq(Q.maxQuality, 100, "and ends at 100")
+    local empty = T.empty()
+    eq(empty.count + empty.handloaded + empty.qualitySum, 0, "an empty record holds nothing")
+    sound(empty, "an empty record")
+    eq(T.empty(7).count, 7, "empty(7) is seven factory rounds")
+    eq(T.getFactory(T.empty(7)), 7, "all of them factory")
+    eq(T.empty(-3).count, 0, "a negative count is no rounds")
+    eq(T.empty(0 / 0).count, 0, "NaN is no rounds")
+
+    -- Loading.
+    local mag = load(nil, 5, 80, 5)
+    sound(mag, "five handloaded and five factory rounds")
+    eq(mag.count, 10, "ten rounds")
+    eq(mag.handloaded, 5, "five handloaded")
+    eq(mag.qualitySum, 400, "their qualities added up")
+    eq(T.getFactory(mag), 5, "five factory")
+    eq(T.getMeanQuality(mag), 80, "mean quality 80")
+    eq(T.getHandloadedShare(mag), 0.5, "half the magazine")
+    eq(T.getMeanQuality(T.empty(4)), nil, "factory rounds have no quality")
+    eq(T.getHandloadedShare(T.empty()), 0, "an empty record has no share")
+    eq(T.addFactory(mag).count, 11, "addFactory adds one round by default")
+    -- A round with no usable quality is a factory round, never a good one.
+    for _, bad in ipairs({ "excellent", 0 / 0, math.huge, -math.huge, true, {} }) do
+        local after = T.addHandloaded(mag, bad)
+        eq(after.count, 11, "a round of quality " .. tostring(bad) .. " is still a round")
+        eq(after.handloaded, 5, "but not a handloaded one")
+        eq(after.qualitySum, 400, "and adds no quality")
+    end
+    eq(T.addHandloaded(nil, nil).handloaded, 0, "a factory round (no quality) is counted as factory")
+    eq(T.addHandloaded(nil, 900).qualitySum, Q.maxQuality, "a quality above the range is the maximum, as AC_CaseQuality reads it")
+    eq(T.addHandloaded(nil, -5).qualitySum, Q.minQuality, "below the range: the minimum")
+    eq(T.addHandloaded(nil, 71.9).qualitySum, 71, "a fraction is rounded down")
+    eq(mag.count, 10, "no function changed the record it was given")
+
+    -- Splitting: the mix leaves evenly.
+    local kinds = {}
+    local rest = mag
+    for _ = 1, 10 do
+        local round
+        rest, round = T.consume(rest)
+        table.insert(kinds, round.handloaded and "H" or "F")
+        sound(rest, "the magazine after a shot")
+        if round.handloaded then eq(round.quality, 80, "a fired handloaded round has the mean quality") end
+    end
+    eq(table.concat(kinds), "FHFHFHFHFH", "a half-and-half magazine fires factory and handloaded rounds in turn")
+    eq(rest.count, 0, "ten shots empty it")
+    local afterEmpty, nothing = T.consume(rest)
+    eq(nothing, nil, "an empty magazine fires nothing")
+    eq(afterEmpty.count, 0, "and stays empty")
+    do
+        local one = load(nil, 1, 60, 9)
+        local order = {}
+        for _ = 1, 10 do
+            local round
+            one, round = T.consume(one)
+            table.insert(order, round.handloaded and "H" or "F")
+        end
+        eq(table.concat(order), "FFFFFFFFFH", "one handloaded round among nine factory rounds is fired last")
+        local nine = load(nil, 9, 60, 1)
+        order = {}
+        for _ = 1, 10 do
+            local round
+            nine, round = T.consume(nine)
+            table.insert(order, round.handloaded and "H" or "F")
+        end
+        eq(table.concat(order), "HHHHHHHHFH", "one factory round among nine handloaded ones leaves near the end, never first")
+    end
+    do
+        local taken, stay = T.split(mag, 4)
+        eq(taken.count, 4, "four rounds leave")
+        eq(taken.handloaded, 2, "two of them handloaded")
+        eq(taken.qualitySum, 160, "with their share of the quality")
+        eq(stay.count, 6, "six stay")
+        eq(stay.handloaded, 3, "three of them handloaded")
+        eq(stay.qualitySum, 240, "with the rest of the quality")
+        local all, none = T.split(mag, 99)
+        check(same(all, mag), "asking for more than there is takes everything")
+        eq(none.count, 0, "and leaves nothing")
+        local zero, whole = T.split(mag, 0)
+        eq(zero.count, 0, "taking nothing takes nothing")
+        check(same(whole, mag), "and leaves everything")
+        for _, bad in ipairs({ -1, "x", 0 / 0, math.huge, 2.5 }) do
+            local t, r = T.split(mag, bad)
+            eq(t.count + r.count, 10, "split(" .. tostring(bad) .. ") loses no round")
+            sound(t, "what split(" .. tostring(bad) .. ") takes")
+        end
+    end
+    -- Uneven quality: the rounding stays behind, nothing is lost.
+    do
+        local uneven = T.addHandloaded(T.addHandloaded(T.addHandloaded(nil, 71), 70), 70)
+        eq(uneven.qualitySum, 211, "three rounds of 71, 70 and 70")
+        local taken, stay = T.split(uneven, 1)
+        eq(taken.qualitySum, 70, "one leaves with the mean rounded down")
+        eq(stay.qualitySum, 141, "and the remainder stays")
+        local list = T.qualities(uneven)
+        eq(#list, 3, "three loose rounds")
+        eq(list[1] + list[2] + list[3], 211, "whose qualities add up to the sum exactly")
+        eq(list[1], 71, "the remainder goes to the first")
+        eq(list[3], 70, "the rest get the mean rounded down")
+        local left, out = T.unload(load(uneven, 0, 0, 2), 5)
+        eq(left.count, 0, "unloading everything empties the record")
+        eq(out.factory, 2, "two factory rounds come out")
+        eq(#out.qualities, 3, "and three handloaded ones")
+        eq(#T.qualities(T.empty(5)), 0, "factory rounds carry no quality")
+    end
+
+    -- Merge and transfer: a magazine into a gun with a round chambered,
+    -- and out again.
+    do
+        local chamber = T.addHandloaded(nil, 90)
+        local gun, fits = T.merge(chamber, mag)
+        eq(fits, true, "a magazine fits a gun")
+        eq(gun.count, 11, "eleven rounds in the gun")
+        eq(gun.handloaded, 6, "six handloaded")
+        eq(gun.qualitySum, 490, "all their quality")
+        local from, to = T.transfer(gun, nil, 10)
+        eq(from.count + to.count, 11, "ejecting the magazine moves ten and leaves one")
+        eq(from.handloaded + to.handloaded, 6, "no handloaded round appears or is lost")
+        eq(from.qualitySum + to.qualitySum, 490, "nor any quality")
+        eq(to.count, 10, "the magazine holds ten again")
+        local full = T.empty(T.CONFIG.maxRounds)
+        local unchanged, refused = T.merge(full, mag)
+        eq(refused, false, "a merge above the limit is refused")
+        eq(unchanged.count, T.CONFIG.maxRounds, "and changes nothing")
+        local source, target = T.transfer(mag, full, 4)
+        check(same(source, mag), "a transfer the destination cannot take moves nothing")
+        eq(target.count, T.CONFIG.maxRounds, "(the destination is unchanged)")
+        eq(T.addFactory(full, 5).count, T.CONFIG.maxRounds, "nothing is counted above the limit")
+        eq(T.addHandloaded(full, 80).handloaded, 0, "nor loaded above it")
+    end
+
+    -- Repair: what is damage, and what it becomes.
+    do
+        local fine, status = T.repair(mag)
+        eq(status, T.OK, "a sound record is ok")
+        check(same(fine, mag) and fine ~= mag, "and comes back as a copy")
+        local none, noneStatus = T.repair(nil)
+        eq(noneStatus, T.OK, "no record at all is a sound empty one")
+        eq(none.count, 0, "(empty)")
+        for _, case in ipairs({
+            { "a word", "garbage", 0 },
+            { "a number", 42, 0 },
+            { "an empty table", {}, 0 },
+            { "no version", { count = 10, handloaded = 5, qualitySum = 400 }, 10 },
+            { "version 0", { version = 0, count = 10, handloaded = 5, qualitySum = 400 }, 10 },
+            { "a fractional version", { version = 1.5, count = 10, handloaded = 5, qualitySum = 400 }, 10 },
+            { "more handloaded than rounds", { version = 1, count = 3, handloaded = 5, qualitySum = 400 }, 3 },
+            { "a quality sum of 900 on five rounds", { version = 1, count = 10, handloaded = 5, qualitySum = 900 }, 10 },
+            { "a quality sum below the minimum", { version = 1, count = 10, handloaded = 5, qualitySum = 4 }, 10 },
+            { "quality without handloaded rounds", { version = 1, count = 10, handloaded = 0, qualitySum = 50 }, 10 },
+            { "a negative handloaded count", { version = 1, count = 10, handloaded = -2, qualitySum = 0 }, 10 },
+            { "a fractional handloaded count", { version = 1, count = 10, handloaded = 2.5, qualitySum = 200 }, 10 },
+            { "a NaN quality sum", { version = 1, count = 10, handloaded = 5, qualitySum = 0 / 0 }, 10 },
+            { "an infinite quality sum", { version = 1, count = 10, handloaded = 5, qualitySum = math.huge }, 10 },
+            { "a NaN count", { version = 1, count = 0 / 0, handloaded = 5, qualitySum = 400 }, 0 },
+            { "a negative count", { version = 1, count = -4, handloaded = 0, qualitySum = 0 }, 0 },
+            { "a count as a string", { version = 1, count = "10", handloaded = 5, qualitySum = 400 }, 0 },
+            { "a count above the limit", { version = 1, count = 1e15, handloaded = 5, qualitySum = 400 }, T.CONFIG.maxRounds },
+        }) do
+            local repaired, how = T.repair(case[2])
+            eq(how, T.REPAIRED, case[1] .. " is damage")
+            sound(repaired, case[1] .. ", repaired,")
+            eq(repaired.handloaded, 0, case[1] .. " reads as all factory")
+            eq(repaired.qualitySum, 0, case[1] .. " carries no quality")
+            eq(repaired.count, case[3], case[1] .. " keeps a usable count")
+        end
+        -- A later release's record is not ours to rewrite.
+        local newer, newerStatus = T.repair({ version = 2, count = 10, handloaded = 5, qualitySum = 400, queue = { 80, 80 } })
+        eq(newerStatus, T.NEWER, "a higher version is reported as newer")
+        eq(newer.handloaded, 0, "and read as nothing known")
+        local kept, keptStatus = T.reconcile({ version = 7, count = 3 }, 10)
+        eq(keptStatus, T.NEWER, "reconcile reports it too")
+        eq(kept.count, 0, "and does not pretend to know the load")
+    end
+
+    -- Reconcile: the game's count is the authority.
+    do
+        local inStep, status = T.reconcile(mag, 10)
+        eq(status, T.OK, "a record in step with the game is ok")
+        check(same(inStep, mag), "and unchanged")
+        local more, moreStatus = T.reconcile(mag, 14)
+        eq(moreStatus, T.ADJUSTED, "rounds nobody reported are an adjustment")
+        eq(more.count, 14, "the count follows the game")
+        eq(more.handloaded, 5, "the unknown rounds are factory rounds")
+        eq(more.qualitySum, 400, "and bring no quality")
+        local fewer, fewerStatus = T.reconcile(mag, 3)
+        eq(fewerStatus, T.ADJUSTED, "missing rounds are an adjustment")
+        eq(fewer.count, 3, "the count follows the game")
+        eq(fewer.handloaded, 1, "the handloaded share is rounded down (5 of 10, 3 left: 1, not 2)")
+        eq(fewer.qualitySum, 80, "with its share of the quality")
+        sound(fewer, "a record that lost rounds")
+        local gone = T.reconcile(mag, 0)
+        eq(gone.count + gone.handloaded + gone.qualitySum, 0, "an emptied gun has an empty record")
+        local unknown = T.reconcile(mag, "ten")
+        eq(unknown.count, 0, "an unusable count from the game is no rounds")
+        local damaged, damagedStatus = T.reconcile({ version = 1, count = 10, handloaded = 50, qualitySum = 400 }, 10)
+        eq(damagedStatus, T.REPAIRED, "a damaged record stays reported as repaired")
+        eq(damaged.handloaded, 0, "and is all factory")
+        eq(damaged.count, 10, "at the game's count")
+    end
+
+    -- Property run: a pool of loose rounds, a magazine, a gun and a second
+    -- gun, with every operation the future carrier needs and the accidents
+    -- it has to survive. One ledger: rounds, handloaded rounds and quality,
+    -- over everything that exists and everything that was fired.
+    do
+        local seed = 20261002
+        local function random(n)
+            seed = (seed * 1103515245 + 12345) % 2147483648
+            return math.floor(seed / 65536) % n
+        end
+        local operations, violations = 0, {}
+        local function violation(text)
+            if #violations < 8 then table.insert(violations, text) end
+        end
+        for run = 1, 40 do
+            local records = { T.empty(), T.empty(), T.empty() }
+            local loose = { factory = 0, handloaded = 0, quality = 0 }
+            local fired = { factory = 0, handloaded = 0, quality = 0 }
+            -- What exists, counted from the records and the loose rounds.
+            local function ledger()
+                local rounds, handloaded, quality = loose.factory + loose.handloaded + fired.factory + fired.handloaded, loose.handloaded + fired.handloaded, loose.quality + fired.quality
+                for _, record in ipairs(records) do
+                    rounds, handloaded, quality = rounds + record.count, handloaded + record.handloaded, quality + record.qualitySum
+                end
+                return rounds, handloaded, quality
+            end
+            for step = 1, 400 do
+                local before = { ledger() }
+                local which = 1 + random(#records)
+                local other = 1 + random(#records)
+                local op = random(9)
+                local exact = true
+                local expected = { 0, 0, 0 }
+                if op == 0 then
+                    -- Factory rounds are loaded.
+                    local rounds = 1 + random(3)
+                    records[which] = T.addFactory(records[which], rounds)
+                    expected = { rounds, 0, 0 }
+                elseif op == 1 then
+                    -- A handloaded round is loaded.
+                    local quality = 1 + random(100)
+                    records[which] = T.addHandloaded(records[which], quality)
+                    expected = { 1, 1, quality }
+                elseif op == 2 and which ~= other then
+                    records[which], records[other] = T.transfer(records[which], records[other], random(12))
+                elseif op == 3 then
+                    local round
+                    records[which], round = T.consume(records[which])
+                    if round then
+                        if round.handloaded then
+                            fired.handloaded, fired.quality = fired.handloaded + 1, fired.quality + round.quality
+                            if round.quality < Q.minQuality or round.quality > Q.maxQuality then violation("a fired round of quality " .. round.quality) end
+                        else
+                            fired.factory = fired.factory + 1
+                        end
+                    end
+                elseif op == 4 then
+                    local out
+                    records[which], out = T.unload(records[which], random(8))
+                    loose.factory = loose.factory + out.factory
+                    for _, quality in ipairs(out.qualities) do
+                        loose.handloaded, loose.quality = loose.handloaded + 1, loose.quality + quality
+                        if quality < Q.minQuality or quality > Q.maxQuality or quality ~= math.floor(quality) then violation("an unloaded round of quality " .. tostring(quality)) end
+                    end
+                elseif op == 5 and which ~= other then
+                    local merged, fits = T.merge(records[which], records[other])
+                    if fits then records[which], records[other] = merged, T.empty() end
+                elseif op == 6 then
+                    local taken, stay = T.split(records[which], random(6))
+                    local back = T.merge(stay, taken)
+                    if back.count ~= records[which].count or back.handloaded ~= records[which].handloaded or back.qualitySum ~= records[which].qualitySum then
+                        violation("split then merge is not the record it started from")
+                    end
+                elseif op == 7 then
+                    -- An accident: the game's count moved without the tally
+                    -- being told. Rounds may vanish or appear; handloaded
+                    -- rounds and quality may only go down.
+                    local old = records[which]
+                    local actual = math.max(0, old.count + random(9) - 4)
+                    records[which] = T.reconcile(old, actual)
+                    exact = false
+                    if records[which].count ~= actual then violation("reconcile did not follow the game's count") end
+                    if records[which].handloaded > old.handloaded then violation("reconcile created a handloaded round") end
+                    if records[which].qualitySum > old.qualitySum then violation("reconcile created quality") end
+                    if old.handloaded > 0 and records[which].handloaded > 0
+                        and records[which].qualitySum * old.handloaded > old.qualitySum * records[which].handloaded then
+                        violation("reconcile raised the mean quality")
+                    end
+                elseif op == 8 then
+                    -- Damage: a field is overwritten in the stored record.
+                    local old = records[which]
+                    local broken = { version = old.version, count = old.count, handloaded = old.handloaded, qualitySum = old.qualitySum }
+                    local field = ({ "version", "count", "handloaded", "qualitySum" })[1 + random(4)]
+                    broken[field] = ({ -1, 900, 0 / 0, math.huge, "x", 2.5, 1e15 })[1 + random(7)]
+                    records[which] = T.reconcile(broken, old.count)
+                    exact = false
+                    if records[which].handloaded > old.handloaded then violation("damage to " .. field .. " created a handloaded round") end
+                    if records[which].qualitySum > old.qualitySum then violation("damage to " .. field .. " created quality") end
+                end
+                operations = operations + 1
+                for index, record in ipairs(records) do
+                    local problems = T.check(record)
+                    if #problems > 0 then violation("run " .. run .. " step " .. step .. " record " .. index .. ": " .. problems[1]) end
+                end
+                local after = { ledger() }
+                if exact then
+                    for index, name in ipairs({ "rounds", "handloaded rounds", "quality" }) do
+                        if after[index] ~= before[index] + expected[index] then
+                            violation("run " .. run .. " step " .. step .. " op " .. op .. " changed the " .. name .. " in existence from " .. before[index] .. " to " .. after[index])
+                        end
+                    end
+                end
+            end
+        end
+        eq(#violations, 0, "the property run found no violation: " .. table.concat(violations, " | "))
+        check(operations >= 16000, "thousands of operations were run (" .. operations .. ")")
+        print("  Quality tally: " .. operations .. " random operations over 40 runs, " .. #violations .. " violations")
+    end
+
+    -- Emptying a record one shot at a time hands out exactly what it held,
+    -- for every mix of a magazine up to thirty rounds.
+    do
+        local wrong = 0
+        for count = 1, 30 do
+            for handloaded = 0, count do
+                -- Uneven qualities: 37, 38, 39 ...
+                local record = T.empty(count - handloaded)
+                local sum = 0
+                for index = 1, handloaded do
+                    record = T.addHandloaded(record, 36 + index)
+                    sum = sum + 36 + index
+                end
+                local firedHandloaded, firedQuality, shots = 0, 0, 0
+                while true do
+                    local round
+                    record, round = T.consume(record)
+                    if not round then break end
+                    shots = shots + 1
+                    if round.handloaded then firedHandloaded, firedQuality = firedHandloaded + 1, firedQuality + round.quality end
+                end
+                if shots ~= count or firedHandloaded ~= handloaded or firedQuality ~= sum then wrong = wrong + 1 end
+            end
+        end
+        eq(wrong, 0, "every mix up to thirty rounds fires exactly its rounds, its handloaded rounds and its quality")
+    end
+
+    -- Fuzz: every field, every kind of damage, through every function. None
+    -- may raise, and what comes out obeys the rules and holds no more
+    -- handloaded rounds or quality than the sound record did.
+    do
+        local calls, raised, advantages = 0, {}, {}
+        local base = { version = 1, count = 10, handloaded = 5, qualitySum = 400 }
+        local function attempt(what, fn, ...)
+            calls = calls + 1
+            local results = { pcall(fn, ...) }
+            if not results[1] then
+                if #raised < 8 then table.insert(raised, what .. ": " .. tostring(results[2])) end
+                return
+            end
+            for index = 2, #results do
+                local result = results[index]
+                if type(result) == "table" and result.count ~= nil then
+                    local problems = T.check(result)
+                    if #problems > 0 and #advantages < 8 then table.insert(advantages, what .. " returned an unsound record: " .. problems[1]) end
+                end
+            end
+            return results[2], results[3]
+        end
+        for _, field in ipairs({ "version", "count", "handloaded", "qualitySum" }) do
+            for _, damage in ipairs(DAMAGE) do
+                local value = damage[2]
+                if value == NIL then value = nil end
+                local function broken()
+                    local record = { version = base.version, count = base.count, handloaded = base.handloaded, qualitySum = base.qualitySum }
+                    record[field] = value
+                    return record
+                end
+                local what = "tally " .. field .. " = " .. damage[1]
+                local repaired = attempt(what .. " repair", T.repair, broken())
+                if repaired then
+                    if repaired.handloaded > base.handloaded or repaired.qualitySum > base.qualitySum then
+                        table.insert(advantages, what .. ": the repair holds more than the record did")
+                    end
+                    -- A record wrong in one field is not trusted for the others.
+                    if #T.check(broken()) > 0 and repaired.handloaded ~= 0 then
+                        table.insert(advantages, what .. ": a damaged record still reads as handloaded")
+                    end
+                end
+                attempt(what .. " check", T.check, broken())
+                for _, actual in ipairs({ 0, 3, 10, 25, "x", 0 / 0 }) do
+                    local reconciled = attempt(what .. " reconcile", T.reconcile, broken(), actual)
+                    if reconciled and reconciled.handloaded > base.handloaded then table.insert(advantages, what .. ": reconcile created handloaded rounds") end
+                end
+                attempt(what .. " addFactory", T.addFactory, broken(), 2)
+                local grown = attempt(what .. " addHandloaded", T.addHandloaded, broken(), 70)
+                if grown and (grown.handloaded > base.handloaded + 1 or grown.qualitySum > base.qualitySum + 70) then table.insert(advantages, what .. ": loading one round added more than one") end
+                attempt(what .. " split", T.split, broken(), 4)
+                attempt(what .. " merge", T.merge, broken(), broken())
+                attempt(what .. " transfer", T.transfer, broken(), broken(), 3)
+                local _, round = attempt(what .. " consume", T.consume, broken())
+                if round and round.handloaded and (not isFinite(round.quality) or round.quality < Q.minQuality or round.quality > Q.maxQuality) then
+                    table.insert(advantages, what .. ": a fired round of quality " .. tostring(round.quality))
+                end
+                local _, out = attempt(what .. " unload", T.unload, broken(), 10)
+                if out then
+                    for _, quality in ipairs(out.qualities) do
+                        if not isFinite(quality) or quality < Q.minQuality or quality > Q.maxQuality then table.insert(advantages, what .. ": an unloaded round of quality " .. tostring(quality)) end
+                    end
+                    if #out.qualities > base.handloaded then table.insert(advantages, what .. ": more handloaded rounds unloaded than were loaded") end
+                end
+                attempt(what .. " qualities", T.qualities, broken())
+                for _, getter in ipairs({ "getFactory", "getMeanQuality", "getHandloadedShare" }) do
+                    local number = attempt(what .. " " .. getter, T[getter], broken())
+                    if number ~= nil and not isFinite(number) then table.insert(advantages, what .. ": " .. getter .. " is not a finite number") end
+                end
+            end
+        end
+        -- Damaged arguments on a sound record.
+        for _, damage in ipairs(DAMAGE) do
+            local value = damage[2]
+            if value == NIL then value = nil end
+            local what = "tally argument = " .. damage[1]
+            attempt(what .. " empty", T.empty, value)
+            attempt(what .. " addFactory", T.addFactory, base, value)
+            attempt(what .. " split", T.split, base, value)
+            attempt(what .. " transfer", T.transfer, base, base, value)
+            attempt(what .. " unload", T.unload, base, value)
+            attempt(what .. " reconcile", T.reconcile, base, value)
+            attempt(what .. " merge", T.merge, base, value)
+            attempt(what .. " repair", T.repair, value)
+            local grown = attempt(what .. " addHandloaded", T.addHandloaded, base, value)
+            if grown and grown.qualitySum > base.qualitySum + Q.maxQuality then table.insert(advantages, what .. ": one round added more than the maximum quality") end
+        end
+        eq(#raised, 0, "no damaged tally raised an error: " .. table.concat(raised, " | "))
+        eq(#advantages, 0, "no damaged tally came out better than it went in: " .. table.concat(advantages, " | "))
+        check(calls > 1000, "the tally fuzz ran (" .. calls .. " calls)")
+        eq(base.handloaded, 5, "and the record it was given is untouched")
+        print("  Quality tally fuzz: " .. calls .. " calls on damaged records and arguments, " .. #raised .. " raised")
+    end
+
+    -- It is arithmetic and nothing else: no event, no ModData, no engine
+    -- object, and no other file of the mod uses it yet. Wiring it to the
+    -- firearms is a later, in-game-verified step; this fails when it starts.
+    do
+        local source = readFile(LUA .. "shared/AC_QualityTally.lua")
+        check(string.find(source, "Events%.") == nil, "the tally registers no event")
+        check(string.find(source, "getModData", 1, true) == nil and string.find(source, "ModData%.") == nil, "reads and writes no ModData")
+        for _, engine in ipairs({ "getPlayer", "getCell", "instanceItem", "ZombRand", "isClient", "isServer", "getCurrentAmmoCount", "ISReloadWeaponAction" }) do
+            check(string.find(source, engine .. "(", 1, true) == nil, "calls no " .. engine)
+        end
+        for _, name in ipairs(MOCK.MOD_FILES) do
+            if name ~= "shared/AC_QualityTally" then
+                check(string.find(readFile(LUA .. name .. ".lua"), "AC_QualityTally", 1, true) == nil, name .. ".lua does not use the quality tally (it is not wired to anything)")
+            end
+        end
+        eq(AC_SaveData.getStructure("tally"), nil, "and no tally is declared as persisted, because none is")
+    end
+end
+
+------------------------------------------------
 -- RECYCLING
 ------------------------------------------------
 

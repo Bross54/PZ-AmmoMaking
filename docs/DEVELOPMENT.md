@@ -60,6 +60,7 @@ never move an item into that list.
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
 | `shared/AC_Recycling.lua` | shared | Brass recycling: what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing). Data and arithmetic only |
 | `shared/AC_Loot.lua` | shared | Die sets as rare loot: tier weights, target lists, `buildEntries`, `validate`, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists |
+| `shared/AC_QualityTally.lua` | shared | The quality tally of loaded ammunition as pure functions (`repair`, `reconcile`, `split`, `merge`, `consume`, `unload`). **Arithmetic only: no other file calls it**, nothing is stored and no vanilla function is wrapped (`AMMO_QUALITY_RUNTIME_DESIGN.md` 7, 8) |
 | `shared/AC_SaveData.lua` | shared | How persisted numbers are read (`number`, `whole`, `isFinite`) and the schema of every ModData key (`SCHEMA`, `check`). Stores nothing |
 | `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 55 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9, scrapping 3, recast 1 |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
