@@ -3790,6 +3790,22 @@ do
     eq(BALANCE.replaceBlock(document), document, "regenerating changes nothing")
     eq(BALANCE.replaceBlock("no markers here"), nil, "a document without markers is not rewritten")
 
+    -- README.md carries the players' shorter table of the same model.
+    local readme = readFile(ROOT .. "/README.md")
+    local rFrom = string.find(readme, BALANCE.SUMMARY_START, 1, true)
+    local _, rTo = string.find(readme, BALANCE.SUMMARY_FINISH, 1, true)
+    check(rFrom ~= nil and rTo ~= nil and rTo > rFrom, "the README has the calibre table markers")
+    eq(string.sub(readme, rFrom or 1, rTo or 1), BALANCE.renderSummaryBlock(), "the README calibre table equals the rendered model (run tests/write_recipes.lua)")
+    eq(BALANCE.replaceSummary(readme), readme, "regenerating the README changes nothing")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(string.find(BALANCE.renderSummary(), "| " .. calibre.id .. " | " .. calibre.class .. " | `" .. calibre.round .. "` |", 1, true) ~= nil, calibre.id .. " has a README row")
+    end
+    -- No other table in the README repeats a calibre's numbers by hand.
+    local outside = string.sub(readme, 1, (rFrom or 1) - 1) .. string.sub(readme, (rTo or 0) + 1)
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(string.find(outside, "| `" .. calibre.round .. "` |", 1, true) == nil, "the README has no hand-typed table row for " .. calibre.round)
+    end
+
     -- One row per calibre and per family, and every value a consumer reads.
     local block = BALANCE.renderBlock()
     for _, calibre in ipairs(AC_Calibres.LIST) do

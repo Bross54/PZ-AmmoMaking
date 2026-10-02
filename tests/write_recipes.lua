@@ -5,8 +5,9 @@
 -- Loads the mod against the mocked API, renders every recipe of
 -- AC_Materials.RECIPES with tests/render_recipes.lua and rewrites the body
 -- of AC_Recipes.txt, keeping its leading comment. It also rewrites the
--- generated balance tables of docs/AMMUNITION_DESIGN.md, between their two
--- marker comments (tests/render_balance.lua). Run it after changing a
+-- generated balance tables of docs/AMMUNITION_DESIGN.md and the calibre
+-- table of README.md, between their marker comments
+-- (tests/render_balance.lua). Run it after changing a
 -- recipe in AC_Materials.lua or a calibre in AC_Calibres.lua; then run
 -- tests/run_tests.lua, which fails while either differs from the model.
 --
@@ -34,16 +35,21 @@ handle:close()
 
 print("Wrote " .. #AC_Materials.RECIPES .. " recipes to " .. SCRIPT)
 
--- The document is read and written in text mode, like the script, so its
--- line endings are whatever the platform's are.
-handle = assert(io.open(DOCUMENT, "r"), "cannot open " .. DOCUMENT)
-local document = string.gsub(handle:read("*a"), "\r", "")
-handle:close()
+-- The documents are read and written in text mode, like the script, so
+-- their line endings are whatever the platform's are.
+local function rewrite(path, replace, what)
+    local file = assert(io.open(path, "r"), "cannot open " .. path)
+    local text = string.gsub(file:read("*a"), "\r", "")
+    file:close()
 
-local updated = assert(BALANCE.replaceBlock(document), "balance table markers not found in " .. DOCUMENT)
+    local updated = assert(replace(text), what .. " markers not found in " .. path)
 
-handle = assert(io.open(DOCUMENT, "w"), "cannot write " .. DOCUMENT)
-handle:write(updated)
-handle:close()
+    file = assert(io.open(path, "w"), "cannot write " .. path)
+    file:write(updated)
+    file:close()
 
-print("Wrote the balance tables to " .. DOCUMENT)
+    print("Wrote the " .. what .. " to " .. path)
+end
+
+rewrite(DOCUMENT, BALANCE.replaceBlock, "balance tables")
+rewrite(ROOT .. "/README.md", BALANCE.replaceSummary, "calibre table")

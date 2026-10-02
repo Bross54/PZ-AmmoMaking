@@ -360,7 +360,7 @@ Offline checks (no game required):
 lua5.1 tests/run_tests.lua
 ```
 
-`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 10,600+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy, case stock and ammunition components (the generated recipe script against its Lua mirror, the eight pistol and rifle calibres and four primer families, cross-calibre isolation, material conservation from ore to finished rounds, case quality, level requirements, a simulated XP career), translation keys, debug gating and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
+`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 14,800+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy, case stock and ammunition components (the generated recipe script against its Lua mirror, the nine rounds (five pistol calibres, three rifle calibres and the 12 gauge shell) and four primer families, cross-calibre isolation, material conservation from ore to finished rounds, case quality and inspection, level requirements, a simulated XP career, the prepared press recipes, the generated balance tables), translation keys, debug gating, startup cost and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
 
 Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Metallurgy: `docs/METALLURGY_DESIGN.md` (the implemented furnace recipes, items, skill and conservation rules) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42.20.4 provides, read from the installed files and jar).
 
@@ -408,30 +408,38 @@ Base.CopperScrap ── Swage 9mm Copper Bullets ──► 2 bullets
 case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bullets9mm
 ```
 
-- **Calibres**: all five vanilla pistol calibres (9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum) and all three vanilla rifle calibres (5.56, .30-30, .308); table below. A calibre is one data entry; no code names one, and pistols and rifles share one model. Each has its own case, bullet and die set, and nothing of one calibre fits another.
-- **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is planned as the faster tier above it and will take the same die sets.
+- **Calibres**: all five vanilla pistol calibres (9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum), all three vanilla rifle calibres (5.56, .30-30, .308) and the vanilla 12 gauge shell; table below. A calibre is one data entry; no code names one, and pistol rounds, rifle rounds and the shell share one model. Each has its own case, bullet and die set, and nothing of one calibre fits another.
+- **12 gauge shells**: a brass hull drawn from three case cups, a charge of copper shot swaged from one copper scrap, a large pistol primer, three charges of gunpowder and a wad of ripped sheet or cotton, assembled into the vanilla `Base.ShotgunShells`. Vanilla has a single shell and puts the nine pellets on the gun, so there are no buckshot or slug variants.
+- **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is designed as the faster tier above it and will take the same die sets (`docs/RELOADING_PRESS_DESIGN.md`); its recipes are prepared and switched off, the station itself is not built.
 - **Bullets are copper**: vanilla has no lead, and copper is already mined.
 - **Primers** come in four families (small and large pistol, small and large rifle), all made the same way from a small brass sheet and toy cap-gun caps or match heads. A large primer holds twice the material of a small one; a rifle primer takes half as much priming charge again and is never interchangeable with a pistol primer. **Gunpowder** is charcoal and fertilizer. Vanilla has no sulfur or nitrate item and none is invented.
 - **Case quality**: 1–100, rolled when a case is formed from the maker's Ammo Making level with a random spread, stored on the case and passed on to the assembled round. It never changes how much material a recipe uses. Nothing reads it in combat yet.
-- **Progression**: metallurgy and case stock from level 0; 9mm and .38 Special rounds at level 3, .45 ACP and .357 Magnum at 4, .44 Magnum and the three rifle rounds at 5, each calibre's die set, cases and bullets one or two levels earlier. In a simulated career level 3 comes after about 19 ore, level 4 after 29, level 5 after 57, and the first rifle round after 73 ore and some 500 pistol rounds. Nothing requires level 6.
-- **Material balance**: larger calibres cost more through three whole-number knobs: cups of brass per case, bullets per copper scrap, and charges of gunpowder.
+- **Inspection**: right-click an empty case, or a loose round you loaded yourself, and choose *Inspect Ammunition* to see its calibre and case quality (a label from level 1, the number from level 5). Factory rounds have nothing to inspect. The record stays with the loose round: a magazine or firearm keeps only a count.
+- **Progression**: metallurgy and case stock from level 0; 9mm and .38 Special rounds at level 3, .45 ACP, .357 Magnum and 12 gauge shells at 4, .44 Magnum and the three rifle rounds at 5, each calibre's die set, cases and bullets one or two levels earlier. In a simulated career level 3 comes after about 19 ore, level 4 after 29, level 5 after 54, and the first rifle round after 70 ore and some 390 pistol rounds and shells. Nothing requires level 6.
+- **Material balance**: larger calibres cost more through whole-number knobs: cups of brass per case, projectiles per copper scrap, charges of gunpowder and, for a shell, a wad.
+- **Boxes**: handloaded rounds are the vanilla items, so vanilla's own *place ammo in box* recipe already packs them.
 
-| Calibre | Type | Vanilla round | Primer | Cups per case | Bullets per scrap | Powder charges | Round at level | Ore per 100 rounds |
-|---|---|---|---|---|---|---|---|---|
-| 9mm | pistol | `Base.Bullets9mm` | small pistol | 1 | 2 | 1 | 3 | 11 |
-| .38 Special | pistol | `Base.Bullets38` | small pistol | 1 | 2 | 1 | 3 | 11 |
-| .45 ACP | pistol | `Base.Bullets45` | large pistol | 1 | 1 | 1 | 4 | 17 |
-| .357 Magnum | pistol | `Base.Bullets357` | small pistol | 1 | 2 | 2 | 4 | 11 |
-| .44 Magnum | pistol | `Base.Bullets44` | large pistol | 2 | 1 | 3 | 5 | 22 |
-| 5.56 | rifle | `Base.556Bullets` | small rifle | 2 | 2 | 3 | 5 | 16 |
-| .30-30 | rifle | `Base.3030Bullets` | large rifle | 2 | 1 | 4 | 5 | 22 |
-| .308 | rifle | `Base.308Bullets` | large rifle | 3 | 1 | 5 | 5 | 27 |
+<!-- CALIBRE TABLE: generated by tests/write_recipes.lua from AC_Calibres.lua. Do not edit. -->
+
+| Round | Type | Vanilla item | Primer | Cups per case | Projectiles per scrap | Powder charges | Wads | Round at level | Ore per 100 rounds |
+|---|---|---|---|---|---|---|---|---|---|
+| 9mm | pistol | `Base.Bullets9mm` | small pistol | 1 | 2 | 1 | 0 | 3 | 11 |
+| .38 Special | pistol | `Base.Bullets38` | small pistol | 1 | 2 | 1 | 0 | 3 | 11 |
+| .45 ACP | pistol | `Base.Bullets45` | large pistol | 1 | 1 | 1 | 0 | 4 | 17 |
+| .357 Magnum | pistol | `Base.Bullets357` | small pistol | 1 | 2 | 2 | 0 | 4 | 11 |
+| .44 Magnum | pistol | `Base.Bullets44` | large pistol | 2 | 1 | 3 | 0 | 5 | 22 |
+| 5.56 | rifle | `Base.556Bullets` | small rifle | 2 | 2 | 3 | 0 | 5 | 16 |
+| .30-30 | rifle | `Base.3030Bullets` | large rifle | 2 | 1 | 4 | 0 | 5 | 22 |
+| .308 | rifle | `Base.308Bullets` | large rifle | 3 | 1 | 5 | 0 | 5 | 27 |
+| 12 Gauge | shotgun | `Base.ShotgunShells` | large pistol | 3 | 1 | 3 | 1 | 4 | 27 |
+
+<!-- END CALIBRE TABLE -->
 
 Rifle powder is a compressed scale: a literal .308 charge would be nearly a whole jar per round.
 
-All balance values are tunable and untuned.
+All balance values are tunable. They live in one file, `AC_Calibres.lua`; the table above, the recipe script and the full balance tables of `docs/AMMUNITION_DESIGN.md` are generated from it.
 
-**Not yet tested in game.** Everything is written from the installed Build 42.20.4 files and covered by the offline tests. Design, balance and the list of what needs a game run: `docs/AMMUNITION_DESIGN.md`; vanilla research: `docs/VANILLA_AMMUNITION_RESEARCH.md`.
+**Not yet tested in game.** Everything is written from the installed Build 42.20.4 files and covered by the offline tests. Design, balance and the list of what needs a game run: `docs/AMMUNITION_DESIGN.md`; vanilla research: `docs/VANILLA_AMMUNITION_RESEARCH.md`, `docs/RIFLE_AMMUNITION_RESEARCH.md`, `docs/SHOTGUN_AMMUNITION_RESEARCH.md`.
 
 ---
 
@@ -450,11 +458,9 @@ The first metallurgy stage (ore to brass on the vanilla furnaces) is implemented
 
 The component chain above is the foundation. Still planned:
 
-- shotgun shells (researched in `docs/SHOTGUN_AMMUNITION_RESEARCH.md`)
-- a reloading press as a faster, higher-quality tier above the hand die set
+- the reloading press station (designed in `docs/RELOADING_PRESS_DESIGN.md`; its recipes are prepared, the world object needs sprites and an in-game pass)
+- die sets as rare loot, brass recycling, spent cases (researched in `docs/AMMUNITION_ROADMAP.md`)
 - bullet and primer quality, powder load, and their effect on reliability
-- recovering and reloading spent cases
-- brass recycling
 
 ---
 
@@ -556,12 +562,13 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Mining / extraction**: pickaxe timed action inside a sampled 3x3, ore dropped on the tile, XP and tool wear
 - **Metallurgy**: zinc smelting, copper and zinc ingot casting and 7 + 3 brass alloying as recipes on the vanilla furnaces; XP and craft time tied to Ammo Making (**not yet run in game**)
 - **Case stock**: brass ingots forged into small brass sheets at the vanilla forge, sheets punched into brass case cups on any surface (**not yet run in game**)
-- **Ammunition components**: die sets, cases with a rolled quality, copper bullets, four primer families, gunpowder from charcoal and fertilizer, and assembly into the vanilla rounds of all five pistol and all three rifle calibres; calibres defined and validated as data (**not yet run in game**)
+- **Ammunition components**: die sets, cases with a rolled quality, copper bullets, four primer families, gunpowder from charcoal and fertilizer, and assembly into the vanilla rounds of all five pistol and all three rifle calibres and the vanilla 12 gauge shell; calibres defined and validated as data (**not yet run in game**)
+- **Component inspection**: calibre and case quality of an empty case or a loose handloaded round, read-only (**not yet run in game**)
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
 - **Inspection prototype**: skill-gated inspection panel for the test cartridge
-- **Debug tools** (`-debug` only): one "Ammo Making Debug" submenu for inspecting, resetting and spawning
-- **Compatibility self-check**: one console line per Build 42 assumption at game start
+- **Debug tools** (`-debug` only): one "Ammo Making Debug" tree (Geology, Analyzer, Metallurgy, Ammunition) for inspecting, resetting and spawning
+- **Compatibility self-check**: every Build 42 assumption probed at game start; problems and a per-class summary in the console, every line in `-debug` mode
 - **Localization**: every player-facing string has an `IGUI_AmmoMaking_*` key with an English fallback
 
 ## Current limitations
@@ -571,7 +578,8 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Metallurgy has not been run in game yet.** The furnace recipes are written from the installed 42.20.4 files and pass the offline tests; whether they appear at the furnace, award XP and speed up with skill is listed under *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/METALLURGY_DESIGN.md`.
 - **The ammunition chain has not been run in game yet**, and its level gates depend on a requirement attached from Lua at boot; see *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/AMMUNITION_DESIGN.md`.
 - **Round quality is stored but not used, and cannot reach the gun as it is.** Vanilla turns loaded rounds into a count, so data on a loose round is gone once it is in a magazine or firearm; misfires and wear need a different carrier and are later work.
-- **Die sets, toy caps and fertilizer have no dedicated loot tuning.** The die set is crafted; the rest is vanilla loot.
+- **Die sets, toy caps and fertilizer have no dedicated loot tuning.** The die set is crafted; the rest is vanilla loot. A proposal for die sets as rare loot is in `docs/AMMUNITION_ROADMAP.md`.
+- **The reloading press is a design, not a station.** Its recipes are generated and switched off; the world object needs sprites and can only be checked in the game.
 - **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
 - **Assay kits and the laboratory analyzer have no loot spawns or recipes yet.** Obtaining them currently relies on the debug menu.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
@@ -606,19 +614,21 @@ die set: cup → case (quality), copper scrap → bullets
         ↓
 primers (brass + toy caps / match heads), gunpowder (charcoal + fertilizer)
         ↓
-assembly → vanilla pistol and rifle rounds (8 calibres)
+assembly → vanilla pistol and rifle rounds and 12 gauge shells (9 rounds)
 ```
 
-Intended next stages (`docs/AMMUNITION_DESIGN.md`):
+Intended next stages (`docs/AMMUNITION_ROADMAP.md`):
 
 ```text
-shotgun shells (docs/SHOTGUN_AMMUNITION_RESEARCH.md)
+reloading press station (docs/RELOADING_PRESS_DESIGN.md)
         ↓
-reloading press tier
+die sets as rare loot
         ↓
-round quality in use: inspection, misfires, wear
+brass recycling
         ↓
 spent case recovery and reloading
+        ↓
+round quality in use: misfires, wear
 ```
 
 ## 🚧 In Development
@@ -709,15 +719,18 @@ PZ-AmmoMaking
 ├── README.md
 ├── docs
 │   ├── AMMUNITION_DESIGN.md
+│   ├── AMMUNITION_ROADMAP.md
 │   ├── DEVELOPMENT.md
 │   ├── METALLURGY_DESIGN.md
 │   ├── MULTIPLAYER_MINING.md
+│   ├── RELOADING_PRESS_DESIGN.md
 │   ├── RIFLE_AMMUNITION_RESEARCH.md
 │   ├── SHOTGUN_AMMUNITION_RESEARCH.md
 │   ├── VANILLA_AMMUNITION_RESEARCH.md
 │   └── VANILLA_METALLURGY_RESEARCH.md
 ├── tests
 │   ├── mock_pz.lua
+│   ├── render_balance.lua
 │   ├── render_recipes.lua
 │   ├── write_recipes.lua
 │   └── run_tests.lua
