@@ -221,6 +221,32 @@ def mod_facts():
     return facts
 
 
+def mod_item_art():
+    """What the mod's item script borrows from vanilla: name -> first item that uses it.
+
+    Icons, models, display categories and item tags are vanilla's own: the
+    mod ships no texture or model. A build that drops one leaves an item
+    without a picture or invisible on the ground.
+    """
+    text = read(ROOT + "/mod/AmmoMaking/42/media/scripts/AC_Items.txt")
+    art = {"icons": {}, "models": {}, "categories": {}, "tags": {}, "types": {}}
+    for name, body in blocks(text, "item"):
+        fields = properties(body)
+        if fields.get("Icon"):
+            art["icons"].setdefault(fields["Icon"], name)
+        for key in ("StaticModel", "WorldStaticModel"):
+            if fields.get(key):
+                art["models"].setdefault(fields[key], name)
+        if fields.get("DisplayCategory"):
+            art["categories"].setdefault(fields["DisplayCategory"], name)
+        if fields.get("ItemType"):
+            art["types"].setdefault(fields["ItemType"], name)
+        for tag in (fields.get("Tags") or "").split(";"):
+            if tag.strip():
+                art["tags"].setdefault(tag.strip(), name)
+    return art
+
+
 def mod_sources():
     files = sorted(glob.glob(MOD_LUA + "**/*.lua", recursive=True))
     return {path.replace("\\", "/")[len(MOD_LUA):]: read(path) for path in files}
@@ -367,6 +393,13 @@ class Install:
             for name, body in blocks(text, "entity"):
                 found[name] = body
         return found
+
+    def models(self):
+        names = set()
+        for path, text in self.script_texts().items():
+            if "model " in text:
+                names.update(re.findall(r"(?m)^\s*model\s+(\w+)\s*$", text))
+        return names
 
     def timed_actions(self):
         names = set()
@@ -720,6 +753,24 @@ def build_snapshot(install, jar, facts, calls):
             "vanillaRecipes": recipe_tags.get(tag, 0),
         }
 
+    # Icons, models, categories and tags the mod's items borrow.
+    art = facts["art"]
+    icons, categories, types, tags = {}, {}, {}, {}
+    for script in items.values():
+        icons[script.get("Icon")] = True
+        categories[script.get("DisplayCategory")] = True
+        types[script.get("ItemType")] = True
+        for tag in (script.get("Tags") or "").split(";"):
+            tags[tag.strip()] = True
+    models = install.models()
+    snapshot["art"] = {
+        "icons": {name: name in icons for name in sorted(art["icons"])},
+        "models": {name: name in models for name in sorted(art["models"])},
+        "categories": {name: name in categories for name in sorted(art["categories"])},
+        "types": {name: name in types for name in sorted(art["types"])},
+        "tags": {name: name in tags for name in sorted(art["tags"])},
+    }
+
     actions = install.timed_actions()
     snapshot["timedActions"] = {name: name in actions for name in sorted(set(facts["timedActions"]) | {facts["press"]["timedAction"]})}
 
@@ -1015,6 +1066,14 @@ def judge(snapshot, facts, calls, recorded, have_jar):
     findings = [("WARNING", "sound %s does not exist (%s)" % (name, facts["sounds"][name])) for name, present in snapshot["sounds"].items() if not present]
     report.group("sounds", findings)
 
+    findings = []
+    words = {"icons": "icon", "models": "model", "categories": "display category", "types": "item type", "tags": "item tag"}
+    for group, word in words.items():
+        for name, present in snapshot["art"][group].items():
+            if not present:
+                findings.append(("WARNING", "%s %s is used by no vanilla item or model script any more (item %s)" % (word, name, facts["art"][group][name])))
+    report.group("icons, models, categories and tags the mod's items borrow (%d)" % sum(len(group) for group in snapshot["art"].values()), findings)
+
     findings = [("WARNING", "%s is gone: the firearm designs rely on it" % name) for name, present in snapshot["design"].items() if not present]
     report.group("vanilla firearm Lua the designs rely on (%d)" % len(snapshot["design"]), findings)
 
@@ -1123,7 +1182,7 @@ def judge(snapshot, facts, calls, recorded, have_jar):
     else:
         if have_jar and recorded.get("version") != snapshot["version"]:
             findings.append(("WARNING", "game version %s, recorded %s" % (snapshot["version"], recorded.get("version"))))
-        for section in ("items", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
+        for section in ("items", "art", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
             for line in difference(recorded.get(section) or {}, snapshot[section] or {}, section):
                 findings.append(("WARNING", line))
     report.group("the installed game against the recorded snapshot", findings)
@@ -1181,6 +1240,7 @@ def main():
     jar = Jar(install, javap) if javap and os.path.isfile(install.root + "/projectzomboid.jar") else None
 
     facts = mod_facts()
+    facts["art"] = mod_item_art()
     calls = mod_calls(mod_sources())
     snapshot = build_snapshot(install, jar, facts, calls)
 

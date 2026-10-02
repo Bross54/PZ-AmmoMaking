@@ -9319,6 +9319,99 @@ do
 end
 
 ------------------------------------------------
+-- ITEM AUDIT
+------------------------------------------------
+
+section("Item audit: every item has vanilla art that exists, a probe, a use and a source")
+do
+    -- The mod ships no texture and no model: every icon, model, display
+    -- category and tag of its items is vanilla's. The engine snapshot
+    -- records, from the installed scripts, whether each still exists.
+    local art = ENGINE.art
+    local count = 0
+    local probed = {}
+    for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
+
+    -- Where an item is used and where it comes from, from the model.
+    local consumed, produced = {}, {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        for _, input in ipairs(recipe.inputs) do
+            for _, id in ipairs(input.items or {}) do consumed[id] = recipe.id end
+        end
+        for _, output in ipairs(recipe.outputs) do produced[output.item] = recipe.id end
+    end
+    local looted = {}
+    for _, entry in ipairs(AC_Loot.buildEntries()) do looted[entry.item] = entry.list end
+    -- Items the geology code makes or handles itself, by the ids it names.
+    local handled = {}
+    for _, module in ipairs({ AC_Geology, AC_GeologySampling, AC_LaboratoryAnalyzer, AC_Mining }) do
+        for _, id in pairs(type(module.ITEMS) == "table" and module.ITEMS or {}) do
+            if type(id) == "string" then handled[id] = true end
+        end
+    end
+    for _, metal in ipairs(AC_Deposits.METALS) do handled[AC_Mining.getOreItemType(metal)] = true end
+
+    local noSource, unused, noWorldModel = {}, {}, {}
+    for id, item in pairs(declaredItems) do
+        count = count + 1
+        local f = item.fields
+        check(type(f.DisplayName) == "string" and f.DisplayName ~= "", id .. " has a display name")
+        eq(art.types[f.ItemType], true, id .. ": its item type " .. tostring(f.ItemType) .. " is one vanilla items have")
+        eq(art.categories[f.DisplayCategory], true, id .. ": its display category " .. tostring(f.DisplayCategory) .. " is one vanilla items have")
+        eq(art.icons[f.Icon], true, id .. ": its icon " .. tostring(f.Icon) .. " is one a vanilla item uses")
+        if not f.WorldStaticModel then table.insert(noWorldModel, id) end
+        for _, key in ipairs({ "StaticModel", "WorldStaticModel" }) do
+            if f[key] then eq(art.models[f[key]], true, id .. ": its " .. key .. " " .. f[key] .. " is a model vanilla defines") end
+        end
+        for tag in string.gmatch(f.Tags or "", "[^;%s]+") do
+            eq(art.tags[tag], true, id .. ": its tag " .. tag .. " is one vanilla items carry")
+        end
+        local weight = tonumber(f.Weight)
+        check(weight ~= nil and weight > 0 and weight <= 40, id .. " has a weight a character can carry (" .. tostring(f.Weight) .. ")")
+        -- A heavy item is two-handed, as vanilla's ore is.
+        if weight and weight >= 20 then eq(f.RequiresEquippedBothHands, "true", id .. " is carried in both hands, like vanilla's ore") end
+
+        local prototype = id == "AmmoMaking.TestCartridge"
+        eq(probed[id] == true, not prototype, id .. (prototype and " is the prototype, not probed" or " is probed at game start"))
+        if not (consumed[id] or produced[id] or handled[id] or prototype) then table.insert(unused, id) end
+        if not (produced[id] or looted[id]) then table.insert(noSource, id) end
+    end
+    eq(count, 41, "forty-one items")
+    -- The five items of the geology stage name no world model; every item
+    -- of the later stages does. (What the game draws for an item without
+    -- one is engine behaviour; the sample and the dropped analyzer were
+    -- used that way in game.)
+    table.sort(noWorldModel)
+    eq(table.concat(noWorldModel, ", "), "AmmoMaking.AdvancedFieldAssayKit, AmmoMaking.FieldAssayKit, AmmoMaking.GeologicalSample, AmmoMaking.LaboratoryAssayAnalyzer, AmmoMaking.TestCartridge",
+        "only the five geology-stage items have no world model")
+    table.sort(unused)
+    eq(#unused, 0, "no item is declared and used by nothing: " .. table.concat(unused, ", "))
+
+    -- Every item that can be made, found, dug up or mined, and the four
+    -- that cannot: the kits and the analyzer have no recipe and no loot yet
+    -- (a known limitation, README), and the prototype cartridge never will.
+    local debugOnly = {}
+    for _, id in ipairs(noSource) do
+        -- The sample is created by digging, the ore by mining.
+        if not (id == "AmmoMaking.GeologicalSample" or id == AC_Mining.getOreItemType("zinc")) then table.insert(debugOnly, id) end
+    end
+    table.sort(debugOnly)
+    eq(table.concat(debugOnly, ", "), "AmmoMaking.AdvancedFieldAssayKit, AmmoMaking.FieldAssayKit, AmmoMaking.LaboratoryAssayAnalyzer, AmmoMaking.TestCartridge",
+        "exactly four items have no recipe and no loot (the debug menu hands them out)")
+    -- A die set is the only item with two sources.
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(produced[calibre.dieSet] ~= nil and looted[calibre.dieSet] ~= nil, calibre.id .. ": its die set can be forged and found")
+        check(looted[calibre.case] == nil and looted[calibre.bullet] == nil, calibre.id .. ": its case and projectile are never loot")
+    end
+    -- Nothing the snapshot records as missing.
+    for group, names in pairs(art) do
+        for name, present in pairs(names) do
+            eq(present, true, "vanilla still has the " .. group .. " entry " .. name)
+        end
+    end
+end
+
+------------------------------------------------
 -- RELEASE METADATA
 ------------------------------------------------
 

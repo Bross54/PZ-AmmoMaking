@@ -1004,6 +1004,7 @@ does not say what class its receiver has).
 | The engine's ammo types | jar, `AmmoType` and `ItemKey` | a type no longer names the round the mod makes |
 | A firearm or magazine for every round | item scripts | none takes the calibre's ammo type |
 | The analyzer's tile | tile definitions, entity scripts | undefined, or claimed by an entity |
+| Icons, models, display categories, item types and tags the mod's items borrow | item and model scripts | (WARNING) one is used by no vanilla item or model script any more |
 | Events the mod listens to | jar, `LuaEventManager` | not registered |
 | Globals and `Table.member` | jar (`@LuaMethod` names, exposed classes), vanilla Lua (with `derive` parents) | neither defines it |
 | Calls of Java globals and static methods | jar | no overload takes that many arguments |
@@ -1128,7 +1129,10 @@ Checked for each of the 55, by name, in the section *Station recipes*:
 
 ### Items
 
-41 items, no duplicate id. A script compared each with the installed game:
+41 items, no duplicate id. **Automated since 2026-10-02** (section *Item
+audit* of the suite, against `tests/engine_snapshot.lua`, which
+`tools/pz_compat.py` writes from the installed scripts); before that a
+one-off script compared each with the installed game:
 
 - every `Icon` is one a vanilla item uses, every `StaticModel` and
   `WorldStaticModel` a vanilla model, every tag (`base:hasmetal`,
@@ -1137,7 +1141,13 @@ Checked for each of the 55, by name, in the section *Station recipes*:
   weight and a name in `ItemName.json` equal to its `DisplayName`;
 - 36 are in recipes; the sample, the two kits and the analyzer are handled
   by the geology code; `AmmoMaking.TestCartridge` by the quality prototype;
-- none is referenced only by tests, and none is in no recipe and no Lua.
+- none is referenced only by tests, and none is in no recipe and no Lua;
+- every item is probed at game start except the prototype cartridge;
+- every item has a source in normal play (a recipe, loot, digging or
+  mining) except exactly four: the two kits, the analyzer and the test
+  cartridge;
+- the five items of the geology stage name no `WorldStaticModel`; the 36
+  of the later stages all do.
 
 Known and intended:
 

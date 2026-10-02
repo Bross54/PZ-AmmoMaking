@@ -123,6 +123,7 @@ check(tool.strip_lua('a = "x -- y" -- z\nb = [[long\n-- text]] c()') == 'a = "" 
 recorded = tool.read_snapshot()
 check(recorded is not None, "tests/engine_snapshot.lua exists")
 facts = tool.mod_facts()
+facts["art"] = tool.mod_item_art()
 calls = tool.mod_calls(tool.mod_sources())
 
 
@@ -208,6 +209,9 @@ warning("a firearm that changed its magazine", set_path("firearms", "Pistol", "m
 warning("a firearm function the designs rely on", set_path("design", "ISReloadWeaponAction.onShoot", False), "ISReloadWeaponAction.onShoot is gone")
 warning("a firearm method the designs rely on", drop("classes", "HandWeapon", "methods", "setSpentRoundCount"), "HandWeapon.setSpentRoundCount is gone")
 warning("a sound that is gone", set_path("sounds", "Shoveling", False), "sound Shoveling does not exist")
+warning("an icon the mod borrows that is gone", set_path("art", "icons", "PistolAmmo", False), "icon PistolAmmo is used by no vanilla item")
+warning("a model the mod borrows that is gone", set_path("art", "models", "IronOre", False), "model IronOre is used by no vanilla item or model script")
+check(len(facts["art"]["icons"]) >= 10 and "IronOre" in facts["art"]["models"], "the mod's borrowed icons and models are read from its item script")
 warning("the analyzer's tile becoming a moveable", set_path("sprites", "industry_03_61", "moveable", True), "is now a vanilla moveable")
 warning("the press's tag taken by vanilla", set_path("benchTags", "AmmoMakingReloadingPress", {"stations": 1, "vanillaRecipes": 0}), "the press's own tag, is now used by vanilla")
 warning("the press's timed action removed", set_path("timedActions", "UseHandPress", False), "timed action UseHandPress does not exist")
