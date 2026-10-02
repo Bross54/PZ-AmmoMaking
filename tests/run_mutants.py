@@ -226,7 +226,10 @@ def run_suite():
         result = subprocess.run([sys.executable, os.path.abspath(__file__), "--suite"], capture_output=True, text=True, errors="replace", timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
         return None, None, "the suite did not finish in %d seconds" % TIMEOUT
-    line = (result.stdout.strip().splitlines() or [""])[-1]
+    # The last line is "passed<TAB>failed<TAB>error"; the error may be empty,
+    # so the line must not be stripped of its trailing tab.
+    lines = [line for line in result.stdout.split("\n") if line.strip()]
+    line = lines[-1].rstrip("\r") if lines else ""
     parts = line.split("\t")
     if len(parts) != 3:
         return None, None, "the suite process ended without a result: %s" % (result.stderr.strip().splitlines() or [line])[-1][:200]

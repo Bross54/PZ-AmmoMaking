@@ -200,14 +200,17 @@ def gate_suite():
 
 def gate_generated():
     """The generated script and tables equal what the model renders now."""
-    before = git("status", "--porcelain")
     lua = lua_runtime()
     lua.execute('arg = { [0] = "%s/tests/write_recipes.lua" }' % ROOT)
     lua.execute("print = function() end")
     lua.execute("dofile(arg[0])")
-    after = git("status", "--porcelain")
-    if before != after:
-        raise Failure("tests/write_recipes.lua changed files: the generated script or tables were out of step with the model. Review and commit them.\n" + after)
+    # By content, not by status: the generator writes the platform's line
+    # endings, and a file rewritten with other line endings and the same
+    # text is not a change.
+    run(["git", "update-index", "-q", "--refresh"])
+    changed = git("diff", "--name-only").strip()
+    if changed:
+        raise Failure("tests/write_recipes.lua changed files: the generated script or tables were out of step with the model. Review and commit them.\n" + changed)
     return "generated recipe script and tables are in step with the model"
 
 
