@@ -83,8 +83,9 @@ function AmmoInspection.inspect(player, item)
     local data = item:getModData()
 
     ------------------------------------------------
-    -- result.title is drawn by the UI itself; lines
-    -- hold only the body so no filtering is needed.
+    -- lines hold only the body. The panel draws its own
+    -- heading; result.title is the same text for anything
+    -- that shows a result without the panel.
     ------------------------------------------------
 
     local result = {

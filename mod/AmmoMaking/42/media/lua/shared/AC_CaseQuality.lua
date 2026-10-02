@@ -9,8 +9,10 @@
 -- the same labels as the AmmoQuality prototype
 -- (AmmoQuality.labelFor). It is rolled once, when the case
 -- is formed, from the maker's Ammo Making level, a random
--- spread and a tool bonus that is 0 for the hand die set
--- and exists so a future press can raise it.
+-- spread and a tool bonus that is 0 for the hand die set.
+-- The bonus is a hook only: the press as designed gives
+-- no quality bonus (its one advantage is time), so
+-- nothing passes anything but 0.
 --
 -- Quality never changes what a recipe consumes or produces.
 --
@@ -236,12 +238,25 @@ function AC_CaseQuality.getRoundQuality(
     end
 
 
+    -- A factory round has no ModData at all, and
+    -- getModData() would create an empty table on it (the
+    -- engine makes one on first access). This runs for
+    -- every round a player right-clicks, so ask first.
+    if item.hasModData
+        and not item:hasModData()
+    then
+        return nil
+    end
+
+
     local data =
         item:getModData()
 
 
     local quality =
         data and data[AC_CaseQuality.CONFIG.roundQualityKey]
+
+
 
 
     -- Not a number, or NaN or an infinity: no quality.

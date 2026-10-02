@@ -129,6 +129,13 @@ MUTANTS = [
     (SHARED + "AC_AmmoInspection.lua", "    if type(isDebugEnabled) == \"function\"\n        and isDebugEnabled()\n    then\n\n        local config = AC_CaseQuality.CONFIG", "    if true then\n\n        local config = AC_CaseQuality.CONFIG", "the debug lines of an inspection show in a normal game"),
     (SHARED + "AC_AmmoInspection.lua", "    elseif level < 5 then\n", "    elseif level < 1 then\n", "the exact case quality is shown below level 5"),
 
+    # ---- per-interaction cost and housekeeping
+    (SHARED + "AC_CaseQuality.lua", "    if item.hasModData\n        and not item:hasModData()\n    then\n        return nil\n    end\n", "", "right-clicking a factory round creates ModData on it"),
+    (SHARED + "AC_Compat.lua", "function AC_Compat.resetForNewWorld()\n\n    AC_Compat.hasRun = false", "function AC_Compat.resetForNewWorld()\n\n    AC_Compat.hasRun = true", "a second save in the same session gets no compatibility check"),
+    (CLIENT + "AC_MiningContextMenu.lua", "            metal,\n            samples\n        )", "            metal\n        )", "the mining menu scans the inventory once per metal"),
+    (CLIENT + "AC_AmmoInspectionUI.lua", "    self.titleText =\n        self.titleText\n        or AC_Text.get(", "    self.titleText =\n        AC_Text.get(", "the inspection panel translates its title every frame"),
+    (SHARED + "AC_Mining.lua", "    if samples == nil then\n", "    if not samples then\n", "an explicit 'no samples' makes findProspect scan again"),
+
     # ---- data files
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json", "    \"AmmoMaking_ScrapBrass10\": \"Scrap Small Brass Sheets and Medium Cases\",\n", "", "a recipe has no name"),
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/IG_UI.json", "This record stays with the loose round; loading or boxing it keeps only a count.", "This record stays with the round.", "the inspection text no longer states the limit"),

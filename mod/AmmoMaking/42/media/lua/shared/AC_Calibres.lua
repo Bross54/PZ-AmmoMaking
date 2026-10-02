@@ -14,7 +14,8 @@
 --                   press; prepared, switched off (PRESS)
 --   buildUnits()    what each component contains, for the
 --                   material-conservation checks
---   getItems()      the item ids to probe and to spawn
+--   getItems()      the item ids the compatibility check
+--                   probes
 --
 -- Adding a calibre is a new entry in AC_Calibres.LIST, its
 -- three items in AC_Items.txt, their names, and a

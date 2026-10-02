@@ -27,8 +27,11 @@
 --     [AmmoMaking] Compatibility check: 171 ok, 0 warnings, 0 unverified
 --
 -- It never changes game state and never raises: every
--- probe is pcall-guarded. It runs once per game start;
--- the debug menu can run it again on demand.
+-- probe is pcall-guarded. It runs once per world load
+-- (the Lua state survives a return to the main menu, so
+-- the "has run" flag is cleared when the next world
+-- initialises); the debug menu can run it again on
+-- demand.
 
 require "AC_Calibres"
 require "AC_Loot"
@@ -734,7 +737,7 @@ local function checkGlobals(
 
         { "ISWorldObjectContextMenu.addToolTip", function() return ISWorldObjectContextMenu ~= nil and ISWorldObjectContextMenu.addToolTip ~= nil end, "tooltips on disabled options" },
 
-        { "BuildingHelper.getShovelAnim", function() return BuildingHelper ~= nil and BuildingHelper.getShovelAnim ~= nil end, "placeholder digging animation (falls back to DigShovel)" },
+        { "BuildingHelper.getShovelAnim", function() return BuildingHelper ~= nil and BuildingHelper.getShovelAnim ~= nil end, "the digging and mining animation" },
 
         { "Metabolics.DiggingSpade", function() return Metabolics ~= nil and Metabolics.DiggingSpade ~= nil end, "metabolic load while digging/mining" },
 
@@ -2179,6 +2182,27 @@ end
 
 Events.OnGameStart.Add(
     AC_Compat.runOnce
+)
+
+
+------------------------------------------------
+-- A second save loaded in the same session is a new
+-- game start: Project Zomboid keeps the Lua state when
+-- the player returns to the main menu (AC_WorldData
+-- resets its cache for the same reason), so without
+-- this the second world would get no check at all.
+-- OnInitGlobalModData fires once per world load, before
+-- OnGameStart.
+------------------------------------------------
+
+function AC_Compat.resetForNewWorld()
+
+    AC_Compat.hasRun = false
+end
+
+
+Events.OnInitGlobalModData.Add(
+    AC_Compat.resetForNewWorld
 )
 
 

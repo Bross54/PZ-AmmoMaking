@@ -1058,7 +1058,9 @@ function AC_LaboratoryAnalyzer.updateState(
 
 
     ------------------------------------------------
-    -- Keep readyAt for debug/display compatibility.
+    -- labReadyAt is kept up to date as a record. Nothing
+    -- reads it once labRemainingHours exists; its one
+    -- reader is the first-version migration above.
     ------------------------------------------------
 
     data.labReadyAt =

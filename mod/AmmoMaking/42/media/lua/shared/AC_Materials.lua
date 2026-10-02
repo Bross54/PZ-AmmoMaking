@@ -84,7 +84,9 @@ AC_Materials.CONFIG = {
 -- ITEM IDS
 ------------------------------------------------
 --
--- Copper and brass are vanilla items. Only zinc is ours.
+-- Copper and brass are vanilla items. Zinc, the small
+-- brass sheet and the case cup are ours. Read by the
+-- debug kits; the recipes name their items themselves.
 ------------------------------------------------
 
 AC_Materials.ITEMS = {

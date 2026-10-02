@@ -245,7 +245,7 @@ local SAMPLE_KEYS = {
 
     { key = "labReadyAt", type = "number", read = false, repair = "a record on a sample" },
 
-    { key = "labProcessing", type = "boolean", read = false, repair = "only ever written false" },
+    { key = "labProcessing", type = "boolean", default = false, repair = "only ever written false; the three places that test it for true are dead, kept for a save that might carry true" },
 }
 
 

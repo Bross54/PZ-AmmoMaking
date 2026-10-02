@@ -79,9 +79,10 @@ AC_Mining.CONFIG = {
     -- PRESENTATION (placeholders)
     ------------------------------------------------
     --
-    -- No verified B42 pickaxe mining animation or
-    -- sound name is used yet. The action falls back to
-    -- the vanilla shovel animation and sound.
+    -- The pickaxe animation (DigPickAxe, through
+    -- BuildingHelper.getShovelAnim) was seen working in
+    -- game. No pickaxe sound name is verified yet, so the
+    -- action still plays the vanilla shovel sound.
     ------------------------------------------------
 
     sound = "Shoveling",
@@ -421,32 +422,62 @@ end
 -- Returns: sample, reportedGrade   or   nil
 ------------------------------------------------
 
+------------------------------------------------
+-- Every geological sample the player carries, bags
+-- included: one recursive inventory scan. A caller that
+-- asks about several metals in one go (the mining menu)
+-- scans once and hands the list to findProspect.
+------------------------------------------------
+
+function AC_Mining.getCarriedSamples(
+    player
+)
+
+    if not player then
+        return nil
+    end
+
+
+    return
+        player:getInventory():
+            getItemsFromFullType(
+                AC_GeologySampling.ITEMS.Sample,
+                true
+            )
+end
+
+
+-- samples: the list getCarriedSamples() returned, when
+-- the caller already has it; left out, it is fetched.
 function AC_Mining.findProspect(
     player,
     square,
-    metal
+    metal,
+    samples
 )
 
     if not player
         or not square
         or not AC_Deposits.isMetal(metal)
     then
-
         return nil
     end
 
 
-    local samples =
-        player:getInventory():
-            getItemsFromFullType(
-                AC_GeologySampling.ITEMS.Sample,
-                true
+    if samples == nil then
+
+        samples =
+            AC_Mining.getCarriedSamples(
+                player
             )
+    end
 
 
     if not samples then
         return nil
     end
+
+
 
 
     local bestSample = nil

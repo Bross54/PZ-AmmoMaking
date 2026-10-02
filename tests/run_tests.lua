@@ -4268,6 +4268,44 @@ do
     eq(counts.buildRecipes, 0, "and does not rebuild the whole recipe list")
     for key in pairs(counts) do AC_Calibres[key] = real[key] end
 
+    -- The mining menu scans the inventory for samples once per right-click,
+    -- whatever the number of metals, and not at all off natural ground.
+    do
+        local px, py = findTile("copper", 1)
+        local scanPlayer, scanSquare = miningSetup(px, py, "Good", "Good", 1)
+        local scans = 0
+        local realScan = scanPlayer.inventory.getItemsFromFullType
+        scanPlayer.inventory.getItemsFromFullType = function(self, fullType, recurse)
+            scans = scans + 1
+            return realScan(self, fullType, recurse)
+        end
+        local ctx = fillWorldMenu(scanPlayer, scanSquare)
+        check(#ctx.options >= 1, "the mining menu offered something")
+        local samplingScans = scans
+        check(samplingScans <= 2, "one right-click on natural ground scans the inventory at most twice in all (" .. scans .. ")")
+        -- The mining handler's own share: one scan for both metals.
+        scans = 0
+        local list = AC_Mining.getCarriedSamples(scanPlayer)
+        eq(scans, 1, "getCarriedSamples is one scan")
+        for _, metal in ipairs(AC_Deposits.METALS) do AC_Mining.findProspect(scanPlayer, scanSquare, metal, list) end
+        eq(scans, 1, "findProspect with a list scans nothing more, for either metal")
+        local alone = AC_Mining.findProspect(scanPlayer, scanSquare, "copper")
+        eq(scans, 2, "findProspect without a list still scans for itself")
+        eq(AC_Mining.findProspect(scanPlayer, scanSquare, "copper", list), alone, "and both ways find the same sample")
+        eq(AC_Mining.findProspect(scanPlayer, scanSquare, "copper", false), nil, "an explicit 'no samples' finds nothing and does not scan")
+        eq(scans, 2, "(no scan)")
+        eq(AC_Mining.getCarriedSamples(nil), nil, "no player, no samples")
+    end
+
+    -- The panels look their constant strings up once, not every frame:
+    -- nothing in a prerender or render body passes AC_Text.get straight to
+    -- drawText. (The panels are not loaded offline; this reads the source.)
+    for _, name in ipairs({ "client/AC_AmmoInspectionUI", "client/AC_GeologyAssayUI" }) do
+        local source = readFile(LUA .. name .. ".lua")
+        check(string.find(source, "drawText%(%s*AC_Text%.get%(") == nil, name .. ".lua draws no text it translates on the spot")
+        check(string.find(source, "self%.titleText%s*=%s*self%.titleText%s*or AC_Text%.get%(") ~= nil, name .. ".lua caches its title")
+    end
+
     -- The modules added later follow the same rule. Counted over a fresh
     -- load of the mod, a world load, a game start and a burst of menus:
     -- recycling builds its recipes once (for AC_Materials) and is validated
@@ -7461,6 +7499,31 @@ do
     MOCK.debug = false
     check(MOCK.printLogContains("[AmmoMaking] OK: Base.CopperOre"), "-debug mode prints the OK lines without being asked")
 
+    -- Once per world load: a second game start in the same world does
+    -- nothing, a second world loaded in the same Lua session is checked.
+    do
+        local runs = 0
+        local realRun = AC_Compat.run
+        AC_Compat.run = function(...)
+            runs = runs + 1
+            return realRun(...)
+        end
+        MOCK.capturePrint(true)
+        AC_Compat.hasRun = false
+        Events.OnGameStart.fire()
+        Events.OnGameStart.fire()
+        local firstWorld = runs
+        Events.OnInitGlobalModData.fire()
+        local resetByWorldLoad = AC_Compat.hasRun
+        Events.OnGameStart.fire()
+        MOCK.capturePrint(false)
+        AC_Compat.run = realRun
+        eq(firstWorld, 1, "the check runs once per game start, not once per OnGameStart")
+        eq(resetByWorldLoad, false, "a new world load clears the flag")
+        eq(runs, 2, "so a second save in the same session is checked too")
+        eq(AC_Compat.hasRun, true, "and is then marked as checked")
+    end
+
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
     AC_Compat.run(false)
@@ -7768,6 +7831,17 @@ do
         eq(AmmoInspection.getComponent(MOCK.newItem(calibre.bullet)), nil, name .. ": a bullet carries no quality")
         eq(AmmoInspection.getComponent(MOCK.newItem(calibre.dieSet)), nil, name .. ": nor does a die set")
         eq(AmmoInspection.inspectComponent(player, factory), nil, name .. ": no inspection for a factory round")
+
+        -- A factory round has no ModData, and asking for it would make the
+        -- engine create an empty table on a vanilla item. Right-clicking
+        -- one must not.
+        local untouched = MOCK.newItem(calibre.round)
+        untouched.hasModData = function() return false end
+        untouched.getModData = function() error("getModData was called on a round without ModData") end
+        local okQuiet, kindQuiet = pcall(AmmoInspection.getComponent, untouched)
+        check(okQuiet and kindQuiet == nil, name .. ": a round without ModData is not asked for it")
+        check(pcall(fillInventoryMenu, player, untouched), name .. ": nor by the inventory menu")
+        eq(AC_CaseQuality.getRoundQuality(untouched), nil, name .. ": it has no record")
 
         -- -debug mode adds the item type, the stored value and the schema's
         -- verdict, whatever the level; a normal game shows none of it.

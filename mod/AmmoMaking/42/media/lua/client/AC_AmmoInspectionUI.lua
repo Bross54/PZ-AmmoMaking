@@ -139,11 +139,17 @@ end
 function AC_AmmoInspectionUI:prerender()
     ISPanel.prerender(self)
 
-    self:drawText(
-        AC_Text.get(
+    -- Looked up once per panel, not once per frame: the
+    -- text cannot change while the panel is open.
+    self.titleText =
+        self.titleText
+        or AC_Text.get(
             "IGUI_AmmoMaking_UI_InspectionTitle",
             "AMMUNITION INSPECTION"
-        ),
+        )
+
+    self:drawText(
+        self.titleText,
         20,
         15,
         1,
@@ -210,12 +216,17 @@ function AC_AmmoInspectionUI:render()
     local footerY =
         self.height - 75
 
-    self:drawText(
-        AC_Text.get(
+    -- The level is the one the inspection was made at.
+    self.levelText =
+        self.levelText
+        or AC_Text.get(
             "IGUI_AmmoMaking_UI_SkillLevel",
             "Ammo Making Level: %1",
             self.inspection.level or 0
-        ),
+        )
+
+    self:drawText(
+        self.levelText,
         25,
         footerY,
         0.7,

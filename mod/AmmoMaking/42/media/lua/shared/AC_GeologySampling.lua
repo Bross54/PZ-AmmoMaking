@@ -102,9 +102,6 @@ AC_GeologySampling.ITEMS = {
 
     AdvancedFieldKit =
         "AmmoMaking.AdvancedFieldAssayKit",
-
-    LaboratoryAnalyzer =
-        "AmmoMaking.LaboratoryAssayAnalyzer",
 }
 
 

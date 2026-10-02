@@ -69,8 +69,7 @@ AC_Geology.ITEMS = {
     CopperOre =
         "Base.CopperOre",
 
-    CopperIngot =
-        "Base.CopperIngot",
+
 
 
     ------------------------------------------------
@@ -79,9 +78,6 @@ AC_Geology.ITEMS = {
 
     ZincOre =
         "AmmoMaking.ZincOre",
-
-    ZincIngot =
-        "AmmoMaking.ZincIngot",
 }
 
 

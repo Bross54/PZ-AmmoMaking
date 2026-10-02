@@ -166,7 +166,8 @@ local function addMetalOption(
     context,
     square,
     metal,
-    pickaxe
+    pickaxe,
+    samples
 )
 
     local sample,
@@ -174,8 +175,11 @@ local function addMetalOption(
         AC_Mining.findProspect(
             player,
             square,
-            metal
+            metal,
+            samples
         )
+
+
 
 
     ------------------------------------------------
@@ -352,6 +356,16 @@ local function onFillWorldObjectContextMenu(
         )
 
 
+    -- One inventory scan for all metals, not one each.
+    -- false, not nil, when there is no list, so that
+    -- findProspect does not scan again.
+    local samples =
+        AC_Mining.getCarriedSamples(
+            player
+        )
+        or false
+
+
     for _,
         metal
     in ipairs(
@@ -364,7 +378,8 @@ local function onFillWorldObjectContextMenu(
             context,
             square,
             metal,
-            pickaxe
+            pickaxe,
+            samples
         )
     end
 end

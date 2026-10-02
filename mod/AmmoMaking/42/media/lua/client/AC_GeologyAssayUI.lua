@@ -177,11 +177,17 @@ function AC_GeologyAssayUI:prerender()
     )
 
 
-    self:drawText(
-        AC_Text.get(
+    -- Looked up once per panel, not once per frame.
+    self.titleText =
+        self.titleText
+        or AC_Text.get(
             "IGUI_AmmoMaking_UI_AssayTitle",
             "GEOLOGICAL ASSAY"
-        ),
+        )
+
+
+    self:drawText(
+        self.titleText,
         20,
         15,
         1,
