@@ -37,7 +37,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [h2]What it adds[/h2]
 [list]
 [*][b]Ammo Making skill[/b] with 10 levels. Levels unlock calibres and shorten the work.
-[*][b]Geology.[/b] Every save has its own hidden copper and zinc. Dig a geological sample with a shovel, then assay it: a field kit gives a rough grade, an advanced kit a range, the powered laboratory analyzer a precise figure a day later.
+[*][b]Geology.[/b] Every save has its own hidden copper and zinc. Dig a geological sample with a shovel, then assay it: a field kit gives a rough grade, an advanced kit a range, the powered laboratory analyzer a precise figure a day later. All three are made at any surface from vanilla items; none is loot.
 [*][b]Mining.[/b] Inside an assayed area, a pickaxe takes ore from the ground. Deposits are finite and stay depleted.
 [*][b]Metallurgy[/b] on the vanilla furnaces and forge: zinc and copper ingots, brass (7 copper + 3 zinc), small brass sheets, case cups.
 [*][b]Ammunition.[/b] Die sets, cases, copper bullets, four kinds of primer, gunpowder from charcoal and fertilizer, and assembly into the [b]vanilla[/b] rounds: 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308 and 12 gauge shells. Vanilla firearms, magazines and ammo boxes work with them unchanged.
@@ -51,7 +51,6 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [*]A handloaded round fires exactly like a factory round. Case quality is recorded and shown; it has no effect on shooting.
 [*]No spent cases: firing leaves nothing to pick up.
 [*]No reloading press: everything is done by hand at a surface.
-[*]The assay kits and the laboratory analyzer are made at any surface from household and garage finds; they are never loot.
 [/list]
 
 [h2]Multiplayer[/h2]
@@ -67,7 +66,7 @@ Not supported. Mining and placing the laboratory analyzer are switched off for m
 
 [h2]Testing status[/h2]
 Seen working in game (42.20.4): geological sampling, mining with a pickaxe, depletion and exhausted deposits.
-Implemented and checked against the installed game's files, but not yet seen in game: metallurgy, case stock, every ammunition recipe, die-set loot, brass recycling, the placed laboratory analyzer.
+Implemented and checked against the installed game's files, but not yet seen in game: the recipes for the assay kits and the analyzer, metallurgy, case stock, every ammunition recipe, die-set loot, brass recycling, the placed laboratory analyzer.
 Please report anything that does not work, with the relevant lines of console.txt.
 
 [h2]Debug mode[/h2]

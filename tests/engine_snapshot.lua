@@ -950,6 +950,11 @@ return {
             type = "base:normal",
             weight = 0.3,
         },
+        ["Base.Loupe"] = {
+            tags = "base:hasmetal;base:magnifier",
+            type = "base:normal",
+            weight = 0.1,
+        },
         ["Base.MagnifyingGlass"] = {
             tags = "base:hasmetal;base:magnifier",
             type = "base:normal",
@@ -1054,6 +1059,11 @@ return {
             weight = 1,
         },
         ["Base.Tweezers"] = {
+            tags = "base:removebullet;base:removeglass;base:tweezers",
+            type = "base:normal",
+            weight = 0.1,
+        },
+        ["Base.Tweezers_Forged"] = {
             tags = "base:removebullet;base:removeglass;base:tweezers",
             type = "base:normal",
             weight = 0.1,

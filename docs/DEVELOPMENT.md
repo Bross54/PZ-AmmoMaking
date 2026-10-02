@@ -1101,7 +1101,7 @@ once, and the run used to hang).
 `check` only verifies that every fault still applies. See the header of the
 file; it must not run while anything else reads the repository.
 
-After the third pass of 2026-10-02 the list holds 141 faults, all killed.
+After the third pass of 2026-10-02 the list holds 143 faults, all killed.
 
 **The seeded runs draw from one exact generator.** `MOCK.nextRandom` is
 MINSTD (`x * 48271 mod 2^31 - 1`), whose product stays below 2^53. The
@@ -1110,8 +1110,10 @@ integers and wrong in Lua 5.1's doubles: the product loses its low bits,
 and every seed fell into the same cycle of 10,466 states, so "eight seeds"
 were one sequence entered at eight points and the mocked `ZombRand` could
 return only those values. The section *Test generator* pins the published
-check value (the 10,000th number from seed 1 is 399268537) and searches
-for a cycle. No invariant failed when the generator was replaced; one test
+check value (the 10,000th number from seed 1 is 399268537) and runs
+Brent's cycle search over 2^18 draws, which finds any cycle of up to 2^17
+states entered within the first 2^17 - 1 draws (the old generator is
+caught after some 27,000). No invariant failed when the generator was replaced; one test
 had to be given enough charcoal to no longer depend on the order of draws.
 The 32 added then: the quality tally (a contradiction trusted, quality
 created at unloading, a later release's record overwritten), calls the
@@ -1215,12 +1217,15 @@ holds them to this:
 | Rule | Why |
 |---|---|
 | No XP for the craft | a kit pays per assay; paying for the kit too would pay twice |
-| Every consumed line is one vanilla item by id, `base:normal` or paper, never a drainable | an input line of a drainable counts uses, and a fluid container is a different mechanism; neither is needed |
+| Every consumed line names vanilla items by id, `base:normal` or paper, never a drainable | an input line of a drainable counts uses, and a fluid container is a different mechanism; neither is needed |
+| A line names every vanilla item of its kind (magnifying glass or loupe; bought or forged tweezers) | vanilla asks for these by tag; a consumed line by id would refuse what the player forged |
+| Every consumed line is ordinary loot in the installed game (a list a container names, outside the junk tables) | from `tests/vanilla_snapshot.lua`; "it exists" is not "it can be found" |
+| A part with a condition carries `flags[NoBrokenItems]` (amplifier, light bulb) | as vanilla's radio recipes write them; a burnt-out bulb builds nothing |
 | No item of the mod is an ingredient | a used-up kit must not become a fresh one |
 | The parts weigh at least what the result does, and at most twice that | the analyzer is 12 kg; it is built into sheet metal around a car battery charger, not conjured from scrap |
 | Field kit at level 0; advanced kit and analyzer each need more skill, time and parts than the one before | the first kit is where the chain starts |
 | A kit that was just made starts with its full uses | it has no ModData until it is first looked at (`initializeKit`) |
-| Every item of the mod is reachable from vanilla finds, digging and mining; without the three recipes zinc, brass and every case are not | the reason they exist. Vanilla brass scrap (bin junk, broken instruments) was the only way to brass without them |
+| Every item of the mod is reachable from vanilla loot, digging and mining; without the three recipes zinc, brass and every case are not | the reason they exist. Vanilla brass scrap (junk in bins and on a tool factory's counters, broken instruments) was the only way to brass without them. That mining needs an instrument is the model's premise; the mining sections test it |
 
 The analyzer follows vanilla `MakeImprovisedFlashlight`
 (`recipes_electrical.txt`): `MakingElectrical` on a surface, category
@@ -1451,8 +1456,12 @@ session got none. It now resets on `OnInitGlobalModData`.
     the menu opens on a sample, and the made analyzer can be placed like
     the debug one;
   - no `Crafting (...)` XP line is printed for any of the three;
-  - the boot check lists the twelve new vanilla ids as present
+  - the boot check lists the new vanilla ids as present
     (`Base.MagnifyingGlass`, `Base.Tweezers`, `Base.SheetPaper2`,
     `Base.Calculator`, `Base.ElectronicsScrap`, `Base.ElectricWire`,
     `Base.Amplifier`, `Base.LightBulb`, `Base.Screws`, `Base.SheetMetal`,
-    `Base.CarBatteryCharger`, `Base.Screwdriver`).
+    `Base.CarBatteryCharger`, `Base.Screwdriver`), and `Base.Loupe` and
+    `Base.Tweezers_Forged`;
+  - a loupe or forged tweezers are accepted in place of the magnifying
+    glass and the tweezers, and a broken light bulb or amplifier is not
+    offered for the analyzer.

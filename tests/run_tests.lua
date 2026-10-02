@@ -2795,7 +2795,7 @@ do
     local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true }
     local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true }
     local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true, Electrical = true }
-    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true }
+    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true, NoBrokenItems = true }
     local destroyLines = 0
     local knownItemTags = {
         ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true,
@@ -2934,7 +2934,7 @@ do
         -- What a kit or the analyzer is put together from holds no metal
         -- the accounting follows; only those three recipes may take it.
         if recipe.step == "equipment" then
-            for _, id in ipairs({ "Base.MagnifyingGlass", "Base.Tweezers", "Base.SheetPaper2", "Base.Calculator", "Base.ElectronicsScrap",
+            for _, id in ipairs({ "Base.MagnifyingGlass", "Base.Loupe", "Base.Tweezers", "Base.Tweezers_Forged", "Base.SheetPaper2", "Base.Calculator", "Base.ElectronicsScrap",
                 "Base.ElectricWire", "Base.Amplifier", "Base.LightBulb", "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger" }) do
                 untracked[id] = true
             end
@@ -9539,19 +9539,37 @@ do
             if input.keep then
                 check(input.tags ~= nil, what .. ": a kept line is a tool tag")
             else
-                -- By id, one id per line, vanilla, never one of the mod's own
-                -- items: a used-up kit must not be an ingredient of a new one.
-                check(input.items ~= nil and #input.items == 1, what .. ": a consumed line names exactly one item")
-                local id = input.items and input.items[1] or "?"
-                eq(string.sub(id, 1, 5), "Base.", what .. ": " .. id .. " is a vanilla item")
-                local recorded = ENGINE.items[id]
-                check(type(recorded) == "table", what .. ": " .. id .. " is in the installed scripts")
-                if type(recorded) == "table" then
-                    -- Nothing that holds a fluid or counts uses: an input line
-                    -- of a drainable counts uses, not items.
-                    check(recorded.type == "base:normal" or recorded.type == "base:literature", what .. ": " .. id .. " is a plain item (" .. tostring(recorded.type) .. ")")
-                    eq(recorded.uses, nil, what .. ": " .. id .. " is not a drainable")
-                    weightIn = weightIn + recorded.weight * input.count
+                -- By id, vanilla, never one of the mod's own items: a used-up
+                -- kit must not be an ingredient of a new one. A line may name
+                -- several items of one kind; the lightest is what is counted.
+                check(input.items ~= nil and #input.items >= 1, what .. ": a consumed line names its items by id")
+                local lightest, looted = nil, false
+                for _, id in ipairs(input.items or {}) do
+                    eq(string.sub(id, 1, 5), "Base.", what .. ": " .. id .. " is a vanilla item")
+                    local recorded = ENGINE.items[id]
+                    check(type(recorded) == "table", what .. ": " .. id .. " is in the installed scripts")
+                    if type(recorded) == "table" then
+                        -- Nothing that holds a fluid or counts uses: an input line
+                        -- of a drainable counts uses, not items.
+                        check(recorded.type == "base:normal" or recorded.type == "base:literature", what .. ": " .. id .. " is a plain item (" .. tostring(recorded.type) .. ")")
+                        eq(recorded.uses, nil, what .. ": " .. id .. " is not a drainable")
+                        if lightest == nil or recorded.weight < lightest then lightest = recorded.weight end
+                    end
+                    -- It can be found: some list a container names holds it,
+                    -- outside the junk tables.
+                    for _, list in ipairs(VANILLA.loot.items[id] or {}) do
+                        if not list.junk then looted = true end
+                    end
+                end
+                check(looted, what .. ": " .. table.concat(input.items or {}, " / ") .. " is ordinary loot in the installed game")
+                weightIn = weightIn + (lightest or 0) * input.count
+            end
+            -- A part that has a condition must not be broken, as in vanilla's
+            -- radio recipes.
+            for _, id in ipairs(input.items or {}) do
+                local tags = type(ENGINE.items[id]) == "table" and ENGINE.items[id].tags or ""
+                if string.find(tags, "base:showcondition", 1, true) then
+                    check(sameList(input.flags, { "NoBrokenItems" }), what .. ": " .. id .. " shows a condition, so its line refuses a broken one")
                 end
             end
         end
@@ -9560,6 +9578,13 @@ do
         check(weightIn >= weightOut - 1e-9, what .. ": its parts weigh at least what it does (" .. weightIn .. " in, " .. weightOut .. " out)")
         check(weightIn <= 2 * weightOut, what .. ": and not more than twice that (" .. weightIn .. " in, " .. weightOut .. " out)")
     end
+
+    -- The amplifier is the scarce part, and meant to be: three tool lists.
+    -- Vanilla's other way to one is to take a speaker apart
+    -- (DismantleMiscElectronics); a speaker is in more lists, most of them
+    -- the junk tables of bins.
+    check(#VANILLA.loot.items["Base.Amplifier"] <= 5, "(the amplifier is in few lists: " .. #VANILLA.loot.items["Base.Amplifier"] .. ")")
+    check(#VANILLA.loot.items["Base.Speaker"] > #VANILLA.loot.items["Base.Amplifier"], "a speaker, which vanilla dismantles into an amplifier, is in more (" .. #VANILLA.loot.items["Base.Speaker"] .. ", junk tables included)")
 
     local G = AC_GeologySampling
     local field, advanced, analyzer = made[G.ITEMS.FieldKit], made[G.ITEMS.AdvancedFieldKit], made[AC_LaboratoryAnalyzer.ITEMS.Analyzer]
@@ -9605,29 +9630,40 @@ do
     check(AC_LaboratoryAnalyzer.CONFIG.processingHours >= 24, "the analyzer takes at least a day per sample")
     check(AC_LaboratoryAnalyzer.CONFIG.assayXP <= 10, "and pays at most 10 XP for it")
 
-    -- What can be reached without the debug menu. Vanilla items and tools
-    -- are taken as found (that they exist is checked elsewhere), except
-    -- the copper and brass ingots, which no vanilla loot list holds and no
-    -- vanilla recipe makes (LOOT_AND_RECYCLING.md, 3). Copper ore counts
-    -- as found: vanilla has its own copper deposits to break up with a
-    -- pickaxe (ISPickAxeGroundCoverItem), apart from the mod's mining. A
-    -- sample is dug with a shovel. Zinc ore exists only in the mod: it is
-    -- mined, and mining needs an assayed sample, so it needs an instrument.
-    -- Everything else has to come out of a recipe whose every consumed
-    -- line can be paid. Skill is left out: the simulated career covers
-    -- the levels.
+    -- What can be reached without the debug menu, from the recipe list and
+    -- the installed game's loot tables (tests/vanilla_snapshot.lua).
     --
-    -- Vanilla brass scrap is the one way to brass without zinc: bin junk
-    -- at a weight of 0.05 and a broken trumpet or saxophone, ten to an
-    -- ingot. "scavenged" says whether that trace counts.
+    --   * A vanilla item that a recipe CONSUMES counts as found only when a
+    --     list some container names holds it. In a junk table only, it is a
+    --     trace, and counts when "scavenged" says so. Not in the snapshot
+    --     and not explained below: the test fails, nobody checked.
+    --   * Kept lines and tag lines are vanilla tools and fuel.
+    --   * A sample is dug with a shovel.
+    --   * Zinc ore is the mod's own and is mined, and mining needs an
+    --     assayed sample. That is a premise of this model, not something it
+    --     proves: the mining sections hold the mod to it.
+    --   * Skill is left out: the simulated career covers the levels.
     local zincOre = AC_Mining.getOreItemType("zinc")
-    local NOT_LOOT = { ["Base.CopperIngot"] = true, ["Base.BrassIngot"] = true }
+    local LOOT = VANILLA.loot.items
+    -- Consumed vanilla items that come from somewhere other than a loot list.
+    local OTHERWISE = {}
+    for _, id in ipairs(AC_Calibres.WAD.items) do OTHERWISE[id] = "rags, ripped from clothing" end
+    local unchecked = {}
     local function reachable(recipes, scavenged)
         local have = { [G.ITEMS.Sample] = true }
         local function has(id)
             if have[id] then return true end
-            if id == "Base.BrassScrap" then return scavenged == true end
-            return string.sub(id, 1, 5) == "Base." and not NOT_LOOT[id]
+            if string.sub(id, 1, 5) ~= "Base." then return false end
+            if OTHERWISE[id] then return true end
+            local lists = LOOT[id]
+            if lists == nil then
+                unchecked[id] = true
+                return false
+            end
+            for _, list in ipairs(lists) do
+                if scavenged or not list.junk then return true end
+            end
+            return false
         end
         local changed = true
         while changed do
@@ -9638,17 +9674,16 @@ do
             for _, recipe in ipairs(recipes) do
                 local payable = true
                 for _, input in ipairs(recipe.inputs) do
-                    -- A line of items is paid by any one of them; a tag line
-                    -- names vanilla tools and materials.
-                    if input.items then
+                    -- A line of items is paid by any one of them.
+                    if input.items and not input.keep then
                         local any = false
-                        for _, id in ipairs(input.items) do any = any or has(id) end
+                        for _, id in ipairs(input.items) do any = has(id) or any end
                         payable = payable and any
                     end
                 end
                 if payable then
                     for _, output in ipairs(recipe.outputs) do
-                        if not has(output.item) then have[output.item], changed = true, true end
+                        if not have[output.item] then have[output.item], changed = true, true end
                     end
                 end
             end
@@ -9656,8 +9691,12 @@ do
         return have
     end
 
-    eq(string.sub(zincOre, 1, 12), "AmmoMaking.Z", "zinc ore is the mod's own item")
+    eq(string.sub(zincOre, 1, 11), "AmmoMaking.", "zinc ore is the mod's own item")
     local have = reachable(AC_Materials.RECIPES, false)
+    local names = {}
+    for id in pairs(unchecked) do table.insert(names, id) end
+    table.sort(names)
+    eq(#names, 0, "every vanilla item a recipe consumes has a recorded source: " .. table.concat(names, ", "))
     local unreachable = {}
     for id in pairs(declaredItems) do
         if not have[id] and id ~= "AmmoMaking.TestCartridge" then table.insert(unreachable, id) end
@@ -9665,35 +9704,45 @@ do
     table.sort(unreachable)
     eq(#unreachable, 0, "every item of the mod can be reached without the debug menu: " .. table.concat(unreachable, ", "))
     eq(have["AmmoMaking.TestCartridge"], nil, "(the prototype cartridge cannot, and is not meant to)")
+    eq(have["Base.BrassIngot"], true, "brass is cast")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        eq(have[calibre.round], true, "a " .. calibre.id .. " round can be assembled")
+    end
+    -- The ingots are in no list at all: they exist only as what is cast.
+    eq(#LOOT["Base.BrassIngot"] + #LOOT["Base.CopperIngot"], 0, "no vanilla list holds a brass or copper ingot")
+    -- Brass scrap is a trace: junk tables only.
+    local scrapLists, scrapJunk = 0, 0
+    for _, list in ipairs(LOOT["Base.BrassScrap"]) do
+        scrapLists = scrapLists + 1
+        if list.junk then scrapJunk = scrapJunk + 1 end
+    end
+    check(scrapLists >= 1 and scrapJunk == scrapLists, "vanilla brass scrap is only in junk tables (" .. scrapLists .. " lists: bins, and a tool factory's counters)")
 
-    eq(have["Base.BrassIngot"], true, "brass is cast from mined ore")
-
-    -- And what the three recipes are for: without them there is no
-    -- instrument, so no zinc, no brass and not one case.
+    -- And what the three recipes are for. Take them away and, by the
+    -- premise, there is no zinc ore; what the recipe list then shows is
+    -- that nothing else gets round it: no zinc, no brass, not one case.
     local without = {}
     for _, recipe in ipairs(AC_Materials.RECIPES) do
         if recipe.step ~= "equipment" then table.insert(without, recipe) end
     end
     local before = reachable(without, false)
-    eq(before[zincOre], nil, "without the equipment recipes zinc ore cannot be mined")
-    eq(before["AmmoMaking.ZincIngot"], nil, "so no zinc is cast")
-    eq(before["Base.CopperIngot"], true, "(copper still is, from vanilla's own deposits)")
+    eq(before["AmmoMaking.ZincIngot"], nil, "without the equipment recipes no zinc is cast")
+    eq(before["Base.CopperIngot"], true, "(copper is: copper scrap is ordinary loot)")
     eq(before["Base.BrassIngot"], nil, "and no brass")
     for _, calibre in ipairs(AC_Calibres.LIST) do
         eq(before[calibre.case], nil, "and no " .. calibre.id .. " case is formed")
         eq(have[calibre.case], true, "with them, a " .. calibre.id .. " case can be")
     end
-    -- The trace of scavenged brass scrap was the only way in, and it never
-    -- reached zinc: stated here so the claim above is not read as more
-    -- than it is.
+    -- The trace of scavenged brass scrap was the only way to brass, stated
+    -- here so the claim above is not read as more than it is.
     local trace = reachable(without, true)
     eq(trace["Base.BrassIngot"], true, "scavenged brass scrap can be recast without any instrument")
-    eq(trace[zincOre], nil, "but it mines nothing")
-    -- One instrument is enough; the field kit alone opens the chain.
+    eq(trace["AmmoMaking.ZincIngot"], nil, "but it is no zinc")
+    -- One instrument is enough: the field kit alone opens the chain.
     local fieldOnly = {}
     for _, recipe in ipairs(without) do table.insert(fieldOnly, recipe) end
     table.insert(fieldOnly, field)
-    eq(reachable(fieldOnly, false)[zincOre], true, "the field kit alone is enough to mine")
+    eq(reachable(fieldOnly, false)["Base.BrassIngot"], true, "the field kit alone is enough to get to brass")
 
     -- The debug parts kit follows the recipes: one craft of each, exactly.
     MOCK.debug = true
@@ -9981,17 +10030,24 @@ section("Test generator: seeded runs are exact arithmetic, not a short loop")
 do
     -- Every seeded run above draws from MOCK.nextRandom. It is MINSTD, and
     -- must be it exactly: the published check value is the 10,000th number
-    -- from seed 1. A generator that loses bits in Lua's doubles fails this,
-    -- and also falls into a short cycle, which the second check looks for
-    -- directly (Brent's cycle search, bounded).
+    -- from seed 1. A generator that loses bits in Lua's doubles fails this.
     local state = 1
     for _ = 1, 10000 do state = MOCK.nextRandom(state) end
     eq(state, 399268537, "the 10,000th MINSTD number from seed 1")
+    eq(MOCK.nextRandom(2147483646), 2147483647 - 48271, "the largest state maps where exact arithmetic puts it")
+
+    -- And it does not fall into a short loop, which is what the generator
+    -- before it did (10,466 states, from every seed). Brent's search over
+    -- 2^18 draws. What that proves, exactly: the hare is compared with a
+    -- point it left at draw 2^17 - 1, so any cycle of up to 2^17 states
+    -- that is entered within the first 2^17 - 1 draws is found. No run of
+    -- the suite draws anywhere near as many numbers from one seed.
+    local DRAWS = 262144
     for _, seed in ipairs({ 1, 7, 42, 1993, 12345, 31337, 4220420, 20261002, 987654321 }) do
         local power, length = 1, 1
         local tortoise, hare = seed, MOCK.nextRandom(seed)
         local steps = 0
-        while tortoise ~= hare and steps < 200000 do
+        while tortoise ~= hare and steps < DRAWS do
             if power == length then
                 tortoise, power, length = hare, power * 2, 0
             end
@@ -9999,8 +10055,7 @@ do
             length = length + 1
             steps = steps + 1
         end
-        check(tortoise ~= hare, "seed " .. seed .. ": no cycle within 200,000 draws")
-        check(hare > 0 and hare < 2147483647 and hare == math.floor(hare), "seed " .. seed .. ": the state stays a whole number in range")
+        check(tortoise ~= hare, "seed " .. seed .. ": no cycle of up to 131,072 states within the first 131,071 draws")
     end
 end
 

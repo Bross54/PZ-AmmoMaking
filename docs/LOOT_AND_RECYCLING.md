@@ -184,7 +184,7 @@ lists only):
 | `Base.SteelBarQuarter` | 7 workshop and factory lists |
 | `Base.CapGunCap`, `Base.CapGunCapBox` (100 caps) | only `WildWestSheriffDesk` / `WildWestSheriffLocker` |
 | `Base.GunPowder` | no loot list; foraging (`Trash` category) and `GatherGunpowder` |
-| `Base.BrassScrap` | no live list; bin junk at 0.05 and a broken saxophone or trumpet (`OnBreak.BrassScrap`) |
+| `Base.BrassScrap` | junk tables only: bins at 0.05 and the counters of a tool factory at 2 (`ToolFactoryTools`), and a broken saxophone or trumpet (`OnBreak.BrassScrap`). A list's junk table is rolled like its items (`ItemPickerJava.rollProceduralItemInternal`) |
 | `Base.BrassIngot`, `Base.CopperIngot`, `Base.CopperOre` | no loot list |
 
 Two consequences. Toy caps are a curiosity (one Wild West location), so

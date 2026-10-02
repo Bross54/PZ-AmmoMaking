@@ -19,9 +19,10 @@ Three new recipes, one loot change and one fix. Otherwise foundations,
 tooling and hardening.
 
 - **The assay kits and the laboratory analyzer can be made.** Three
-  recipes at any surface, from vanilla items (magnifying glass, tweezers,
-  paper; a calculator and electronics scrap; sheet metal, a car battery
-  charger and electronics for the analyzer). Until now all three came only
+  recipes at any surface, from vanilla items (a magnifying glass or loupe,
+  tweezers, paper; a calculator and electronics scrap; sheet metal, a car
+  battery charger and electronics for the analyzer). The two kits weigh
+  what their parts do: 0.7 and 1.2 instead of 1.0 and 1.5. Until now all three came only
   from the debug menu, and with them mining, which needs an assayed
   sample: no zinc, so no brass beyond the trace of brass scrap vanilla
   leaves in bins. No XP for making them. Not crafted in game yet.

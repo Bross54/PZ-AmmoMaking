@@ -110,7 +110,11 @@ AC_Compat.REQUIRED_ITEMS = {
     -- consume (AC_Materials.EQUIPMENT_RECIPES).
     "Base.MagnifyingGlass",
 
+    "Base.Loupe",
+
     "Base.Tweezers",
+
+    "Base.Tweezers_Forged",
 
     "Base.SheetPaper2",
 

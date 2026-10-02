@@ -195,9 +195,12 @@ MUTANTS = [
     (SHARED + "AC_Materials.lua", "    AC_Materials.EQUIPMENT_RECIPES\n)\ndo\n\n    table.insert(\n        AC_Materials.RECIPES,\n        recipe\n    )\nend\n", "    {}\n)\ndo\n\n    table.insert(\n        AC_Materials.RECIPES,\n        recipe\n    )\nend\n", "the equipment recipes never join the recipe list"),
     (SHARED + "AC_Compat.lua", "    \"Base.CarBatteryCharger\",\n", "", "an ingredient of the analyzer is not probed at game start"),
 
-    (SHARED + "AC_Materials.lua", "    { count = 1, items = { \"Base.Tweezers\" } },", "    { count = 1, items = { \"AmmoMaking.LaboratoryAssayAnalyzer\" } },", "every kit needs an analyzer, and nothing makes the first instrument cheaply"),
+    (SHARED + "AC_Materials.lua", "    { count = 1, items = { \"Base.Tweezers\", \"Base.Tweezers_Forged\" } },", "    { count = 1, items = { \"AmmoMaking.LaboratoryAssayAnalyzer\" } },", "every kit needs an analyzer, and nothing makes the first instrument cheaply"),
 
     (CLIENT + "AC_GeologyDebug.lua", "                entry[2] =\n                    entry[2] + input.count\n", "                entry[2] =\n                    entry[2] + 1\n", "the debug parts kit holds one of each part, not what the recipes take"),
+
+    (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.Amplifier\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.HomeAlarm\" } },", "the analyzer takes a part that is not probed and whose availability nobody recorded"),
+    (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.LightBulb\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.LightBulb\" } },", "a burnt-out bulb builds an analyzer"),
 
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),

@@ -78,17 +78,26 @@ local function listFacts(name)
 end
 
 -- Lists a container names that hold the item, with the weight (the first
--- when it is listed more than once).
+-- when it is listed more than once). A list's "junk" table counts too, and
+-- is marked: the engine parses it (ItemPickerJava.ExtractContainersFromLua)
+-- and rolls it after the list's own items (rollProceduralItemInternal).
 local function liveListsWith(itemType)
     local found = {}
     local bare = string.gsub(itemType, "^Base%.", "")
     for _, name in ipairs(names) do
         if references[name] then
-            local items = ProceduralDistributions.list[name].items
-            for index = 1, #items, 2 do
-                if items[index] == bare or items[index] == itemType then
-                    table.insert(found, { list = name, weight = items[index + 1] })
-                    break
+            local list = ProceduralDistributions.list[name]
+            local seen = false
+            for _, part in ipairs({ { list.items, false }, { type(list.junk) == "table" and list.junk.items or nil, true } }) do
+                local items = part[1]
+                if items and not seen then
+                    for index = 1, #items, 2 do
+                        if items[index] == bare or items[index] == itemType then
+                            table.insert(found, { list = name, weight = items[index + 1], junk = part[2] })
+                            seen = true
+                            break
+                        end
+                    end
                 end
             end
         end
@@ -142,6 +151,10 @@ local RAW_INPUTS = {
     "Base.BrassScrap", "Base.CopperScrap", "Base.GunPowder", "Base.CapGunCap", "Base.CapGunCapBox",
     "Base.Matches", "Base.Matchbox", "Base.Fertilizer", "Base.Charcoal", "Base.SteelBarQuarter",
     "Base.BrassIngot", "Base.CopperIngot", "Base.CopperOre",
+    -- What the assay kits and the analyzer are made from.
+    "Base.MagnifyingGlass", "Base.Loupe", "Base.Tweezers", "Base.Tweezers_Forged", "Base.SheetPaper2",
+    "Base.Calculator", "Base.ElectronicsScrap", "Base.ElectricWire", "Base.Amplifier", "Base.LightBulb",
+    "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger", "Base.Speaker",
 }
 
 ------------------------------------------------
@@ -285,7 +298,7 @@ emit("        items = {")
 for _, itemType in ipairs(RAW_INPUTS) do
     local parts = {}
     for _, found in ipairs(liveListsWith(itemType)) do
-        table.insert(parts, "{ list = " .. quote(found.list) .. ", weight = " .. number(found.weight) .. " }")
+        table.insert(parts, "{ list = " .. quote(found.list) .. ", weight = " .. number(found.weight) .. (found.junk and ", junk = true" or "") .. " }")
     end
     emit("            [" .. quote(itemType) .. "] = { " .. table.concat(parts, ", ") .. " },")
 end

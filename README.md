@@ -149,15 +149,20 @@ Geological samples can be analyzed using several levels of equipment.
 
 ## Making the equipment
 
-All three are put together at any surface from things found in houses,
-offices and garages. None of it is found ready-made, and making it earns
-no Ammo Making XP: a kit pays per assay.
+All three are put together at any surface from vanilla items. None of
+them is found ready-made, and making one earns no Ammo Making XP: a kit
+pays per assay.
 
 | Equipment | Ammo Making level | Takes |
 |---|---|---|
-| Field Assay Kit (20 assays) | 0 | a magnifying glass, tweezers, 5 sheets of paper |
+| Field Assay Kit (20 assays) | 0 | a magnifying glass or a loupe, tweezers (bought or forged), 5 sheets of paper |
 | Advanced Field Assay Kit (10 assays) | 1 | the same, a calculator and 2 electronics scrap |
 | Laboratory Assay Analyzer | 2 | 4 sheet metal, a car battery charger, 8 electronics scrap, 3 electric wire, an amplifier, a light bulb, 6 screws; a screwdriver is kept |
+
+The kit parts are ordinary household and office loot. The analyzer's
+amplifier is the scarce part: electricians' and engineers' tool stores,
+or a speaker taken apart with a screwdriver (a vanilla recipe). The
+amplifier and the bulb must not be broken.
 
 These recipes are new and have not been crafted in the game yet; the
 amounts are a first guess and easy to change (`AC_Materials.EQUIPMENT_RECIPES`).

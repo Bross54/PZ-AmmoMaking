@@ -191,8 +191,8 @@ module Base
         OnCreate = AC_Materials.onAssembleFieldAssayKit,
         inputs
         {
-            item 1 [Base.MagnifyingGlass],
-            item 1 [Base.Tweezers],
+            item 1 [Base.MagnifyingGlass;Base.Loupe],
+            item 1 [Base.Tweezers;Base.Tweezers_Forged],
             item 5 [Base.SheetPaper2],
         }
         outputs
@@ -210,8 +210,8 @@ module Base
         OnCreate = AC_Materials.onAssembleAdvancedFieldAssayKit,
         inputs
         {
-            item 1 [Base.MagnifyingGlass],
-            item 1 [Base.Tweezers],
+            item 1 [Base.MagnifyingGlass;Base.Loupe],
+            item 1 [Base.Tweezers;Base.Tweezers_Forged],
             item 5 [Base.SheetPaper2],
             item 1 [Base.Calculator],
             item 2 [Base.ElectronicsScrap],
@@ -236,8 +236,8 @@ module Base
             item 1 [Base.CarBatteryCharger],
             item 8 [Base.ElectronicsScrap],
             item 3 [Base.ElectricWire],
-            item 1 [Base.Amplifier],
-            item 1 [Base.LightBulb],
+            item 1 [Base.Amplifier] flags[NoBrokenItems],
+            item 1 [Base.LightBulb] flags[NoBrokenItems],
             item 6 [Base.Screws],
         }
         outputs

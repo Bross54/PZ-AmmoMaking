@@ -438,8 +438,9 @@ AC_Materials.RECIPES = {
 -- needs an assayed sample and zinc comes only from mining,
 -- so without a way to make these there is no zinc and no
 -- brass outside the debug menu. (The one way round is
--- vanilla's trace of brass scrap, bin junk and broken
--- instruments, recast ten to an ingot.)
+-- vanilla's trace of brass scrap: junk in bins and on a
+-- tool factory's counters, a broken trumpet or saxophone;
+-- recast ten to an ingot.)
 --
 -- Every amount below is a first guess to be tuned: none
 -- of it has been crafted in game. What is fixed is the
@@ -450,7 +451,14 @@ AC_Materials.RECIPES = {
 --     electronics scrap, wire, light bulb, amplifier,
 --     screws, sheet metal) or that are plain base:normal
 --     items (magnifying glass, tweezers, calculator, car
---     battery charger). No fluid container, no drainable;
+--     battery charger). No fluid container, no drainable.
+--     A line names every vanilla item of its kind: the
+--     loupe beside the magnifying glass (both carry
+--     base:magnifier) and forged tweezers beside bought
+--     ones, so what a player forged is not refused;
+--   * a part with a condition must not be broken: the
+--     amplifier and bulb lines carry flags[NoBrokenItems],
+--     as in vanilla's radio recipes (recipes_radio.txt);
 --   * what goes in weighs at least what comes out: the
 --     analyzer is a 12 kg machine, so it is built into a
 --     sheet metal cabinet around a car battery charger
@@ -473,8 +481,8 @@ AC_Materials.RECIPES = {
 ------------------------------------------------
 
 local KIT_OPTICS = {
-    { count = 1, items = { "Base.MagnifyingGlass" } },
-    { count = 1, items = { "Base.Tweezers" } },
+    { count = 1, items = { "Base.MagnifyingGlass", "Base.Loupe" } },
+    { count = 1, items = { "Base.Tweezers", "Base.Tweezers_Forged" } },
     { count = 5, items = { "Base.SheetPaper2" } },
 }
 
@@ -578,8 +586,8 @@ AC_Materials.EQUIPMENT_RECIPES = {
             { count = 1, items = { "Base.CarBatteryCharger" } },
             { count = 8, items = { "Base.ElectronicsScrap" } },
             { count = 3, items = { "Base.ElectricWire" } },
-            { count = 1, items = { "Base.Amplifier" } },
-            { count = 1, items = { "Base.LightBulb" } },
+            { count = 1, items = { "Base.Amplifier" }, flags = { "NoBrokenItems" } },
+            { count = 1, items = { "Base.LightBulb" }, flags = { "NoBrokenItems" } },
             { count = 6, items = { "Base.Screws" } },
         },
 

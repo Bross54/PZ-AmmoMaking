@@ -447,7 +447,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Icon = FirstAid_Camping,
-        Weight = 1.0,
+        Weight = 0.7,
     }
 
     item AdvancedFieldAssayKit
@@ -456,7 +456,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Icon = MakeupCase_Professional,
-        Weight = 1.5,
+        Weight = 1.2,
     }
 
     item LaboratoryAssayAnalyzer

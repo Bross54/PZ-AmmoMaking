@@ -393,8 +393,8 @@ XP economy over that career:
 - Assay XP when kits can be made. A sample costs nothing but digging, so
   what bounds assay XP is the instrument. A field kit is 20 assays of 3 XP
   and an advanced kit 10 of 6: 60 XP each, and each kit consumes a
-  magnifying glass and tweezers, which no recipe makes. Making a kit pays
-  nothing. The analyzer never runs out, and is bounded by time instead:
+  magnifying glass or a loupe, which no recipe makes (tweezers can be
+  forged). Making a kit pays nothing. The analyzer never runs out, and is bounded by time instead:
   one sample at a time, 24 powered hours, 10 XP. Nothing here is free and
   repeatable in the way charcoal is.
 - Cheap repeatable crafts: punching cups (1 XP per sheet) and swaging

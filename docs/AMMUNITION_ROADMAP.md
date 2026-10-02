@@ -1,6 +1,6 @@
 # Ammunition roadmap
 
-Where the mod stands after the second pass of 2026-10-02, and what comes
+Where the mod stands after the third pass of 2026-10-02, and what comes
 next. Everything marked *implemented* is Lua and data checked offline only;
 what the running game has to confirm is collected in each document's
 `REQUIRES FUTURE IN-GAME VERIFICATION` section and summarised in
@@ -11,6 +11,7 @@ what the running game has to confirm is collected in each document's
 | Area | Status | Where |
 |---|---|---|
 | Geology, sampling, assay, analyzer, mining | implemented; sampling and mining seen working in game | `DEVELOPMENT.md` |
+| Assay kits and analyzer | **three recipes (third pass)**; before that, debug menu only, which locked zinc and so brass | `DEVELOPMENT.md`, *Item and recipe audit* |
 | Metallurgy, case stock | implemented | `METALLURGY_DESIGN.md` |
 | Nine calibres: cases, bullets, primers, powder, assembly | implemented | `AMMUNITION_DESIGN.md` |
 | Die sets as rare loot | implemented; **availability now worked out per room, and one outlier removed** | `LOOT_AND_RECYCLING.md` 1 |
