@@ -22,9 +22,9 @@ tooling and hardening.
   recipes at any surface, from vanilla items (magnifying glass, tweezers,
   paper; a calculator and electronics scrap; sheet metal, a car battery
   charger and electronics for the analyzer). Until now all three came only
-  from the debug menu, and with them everything after: mining needs an
-  assayed sample, and zinc comes only from mining. No XP for making them.
-  Not crafted in game yet.
+  from the debug menu, and with them mining, which needs an assayed
+  sample: no zinc, so no brass beyond the trace of brass scrap vanilla
+  leaves in bins. No XP for making them. Not crafted in game yet.
 
 - **Quality tally**: the arithmetic for carrying ammunition quality in a
   magazine or firearm (`AC_QualityTally`), as pure functions that nothing

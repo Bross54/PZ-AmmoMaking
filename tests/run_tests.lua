@@ -9603,6 +9603,96 @@ do
     -- sample at a time, a day of power each.
     check(AC_LaboratoryAnalyzer.CONFIG.processingHours >= 24, "the analyzer takes at least a day per sample")
     check(AC_LaboratoryAnalyzer.CONFIG.assayXP <= 10, "and pays at most 10 XP for it")
+
+    -- What can be reached without the debug menu. Vanilla items and tools
+    -- are taken as found (that they exist is checked elsewhere), except
+    -- the copper and brass ingots, which no vanilla loot list holds and no
+    -- vanilla recipe makes (LOOT_AND_RECYCLING.md, 3). Copper ore counts
+    -- as found: vanilla has its own copper deposits to break up with a
+    -- pickaxe (ISPickAxeGroundCoverItem), apart from the mod's mining. A
+    -- sample is dug with a shovel. Zinc ore exists only in the mod: it is
+    -- mined, and mining needs an assayed sample, so it needs an instrument.
+    -- Everything else has to come out of a recipe whose every consumed
+    -- line can be paid. Skill is left out: the simulated career covers
+    -- the levels.
+    --
+    -- Vanilla brass scrap is the one way to brass without zinc: bin junk
+    -- at a weight of 0.05 and a broken trumpet or saxophone, ten to an
+    -- ingot. "scavenged" says whether that trace counts.
+    local zincOre = AC_Mining.getOreItemType("zinc")
+    local NOT_LOOT = { ["Base.CopperIngot"] = true, ["Base.BrassIngot"] = true }
+    local function reachable(recipes, scavenged)
+        local have = { [G.ITEMS.Sample] = true }
+        local function has(id)
+            if have[id] then return true end
+            if id == "Base.BrassScrap" then return scavenged == true end
+            return string.sub(id, 1, 5) == "Base." and not NOT_LOOT[id]
+        end
+        local changed = true
+        while changed do
+            changed = false
+            if not have[zincOre] and (have[G.ITEMS.FieldKit] or have[G.ITEMS.AdvancedFieldKit] or have[AC_LaboratoryAnalyzer.ITEMS.Analyzer]) then
+                have[zincOre], changed = true, true
+            end
+            for _, recipe in ipairs(recipes) do
+                local payable = true
+                for _, input in ipairs(recipe.inputs) do
+                    -- A line of items is paid by any one of them; a tag line
+                    -- names vanilla tools and materials.
+                    if input.items then
+                        local any = false
+                        for _, id in ipairs(input.items) do any = any or has(id) end
+                        payable = payable and any
+                    end
+                end
+                if payable then
+                    for _, output in ipairs(recipe.outputs) do
+                        if not has(output.item) then have[output.item], changed = true, true end
+                    end
+                end
+            end
+        end
+        return have
+    end
+
+    eq(string.sub(zincOre, 1, 12), "AmmoMaking.Z", "zinc ore is the mod's own item")
+    local have = reachable(AC_Materials.RECIPES, false)
+    local unreachable = {}
+    for id in pairs(declaredItems) do
+        if not have[id] and id ~= "AmmoMaking.TestCartridge" then table.insert(unreachable, id) end
+    end
+    table.sort(unreachable)
+    eq(#unreachable, 0, "every item of the mod can be reached without the debug menu: " .. table.concat(unreachable, ", "))
+    eq(have["AmmoMaking.TestCartridge"], nil, "(the prototype cartridge cannot, and is not meant to)")
+
+    eq(have["Base.BrassIngot"], true, "brass is cast from mined ore")
+
+    -- And what the three recipes are for: without them there is no
+    -- instrument, so no zinc, no brass and not one case.
+    local without = {}
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        if recipe.step ~= "equipment" then table.insert(without, recipe) end
+    end
+    local before = reachable(without, false)
+    eq(before[zincOre], nil, "without the equipment recipes zinc ore cannot be mined")
+    eq(before["AmmoMaking.ZincIngot"], nil, "so no zinc is cast")
+    eq(before["Base.CopperIngot"], true, "(copper still is, from vanilla's own deposits)")
+    eq(before["Base.BrassIngot"], nil, "and no brass")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        eq(before[calibre.case], nil, "and no " .. calibre.id .. " case is formed")
+        eq(have[calibre.case], true, "with them, a " .. calibre.id .. " case can be")
+    end
+    -- The trace of scavenged brass scrap was the only way in, and it never
+    -- reached zinc: stated here so the claim above is not read as more
+    -- than it is.
+    local trace = reachable(without, true)
+    eq(trace["Base.BrassIngot"], true, "scavenged brass scrap can be recast without any instrument")
+    eq(trace[zincOre], nil, "but it mines nothing")
+    -- One instrument is enough; the field kit alone opens the chain.
+    local fieldOnly = {}
+    for _, recipe in ipairs(without) do table.insert(fieldOnly, recipe) end
+    table.insert(fieldOnly, field)
+    eq(reachable(fieldOnly, false)[zincOre], true, "the field kit alone is enough to mine")
 end
 
 ------------------------------------------------

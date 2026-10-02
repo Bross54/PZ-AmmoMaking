@@ -1097,7 +1097,7 @@ once, and the run used to hang).
 `check` only verifies that every fault still applies. See the header of the
 file; it must not run while anything else reads the repository.
 
-After the third pass of 2026-10-02 the list holds 139 faults, all killed.
+After the third pass of 2026-10-02 the list holds 140 faults, all killed.
 
 **The seeded runs draw from one exact generator.** `MOCK.nextRandom` is
 MINSTD (`x * 48271 mod 2^31 - 1`), whose product stays below 2^53. The
@@ -1216,6 +1216,7 @@ holds them to this:
 | The parts weigh at least what the result does, and at most twice that | the analyzer is 12 kg; it is built into sheet metal around a car battery charger, not conjured from scrap |
 | Field kit at level 0; advanced kit and analyzer each need more skill, time and parts than the one before | the first kit is where the chain starts |
 | A kit that was just made starts with its full uses | it has no ModData until it is first looked at (`initializeKit`) |
+| Every item of the mod is reachable from vanilla finds, digging and mining; without the three recipes zinc, brass and every case are not | the reason they exist. Vanilla brass scrap (bin junk, broken instruments) was the only way to brass without them |
 
 The analyzer follows vanilla `MakeImprovisedFlashlight`
 (`recipes_electrical.txt`): `MakingElectrical` on a surface, category

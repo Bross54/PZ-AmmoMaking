@@ -432,8 +432,10 @@ AC_Materials.RECIPES = {
 --
 -- The two assay kits and the laboratory analyzer. Mining
 -- needs an assayed sample and zinc comes only from mining,
--- so without a way to make these the whole chain is open
--- only from the debug menu.
+-- so without a way to make these there is no zinc and no
+-- brass outside the debug menu. (The one way round is
+-- vanilla's trace of brass scrap, bin junk and broken
+-- instruments, recast ten to an ingot.)
 --
 -- Every amount below is a first guess to be tuned: none
 -- of it has been crafted in game. What is fixed is the
