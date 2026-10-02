@@ -217,6 +217,10 @@ tents). One mod claims hundreds of unclaimed vanilla sprites for decorative
 buildables, never for a station. No installed mod claims any candidate
 above.
 
+The survey was repeated on 2026-10-02 against the same build with the same
+result; `tools/pz_compat.py` now reports, after any game update, a tile the
+mod uses that has become claimed by an entity or turned into a moveable.
+
 **Verdict: no safe placeholder sprite can be proven from the installed
 files.** A vanilla sprite fails on point 1 (map side effects, unverifiable
 offline) and point 3 (a hard failure when someone else claims it). The only
@@ -284,6 +288,36 @@ recipes run", which is precisely what a `CraftBench` entity is.
 | Batch crafting | vanilla's | vanilla's | vanilla's |
 | Upgrade path | a second, better item | better stations as further tags, as the forges do (`PrimitiveForge;Forge`) | none of its own |
 | Feels like a press | no | yes | partly |
+
+### 4.1 A portable press in the meantime? Evaluated, and rejected
+
+With the placed press waiting for art, the obvious shortcut is option A as
+an intermediate tier: `AmmoMaking.PortableReloadingPress`, a kept tool in
+faster `AnySurfaceCraft` recipes that take the same die sets. Three ways to
+go, compared:
+
+| | 1. Hand loading only until the placed press exists | 2. A portable press item now | 3. A press kit: a tool now, the build ingredient of the station later |
+|---|---|---|---|
+| Gameplay now | none new | 15 % to 22 % of a batch's station time saved (`AMMUNITION_DESIGN.md` 9.1) | the same |
+| Code | nothing | small: the generator exists; the bench tag becomes `AnySurfaceCraft` and one kept line is added | the same, plus the station's build recipe later |
+| Recipe list | 51 manufacturing recipes | **78**: every case, projectile and assembly step twice in the same surface list, told apart only by a suffix | the same until the station exists, then back to one list per place |
+| What the item is afterwards | – | either a second, permanent tier (27 recipes for ever, and a number to balance against the station) or an item whose recipes disappear | an item that stops working as a tool the day the station arrives: a tool the player has been using becomes a crate of parts |
+| Migration | none | items in saves outlive their recipes unless the tier is kept | no orphan item, but a change of meaning mid-save |
+| Unverified engine behaviour added | none | a heavy kept tool: whether it must be carried or may stand nearby, and how 27 more surface recipes read in the crafting window | the same |
+| Art | none | an icon (a vanilla one can stand in) | the same |
+
+**Decision: 1.** The time saved is real but modest, and the press's only
+advantage is time. Against that: the surface crafting list grows by half
+with near-duplicates, the item's meaning has to change or a second tier has
+to be carried for ever, and 27 more recipes would be added before a single
+ammunition recipe has been seen in game. That is transitional clutter for a
+convenience.
+
+It stays cheap to reverse. Everything a tool-based press needs is already
+generated and tested (`buildPressRecipes`: same material, same die set,
+same XP, the hammer removed); turning it into option 2 is the bench tag and
+one kept input line. If the placed station fails its in-game checks, that
+is the fallback, as section 5 already says.
 
 ## 5. Decision
 
@@ -470,6 +504,33 @@ recipe's and collides with nothing.
 Later, and independent of the above: a `toolBonus` for cases formed at the
 press (`AC_CaseQuality.onCasesFormed` already takes one; a press recipe would
 name a second effect), and better presses as further tags.
+
+### 7.1 Art specification
+
+For whoever draws the press. Every figure is read from the installed
+42.20.4 files; nothing here has been seen in game with a mod tile.
+
+| | Specification | Source |
+|---|---|---|
+| Footprint | **one tile**. The vanilla Hand Press and Key Duplicator are one tile per face; the two-tile vanilla benches are the wrong shape for a bench-top press | FILE entity scripts, `newtiledefinitions.tiles.txt` |
+| Orientations | **two faces: S and E**, as vanilla's `Hand_Press` (`crafted_01_72` S, `crafted_01_73` E). N and W are optional; the entity script takes `face N` / `face W` if they are drawn | FILE `entity_handpress.txt` |
+| Canvas per face | **128 x 256 px** at the game's 2x scale (every tile in `Tiles2x.pack` has that full size); a 64 x 128 version for the 1x pack is optional | `Tiles2x.pack` entries, `fullW`, `fullH` |
+| The drawing inside it | bottom-anchored on the floor diamond. Vanilla's hand press occupies 110 x 154 px at offset (4, 94) for S and 103 x 141 at (18, 107) for E; a reloading press on a stand should fill about the same box | `Tiles2x.pack` entry of `crafted_01_72`, `_73` |
+| Projection and light | the game's 2:1 isometric projection; the floor diamond of a tile is 128 x 64 px at 2x; light from the upper left, as vanilla furniture | vanilla tiles |
+| Style | a single-stage bench press on a short wooden stand: cast frame, a long lever, a ram, a die in the top. Muted colours and a dark outline, to sit beside `crafted_01` (the hand-made workshop set) | – |
+| Interaction point | none to define: a `CraftBench` entity is used from any adjacent square (`ISContextEntity`) | FILE |
+| Tileset | one sheet, **8 columns**, as every vanilla sheet (`size = 8,N`); name `ammomaking_press_01` | FILE `.tiles.txt`: `size = 8,16` |
+| Sprite names | `<tileset>_<index>`, index counting across then down from 0: `ammomaking_press_01_0` (S), `ammomaking_press_01_1` (E) | FILE |
+| Tile properties | as vanilla's Hand Press: `BlocksPlacement`, `solidtrans`, `Facing = S` / `E`, `CustomName = Press`, `GroupName = Reloading`, `IsMoveAble`, `PickUpWeight = 400` (40 weight; vanilla's own is 400). `solidtrans` blocks movement and lets light and sight through | FILE `// crafted_01_72` |
+| Surface | none (`IsTable` / `Surface` not set): nothing is placed on a press | FILE: the Hand Press sets neither |
+| Files | `media/ammomaking_press.tiles` (binary: magic `tdef`, version 1) and `media/texturepacks/AmmoMakingPress.pack` (binary: magic `PZPK`, version 1, a PNG page with one entry per sprite) | read from `newtiledefinitions.tiles` and `Tiles2x.pack`; both formats parsed by a script of this pass |
+| `mod.info` | `pack=AmmoMakingPress` and `tiledef=ammomaking_press <number>`; the number must be from 100 to 8189 and **not used by another loaded mod's tile sheet** | JAR `ChooseGameInfo`: the range check's constants |
+| Bench tag | `AmmoMakingReloadingPress` (`AC_Calibres.PRESS.benchTag`), on the entity's `CraftBench { Recipes = ... }` | section 6 |
+| Icon | `Build_Handpress` can stand in for the entity's window icon; a 32 x 32 icon of its own is optional | FILE `scripts/xui/defaultskin/x_entity_hand_press.txt` |
+
+What cannot be specified from files and has to be looked at in game: how
+the sprite sits on the tile (the offsets), whether the lever reads at the
+game's zoom levels, and the choice of the tile-definition number.
 
 ## 8. Multiplayer
 
