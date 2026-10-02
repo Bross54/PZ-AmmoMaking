@@ -60,7 +60,6 @@ Work that changes data and Lua the offline suite covers end to end.
 | Task | Notes |
 |---|---|
 | Copper recycling (bullets and shot back to scrap) | needs a loss model that fits two bullets per scrap; `AC_Recycling` groups by content already |
-| A debug kit for recycling | a spawn entry in the debug tree, like the other stages' kits |
 | Spent-case **data**: `calibre.spentCase`, items, a resizing recipe, the recycling group | all covered by the model tests and generators; do it together with the hook, not before (`SPENT_CASE_RESEARCH.md` 3–4) |
 | The quality tally as pure functions (`load`, `takeOne`, `moveAll`, `reconcile`) | testable exactly as `AC_CaseQuality` is; no vanilla function touched (`AMMO_QUALITY_RUNTIME_DESIGN.md` 4) |
 | Rare component loot through `AC_Loot` | the mechanism and validation exist; whether to do it is a decision (below) |

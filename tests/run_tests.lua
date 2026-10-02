@@ -4206,7 +4206,12 @@ do
         OnPreDistributionMerge = true,
     }
     local registrations = 0
-    local heavy = { "AC_Calibres.validate", "AC_Calibres.buildRecipes", "AC_Calibres.buildUnits", "AC_Calibres.getItems", "AC_Compat.run", "applySkillRequirements" }
+    local heavy = {
+        "AC_Calibres.validate", "AC_Calibres.buildRecipes", "AC_Calibres.buildUnits", "AC_Calibres.getItems", "AC_Compat.run", "applySkillRequirements",
+        "AC_Loot.register", "AC_Loot.validate", "AC_Loot.buildEntries", "AC_Loot.findReferencedLists",
+        "AC_Recycling.validate", "AC_Recycling.buildRecipes", "AC_Recycling.buildGroups", "AC_Recycling.getScrappable",
+        "AC_SaveData.check",
+    }
     for _, name in ipairs(MOCK.MOD_FILES) do
         local source = readFile(LUA .. name .. ".lua")
         for event in string.gmatch(source, "Events%.([%w_]+)%.Add") do
@@ -4262,6 +4267,79 @@ do
     eq(counts.validate, 1, "one compatibility run validates the model once")
     eq(counts.buildRecipes, 0, "and does not rebuild the whole recipe list")
     for key in pairs(counts) do AC_Calibres[key] = real[key] end
+
+    -- The modules added later follow the same rule. Counted over a fresh
+    -- load of the mod, a world load, a game start and a burst of menus:
+    -- recycling builds its recipes once (for AC_Materials) and is validated
+    -- once per compatibility run; loot is validated and built once per
+    -- world load and never at file load; the schema is only consulted in
+    -- -debug inspection.
+    do
+        reloadMod()
+        local tally = {}
+        local wrapped = {}
+        local function count(module, moduleName, name)
+            local key = moduleName .. "." .. name
+            tally[key] = 0
+            wrapped[key] = { module, name, module[name] }
+            local original = module[name]
+            module[name] = function(...)
+                tally[key] = tally[key] + 1
+                return original(...)
+            end
+        end
+        for _, name in ipairs({ "register", "validate", "buildEntries", "findReferencedLists" }) do count(AC_Loot, "AC_Loot", name) end
+        for _, name in ipairs({ "validate", "buildRecipes", "buildGroups", "getScrappable" }) do count(AC_Recycling, "AC_Recycling", name) end
+        count(AC_SaveData, "AC_SaveData", "check")
+
+        local menuPlayer = MOCK.newPlayer()
+        local nineMm = AC_Calibres.get("9mm")
+        local menuSquare = MOCK.newSquare(4, 3, 0, GRASS)
+        for _ = 1, 30 do
+            fillInventoryMenu(menuPlayer, MOCK.newItem(nineMm.case))
+            fillInventoryMenu(menuPlayer, MOCK.newItem(nineMm.dieSet))
+            fillInventoryMenu(menuPlayer, MOCK.newItem("Base.BrassScrap"))
+            fillWorldMenu(MOCK.newPlayer({ square = menuSquare }), menuSquare)
+            AmmoInspection.inspectComponent(menuPlayer, MOCK.newItem(nineMm.case))
+            AC_Materials.onScrapBrass5(nil, menuPlayer)
+        end
+        for key, calls in pairs(tally) do eq(calls, 0, "no menu, inspection or callback calls " .. key) end
+
+        local savedProcedural, savedDistributions = ProceduralDistributions, Distributions
+        local lists, procList = {}, {}
+        for _, target in ipairs(AC_Loot.TARGETS) do
+            lists[target.list] = { rolls = 4, items = { "Nails", 1 } }
+            table.insert(procList, { name = target.list, min = 0, max = 99 })
+        end
+        ProceduralDistributions = { list = lists }
+        Distributions = { { gunstore = { displaycase = { procedural = true, procList = procList } } } }
+        MOCK.capturePrint(true)
+        Events.OnPreDistributionMerge.fire()
+        MOCK.capturePrint(false)
+        ProceduralDistributions, Distributions = savedProcedural, savedDistributions
+        eq(tally["AC_Loot.register"], 1, "one world load registers the loot once")
+        eq(tally["AC_Loot.validate"], 1, "validating the loot model once")
+        eq(tally["AC_Loot.findReferencedLists"], 1, "and walking the distribution table once")
+        check(tally["AC_Loot.buildEntries"] <= 2, "building the entries at most twice (" .. tally["AC_Loot.buildEntries"] .. ")")
+        eq(tally["AC_Recycling.buildRecipes"] + tally["AC_Recycling.validate"], 0, "a world load does not touch recycling")
+
+        MOCK.capturePrint(true)
+        AC_Compat.run(false)
+        MOCK.capturePrint(false)
+        eq(tally["AC_Recycling.validate"], 1, "one compatibility run validates recycling once")
+        eq(tally["AC_Loot.validate"], 2, "and the loot model once more")
+        eq(tally["AC_Loot.register"], 1, "without registering anything")
+        eq(tally["AC_SaveData.check"], 0, "the schema check is for -debug inspection only")
+        for _, entry in pairs(wrapped) do entry[1][entry[2]] = entry[3] end
+
+        -- At file load: the recipe list holds the recycling recipes, built once.
+        local built = 0
+        local realBuild = AC_Recycling.buildRecipes
+        reloadMod()
+        eq(#AC_Materials.RECIPES, 55, "the reloaded mod has its 55 recipes")
+        eq(type(AC_Loot.lastSummary), "nil", "loading the mod registers no loot by itself")
+        check(realBuild ~= nil and built == 0, "the counters above were removed before the reload")
+    end
 
     -- identify() allocates nothing per call that depends on the list size:
     -- same answers as before, for every item of every calibre.

@@ -175,6 +175,13 @@ crafting.
   furnace, empty crucible, tongs and mold kept, four charcoal, ten scrap,
   one ingot. Nothing is lost there; the loss is in the scrapping.
 - All numbers are in `AC_Recycling.CONFIG` (`batchUnits`, `scrapPerBatch`).
+- Weight is not a conserved quantity anywhere in the chain, and is not one
+  here: four case cups weigh 0.2 and the brass scrap they become weighs 0.5,
+  because the scrap is vanilla's item with vanilla's weight. The accounting
+  is in brass units, not in weight.
+- `-debug`: *Ammo Making Debug > Metallurgy > Spawn Recycling Kit* hands out
+  one batch for each scrapping recipe, mixed from two components, a hammer,
+  and what one recast needs. It is built from the model.
 
 ### 2.3 Rules, and how they are enforced
 
