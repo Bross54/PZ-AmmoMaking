@@ -108,6 +108,11 @@ MUTANTS = [
     (SHARED + "AC_QualityTally.lua", "    local whole =\n        AC_SaveData.whole(\n            quality,\n            minimum,\n            minimum,\n            maximum\n        )", "    local whole =\n        quality", "a loaded round's quality is taken as given (900 stays 900)"),
     (SHARED + "AC_QualityTally.lua", "        if index <= extra then\n            list[index] = base + 1\n        else\n            list[index] = base\n        end", "        list[index] = base + 1", "unloaded rounds are each rounded up, creating quality"),
 
+    # ---- calls the engine would refuse (the mock checks them against tests/engine_snapshot.lua)
+    (SHARED + "AC_Mining.lua", "                        ZombRandFloat(0.2, 0.8),\n                        ZombRandFloat(0.2, 0.8),\n                        0\n", "                        ZombRandFloat(0.2, 0.8),\n                        ZombRandFloat(0.2, 0.8)\n", "the ore is dropped with an overload the engine does not have"),
+    (SHARED + "AC_AmmoMakingSkill.lua", "    player:getXp():AddXP(\n", "    player:getXp():AddXP(\n        true,\n", "XP is granted with an argument too many"),
+    ("tests/engine_snapshot.lua", "                hasWater = { \"\" },\n                haveElectricity", "                hasWater = { \"boolean\" },\n                haveElectricity", "the recorded build's hasWater takes an argument the mod does not pass"),
+
     # ---- the calibre model and the chain (the faults earlier passes guarded against)
     (SHARED + "AC_Calibres.lua", "    cupUnits = 5,", "    cupUnits = 4,", "a case cup holds less brass than the sheet gives"),
     (SHARED + "AC_Calibres.lua", "    usesPerJar = 10,", "    usesPerJar = 12,", "a jar of powder holds twelve uses"),

@@ -24,6 +24,154 @@ MOCK.invalidHasTagCalls = 0  -- item:hasTag("string") calls; invalid on 42.20.4
 MOCK.scriptManagerAvailable = true
 
 ------------------------------------------------
+-- ENGINE SIGNATURES
+------------------------------------------------
+--
+-- tests/engine_snapshot.lua records, from the installed jar, the overloads
+-- of every Java method the mod or this mock names. With it, a mocked
+-- engine object refuses a call no overload takes, the way Kahlua does
+-- (LuaJavaInvoker.prepareCall in the 42.20.4 jar):
+--
+--   too few arguments          error
+--   too many arguments         error for a method with a receiver
+--   an argument Kahlua cannot  error (a string for an ItemTag, a table for
+--   convert to the parameter   a number)
+--   nil                        accepted for an object, not for a primitive
+--
+-- A real object of the wrong Java class cannot be told apart here: every
+-- mocked object is a Lua table and is accepted wherever an object is.
+--
+-- Without a snapshot (MOCK.useEngineSnapshot not called) the mock is as
+-- permissive as plain Lua.
+
+MOCK.engine = nil
+MOCK.invalidEngineCalls = {}     -- "Class.method(...)" of every refused call
+MOCK.unknownMockMethods = {}     -- "Class.method" the mock has and the engine does not
+
+-- Methods the mock adds for the tests' own use; the engine has none of them.
+MOCK.HELPERS = {
+    ItemContainer = { count = true },
+    IsoPlayer = { totalXP = true },
+}
+
+local PRIMITIVE = { int = true, float = true, double = true, long = true, short = true, byte = true, boolean = true, char = true }
+local NUMERIC = {
+    int = true, float = true, double = true, long = true, short = true, byte = true,
+    Integer = true, Float = true, Double = true, Long = true, Short = true, Byte = true, Number = true,
+}
+
+local function accepts(parameter, value)
+    local kind = type(value)
+    if value == nil then return not PRIMITIVE[parameter] end
+    if kind == "number" then return NUMERIC[parameter] or parameter == "Object" end
+    if kind == "boolean" then return parameter == "boolean" or parameter == "Boolean" or parameter == "Object" end
+    if kind == "string" then return parameter == "String" or parameter == "Object" or parameter == "CharSequence" end
+    if kind == "function" then return parameter == "Object" or parameter == "LuaClosure" end
+    -- A table: a mocked Java object, or a Lua table handed to the engine.
+    return not NUMERIC[parameter] and parameter ~= "boolean" and parameter ~= "Boolean" and parameter ~= "String"
+end
+
+local function overloadTakes(signature, count, arguments)
+    -- A global function or a static method has no receiver, and Kahlua then
+    -- ignores arguments beyond the parameters.
+    local static = string.sub(signature, 1, 7) == "static "
+    signature = string.gsub(signature, "^static ", "")
+    local parameters = {}
+    for parameter in string.gmatch(signature, "[^,]+") do table.insert(parameters, parameter) end
+    local varargs = nil
+    if #parameters > 0 and string.sub(parameters[#parameters], -3) == "..." then
+        varargs = string.sub(table.remove(parameters), 1, -4)
+    end
+    if count < #parameters then return false end
+    if count > #parameters and not varargs and not static then return false end
+    for index = 1, count do
+        local parameter = parameters[index] or varargs
+        if parameter and not accepts(parameter, arguments[index]) then return false end
+    end
+    return true
+end
+
+MOCK.overloadTakes = overloadTakes
+
+local function describe(value)
+    if type(value) == "table" then return "object" end
+    return type(value) .. " " .. tostring(value)
+end
+
+-- Makes object answer as an instance of the engine class className: each
+-- of its functions that the class has is checked against the class's
+-- overloads on every call. Functions the class does not have are noted,
+-- unless they are declared helpers.
+function MOCK.strict(object, className)
+    local class = MOCK.engine and MOCK.engine.classes[className]
+    if not class then return object end
+    local helpers = MOCK.HELPERS[className] or {}
+    for name, original in pairs(object) do
+        if type(original) == "function" then
+            local signatures = class.methods[name]
+            if signatures then
+                object[name] = function(self, ...)
+                    local count = select("#", ...)
+                    local arguments = { ... }
+                    for _, signature in ipairs(signatures) do
+                        if overloadTakes(signature, count, arguments) then
+                            return original(self, ...)
+                        end
+                    end
+                    local shown = {}
+                    for index = 1, count do shown[index] = describe(arguments[index]) end
+                    local call = className .. "." .. name .. "(" .. table.concat(shown, ", ") .. ")"
+                    table.insert(MOCK.invalidEngineCalls, call)
+                    if name == "hasTag" then MOCK.invalidHasTagCalls = MOCK.invalidHasTagCalls + 1 end
+                    error("No implementation found for function: " .. call .. "; overloads: (" .. table.concat(signatures, ") (") .. ")", 2)
+                end
+            elseif not helpers[name] then
+                MOCK.unknownMockMethods[className .. "." .. name] = true
+            end
+        end
+    end
+    return object
+end
+
+-- The same check for a function without a receiver: a Java global
+-- (getSpecificPlayer) or a static method (ModData.getOrCreate).
+local function strictFunction(name, original, signatures)
+    return function(...)
+        local count = select("#", ...)
+        local arguments = { ... }
+        for _, signature in ipairs(signatures) do
+            if overloadTakes(signature, count, arguments) then
+                return original(...)
+            end
+        end
+        local shown = {}
+        for index = 1, count do shown[index] = describe(arguments[index]) end
+        local call = name .. "(" .. table.concat(shown, ", ") .. ")"
+        table.insert(MOCK.invalidEngineCalls, call)
+        error("No implementation found for function: " .. call .. "; overloads: (" .. table.concat(signatures, ") (") .. ")", 2)
+    end
+end
+
+-- Called once, after this file has defined its globals: from then on the
+-- mocked engine objects, Java globals and static methods check their
+-- arguments against the snapshot.
+function MOCK.useEngineSnapshot(snapshot)
+    MOCK.engine = snapshot
+    for name, signatures in pairs(snapshot.functions) do
+        if type(_G[name]) == "function" then
+            _G[name] = strictFunction(name, _G[name], signatures)
+        end
+    end
+    for member, signatures in pairs(snapshot.members) do
+        local owner, name = string.match(member, "^([%w_]+)%.([%w_]+)$")
+        if type(signatures) == "table" and type(_G[owner]) == "table" and type(_G[owner][name]) == "function" then
+            _G[owner][name] = strictFunction(member, _G[owner][name], signatures)
+        end
+    end
+    MOCK.cell = MOCK.newCell()
+end
+
+------------------------------------------------
 -- GLOBAL MODDATA
 ------------------------------------------------
 
@@ -90,32 +238,37 @@ function MOCK.registerSquare(square)
     return square
 end
 
-MOCK.cell = {
-    getGridSquare = function(_, x, y, z)
-        return MOCK.cellSquares[x .. "," .. y .. "," .. (z or 0)]
-    end,
-    setDrag = function(_, object, playerNum)
-        MOCK.drag = { object = object, player = playerNum }
-    end,
-}
+local function newCell()
+    return MOCK.strict({
+        getGridSquare = function(_, x, y, z)
+            return MOCK.cellSquares[x .. "," .. y .. "," .. (z or 0)]
+        end,
+        setDrag = function(_, object, playerNum)
+            MOCK.drag = { object = object, player = playerNum }
+        end,
+    }, "IsoCell")
+end
+
+MOCK.newCell = newCell
+MOCK.cell = newCell()
 
 function getCell() return MOCK.cell end
 
 MOCK.hydroPowerOn = false
 
 function getWorld()
-    return {
+    return MOCK.strict({
         getWorld = function() return MOCK.saveName end,
         isHydroPowerOn = function() return MOCK.hydroPowerOn end,
         getCell = function() return MOCK.cell end,
-    }
+    }, "IsoWorld")
 end
 
 function getGameTime()
-    return {
+    return MOCK.strict({
         getWorldAgeHours = function() return MOCK.worldHours end,
         getMultiplier = function() return 1 end,
-    }
+    }, "GameTime")
 end
 
 function getTimestamp() return 0 end
@@ -301,7 +454,7 @@ local function newCraftRecipeScript(id)
         end
         table.insert(self.requiredSkills, { perk = perk, level = level })
     end
-    return script
+    return MOCK.strict(script, "CraftRecipe")
 end
 
 -- UseDelta of the drainables the mod relies on, as in the installed scripts
@@ -368,7 +521,7 @@ local function newItem(fullType, opts)
         end
         return self.tags[tag] == true
     end
-    return item
+    return MOCK.strict(item, "InventoryItem")
 end
 
 MOCK.newItem = newItem
@@ -392,18 +545,18 @@ function getScriptManager()
     if not MOCK.scriptManagerAvailable then
         error("script manager unavailable")
     end
-    return {
+    return MOCK.strict({
         FindItem = function(_, fullType)
             if not MOCK.knownScriptItems[fullType] then return nil end
             -- Item scripts expose getUseDelta() (42.20.4 jar: Item.getUseDelta()F).
             local delta = MOCK.useDeltas[fullType]
             if MOCK.useDeltaMethod == false then return {} end
-            return { getUseDelta = function() return delta or 0 end }
+            return MOCK.strict({ getUseDelta = function() return delta or 0 end }, "Item")
         end,
         getCraftRecipe = MOCK.craftRecipeLookup and function(_, id)
             return MOCK.craftRecipeScripts[id]
         end or nil,
-    }
+    }, "ScriptManager")
 end
 
 -- Java ArrayList-like
@@ -411,7 +564,7 @@ local function arrayList(items)
     local list = { items = items }
     function list:size() return #self.items end
     function list:get(i) return self.items[i + 1] end
-    return list
+    return MOCK.strict(list, "ArrayList")
 end
 
 MOCK.arrayList = arrayList
@@ -475,7 +628,7 @@ local function newInventory()
         end
         return n
     end
-    return inv
+    return MOCK.strict(inv, "ItemContainer")
 end
 
 MOCK.newInventory = newInventory
@@ -505,13 +658,13 @@ local function newPlayer(opts)
     function player:getPlayerNum() return opts.playerNum or 0 end
     function player:getXp()
         local p = self
-        return {
+        return MOCK.strict({
             AddXP = function(_, perk, amount)
                 table.insert(p.xpLog, amount)
             end,
             setXPToLevel = function(_, perk, level) end,
             getXP = function(_, perk) return p:totalXP() end,
-        }
+        }, "XP")
     end
     function player:SetVariable(key, value)
         self.animVariables = self.animVariables or {}
@@ -536,7 +689,7 @@ local function newPlayer(opts)
         for _, v in ipairs(self.xpLog) do total = total + v end
         return total
     end
-    return player
+    return MOCK.strict(player, "IsoPlayer")
 end
 
 MOCK.newPlayer = newPlayer
@@ -577,18 +730,20 @@ local function newSquare(x, y, z, spriteName, opts)
             return nil
         end
         local s = self
-        return {
+        return MOCK.strict({
             getSprite = function()
                 if s.spriteError then error("sprite lookup failed") end
                 if s.noSprite then return nil end
-                return { getName = function() return s.spriteName end }
+                return MOCK.strict({ getName = function() return s.spriteName end }, "IsoSprite")
             end,
-        }
+        }, "IsoObject")
     end
+    -- 42.20.4: AddWorldInventoryItem(InventoryItem, float, float, float)
+    -- returns the InventoryItem itself.
     function square:AddWorldInventoryItem(item, ox, oy, oz)
         if self.spawnError then error(self.spawnError) end
         table.insert(self.worldItems, item)
-        return { getItem = function() return item end }
+        return item
     end
     function square:getWorldObjects() return arrayList({}) end
     function square:getObjects() return arrayList(self.objects) end
@@ -617,12 +772,12 @@ local function newSquare(x, y, z, spriteName, opts)
     function square:hasWater() return self.water end
     function square:haveElectricity() return false end
     function square:hasGridPower() return opts.gridPower == true end
-    return square
+    return MOCK.strict(square, "IsoGridSquare")
 end
 
 MOCK.newSquare = newSquare
 
-IsoFlagType = { water = "water", exterior = "exterior" }
+IsoFlagType = { water = { enum = "IsoFlagType", name = "water" }, exterior = { enum = "IsoFlagType", name = "exterior" } }
 
 ------------------------------------------------
 -- WORLD OBJECTS
@@ -656,7 +811,7 @@ local function newWorldObject(opts)
         end
         return -1
     end
-    return object
+    return MOCK.strict(object, opts.class == "IsoWorldInventoryObject" and "IsoWorldInventoryObject" or "IsoObject")
 end
 
 MOCK.newWorldObject = newWorldObject
@@ -666,7 +821,7 @@ MOCK.knownSprites = { ["industry_03_61"] = true }
 
 function getSprite(name)
     if not MOCK.knownSprites[name] then return nil end
-    return { getName = function() return name end }
+    return MOCK.strict({ getName = function() return name end }, "IsoSprite")
 end
 
 ------------------------------------------------
@@ -712,7 +867,7 @@ function IsoThumpable.new(cell, square, sprite, north, luaObject)
     function o:setIsThumpable(v) self.isThumpable = v end
     function o:setIsDismantable(v) self.dismantable = v end
     function o:transmitCompleteItemToClients() self.transmitted = self.transmitted + 1 end
-    return o
+    return MOCK.strict(o, "IsoThumpable")
 end
 
 ------------------------------------------------
@@ -732,7 +887,15 @@ end
 function HaloTextHelper.clear() HaloTextHelper.log = {} end
 function HaloTextHelper.last() return HaloTextHelper.log[#HaloTextHelper.log] end
 
-Metabolics = { DiggingSpade = "DiggingSpade", HeavyDomestic = "HeavyDomestic" }
+-- Java enum constants are objects, not strings: a tagged table each, so a
+-- method that wants the enum takes it and one that wants a String does not.
+local function enum(class, names)
+    local values = {}
+    for _, name in ipairs(names) do values[name] = { enum = class, name = name } end
+    return values
+end
+
+Metabolics = enum("Metabolics", { "DiggingSpade", "HeavyDomestic" })
 
 -- Records the items the placement menu asked to move into the main
 -- inventory; the real function queues a transfer action.
@@ -740,7 +903,7 @@ ISInventoryPaneContextMenu = { transfers = {} }
 function ISInventoryPaneContextMenu.transferIfNeeded(player, item)
     table.insert(ISInventoryPaneContextMenu.transfers, item)
 end
-Perks = { Strength = "Strength", Crafting = "Crafting" }
+Perks = enum("Perk", { "Strength", "Crafting" })
 
 -- Same branches as vanilla BuildingHelper.getShovelAnim in the installed
 -- 42.20.4 shared/Util/BuildingHelper.lua. In game the results are

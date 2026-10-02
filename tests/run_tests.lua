@@ -26,6 +26,10 @@ local ROOT = arg and arg[0] and arg[0]:match("^(.*)/tests/[^/]*$") or "."
 local LUA = ROOT .. "/mod/AmmoMaking/42/media/lua/"
 
 local MOCK = dofile(ROOT .. "/tests/mock_pz.lua")
+-- The Java overloads of the installed build: mocked engine objects refuse a
+-- call the real engine would refuse (see mock_pz.lua, ENGINE SIGNATURES).
+local ENGINE = dofile(ROOT .. "/tests/engine_snapshot.lua")
+MOCK.useEngineSnapshot(ENGINE)
 local RENDER = dofile(ROOT .. "/tests/render_recipes.lua")
 
 ------------------------------------------------
@@ -8552,6 +8556,165 @@ do
         eq(#ctx.options, 0, mode .. ": no entry on an unrelated item")
     end
     MOCK.debug = false
+end
+
+------------------------------------------------
+-- MOCK FIDELITY (last: it looks back over the whole run)
+------------------------------------------------
+
+section("Mock fidelity: the mocked engine answers as the installed build does")
+do
+    -- tests/engine_snapshot.lua is written by tools/pz_compat.py from the
+    -- installed jar and scripts. Everything above ran against mocked engine
+    -- objects that refuse a call no real overload takes. This section
+    -- checks the refusal itself, and that the mock claims nothing the game
+    -- does not have. It still proves nothing about what a method DOES.
+    eq(ENGINE.version, VANILLA.version, "both snapshots were taken from the same game build")
+    check(type(ENGINE.classes) == "table" and ENGINE.classes.InventoryItem ~= nil, "the snapshot holds Java signatures (it was written with javap available)")
+
+    -- Kahlua's rules (LuaJavaInvoker.prepareCall), on the pure matcher.
+    local takes = MOCK.overloadTakes
+    eq(takes("InventoryItem,float,float,float", 4, { {}, 0.5, 0.5, 0 }), true, "an exact match is taken")
+    eq(takes("InventoryItem,float,float,float", 3, { {}, 0.5, 0.5 }), false, "too few arguments are refused")
+    eq(takes("InventoryItem,float,float,float", 5, { {}, 0.5, 0.5, 0, 1 }), false, "too many arguments are refused for a method with a receiver")
+    eq(takes("static String", 2, { "x", 1 }), true, "a function without a receiver ignores extra arguments")
+    eq(takes("static String", 0, {}), false, "but not missing ones")
+    eq(takes("ItemTag", 1, { "Shovel" }), false, "a string is not an ItemTag (the hasTag failure of 42.20.4)")
+    eq(takes("ItemTag", 1, { {} }), true, "an object is")
+    eq(takes("ItemTag...", 0, {}), true, "varargs take none")
+    eq(takes("ItemTag...", 3, { {}, {}, {} }), true, "or several")
+    eq(takes("ItemTag...", 2, { {}, "x" }), false, "each of the right kind")
+    eq(takes("int", 1, { 3 }), true, "a number is an int")
+    eq(takes("int", 1, { "3" }), false, "a numeric string is not")
+    eq(takes("int", 1, { nil }), false, "nil is not a primitive")
+    eq(takes("String", 1, { nil }), true, "nil is accepted for an object")
+    eq(takes("String", 1, { 5 }), false, "a number is not a String")
+    eq(takes("boolean", 1, { true }), true, "a boolean is a boolean")
+    eq(takes("boolean", 1, { 1 }), false, "a number is not")
+    eq(takes("Object", 1, { 5 }), true, "anything is an Object")
+    eq(takes("", 0, {}), true, "no parameters, no arguments")
+    eq(takes("", 1, { 1 }), false, "no parameters, one argument: refused")
+
+    -- The mocked objects refuse what the engine refuses.
+    local refusedBefore = #MOCK.invalidEngineCalls
+    local function refused(what, fn)
+        local ok, message = pcall(fn)
+        check(not ok and string.find(tostring(message), "No implementation found", 1, true) ~= nil, what .. " is refused (" .. tostring(message) .. ")")
+    end
+    local function accepted(what, fn)
+        local ok, message = pcall(fn)
+        check(ok, what .. " is accepted (" .. tostring(message) .. ")")
+    end
+    local item = MOCK.newItem("Base.PickAxe")
+    local square = MOCK.newSquare(1, 1, 0, GRASS)
+    local player = MOCK.newPlayer({ square = square })
+    refused("item:hasTag(\"Shovel\")", function() item:hasTag("Shovel") end)
+    accepted("item:hasTag(tag object)", function() item:hasTag({ enum = "ItemTag" }) end)
+    refused("item:setCondition(\"full\")", function() item:setCondition("full") end)
+    refused("item:getModData(1)", function() item:getModData(1) end)
+    refused("square:hasWater(true)", function() square:hasWater(true) end)
+    refused("square:AddWorldInventoryItem(item)", function() square:AddWorldInventoryItem(item) end)
+    accepted("square:AddWorldInventoryItem(item, x, y, z)", function() square:AddWorldInventoryItem(item, 0.5, 0.5, 0) end)
+    refused("player:getPerkLevel()", function() player:getPerkLevel() end)
+    refused("player:getXp():AddXP(perk)", function() player:getXp():AddXP(Perks.Strength) end)
+    accepted("player:getXp():AddXP(perk, amount)", function() player:getXp():AddXP(Perks.Strength, 5) end)
+    refused("inventory:AddItem(5)", function() player:getInventory():AddItem(5) end)
+    refused("inventory:containsID(\"7\")", function() player:getInventory():containsID("7") end)
+    refused("getSpecificPlayer()", function() getSpecificPlayer() end)
+    accepted("getSpecificPlayer(0)", function() getSpecificPlayer(0) end)
+    refused("instanceItem(5)", function() instanceItem(5) end)
+    refused("ModData.getOrCreate()", function() ModData.getOrCreate() end)
+    refused("getScriptManager():FindItem()", function() getScriptManager():FindItem() end)
+    refused("getGameTime():getWorldAgeHours(1)", function() getGameTime():getWorldAgeHours(1) end)
+    -- The refusals above are the only ones of the whole run: no test and no
+    -- mod code made a call the engine would not take.
+    local provoked = #MOCK.invalidEngineCalls - refusedBefore
+    eq(provoked, 14, "each refusal above was recorded")
+    local unexpected = {}
+    for index = 1, refusedBefore do
+        -- Earlier sections provoke hasTag(string) on purpose, to pin that the
+        -- mod's shovel and pickaxe detection never does.
+        if string.sub(MOCK.invalidEngineCalls[index], 1, 21) ~= "InventoryItem.hasTag(" then
+            table.insert(unexpected, MOCK.invalidEngineCalls[index])
+        end
+    end
+    eq(#unexpected, 0, "no other call in the whole run was one the engine refuses: " .. table.concat(unexpected, " | "))
+
+    -- The mock has no method the engine class lacks (the square:Is() that
+    -- hid a crash was such a method).
+    local unknown = {}
+    for name in pairs(MOCK.unknownMockMethods) do table.insert(unknown, name) end
+    table.sort(unknown)
+    eq(#unknown, 0, "every method of a mocked engine object exists on the real class: " .. table.concat(unknown, ", "))
+    for class, helpers in pairs(MOCK.HELPERS) do
+        for name in pairs(helpers) do
+            check(ENGINE.classes[class].methods[name] == nil, class .. "." .. name .. " is a test helper, not an engine method")
+        end
+    end
+    for name, class in pairs(ENGINE.classes) do
+        check(class.exposed ~= false and not class.missing, name .. " exists and is exposed to Lua on the recorded build")
+    end
+
+    -- What the mock says the game has, the game has.
+    local missing = {}
+    for id in pairs(MOCK.knownScriptItems) do
+        if string.sub(id, 1, 5) == "Base." and not ENGINE.items[id] then table.insert(missing, id) end
+    end
+    table.sort(missing)
+    eq(#missing, 0, "every vanilla item the mock knows is in the installed scripts: " .. table.concat(missing, ", "))
+    for id in pairs(MOCK.knownScriptItems) do
+        if string.sub(id, 1, 11) == "AmmoMaking." then
+            check(declaredItems[id] ~= nil, "the mock's " .. id .. " is declared in AC_Items.txt")
+        end
+    end
+    for id, delta in pairs(MOCK.useDeltas) do
+        eq(ENGINE.items[id] and ENGINE.items[id].uses, math.floor(1 / delta + 0.5), "the mock's use count of " .. id .. " is the installed script's")
+    end
+    for sprite in pairs(MOCK.knownSprites) do
+        check(type(ENGINE.sprites[sprite]) == "table", "the mock's sprite " .. sprite .. " is a defined tile")
+    end
+    for _, id in ipairs(MOCK.vanillaCraftRecipes) do
+        check(type(ENGINE.recipes[id]) == "string", "the mock's vanilla recipe " .. id .. " is in the installed scripts")
+    end
+    -- The mock's shovel animation chooser mirrors a vanilla function that exists.
+    eq(ENGINE.members["BuildingHelper.getShovelAnim"], true, "BuildingHelper.getShovelAnim exists in vanilla Lua")
+
+    -- The model against the snapshot: what the game-start check will probe
+    -- in game is already known to hold on the recorded build.
+    for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do
+        if string.sub(id, 1, 5) == "Base." then
+            check(ENGINE.items[id] ~= nil and ENGINE.items[id] ~= false, id .. " (AC_Compat.REQUIRED_ITEMS) exists on the recorded build")
+        end
+    end
+    eq(ENGINE.items[AC_Calibres.POWDER.item].uses, AC_Calibres.POWDER.usesPerJar, "a jar of gunpowder holds the uses the model assumes")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        eq(ENGINE.ammoTypes[calibre.ammoType], calibre.round, calibre.id .. ": the engine's ammo type names the round the mod makes")
+        local taken = false
+        for _, group in ipairs({ ENGINE.firearms, ENGINE.magazines }) do
+            for _, entry in pairs(group) do
+                if entry.ammoType == calibre.ammoType then taken = true end
+            end
+        end
+        check(taken, calibre.id .. ": a vanilla firearm or magazine takes it")
+    end
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        local tag = ENGINE.benchTags[recipe.benchTag]
+        check(tag ~= nil and (tag.stations > 0 or tag.vanillaRecipes > 0), recipe.id .. ": its station tag " .. tostring(recipe.benchTag) .. " is one vanilla provides")
+        if recipe.timedAction then
+            eq(ENGINE.timedActions[recipe.timedAction], true, recipe.id .. ": its timed action exists")
+        end
+        for _, input in ipairs(recipe.inputs) do
+            for _, tag in ipairs(input.tags or {}) do
+                check((ENGINE.itemTags[tag] or 0) > 0, recipe.id .. ": a vanilla item carries " .. tag)
+            end
+        end
+    end
+    -- The press's own names: the tag is free, the timed action is vanilla's.
+    local pressTag = ENGINE.benchTags[AC_Calibres.PRESS.benchTag]
+    check(pressTag ~= nil and pressTag.stations == 0 and pressTag.vanillaRecipes == 0, "the press's bench tag is used by nothing in vanilla")
+    eq(ENGINE.timedActions[AC_Calibres.PRESS.timedAction], true, "the press's timed action exists in vanilla")
+    local analyzerTile = ENGINE.sprites[AC_LaboratoryAnalyzer.CONFIG.worldSprite]
+    check(type(analyzerTile) == "table" and analyzerTile.entity == false and analyzerTile.moveable == false, "the analyzer's tile exists, is claimed by no entity and is not a vanilla moveable")
 end
 
 ------------------------------------------------
