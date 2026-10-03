@@ -1,6 +1,7 @@
 """Ammo Making - build a tile sheet (tile definitions and texture pack) from PNGs.
 
     python tools/build_tiles.py art/reloading_press/tiles.json
+    python tools/build_tiles.py art/reloading_press/tiles.json --check
     python tools/build_tiles.py --selftest
     python tools/build_tiles.py --verify --install "<Project Zomboid install>"
 
@@ -10,9 +11,13 @@ The game reads a mod's tiles from two binary files named in mod.info:
     pack=<name>               media/texturepacks/<name>.pack
 
 This writes both from a small JSON description and one PNG per sprite, into
-the description's own build/ folder. NOTHING is written into the mod: the
-reloading press is switched off (docs/RELOADING_PRESS_DESIGN.md), and
-putting a tile sheet into mod.info is a step for a session with the game.
+the folder the description names as "output" (build/ beside it when it
+names none). The reloading press's sheet goes into the press ADD-ON mod
+(mod/AmmoMakingPress), never into the main mod: the press is a feature
+that is off unless that add-on is ticked (AC_Features.lua).
+
+--check builds in memory and compares with the files already there: the
+release gate uses it to refuse a sheet that is out of step with its art.
 
 The two formats, as read from the installed 42.20.4 files and checked by
 --verify, which parses vanilla's own files and writes them back byte for
@@ -411,7 +416,8 @@ def verify(install):
 
 def main():
     parser = argparse.ArgumentParser(description="Build a Project Zomboid tile sheet (.tiles and .pack) from PNGs.")
-    parser.add_argument("description", nargs="?", help="a tiles.json; output goes to build/ beside it")
+    parser.add_argument("description", nargs="?", help="a tiles.json; output goes to its \"output\" folder, or build/ beside it")
+    parser.add_argument("--check", action="store_true", help="write nothing: fail if the files already built differ from a fresh build")
     parser.add_argument("--selftest", action="store_true", help="check the builder on generated sprites (needs Pillow, no game)")
     parser.add_argument("--verify", action="store_true", help="read vanilla's own files and write them back byte for byte")
     parser.add_argument("--install", default=os.environ.get("PZ_INSTALL"), help="the Project Zomboid install, for --verify")
@@ -435,10 +441,24 @@ def main():
     if problems:
         print("FAILED   the built sheet does not read back as described: " + "; ".join(problems))
         return 1
-    out = os.path.join(folder, "build")
-    os.makedirs(os.path.join(out, "texturepacks"), exist_ok=True)
+    out = os.path.normpath(os.path.join(folder, description.get("output", "build")))
     tiles_path = os.path.join(out, description["tiledef"] + ".tiles")
     pack_path = os.path.join(out, "texturepacks", description["pack"] + ".pack")
+    if arguments.check:
+        stale = []
+        for path, fresh in ((tiles_path, tiles_bytes), (pack_path, pack_bytes)):
+            if not os.path.isfile(path):
+                stale.append("%s is missing" % os.path.relpath(path, ROOT).replace("\\", "/"))
+            else:
+                with open(path, "rb") as handle:
+                    if handle.read() != fresh:
+                        stale.append("%s differs from a fresh build" % os.path.relpath(path, ROOT).replace("\\", "/"))
+        if stale:
+            print("FAILED   " + "; ".join(stale) + " (run tools/build_tiles.py on the description)")
+            return 1
+        print("PASS     the built tile sheet is in step with %s" % os.path.relpath(path if False else arguments.description, ".").replace("\\", "/"))
+        return 0
+    os.makedirs(os.path.join(out, "texturepacks"), exist_ok=True)
     with open(tiles_path, "wb") as handle:
         handle.write(tiles_bytes)
     with open(pack_path, "wb") as handle:
@@ -447,7 +467,7 @@ def main():
         print("  " + line)
     print("Wrote %s (%d bytes)" % (os.path.relpath(tiles_path, ROOT).replace("\\", "/"), len(tiles_bytes)))
     print("Wrote %s (%d bytes)" % (os.path.relpath(pack_path, ROOT).replace("\\", "/"), len(pack_bytes)))
-    print("mod.info lines, for the day the press is switched on:")
+    print("mod.info lines of the mod that ships the sheet:")
     print("  pack=%s" % description["pack"])
     print("  tiledef=%s %d" % (description["tiledef"], description["fileNumber"]))
     return 0

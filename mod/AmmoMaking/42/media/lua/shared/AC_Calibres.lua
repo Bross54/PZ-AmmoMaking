@@ -29,6 +29,8 @@
 -- Vanilla evidence for every item id, tool tag and recipe
 -- pattern used here: docs/VANILLA_AMMUNITION_RESEARCH.md.
 
+require "AC_Features"
+
 AC_Calibres = AC_Calibres or {}
 
 
@@ -342,11 +344,14 @@ AC_Calibres.PRIMERS = {
 -- material, less time, and no hammer (the press does the
 -- pressing).
 --
--- enabled = false: buildRecipes() adds nothing, so the
--- recipe script, the callbacks and the compatibility
--- check do not know a press exists. Nothing provides the
--- bench tag yet, and a recipe nothing can craft would
--- only be dead weight in the game's recipe list.
+-- enabled: whether the press exists in this game. It is
+-- the feature "reloadingPress" (AC_Features): true only
+-- when the add-on mod that carries the station entity,
+-- its tile sheet and the press recipe script is active.
+-- Without it buildRecipes() adds nothing, so the recipe
+-- list, the callbacks and the compatibility check do not
+-- know a press exists, and no recipe is left that nothing
+-- can craft.
 --
 -- timePercent: the press time as a percentage of the
 -- hand time, rounded down. 60 means two fifths faster.
@@ -367,7 +372,7 @@ AC_Calibres.PRIMERS = {
 
 AC_Calibres.PRESS = {
 
-    enabled = false,
+    enabled = AC_Features.isEnabled("reloadingPress"),
 
     benchTag = "AmmoMakingReloadingPress",
 

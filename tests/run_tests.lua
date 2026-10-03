@@ -4504,8 +4504,9 @@ do
     local P = AC_Calibres.PRESS
     local U = AC_Materials.UNITS
 
-    -- Off: the station entity does not exist, so nothing of the press
-    -- reaches the recipe list, the script, the callbacks or the names.
+    -- Off (the add-on that carries the station is not active here), so
+    -- nothing of the press reaches the recipe list, the main script, the
+    -- callbacks or the main mod's names.
     eq(P.enabled, false, "the press is switched off")
     eq(#AC_Calibres.validatePress(), 0, "the press description is sound: " .. table.concat(AC_Calibres.validatePress(), "; "))
     local script = readFile(SCRIPTS .. "AC_Recipes.txt")
@@ -4653,8 +4654,8 @@ do
     eq(#AC_Calibres.buildRecipes(), #before, "switched off again: the list is what it was")
 
     -- Names: a press recipe is called after its hand recipe. None is in
-    -- Recipes.json while the press is off; each can be derived, is unique
-    -- and collides with no existing name.
+    -- the main mod's Recipes.json (the add-on carries them); each can be
+    -- derived, is unique and collides with no existing name.
     do
         local names = {}
         for key, value in string.gmatch(readFile(TRANSLATE .. "Recipes.json"), '"([^"]+)"%s*:%s*"([^"]*)"') do names[key] = value end
@@ -4663,7 +4664,7 @@ do
         eq(P.nameSuffix, " (Press)", "the press name suffix")
         for _, calibre in ipairs(AC_Calibres.LIST) do
             for _, recipe in ipairs(AC_Calibres.buildPressRecipes(calibre)) do
-                eq(names[recipe.id], nil, recipe.id .. " has no name yet")
+                eq(names[recipe.id], nil, recipe.id .. " has no name in the main mod")
                 local handName = names[recipe.handRecipe]
                 check(handName ~= nil and handName ~= "", recipe.id .. " can be named after " .. recipe.handRecipe)
                 local name = tostring(handName) .. P.nameSuffix
@@ -4672,7 +4673,7 @@ do
                 derived = derived + 1
             end
         end
-        eq(derived, #P.steps * #AC_Calibres.LIST, "twenty-seven press names are ready to be written")
+        eq(derived, #P.steps * #AC_Calibres.LIST, "twenty-seven press names can be derived")
     end
 
     -- The press's advantage is pinned and bounded: 60 % of the hand time,
@@ -9869,86 +9870,6 @@ do
 end
 
 ------------------------------------------------
--- PRESS ART (prepared beside the mod, not in it)
-------------------------------------------------
-
-section("Press art: a tile sheet and an entity draft, prepared and not shipped")
-do
-    local ART = ROOT .. "/art/reloading_press/"
-    local P = AC_Calibres.PRESS
-    local sheet = readFile(ART .. "tiles.json")
-    local draft = stripComments(readFile(ART .. "AC_ReloadingPress.txt"))
-    local readme = readFile(ART .. "README.md")
-
-    -- Not in the mod: the press is off, mod.info names no sheet, and no
-    -- script of the mod defines an entity.
-    eq(P.enabled, false, "the press is switched off")
-    local info = readFile(ROOT .. "/mod/AmmoMaking/42/mod.info")
-    check(string.find(info, "pack=", 1, true) == nil and string.find(info, "tiledef=", 1, true) == nil, "mod.info names no texture pack and no tile definition")
-    for _, name in ipairs({ "AC_Items.txt", "AC_Recipes.txt" }) do
-        local script = readFile(SCRIPTS .. name)
-        check(string.find(script, "%f[%a]entity%s") == nil, name .. " defines no entity")
-        check(string.find(script, "ammomaking_press", 1, true) == nil, name .. " names no press sprite")
-    end
-    for _, name in ipairs(MOCK.MOD_FILES) do
-        check(string.find(readFile(LUA .. name .. ".lua"), "ammomaking_press", 1, true) == nil, name .. ".lua names no press sprite")
-    end
-    check(string.find(readme, "NOT IN THE MOD", 1, true) ~= nil, "the art folder says it is not in the mod")
-    check(string.find(readme, "REQUIRES FUTURE IN-GAME VERIFICATION", 1, true) ~= nil, "and what has to be seen in game")
-
-    -- The sheet: one tileset of eight columns, two tiles, a file number in
-    -- the engine's range, the names the design fixes.
-    local pack = string.match(sheet, '"pack"%s*:%s*"([%w_]+)"')
-    local tiledef = string.match(sheet, '"tiledef"%s*:%s*"([%w_]+)"')
-    local fileNumber = tonumber(string.match(sheet, '"fileNumber"%s*:%s*(%d+)'))
-    local tileset = string.match(sheet, '"name"%s*:%s*"([%w_]+)"')
-    eq(pack, "AmmoMakingPress", "the texture pack's name")
-    eq(tiledef, "ammomaking_press", "the tile definition's name")
-    check(fileNumber ~= nil and fileNumber >= 100 and fileNumber <= 8189, "the tile-definition number is in the engine's range, 100 to 8189 (" .. tostring(fileNumber) .. ")")
-    eq(tileset, "ammomaking_press_01", "the tileset's name")
-    eq(tonumber(string.match(sheet, '"columns"%s*:%s*(%d+)')), 8, "eight columns, as every vanilla sheet")
-    local indices, facings = {}, {}
-    for index in string.gmatch(sheet, '"index"%s*:%s*(%d+)') do table.insert(indices, tonumber(index)) end
-    for facing in string.gmatch(sheet, '"Facing"%s*:%s*"(%a)"') do table.insert(facings, facing) end
-    eq(table.concat(indices, ","), "0,1", "two tiles")
-    eq(table.concat(facings, ","), "S,E", "facing south and east, as vanilla's hand press")
-    -- Each tile has the tile properties of vanilla's Hand Press, as the
-    -- snapshot recorded them from the installed tile definitions.
-    local reference = ENGINE.pressDraft.handPressTileProperties
-    check(#reference >= 6, "the snapshot records the hand press's tile properties (" .. #reference .. ")")
-    for _, key in ipairs(reference) do
-        local _, count = string.gsub(sheet, '"' .. key .. '"%s*:', "")
-        eq(count, 2, "both tiles set " .. key .. ", as vanilla's hand press does")
-    end
-    eq(tonumber(string.match(sheet, '"PickUpWeight"%s*:%s*(%d+)')), 400, "it weighs what the hand press weighs")
-
-    -- The entity draft: the press's own tag, the sheet's sprites in order,
-    -- and nothing vanilla does not have.
-    eq(string.match(draft, "Recipes%s*=%s*([%w_]+)"), P.benchTag, "the draft's CraftBench tag is the calibre model's")
-    local rows = {}
-    for row in string.gmatch(draft, "row%s*=%s*([%w_]+)") do table.insert(rows, row) end
-    eq(table.concat(rows, ","), tileset .. "_0," .. tileset .. "_1", "its faces are the sheet's two sprites")
-    check(string.find(draft, "face S", 1, true) ~= nil and string.find(draft, "face E", 1, true) ~= nil, "south and east")
-    check(string.find(draft, "AmmoMaking", 1, true) ~= nil and string.find(draft, "AmmoMaking:", 1, true) == nil, "the build recipe does not name the Ammo Making perk (the engine would drop it)")
-    local D = ENGINE.pressDraft
-    eq(D.timedAction, true, "its build timed action exists in vanilla")
-    eq(D.entityNameFree, true, "no vanilla entity has its name")
-    eq(D.tilesetNamesFree, true, "no vanilla tileset has the sheet's name")
-    eq(D.spritesUnclaimed, true, "no vanilla entity claims its sprites")
-    local named = 0
-    for item, present in pairs(D.items) do
-        named = named + 1
-        eq(present, true, "its build input " .. item .. " exists in vanilla")
-        check(string.find(draft, "[" .. item .. "]", 1, true) ~= nil, "(" .. item .. " is in the draft)")
-    end
-    check(named >= 3, "the build recipe's inputs were checked (" .. named .. ")")
-    for tag, present in pairs(D.tags) do eq(present, true, "its tool tag " .. tag .. " exists in vanilla") end
-    -- The mod.info lines the README gives are the sheet's.
-    check(string.find(readme, "pack=" .. pack, 1, true) ~= nil, "the README's pack line is the sheet's")
-    check(string.find(readme, "tiledef=" .. tiledef .. " " .. fileNumber, 1, true) ~= nil, "and its tiledef line")
-end
-
-------------------------------------------------
 -- RELEASE METADATA
 ------------------------------------------------
 
@@ -10019,7 +9940,30 @@ do
     end
     check(string.find(workshop, "fires exactly like a factory round", 1, true) ~= nil, "it says quality has no effect on shooting")
     check(string.find(workshop, "Not supported", 1, true) ~= nil, "it says multiplayer is not supported")
-    eq(AC_Calibres.PRESS.enabled, false, "(the press is off, as the Workshop text says)")
+    eq(AC_Calibres.PRESS.enabled, false, "(the press is off without its add-on, as the Workshop text says)")
+end
+
+------------------------------------------------
+-- FEATURE SUITES
+------------------------------------------------
+--
+-- The systems added behind AC_Features each have a file of their own
+-- (tests/suite_<name>.lua). A suite is a function that takes this table of
+-- helpers; it runs here, before the mock is checked against the engine.
+
+do
+    local T = {
+        ROOT = ROOT, LUA = LUA, SCRIPTS = SCRIPTS, TRANSLATE = TRANSLATE, GRASS = GRASS,
+        MOCK = MOCK, ENGINE = ENGINE, VANILLA = VANILLA, RENDER = RENDER,
+        check = check, eq = eq, section = section, show = show,
+        reloadMod = reloadMod, readFile = readFile, parseScript = parseScript, parseItemLine = parseItemLine,
+        sameList = sameList, listText = listText, declaredItems = declaredItems,
+        mirrorCraft = mirrorCraft, mirrorCanCraft = mirrorCanCraft,
+        fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu,
+    }
+    for _, name in ipairs({ "features", "press" }) do
+        dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
+    end
 end
 
 ------------------------------------------------

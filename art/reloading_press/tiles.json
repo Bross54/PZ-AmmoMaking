@@ -2,6 +2,7 @@
     "pack": "AmmoMakingPress",
     "tiledef": "ammomaking_press",
     "fileNumber": 6142,
+    "output": "../../mod/AmmoMakingPress/42/media",
     "tilesets": [
         {
             "name": "ammomaking_press_01",

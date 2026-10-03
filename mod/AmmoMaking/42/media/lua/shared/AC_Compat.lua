@@ -33,6 +33,8 @@
 -- initialises); the debug menu can run it again on
 -- demand.
 
+require "AC_Features"
+require "AC_Visuals"
 require "AC_Calibres"
 require "AC_Loot"
 require "AC_Recycling"
@@ -1000,12 +1002,12 @@ end
 AC_Compat.DEFAULT_SPRITE_ID = 20000000
 
 
-local function checkAnalyzerSprite(
-    results
+local function checkSprite(
+    results,
+    spriteName,
+    what,
+    advice
 )
-
-    local spriteName =
-        AC_LaboratoryAnalyzer.CONFIG.worldSprite
 
 
     if type(getSprite) ~= "function" then
@@ -1013,7 +1015,7 @@ local function checkAnalyzerSprite(
         addResult(
             results,
             "UNVERIFIED",
-            "analyzer world sprite " .. tostring(spriteName),
+            what .. " " .. tostring(spriteName),
             "getSprite unavailable"
         )
 
@@ -1040,7 +1042,7 @@ local function checkAnalyzerSprite(
         addResult(
             results,
             "UNVERIFIED",
-            "analyzer world sprite " .. tostring(spriteName),
+            what .. " " .. tostring(spriteName),
             tostring(err)
         )
 
@@ -1049,8 +1051,8 @@ local function checkAnalyzerSprite(
         addResult(
             results,
             "WARNING",
-            "analyzer world sprite " .. tostring(spriteName) .. " not found",
-            "a placed analyzer would be invisible; change AC_LaboratoryAnalyzer.CONFIG.worldSprite"
+            what .. " " .. tostring(spriteName) .. " not found",
+            advice
         )
 
     elseif hasMethod(sprite, "getID") ~= true then
@@ -1058,7 +1060,7 @@ local function checkAnalyzerSprite(
         addResult(
             results,
             "UNVERIFIED",
-            "analyzer world sprite " .. tostring(spriteName),
+            what .. " " .. tostring(spriteName),
             "IsoSprite:getID unavailable; cannot tell a defined tile from one created on the spot"
         )
 
@@ -1082,7 +1084,7 @@ local function checkAnalyzerSprite(
             addResult(
                 results,
                 "UNVERIFIED",
-                "analyzer world sprite " .. tostring(spriteName),
+                what .. " " .. tostring(spriteName),
                 tostring(idErr or "no sprite id")
             )
 
@@ -1091,8 +1093,8 @@ local function checkAnalyzerSprite(
             addResult(
                 results,
                 "WARNING",
-                "analyzer world sprite " .. tostring(spriteName) .. " not found",
-                "no tile definition has that name: a placed analyzer would be invisible; change AC_LaboratoryAnalyzer.CONFIG.worldSprite"
+                what .. " " .. tostring(spriteName) .. " not found",
+                "no tile definition has that name: " .. advice
             )
 
         else
@@ -1100,10 +1102,23 @@ local function checkAnalyzerSprite(
             addResult(
                 results,
                 "OK",
-                "analyzer world sprite (" .. tostring(spriteName) .. ")"
+                what .. " (" .. tostring(spriteName) .. ")"
             )
         end
     end
+end
+
+
+local function checkAnalyzerSprite(
+    results
+)
+
+    checkSprite(
+        results,
+        AC_LaboratoryAnalyzer.CONFIG.worldSprite,
+        "analyzer world sprite",
+        "a placed analyzer would be invisible; change the entry analyzerWorldSprite of AC_Visuals"
+    )
 end
 
 
@@ -2025,6 +2040,222 @@ end
 -- totals under the given title.
 ------------------------------------------------
 
+------------------------------------------------
+-- Feature switches and what each switched-on feature
+-- needs (AC_Features).
+--
+-- The table itself is checked always. A feature that is
+-- off is one OK line saying so, and nothing of it is
+-- probed: none of it exists in this game. A feature
+-- that is on is probed by its entry in FEATURE_CHECKS;
+-- a module registers its own there when it loads
+-- (AC_Compat.FEATURE_CHECKS[id] = function(results,
+-- tools)), so this file names no feature but the press,
+-- whose parts are scripts of an add-on and have no Lua
+-- module of their own.
+------------------------------------------------
+
+AC_Compat.FEATURE_CHECKS =
+    AC_Compat.FEATURE_CHECKS or {}
+
+
+-- The reloading press: its add-on is active, so its
+-- station entity must be loaded, its two sprites must be
+-- tiles of the add-on's sheet, and its recipe
+-- description must be sound. The 27 press recipes
+-- themselves are in AC_Materials.RECIPES and are probed
+-- with every other recipe.
+AC_Compat.PRESS_ENTITY = "AmmoMaking_ReloadingPress"
+
+
+AC_Compat.FEATURE_CHECKS.reloadingPress =
+    function(
+        results,
+        tools
+    )
+
+        local manager =
+            type(getScriptManager) == "function"
+            and safe(getScriptManager)
+            or nil
+
+
+        if not manager
+            or hasMethod(manager, "getGameEntityScript") ~= true
+        then
+
+            addResult(
+                results,
+                "UNVERIFIED",
+                "reloading press station entity",
+                "getGameEntityScript unavailable"
+            )
+
+        else
+
+            local entity,
+                  err =
+                safe(
+                    function()
+
+                        return
+                            manager:getGameEntityScript(
+                                AC_Compat.PRESS_ENTITY
+                            )
+                    end
+                )
+
+
+            if err then
+
+                addResult(
+                    results,
+                    "UNVERIFIED",
+                    "reloading press station entity",
+                    tostring(err)
+                )
+
+            elseif entity then
+
+                addResult(
+                    results,
+                    "OK",
+                    "reloading press station entity (" .. AC_Compat.PRESS_ENTITY .. ")"
+                )
+
+            else
+
+                addResult(
+                    results,
+                    "WARNING",
+                    "reloading press station entity " .. AC_Compat.PRESS_ENTITY .. " not found",
+                    "the add-on is active but its entity script did not load: the press recipes have no station"
+                )
+            end
+        end
+
+
+        for _,
+            key
+        in ipairs(
+            { "pressSpriteSouth", "pressSpriteEast" }
+        )
+        do
+
+            tools.checkSprite(
+                results,
+                AC_Visuals.get(key),
+                "reloading press sprite",
+                "the add-on's tile sheet did not load (pack= and tiledef= of its mod.info): the press would be invisible"
+            )
+        end
+    end
+
+
+local function checkFeatures(
+    results
+)
+
+    for _,
+        problem
+    in ipairs(
+        safe(AC_Features.validate) or { "the feature table could not be checked" }
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            "feature switches: " .. tostring(problem),
+            "AC_Features.DEFINITIONS"
+        )
+    end
+
+
+    for _,
+        problem
+    in ipairs(
+        safe(AC_Visuals.validate) or { "the visuals table could not be checked" }
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            "placeholder visuals: " .. tostring(problem),
+            "AC_Visuals.LIST"
+        )
+    end
+
+
+    local tools = {
+
+        addResult = addResult,
+
+        safe = safe,
+
+        hasMethod = hasMethod,
+
+        checkSprite = checkSprite,
+    }
+
+
+    for _,
+        definition
+    in ipairs(
+        AC_Features.DEFINITIONS
+    )
+    do
+
+        local enabled,
+              why =
+            AC_Features.getState(definition.id)
+
+
+        addResult(
+            results,
+            "OK",
+            "feature "
+            .. definition.name
+            .. ": "
+            .. (enabled and "ON" or "off")
+            .. " ("
+            .. tostring(why)
+            .. ")"
+        )
+
+
+        local check =
+            AC_Compat.FEATURE_CHECKS[definition.id]
+
+
+        if enabled
+            and check
+        then
+
+            local ok,
+                  err =
+                pcall(
+                    check,
+                    results,
+                    tools
+                )
+
+
+            if not ok then
+
+                addResult(
+                    results,
+                    "WARNING",
+                    "feature " .. definition.name .. " could not be checked",
+                    tostring(err)
+                )
+            end
+        end
+    end
+end
+
+
 local function report(
     results,
     verbose,
@@ -2218,6 +2449,8 @@ function AC_Compat.run(
     checkRecycling(results)
 
     checkLoot(results)
+
+    checkFeatures(results)
 
 
     local summary =

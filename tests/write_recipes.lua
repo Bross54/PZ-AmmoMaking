@@ -63,3 +63,10 @@ rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", BALANCE.replaceRecycling, "recycl
 rewrite(ROOT .. "/docs/SPENT_CASE_RESEARCH.md", BALANCE.replaceSpent, "spent-case policy table")
 rewrite(ROOT .. "/README.md", BALANCE.replaceSummary, "calibre table")
 rewrite(ROOT .. "/docs/DEVELOPMENT.md", BALANCE.replaceRecipeAudit, "recipe audit table")
+
+-- The add-on mods: their recipe scripts, item scripts and names come from
+-- the same model, whether or not their feature is on here.
+local ADDONS = dofile(ROOT .. "/tests/render_addons.lua")
+for _, path in ipairs(ADDONS.writeAll(ROOT, RENDER)) do
+    print("Wrote " .. ROOT .. "/" .. path)
+end

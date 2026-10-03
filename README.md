@@ -827,6 +827,7 @@ PZ-AmmoMaking
                         ├── AC_CaseQuality.lua
                         ├── AC_Compat.lua
                         ├── AC_Deposits.lua
+                        ├── AC_Features.lua
                         ├── AC_Geology.lua
                         ├── AC_GeologySampling.lua
                         ├── AC_LaboratoryAnalyzer.lua
@@ -837,6 +838,7 @@ PZ-AmmoMaking
                         ├── AC_Recycling.lua
                         ├── AC_SaveData.lua
                         ├── AC_Text.lua
+                        ├── AC_Visuals.lua
                         └── AC_WorldData.lua
 ```
 

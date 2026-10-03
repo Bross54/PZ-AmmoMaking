@@ -1,0 +1,548 @@
+/* Ammo Making: Reloading Press (add-on) - the press recipes.
+
+   EXPERIMENTAL, NOT YET SEEN IN GAME.
+
+   THE BODY OF THIS FILE IS GENERATED from AC_Calibres.lua of the main mod
+   (AC_Calibres.buildPressRecipes) by tests/write_recipes.lua; this comment
+   is kept. Do not edit the body.
+
+   One recipe for each case, projectile and assembly step of every calibre,
+   made from the hand recipe of the same step:
+
+     Tags = AmmoMakingReloadingPress   only the Reloading Press entity of
+                                       this add-on offers it (its CraftBench
+                                       Recipes tag); the hand-craft window
+                                       does not list it
+     timedAction = UseHandPress        vanilla's press action (PressClayBrick)
+     time                              60 % of the hand recipe's, rounded down
+     inputs                            the hand recipe's, with the SAME
+                                       calibre's die set kept, and without
+                                       the hammer line: the press does the
+                                       pressing
+     outputs, OnCreate                 the hand recipe's: same count, same
+                                       XP, same quality roll
+
+   The pattern is vanilla's own press and mold: a station tag and a kept
+   tool that decides what comes out
+   (entities/pottery/cratRecipes/craftrecipe_handpress.txt, 42.20.4).
+
+   The OnCreate functions are defined by the main mod when this add-on is
+   active (AC_Materials.lua builds one per recipe of its list, and the
+   press recipes join that list through the feature "reloadingPress"). */
+
+module Base
+{
+    craftRecipe AmmoMaking_FormCase9mmAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase9mmAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets9mmAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets9mmAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound9mmAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound9mmAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case9mm],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.Bullet9mm],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase38SpecialAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase38SpecialAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets38SpecialAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets38SpecialAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound38SpecialAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound38SpecialAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case38Special],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.Bullet38Special],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets38,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase45ACPAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase45ACPAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets45ACPAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets45ACPAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound45ACPAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound45ACPAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case45ACP],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.Bullet45ACP],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets45,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase357MagnumAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase357MagnumAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets357MagnumAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets357MagnumAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound357MagnumAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound357MagnumAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case357Magnum],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.Bullet357Magnum],
+            item 2 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets357,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase44MagnumAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase44MagnumAtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets44MagnumAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets44MagnumAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound44MagnumAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound44MagnumAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case44Magnum],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.Bullet44Magnum],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets44,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase556NATOAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase556NATOAtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets556NATOAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets556NATOAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound556NATOAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound556NATOAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case556NATO],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.Bullet556NATO],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.556Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase3030WinAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase3030WinAtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets3030WinAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets3030WinAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound3030WinAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound3030WinAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case3030Win],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet3030Win],
+            item 4 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.3030Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase308WinAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase308WinAtPress,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets308WinAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets308WinAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound308WinAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound308WinAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case308Win],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet308Win],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.308Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase12GaugeAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase12GaugeAtPress,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Hull12Gauge,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets12GaugeAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets12GaugeAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.ShotCharge12Gauge,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound12GaugeAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound12GaugeAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Hull12Gauge],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.ShotCharge12Gauge],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,
+        }
+        outputs
+        {
+            item 1 Base.ShotgunShells,
+        }
+    }
+}

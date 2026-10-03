@@ -484,6 +484,8 @@ MOCK.useDeltaMethod = true   -- false: item scripts have no getUseDelta
 MOCK.newCraftRecipeScript = newCraftRecipeScript
 MOCK.craftRecipeScripts = {}
 MOCK.craftRecipeLookup = true   -- false: the script manager has no getCraftRecipe
+MOCK.entityScripts = {}         -- entity name -> script object, as the add-ons would bring
+MOCK.entityLookup = true        -- false: the script manager has no getGameEntityScript
 
 -- Vanilla recipes the mod probes by id (confirmed in the installed 42.20.4
 -- scripts). They are always known, whatever mod recipes a test registers.
@@ -574,6 +576,11 @@ function getScriptManager()
         end,
         getCraftRecipe = MOCK.craftRecipeLookup and function(_, id)
             return MOCK.craftRecipeScripts[id]
+        end or nil,
+        -- Entity scripts by name (42.20.4 jar: ScriptManager
+        -- .getGameEntityScript(String)); nil for one that is not loaded.
+        getGameEntityScript = MOCK.entityLookup and function(_, name)
+            return MOCK.entityScripts[name]
         end or nil,
     }, "ScriptManager")
 end
@@ -909,7 +916,25 @@ end
 ------------------------------------------------
 
 function isClient() return MOCK.client end
-function isServer() return false end
+function isServer() return MOCK.server == true end
+
+-- The engine's list of loaded mod ids, and the sandbox options of the save.
+-- Build 42 writes an id with a leading backslash; MOCK.activeMods holds
+-- them as a test wants the engine to report them.
+MOCK.activeMods = {}
+function getActivatedMods()
+    local list = { items = MOCK.activeMods }
+    function list:contains(value)
+        for _, id in ipairs(self.items) do
+            if id == value then return true end
+        end
+        return false
+    end
+    function list:size() return #self.items end
+    function list:get(index) return self.items[index + 1] end
+    return list
+end
+SandboxVars = {}
 function isDebugEnabled() return MOCK.debug end
 function addSound() end
 function instanceof(obj, className) return obj ~= nil and obj.__class == className end
@@ -1123,8 +1148,8 @@ end
 MOCK.MOD_FILES = {
     "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality",
     "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
-    "shared/AC_Deposits", "shared/AC_Geology", "shared/AC_GeologySampling",
-    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_Text",
+    "shared/AC_Deposits", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_Text", "shared/AC_Visuals",
     "shared/AC_WorldData",
     "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
     "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
@@ -1162,6 +1187,8 @@ function MOCK.resetLuaState()
     AC_Mining = nil
     AC_Materials = nil
     AC_Calibres = nil
+    AC_Features = nil
+    AC_Visuals = nil
     AC_CaseQuality = nil
     AC_Compat = nil
     AC_Loot = nil

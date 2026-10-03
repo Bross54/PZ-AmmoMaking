@@ -1,0 +1,31 @@
+/* Ammo Making: Reloading Press (add-on) - the window skin of the station.
+
+   EXPERIMENTAL, NOT YET SEEN IN GAME. Follows vanilla's
+   media/scripts/xui/defaultskin/x_entity_hand_press.txt (42.20.4) field for
+   field.
+
+   PLACEHOLDER_VISUAL: Icon = Build_Handpress is vanilla's hand press icon
+   (docs/PLACEHOLDER_ASSETS.md). */
+
+module Base
+{
+    xuiSkin default
+    {
+        entity ES_AmmoMaking_ReloadingPress
+        {
+            LuaWindowClass      = ISEntityWindow,
+            DisplayName         = Reloading Press,
+            Icon                = Build_Handpress,
+
+            components
+            {
+                CraftLogic
+                {
+                    LuaPanelClass           = ISCraftDefaultPanel,
+                    DisplayName             = Press,
+                    Icon                    = Build_Handpress,
+                }
+            }
+        }
+    }
+}

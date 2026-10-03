@@ -1,6 +1,8 @@
 -- Ammo Making - Laboratory Assay Analyzer
 -- Project Zomboid Build 42.20
 
+require "AC_Visuals"
+
 AC_LaboratoryAnalyzer =
     AC_LaboratoryAnalyzer or {}
 
@@ -18,11 +20,12 @@ AC_LaboratoryAnalyzer.CONFIG = {
     -- Ammo Making XP when a finished sample is collected.
     assayXP = 10,
 
-    -- Temporary vanilla world sprite of the placed
-    -- analyzer (found in 42.20 with the tile object
-    -- inspector); a custom sprite can replace it later
-    -- without touching the analyzer logic.
-    worldSprite = "industry_03_61",
+    -- PLACEHOLDER_VISUAL: the world sprite of the placed
+    -- analyzer, a vanilla tile for now. The name lives
+    -- in AC_Visuals ("analyzerWorldSprite"); a sprite of
+    -- the mod's own replaces it there without touching
+    -- the analyzer logic.
+    worldSprite = AC_Visuals.get("analyzerWorldSprite"),
 
     -- Ticks to place the analyzer. ISBuildAction takes
     -- 50 off for the Handy trait, so this must stay

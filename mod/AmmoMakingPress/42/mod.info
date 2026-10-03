@@ -1,0 +1,8 @@
+name=Ammo Making: Reloading Press (experimental)
+id=AmmoMakingPress
+require=\AmmoMaking
+modversion=0.9.0
+versionMin=42.20.0
+pack=AmmoMakingPress
+tiledef=ammomaking_press 6142
+description=EXPERIMENTAL add-on for Ammo Making: a placed reloading press that runs the case, projectile and assembly steps faster, with the same die sets and the same material. Not yet verified in game; leave it off unless you are testing it.

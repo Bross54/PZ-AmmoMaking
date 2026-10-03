@@ -248,12 +248,13 @@ def mod_item_art():
 
 
 def press_draft():
-    """What the prepared (not shipped) press entity and tile sheet name."""
+    """What the press add-on's entity script and tile sheet name."""
     folder = ROOT + "/art/reloading_press/"
-    if not os.path.isfile(folder + "AC_ReloadingPress.txt"):
+    entity_path = ROOT + "/mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt"
+    if not os.path.isfile(entity_path):
         return None
     import json
-    script = re.sub(r"/\*.*?\*/", "", read(folder + "AC_ReloadingPress.txt"), flags=re.S)
+    script = re.sub(r"/\*.*?\*/", "", read(entity_path), flags=re.S)
     with io.open(folder + "tiles.json", encoding="utf-8") as handle:
         sheet = json.load(handle)
     entity = re.search(r"(?m)^\s*entity\s+(\w+)", script)
@@ -1128,18 +1129,18 @@ def judge(snapshot, facts, calls, recorded, have_jar):
     draft = snapshot.get("pressDraft") or {}
     if draft:
         if not draft["timedAction"]:
-            findings.append(("WARNING", "the press draft's build timed action no longer exists"))
+            findings.append(("WARNING", "the press add-on's build timed action no longer exists"))
         for group in ("items", "tags"):
             for name, present in draft[group].items():
                 if not present:
-                    findings.append(("WARNING", "the press draft's build recipe names %s, which no longer exists" % name))
+                    findings.append(("WARNING", "the press add-on's build recipe names %s, which no longer exists" % name))
         if not draft["entityNameFree"]:
-            findings.append(("WARNING", "vanilla now has an entity with the press draft's name"))
+            findings.append(("WARNING", "vanilla now has an entity with the press add-on's name"))
         if not draft["tilesetNamesFree"]:
             findings.append(("WARNING", "vanilla now has a tileset with the press sheet's name"))
         if not draft["spritesUnclaimed"]:
             findings.append(("WARNING", "a vanilla entity now claims one of the press's sprite names"))
-    report.group("the prepared press entity and tile sheet (not shipped)", findings)
+    report.group("the press add-on's entity and tile sheet", findings)
 
     findings = [("WARNING", "%s is gone: the firearm designs rely on it" % name) for name, present in snapshot["design"].items() if not present]
     report.group("vanilla firearm Lua the designs rely on (%d)" % len(snapshot["design"]), findings)

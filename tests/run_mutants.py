@@ -72,7 +72,7 @@ MUTANTS = [
     (SHARED + "AC_Calibres.lua", "    timePercent = 60,", "    timePercent = 30,", "a press more than three times as fast"),
     (SHARED + "AC_Calibres.lua", "    timePercent = 60,", "    timePercent = 80,", "a different press speed"),
     (SHARED + "AC_Calibres.lua", "                math.floor(hand.time * press.timePercent / 100)", "                hand.time", "the press is no faster than the hand"),
-    (SHARED + "AC_Calibres.lua", "    enabled = false,\n\n    benchTag = \"AmmoMakingReloadingPress\",", "    enabled = true,\n\n    benchTag = \"AmmoMakingReloadingPress\",", "the press recipes are live without a station"),
+    (SHARED + "AC_Calibres.lua", "    enabled = AC_Features.isEnabled(\"reloadingPress\"),", "    enabled = true,", "the press recipes are live without a station"),
     (SHARED + "AC_Calibres.lua", "                local isHammer =\n                    input.keep\n                    and input.tags\n                    and input.tags[1] == \"base:hammer\"", "                local isHammer =\n                    input.keep", "the press needs no die set"),
     (SHARED + "AC_Calibres.lua", "                local isHammer =\n                    input.keep\n                    and input.tags\n                    and input.tags[1] == \"base:hammer\"", "                local isHammer =\n                    not input.keep and input.items and input.items[1] == \"AmmoMaking.BrassCaseCup\"", "the press forms a case from nothing"),
 
@@ -201,6 +201,24 @@ MUTANTS = [
 
     (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.Amplifier\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.HomeAlarm\" } },", "the analyzer takes a part that is not probed and whose availability nobody recorded"),
     (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.LightBulb\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.LightBulb\" } },", "a burnt-out bulb builds an analyzer"),
+
+    # ---- feature switches
+    (SHARED + "AC_Features.lua", "    return options[option] == true\n", "    return options[option] ~= nil\n", "any sandbox value switches a feature on"),
+    (SHARED + "AC_Features.lua", "    return\n        mods:contains(modId) == true\n        or mods:contains(\"\\\\\" .. modId) == true\n", "    return true\n", "every add-on counts as active"),
+    (SHARED + "AC_Features.lua", "    if definition.stability ~= AC_Features.EXPERIMENTAL then\n        return false, \"locked\"\n    end\n", "", "a locked feature can be switched on"),
+    (SHARED + "AC_Features.lua", "    if definition.singlePlayerOnly\n        and AC_Features.isMultiplayer()\n    then\n        return false, \"multiplayer\"\n    end\n", "", "a single-player feature runs on a multiplayer client"),
+    (SHARED + "AC_Features.lua", "        if AC_Features.isModActive(other) then\n            return false, \"conflict with \" .. other\n        end\n", "", "spent cases run beside a mod that already leaves casings"),
+    (SHARED + "AC_Features.lua", "        stability = AC_Features.DISABLED,", "        stability = AC_Features.EXPERIMENTAL,", "firing effects are unlocked"),
+    (SHARED + "AC_Features.lua", "    if definition.requires\n        and not AC_Features.isEnabled(definition.requires)\n    then\n        return false, \"needs \" .. definition.requires\n    end\n", "", "a feature runs without the one it needs"),
+
+    # ---- the press add-on
+    ("mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt", "            Recipes = AmmoMakingReloadingPress,", "            Recipes = HandPress,", "the press station offers vanilla's hand press recipes instead of its own"),
+    ("mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt", "                    row = ammomaking_press_01_1,", "                    row = crafted_01_73,", "the press claims a sprite of vanilla's hand press"),
+    ("mod/AmmoMakingPress/42/mod.info", "require=\AmmoMaking\n", "", "the press add-on can be enabled without the main mod"),
+    ("mod/AmmoMakingPress/42/mod.info", "tiledef=ammomaking_press 6142\n", "", "the press add-on does not declare its tile sheet"),
+    ("art/reloading_press/tiles.json", "\"output\": \"../../mod/AmmoMakingPress/42/media\",", "\"output\": \"../../mod/AmmoMaking/42/media\",", "the press tile sheet is built into the main mod"),
+    (SHARED + "AC_Visuals.lua", "        value = \"ammomaking_press_01_1\",", "        value = \"ammomaking_press_01_0\",", "the game-start check probes the south sprite twice and never the east one"),
+    (SHARED + "AC_Compat.lua", "    checkLoot(results)\n\n    checkFeatures(results)\n", "    checkLoot(results)\n", "the game-start check never looks at the features"),
 
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
