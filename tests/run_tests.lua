@@ -9769,11 +9769,22 @@ do
         eq(before[calibre.case], nil, "and no " .. calibre.id .. " case is formed")
         eq(have[calibre.case], true, "with them, a " .. calibre.id .. " case can be")
     end
-    -- The trace of scavenged brass scrap was the only way to brass, stated
-    -- here so the claim above is not read as more than it is.
+    -- Scavenged brass scrap is the one way to brass without zinc, stated
+    -- here so the claim above is not read as more than it is. It is a
+    -- trace from two places: vanilla's junk tables, and since the third
+    -- pass the mod's own component loot, which puts a brass scrap in a few
+    -- crates (AC_Loot.COMPONENTS; a tenth of an ingot per find).
     local trace = reachable(without, true)
     eq(trace["Base.BrassIngot"], true, "scavenged brass scrap can be recast without any instrument")
     eq(trace["AmmoMaking.ZincIngot"], nil, "but it is no zinc")
+    local scrapLoot = 0
+    for _, component in ipairs(AC_Loot.COMPONENTS) do
+        if component.item == "Base.BrassScrap" then
+            scrapLoot = scrapLoot + 1
+            check(component.weight <= 2, "the mod's own brass scrap loot is rare (" .. component.weight .. " in " .. component.list .. ")")
+        end
+    end
+    check(scrapLoot >= 1, "(the mod's component loot is part of that trace)")
     -- One instrument is enough: the field kit alone opens the chain.
     local fieldOnly = {}
     for _, recipe in ipairs(without) do table.insert(fieldOnly, recipe) end
@@ -9997,7 +10008,7 @@ do
         fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "progression" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

@@ -56,6 +56,7 @@ end
 
 rewrite(DOCUMENT, BALANCE.replaceBlock, "balance tables")
 rewrite(DOCUMENT, BALANCE.replaceEconomy, "economy table")
+rewrite(DOCUMENT, BALANCE.replaceProgression, "progression table")
 
 local VANILLA = dofile(ROOT .. "/tests/vanilla_snapshot.lua")
 rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", function(text) return BALANCE.replaceLoot(text, VANILLA) end, "loot table")
