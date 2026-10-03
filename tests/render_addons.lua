@@ -87,10 +87,32 @@ end
 -- Spent cases
 ------------------------------------------------
 
--- One item block per calibre, from AC_SpentCases.buildItems().
-function A.spentItemsBody()
+-- The script fields of every item in an item script: full type -> { key = value }.
+function A.readItemFields(text)
+    text = string.gsub(text, "/%*.-%*/", "")
+    local module = string.match(text, "module%s+([%w_]+)")
+    local items = {}
+    for name, body in string.gmatch(text, "item%s+([%w_]+)%s*(%b{})") do
+        local fields = {}
+        for key, value in string.gmatch(body, "([%w_]+)%s*=%s*([^,\n]+),") do
+            fields[key] = (string.gsub(value, "%s+$", ""))
+        end
+        items[module .. "." .. name] = fields
+    end
+    return items
+end
+
+-- The spent-case items, each with the look and weight of its clean case.
+-- mainItems: the text of the main mod's AC_Items.txt.
+function A.spentItems(mainItems)
+    local clean = A.readItemFields(mainItems)
+    return AC_SpentCases.buildItems(function(fullType) return clean[fullType] end)
+end
+
+-- One item block per calibre.
+function A.spentItemsBody(mainItems)
     local blocks = {}
-    for _, item in ipairs(AC_SpentCases.buildItems()) do
+    for _, item in ipairs(A.spentItems(mainItems)) do
         local lines = { "    item " .. item.name, "    {" }
         for _, field in ipairs(item.fields) do
             table.insert(lines, "        " .. field[1] .. " = " .. tostring(field[2]) .. ",")
@@ -101,9 +123,9 @@ function A.spentItemsBody()
     return "module AmmoMaking\n{\n" .. table.concat(blocks, "\n\n") .. "\n}\n"
 end
 
-function A.spentItemNames()
+function A.spentItemNames(mainItems)
     local list = {}
-    for _, item in ipairs(AC_SpentCases.buildItems()) do
+    for _, item in ipairs(A.spentItems(mainItems)) do
         table.insert(list, { item.fullType, item.displayName })
     end
     return A.renderNames(list)
@@ -125,7 +147,7 @@ end
 function A.spentNames()
     local list = {}
     for _, recipe in ipairs(A.spentRecipes()) do
-        table.insert(list, { recipe.id, AC_SpentCases.recipeName(recipe) })
+        table.insert(list, { recipe.id, AC_Recycling.getSpentRecipeName(recipe) })
     end
     return A.renderNames(list)
 end
@@ -165,9 +187,10 @@ function A.writeAll(root, RENDER, which)
         table.insert(written, A.PRESS_NAMES)
     end
     if (which == nil or which == "spent") and AC_SpentCases then
-        writeScript(root .. "/" .. A.SPENT_ITEMS, A.spentItemsBody(), RENDER)
+        local mainItems = assert(read(root .. "/mod/AmmoMaking/42/media/scripts/AC_Items.txt"))
+        writeScript(root .. "/" .. A.SPENT_ITEMS, A.spentItemsBody(mainItems), RENDER)
         writeScript(root .. "/" .. A.SPENT_SCRIPT, A.spentScriptBody(RENDER), RENDER)
-        write(root .. "/" .. A.SPENT_ITEM_NAMES, A.spentItemNames())
+        write(root .. "/" .. A.SPENT_ITEM_NAMES, A.spentItemNames(mainItems))
         write(root .. "/" .. A.SPENT_NAMES, A.spentNames())
         for _, path in ipairs({ A.SPENT_ITEMS, A.SPENT_SCRIPT, A.SPENT_ITEM_NAMES, A.SPENT_NAMES }) do
             table.insert(written, path)

@@ -393,6 +393,20 @@ B.SPENT_POLICIES = {
     { id = "E", label = "no spent cases", factory = 0, handloaded = 0, scrap = 0, resize = 0, factoryResize = 0 },
 }
 
+-- F is not a what-if: it is what the Spent Cases add-on does, from the
+-- mod's own numbers (AC_SpentCases.CONFIG, AC_Recycling.SPENT). Every round
+-- leaves a case, half are found, a spent case can only be scrapped, and a
+-- quarter of its brass comes back.
+table.insert(B.SPENT_POLICIES, {
+    id = "F",
+    label = "**implemented (add-on)**: every round leaves a case, half are found, scrap only at a quarter",
+    factory = AC_SpentCases.CONFIG.recoveryPercent / 100,
+    handloaded = AC_SpentCases.CONFIG.recoveryPercent / 100,
+    scrap = AC_Recycling.getRecovery(AC_Recycling.getSpentSource()),
+    resize = 0,
+    factoryResize = 0,
+})
+
 B.SPENT_CALIBRES = { "9mm", ".308", "12 Gauge" }
 
 -- rounds of one origin ("factory" or "handloaded") fired under a policy.

@@ -1,9 +1,13 @@
-# Spent cases: research and design
+# Spent cases: research, design and implementation
 
-Status: **RESEARCH AND DESIGN ONLY. No spent-case item, hook or recipe
-exists.** This document records how Build 42.20.4 fires a firearm, where a
-spent case could be recovered, and why nothing was implemented in this
-pass.
+Status: **IMPLEMENTED AS AN EXPERIMENTAL ADD-ON, NOT YET SEEN IN GAME.**
+The add-on mod `AmmoMakingSpentCases` carries nine spent-case items and
+their scrapping recipes; `AC_SpentCases.lua` in the main mod is the logic.
+Nothing of it exists in a game without the add-on (feature `spentCases`,
+`AC_Features.lua`), in multiplayer, or beside another mod that leaves
+casings. Sections 1 to 3 are the research the implementation rests on;
+section 4 is the economy and the policy that was chosen (4.2); section 7
+is what was built.
 
 Facts were read on 2026-10-02 from the installed game and are marked
 **FILE** (a vanilla Lua or script file, path under `media/`), **JAR**
@@ -232,7 +236,11 @@ Designed, not defined in any script:
 | Recycling | joins the scrapping recipe of its brass size in `AC_Recycling`, which already groups by content |
 | Quality | a resized case gets a fresh quality roll, a little lower: there is nothing to carry over, because the round in the gun was a count |
 
-## 4. Why nothing was implemented
+## 4. Why it was first left unimplemented, and what changed
+
+(Kept as written in the second pass, because the reasons are why the
+feature is an add-on that is off by default. The decision that followed is
+in 4.2.)
 
 The pass's rule was to implement only if the hook is source-verified, the
 duplication risk is low, no invasive override is needed and the behaviour
@@ -284,6 +292,7 @@ Looted factory ammunition as a source of brass, per hundred rounds fired:
 | **C**: only handloaded rounds leave a case | 0, 0, 0 | 0, 0, 0 | 0, 0, 0 |
 | **D**: every round leaves a case; half are lost, the rest are dirty | 50, 0.6, 1.9 | 50, 1.9, 5.6 | 50, 1.9, 5.6 |
 | **E**: no spent cases | 0, 0, 0 | 0, 0, 0 | 0, 0, 0 |
+| **F**: **implemented (add-on)**: every round leaves a case, half are found, scrap only at a quarter | 50, 0.6, 0 | 50, 1.9, 0 | 50, 1.9, 0 |
 
 The player's own rounds, fired and reloaded: what the next hundred cost:
 
@@ -294,6 +303,7 @@ The player's own rounds, fired and reloaded: what the next hundred cost:
 | **C** | 75, 2.3 (6), 7.3 (11) | 75, 5.8 (17), 15.8 (27) | 75, 5.8 (17), 15.8 (27) |
 | **D** | 37.5, 4.1 (6), 9.1 (11) | 37.5, 11.4 (17), 21.4 (27) | 37.5, 11.4 (17), 21.4 (27) |
 | **E** | 0, 6 (6), 11 (11) | 0, 17 (17), 27 (27) | 0, 17 (17), 27 (27) |
+| **F** | 0, 6 (6), 11 (11) | 0, 17 (17), 27 (27) | 0, 17 (17), 27 (27) |
 
 <!-- END SPENT CASE POLICY TABLE -->
 
@@ -349,12 +359,43 @@ per handloaded round fired, and resizing loses some. No loop creates brass.
 as data, and refuses one that returns more than unused components do
 (`getSources()`; the suite builds an invented spent source through it).
 
-So the hook stays unwritten and the items undefined. Defining nine spent-case
-items that nothing produces and nothing consumes would add dead data to the
-item list and the translation file without bringing the feature closer; the
-table in section 3 is what a future pass needs.
+### 4.2 The policy that was implemented (row F)
 
-## 5. Proposed order for a future pass
+The project owner's direction for the third pass: all spent brass may
+exist; it recycles at a lower efficiency than unused components; no XP;
+no rule that depends on where a round came from, since that does not
+survive loading; and firing factory ammunition must not beat mining.
+
+That is neither A (clean, reloadable cases) nor C (handloads only, which
+needs the tally wired). It is row **F** of the table above, the one row
+that is computed from the mod's own numbers:
+
+| | Value | Where |
+|---|---|---|
+| Which rounds leave a case | all, factory and handloaded alike | `AC_SpentCases` asks only for the firearm's calibre |
+| How many are found | 50 of 100 | `AC_SpentCases.CONFIG.recoveryPercent` |
+| What a spent case is | an item of its own, `calibre.spentCase`; **not** a case | `AC_Calibres.define` |
+| Loading it again | impossible: no recipe takes it but scrapping | tested: no main, press or assembly recipe names one |
+| Scrap recovery | a quarter (40 units in, 1 brass scrap out) | `AC_Recycling.SPENT` |
+| XP | none | `AC_Recycling.CONFIG.xp`, shared with clean scrapping |
+
+Half found times a quarter recovered is **one eighth** of a fired case's
+brass. A hundred looted 9mm are 0.6 of an ingot, a hundred .308 or shells
+1.9. An ore is an ingot: mining a tile beats emptying two boxes of
+ammunition into a wall, and the brass of a hundred new rounds is six to
+seventeen ingots. Looted ammunition is a trickle, not a mine.
+
+The player's own rounds come back at the same eighth. From any stock of
+cases the rounds that can ever be made are bounded by 1 / (1 - 0.25) even
+if every case were found, and the suite walks that cycle to exhaustion for
+every calibre.
+
+A resizing recipe (spent case back to a loadable case) is deliberately
+absent. It would need to know handloads from factory rounds to stay
+honest, which is the quality tally's job; it is listed as an optional
+future feature.
+
+## 5. The order that was proposed (done except point 4's in-game check)
 
 1. Decide the economy (section 4, point 1) and the recovery rule.
 2. Add `calibre.spentCase`, the items, the resizing recipe and the
@@ -377,3 +418,39 @@ table in section 3 is what a future pass needs.
   player (it decides where a wrapped `ejectSpentRounds` would be called).
 - That a revolver's `getSpentRoundCount()` still holds N at the start of
   `ejectSpentRounds()`.
+
+## 7. What is implemented
+
+`AC_SpentCases.lua` (main mod), the add-on `mod/AmmoMakingSpentCases`
+(generated items, recipes and names), the source `spent` of
+`AC_Recycling`.
+
+| Firearm family | Decided by | When the case is left | How |
+|---|---|---|---|
+| Self-loading pistols and rifles | neither flag set | at the shot | listener on `OnWeaponSwingHitPoint` |
+| Double barrel | neither flag set (no chamber) | at the shot | the same listener |
+| Revolvers | `ManuallyRemoveSpentRounds` | when the cylinder is opened, all at once | wrapped `ejectSpentRounds` (reload and rack actions) |
+| Pump, bolt and lever guns | `RackAfterShoot` | at the rack that follows the shot | the same wrapper |
+
+No firearm is named: the two script flags vanilla's own `onShoot`
+branches on are the adapters. The wrapper reads the spent count, calls
+vanilla's function with exactly what it was given, and only then leaves
+the cases; its own two steps are `pcall`-guarded and vanilla's is not, so
+a failure of the mod cannot break a reload. The cases are created with
+the item factory and placed with `IsoGridSquare:AddWorldInventoryItem`,
+the two calls mining uses to drop ore (that path has been seen in game),
+or put in the inventory (`CONFIG.placement`).
+
+Tested offline against a model of vanilla's seven reload functions
+(`tests/firearm_model.lua`, written from the installed 42.20.4 Lua): for
+every family one case per round fired and never more, at the moment the
+table says; nothing for a dry fire, a melee swing, a racked-out live
+round, unlimited debug ammunition or a calibre the mod does not make;
+1,600 random actions per family and seed, including a save that loses
+vanilla's spent state. The model is the mod's reading of vanilla, not
+vanilla.
+
+An installed Workshop mod (Hot Brass, `docs/REFERENCE_IMPLEMENTATIONS.md`)
+wraps the same two functions the same way, which is a clue that the
+pattern works in Build 42, not proof for this mod. With that mod active
+the feature stands down: both would leave a casing.

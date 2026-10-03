@@ -44,6 +44,7 @@
 -- RECIPES; tests/write_recipes.lua renders the script).
 -- Nothing here persists anything.
 
+require "AC_Features"
 require "AC_Calibres"
 
 AC_Recycling = AC_Recycling or {}
@@ -194,14 +195,138 @@ end
 --   components     function returning item -> units, and
 --                  the items in a stable order
 --
--- Listed cleanest first. There is ONE today: unused
--- components, at the recovery of CONFIG. Spent cases, if
--- they ever exist (docs/SPENT_CASE_RESEARCH.md), would be
--- a second entry with a lower recovery, and validate()
--- already refuses a later source that returns more than
--- an earlier one. Nothing is prepared beyond that: no
--- spent-case item is defined.
+-- Listed cleanest first, and validate() refuses a later
+-- source that returns more than an earlier one:
+--
+--   clean   unused components, at the recovery of CONFIG.
+--           Always there.
+--   spent   fired cases, at the lower recovery of SPENT.
+--           There only when the feature "spentCases" is
+--           on (AC_Features): its items and its recipe
+--           scripts are in the spent-cases add-on, so
+--           without the add-on no recipe is left that
+--           nothing can craft.
+--
+-- A future "damaged brass" class is a third entry here.
 ------------------------------------------------
+
+------------------------------------------------
+-- SPENT BRASS (tunable)
+------------------------------------------------
+--
+-- batchUnits 40, scrapPerBatch 1: ten units of scrap for
+-- forty units of spent brass, a quarter. Half of what
+-- unused components return. With the half of fired cases
+-- that is never found (AC_SpentCases.CONFIG
+-- .recoveryPercent), one round's brass in eight comes
+-- back.
+--
+-- names: what each scrapping recipe is called, by the
+-- brass units of the cases it takes.
+------------------------------------------------
+
+AC_Recycling.SPENT = {
+
+    batchUnits = 40,
+
+    scrapPerBatch = 1,
+
+    idPrefix = "AmmoMaking_ScrapSpentBrass",
+
+    callbackPrefix = "onScrapSpentBrass",
+
+    names = {
+        [5] = "Scrap Spent Small Cases",
+        [10] = "Scrap Spent Medium Cases",
+        [15] = "Scrap Spent Large Cases and Hulls",
+    },
+
+    fallbackName = "Scrap Spent Brass",
+}
+
+
+-- item -> brass units for every calibre's spent case: the
+-- brass of the case it was. The fired primer cup is
+-- thrown away with the primer.
+function AC_Recycling.getSpentScrappable()
+
+    local units = {}
+
+    local order = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        if units[calibre.spentCase] == nil then
+
+            table.insert(
+                order,
+                calibre.spentCase
+            )
+        end
+
+
+        units[calibre.spentCase] =
+            AC_Calibres.CONFIG.cupUnits * calibre.cupsPerCase
+    end
+
+
+    return units, order
+end
+
+
+-- The spent source, whether or not the feature is on (the
+-- add-on's recipe script is generated from it).
+function AC_Recycling.getSpentSource()
+
+    local spent =
+        AC_Recycling.SPENT
+
+
+    return {
+        id = "spent",
+
+        idPrefix = spent.idPrefix,
+
+        callbackPrefix = spent.callbackPrefix,
+
+        batchUnits = spent.batchUnits,
+
+        scrapPerBatch = spent.scrapPerBatch,
+
+        components = AC_Recycling.getSpentScrappable,
+    }
+end
+
+
+-- What a spent scrapping recipe is called.
+function AC_Recycling.getSpentRecipeName(
+    recipe
+)
+
+    local spent =
+        AC_Recycling.SPENT
+
+
+    local units =
+        tonumber(
+            string.match(
+                tostring(recipe and recipe.id),
+                "(%d+)$"
+            )
+        )
+
+
+    return
+        spent.names[units]
+        or (spent.fallbackName .. " (" .. tostring(units) .. ")")
+end
+
 
 function AC_Recycling.getSources()
 
@@ -209,7 +334,7 @@ function AC_Recycling.getSources()
         AC_Recycling.CONFIG
 
 
-    return {
+    local sources = {
         {
             id = "clean",
 
@@ -224,6 +349,18 @@ function AC_Recycling.getSources()
             components = AC_Recycling.getScrappable,
         },
     }
+
+
+    if AC_Features.isEnabled("spentCases") then
+
+        table.insert(
+            sources,
+            AC_Recycling.getSpentSource()
+        )
+    end
+
+
+    return sources
 end
 
 

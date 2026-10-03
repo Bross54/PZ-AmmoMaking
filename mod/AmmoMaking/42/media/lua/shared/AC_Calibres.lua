@@ -634,6 +634,18 @@ function AC_Calibres.define(
         calibre.dieSet or ("AmmoMaking.DieSet" .. calibre.suffix)
 
 
+    -- What a fired round leaves behind: the case's own
+    -- item name with "Spent" in front. The item exists
+    -- only in the spent-cases add-on (AC_SpentCases); it
+    -- is not a case and cannot be loaded again.
+    calibre.spentCase =
+        calibre.spentCase
+        or (
+            "AmmoMaking.Spent"
+            .. (string.match(calibre.case, "([^%.]+)$") or calibre.suffix)
+        )
+
+
     for _,
         key
     in ipairs(
@@ -2041,6 +2053,35 @@ end
 -- assembly comes out even and vanilla's "gather
 -- gunpowder" can only return what was put in.
 ------------------------------------------------
+
+-- The same for the spent cases: a fired case holds the
+-- brass of the case it was, and never more (the primer
+-- cup goes with the primer). Kept apart from
+-- buildUnits(): the items exist only with the spent-cases
+-- add-on, and AC_Materials takes these in only when that
+-- feature is on.
+function AC_Calibres.buildSpentUnits()
+
+    local units = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        units[calibre.spentCase] = {
+            metal = "brass",
+            units = AC_Calibres.CONFIG.cupUnits * calibre.cupsPerCase,
+        }
+    end
+
+
+    return units
+end
+
 
 function AC_Calibres.buildUnits()
 

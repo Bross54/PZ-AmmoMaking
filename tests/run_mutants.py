@@ -31,8 +31,8 @@ CLIENT = LUA + "client/"
 # (file, text to find exactly once, replacement, what the fault is)
 MUTANTS = [
     # ---- brass recycling
-    (SHARED + "AC_Recycling.lua", "    scrapPerBatch = 1,", "    scrapPerBatch = 2,", "recycling gives all of the brass back"),
-    (SHARED + "AC_Recycling.lua", "    scrapPerBatch = 1,", "    scrapPerBatch = 3,", "recycling returns more brass than it takes"),
+    (SHARED + "AC_Recycling.lua", "    batchUnits = 20,\n\n    scrapPerBatch = 1,", "    batchUnits = 20,\n\n    scrapPerBatch = 2,", "recycling gives all of the brass back"),
+    (SHARED + "AC_Recycling.lua", "    batchUnits = 20,\n\n    scrapPerBatch = 1,", "    batchUnits = 20,\n\n    scrapPerBatch = 3,", "recycling returns more brass than it takes"),
     (SHARED + "AC_Recycling.lua", "    batchUnits = 20,", "    batchUnits = 10,", "a recycling batch no bigger than its scrap"),
     (SHARED + "AC_Recycling.lua", "    xp = 0,", "    xp = 1,", "recycling grants XP"),
     (SHARED + "AC_Recycling.lua", "    scrapPerIngot = 10,", "    scrapPerIngot = 5,", "an ingot from five brass scrap"),
@@ -219,6 +219,24 @@ MUTANTS = [
     ("art/reloading_press/tiles.json", "\"output\": \"../../mod/AmmoMakingPress/42/media\",", "\"output\": \"../../mod/AmmoMaking/42/media\",", "the press tile sheet is built into the main mod"),
     (SHARED + "AC_Visuals.lua", "        value = \"ammomaking_press_01_1\",", "        value = \"ammomaking_press_01_0\",", "the game-start check probes the south sprite twice and never the east one"),
     (SHARED + "AC_Compat.lua", "    checkLoot(results)\n\n    checkFeatures(results)\n", "    checkLoot(results)\n", "the game-start check never looks at the features"),
+
+    # ---- spent cases
+    (SHARED + "AC_SpentCases.lua", "    recoveryPercent = 50,", "    recoveryPercent = 100,", "every fired case is found"),
+    (SHARED + "AC_Recycling.lua", "AC_Recycling.SPENT = {\n\n    batchUnits = 40,", "AC_Recycling.SPENT = {\n\n    batchUnits = 20,", "spent brass scraps as well as unused brass"),
+    (SHARED + "AC_SpentCases.lua", "    return\n        not weapon:isRackAfterShoot()\n        and not weapon:isManuallyRemoveSpentRounds()\n", "    return\n        not weapon:isRackAfterShoot()\n", "a revolver leaves its cases at the shot and again when it is opened"),
+    (SHARED + "AC_SpentCases.lua", "    return\n        not weapon:isRackAfterShoot()\n        and not weapon:isManuallyRemoveSpentRounds()\n", "    return\n        not weapon:isManuallyRemoveSpentRounds()\n", "a pump gun leaves its case at the shot and again at the rack"),
+    (SHARED + "AC_SpentCases.lua", "    if weapon:isSpentRoundChambered() then\n        return 1\n    end", "    if weapon:isSpentRoundChambered() then\n        return 2\n    end", "a chambered spent round counts as two cases"),
+    (SHARED + "AC_SpentCases.lua", "        local result = original(self, ...)\n", "        local result = nil\n", "the wrapper never calls vanilla's function"),
+    (SHARED + "AC_SpentCases.lua", "    if AC_SpentCases.installed then\n        return AC_SpentCases.installed\n    end\n", "", "the hooks are installed again on every call"),
+    (SHARED + "AC_SpentCases.lua", "    if not AC_Features.isEnabled(\"spentCases\") then\n        return nil\n    end\n", "", "the hooks are installed whatever the feature says"),
+    (SHARED + "AC_SpentCases.lua", "    if type(getDebug) == \"function\"\n        and getDebug()\n        and character\n        and character.isUnlimitedAmmo\n        and character:isUnlimitedAmmo()\n    then\n        return 0\n    end\n", "", "unlimited debug ammunition leaves real brass"),
+    (SHARED + "AC_SpentCases.lua", "    local toGround =\n        AC_SpentCases.CONFIG.placement ~= \"inventory\"\n", "    local toGround = false\n", "cases always go to the inventory"),
+    (SHARED + "AC_SpentCases.lua", "    if fired > config.maximumPerEvent then\n        fired = config.maximumPerEvent\n    end\n", "", "a damaged spent count leaves a pile of brass"),
+    (SHARED + "AC_Recycling.lua", "    if AC_Features.isEnabled(\"spentCases\") then\n\n        table.insert(\n            sources,", "    if true then\n\n        table.insert(\n            sources,", "the spent scrapping recipes exist without their items"),
+    (SHARED + "AC_Calibres.lua", "            \"AmmoMaking.Spent\"\n            .. (string.match(calibre.case, \"([^%.]+)$\") or calibre.suffix)", "            \"AmmoMaking.\"\n            .. (string.match(calibre.case, \"([^%.]+)$\") or calibre.suffix)", "a fired round leaves a case that can be loaded again"),
+    (SHARED + "AC_Materials.lua", "if AC_Features.isEnabled(\"spentCases\") then\n\n    for itemType,", "if true then\n\n    for itemType,", "spent cases are in the material table without their add-on"),
+    ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.005,", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.5,", "a spent case a hundred times as heavy as the case it was"),
+    ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt", "            item 1 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "            item 2 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "the spent scrapping script hands back twice what the model says"),
 
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),

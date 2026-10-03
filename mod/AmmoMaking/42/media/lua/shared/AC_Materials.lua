@@ -35,6 +35,7 @@
 
 -- The component recipes and their units are built from the
 -- calibre definitions, which must be loaded first.
+require "AC_Features"
 require "AC_Calibres"
 require "AC_Recycling"
 
@@ -184,6 +185,22 @@ in pairs(
 do
 
     AC_Materials.UNITS[itemType] = entry
+end
+
+
+-- Spent cases, when that feature is on (their items are in
+-- its add-on): the brass a fired case still holds.
+if AC_Features.isEnabled("spentCases") then
+
+    for itemType,
+        entry
+    in pairs(
+        AC_Calibres.buildSpentUnits()
+    )
+    do
+
+        AC_Materials.UNITS[itemType] = entry
+    end
 end
 
 

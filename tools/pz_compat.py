@@ -58,6 +58,7 @@ VANILLA_SNAPSHOT = ROOT + "/tests/vanilla_snapshot.lua"
 CLASSES = {
     "InventoryItem": "zombie.inventory.InventoryItem",
     "HandWeapon": "zombie.inventory.types.HandWeapon",
+    "AmmoType": "zombie.scripting.objects.AmmoType",
     "ItemContainer": "zombie.inventory.ItemContainer",
     "IsoPlayer": "zombie.characters.IsoPlayer",
     "XP": "zombie.characters.IsoGameCharacter$XP",
@@ -108,6 +109,8 @@ DESIGN_METHODS = {
         "getSpentRoundCount", "setSpentRoundCount", "haveChamber", "isRackAfterShoot",
         "isManuallyRemoveSpentRounds", "isContainsClip", "getMagazineType", "getShellFallSound",
         "checkJam", "getJamGunChance", "isRanged",
+        # The model of vanilla's reload actions (tests/firearm_model.lua).
+        "isInsertAllBulletsReload", "isJammed", "setJammed", "setContainsClip",
     ],
     "InventoryItem": ["getCurrentAmmoCount", "setCurrentAmmoCount", "getAmmoType", "getMaxAmmo"],
 }

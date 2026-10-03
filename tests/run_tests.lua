@@ -4326,7 +4326,13 @@ do
         for event in string.gmatch(source, "Events%.([%w_]+)%.Add") do
             registrations = registrations + 1
             check(not perFrame[event], name .. ".lua does not listen to " .. event)
-            check(allowed[event], name .. ".lua listens only to load and menu events (" .. event .. ")")
+            -- The shot is listened to by the two switched features only,
+            -- and only from their install functions (their suites check
+            -- that nothing is registered while the feature is off).
+            local gated = event == "OnWeaponSwingHitPoint"
+                and (name == "shared/AC_SpentCases" or name == "shared/AC_QualityCarrier")
+                and string.find(source, 'AC_Features.isEnabled', 1, true) ~= nil
+            check(allowed[event] or gated, name .. ".lua listens only to load and menu events (" .. event .. ")")
         end
         -- Menus and timed actions never rebuild the model or run the checks.
         local isMenuOrAction = string.find(name, "ContextMenu", 1, true) or string.find(name, "Action", 1, true) or string.find(name, "UI", 1, true)
@@ -7160,13 +7166,15 @@ do
     -- The same recovery as the clean source is allowed (not more).
     eq(#AC_Recycling.validate(AC_Recycling.buildRecipes({ sources[1], spentSource(20, 1) }), { sources[1], spentSource(20, 1) }), 0, "a second source at the same recovery is allowed")
 
-    -- None of it exists in the mod: one source, no spent-case item anywhere.
+    -- None of it stays behind, and none of it is in the main mod: with the
+    -- spent-cases feature off there is one source, and the main item
+    -- script defines no spent case (the add-on does; tests/suite_spent).
     eq(#AC_Recycling.getSources(), 1, "the invented source did not stay behind")
     for id in pairs(declaredItems) do
-        check(string.find(string.lower(id), "spent", 1, true) == nil, id .. " is not a spent-case item (none is defined; SPENT_CASE_RESEARCH.md)")
+        check(string.find(string.lower(id), "spent", 1, true) == nil, id .. " is not a spent-case item: those are in the add-on")
     end
-    for _, calibre in ipairs(AC_Calibres.LIST) do
-        eq(calibre.spentCase, nil, calibre.id .. " names no spent case")
+    for id in pairs(AC_Materials.UNITS) do
+        check(string.find(string.lower(id), "spent", 1, true) == nil, id .. ": no spent case is in the material table while the feature is off")
     end
 end
 
@@ -7351,7 +7359,13 @@ do
     local function near(a, b) return math.abs(a - b) < 1e-9 end
     local byId = {}
     for _, policy in ipairs(BALANCE.SPENT_POLICIES) do byId[policy.id] = policy end
-    eq(#BALANCE.SPENT_POLICIES, 5, "five policies are compared")
+    eq(#BALANCE.SPENT_POLICIES, 6, "five policies are compared with the one the add-on implements")
+    local implemented = BALANCE.SPENT_POLICIES[6]
+    eq(implemented.id, "F", "the implemented policy is the last row")
+    eq(implemented.factory, AC_SpentCases.CONFIG.recoveryPercent / 100, "its share of cases found is the mod's")
+    eq(implemented.handloaded, implemented.factory, "the same for the player's own rounds: where a round came from is not known")
+    eq(implemented.scrap, AC_Recycling.getRecovery(AC_Recycling.getSpentSource()), "its scrap recovery is the spent source's")
+    eq(implemented.resize + implemented.factoryResize, 0, "and no spent case is ever loaded again")
     local clean = AC_Recycling.getRecovery()
     for _, policy in ipairs(BALANCE.SPENT_POLICIES) do
         local what = "policy " .. policy.id
@@ -9961,7 +9975,7 @@ do
         mirrorCraft = mirrorCraft, mirrorCanCraft = mirrorCanCraft,
         fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu,
     }
-    for _, name in ipairs({ "features", "press" }) do
+    for _, name in ipairs({ "features", "press", "spent" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end
