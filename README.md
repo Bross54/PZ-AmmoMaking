@@ -591,13 +591,34 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Die-set loot**: each calibre's die set in four vanilla loot lists, rare, added when the world loads (**not yet run in game**)
 - **Brass recycling**: unwanted brass components to vanilla brass scrap at half the brass and no XP, and scrap back to ingots (**not yet run in game**)
 - **Save-data safety**: every stored value is read back within its range; a damaged or hand-edited save cannot give a kit extra uses, stall the analyzer or put a broken number on screen. The depletion store carries a layout version, and a save written by a later version of the mod is read without being reset
-- **Quality tally (arithmetic only)**: the bookkeeping that would let ammunition quality travel through a magazine and a firearm, as pure functions that nothing calls yet. Firing is unchanged (`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`)
+- **Component loot**: a little gunpowder, primers, brass scrap and small brass sheet in gun stores, hunting stores and metalwork crates; never cases, bullets or rounds (**not yet run in game**)
+- **Feature switches**: every optional system is stable, experimental or disabled in `AC_Features.lua`; one that is off adds no recipe, no menu entry and no hook, and the game-start check says which are on and why
+- **Multiplayer guards**: sampling, assays, the analyzer and mining are refused on a multiplayer client and say so
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
 - **Inspection prototype**: skill-gated inspection panel for the test cartridge
-- **Debug tools** (`-debug` only): one "Ammo Making Debug" tree (Geology, Analyzer, Metallurgy, Ammunition) for inspecting, resetting and spawning, with a material ledger to check in game that a craft neither creates nor loses metal
+- **Debug tools** (`-debug` only): one "Ammo Making Debug" tree (Geology, Analyzer, Metallurgy, Ammunition, Stations, Diagnostics) for inspecting, resetting and spawning, with a material ledger to check in game that a craft neither creates nor loses metal
 - **Compatibility self-check**: every Build 42 assumption probed at game start; problems and a per-class summary in the console, every line in `-debug` mode
 - **Localization**: every player-facing string has an `IGUI_AmmoMaking_*` key with an English fallback
+
+## Experimental systems (off by default)
+
+Written, tested offline, and **never run in the game**. Each is switched on
+separately; with all of them off the mod behaves as described above.
+`docs/INGAME_VALIDATION.md`, sections 18 to 20, is the session that checks
+them.
+
+| System | Switch | What it does |
+|---|---|---|
+| **Reloading Press** | the add-on mod *Ammo Making: Reloading Press (experimental)* | a placed station; the case, projectile and assembly steps of all nine calibres, same die sets and material, less time. Placeholder sprites |
+| **Spent cases** | the add-on mod *Ammo Making: Spent Cases (experimental)*; sandbox option for how many are found | fired rounds leave spent brass that can only be scrapped, at a quarter of its brass and no XP. Single player. Stands down beside Hot Brass |
+| **Quality tracking** | sandbox option *Track ammunition quality in magazines and firearms* | the casing quality of handloaded rounds survives loading and unloading, and can be inspected on a magazine or firearm. Single player. No effect on firing |
+| **Quality effects at the shot** | none: locked off in this version | a small extra jam chance for poor handloads, through vanilla's own jam state. Written; waits for the tracking to be seen working |
+
+An add-on is a mod folder of its own beside `AmmoMaking`, holding only
+scripts, translations and (for the press) a tile sheet. All logic is in the
+main mod. If a world does not load with an add-on ticked, untick it: the
+main mod has no tile sheet or entity of its own.
 
 ## Current limitations
 
@@ -605,12 +626,13 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Multiplayer mining is intentionally disabled.** A multiplayer client gets a disabled option and no extraction. The server-authoritative design is in `docs/MULTIPLAYER_MINING.md`.
 - **Metallurgy has not been run in game yet.** The furnace recipes are written from the installed 42.20.4 files and pass the offline tests; whether they appear at the furnace, award XP and speed up with skill is listed under *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/METALLURGY_DESIGN.md`.
 - **The ammunition chain has not been run in game yet**, and its level gates depend on a requirement attached from Lua at boot; see *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/AMMUNITION_DESIGN.md`.
-- **Round quality is stored but not used, and cannot reach the gun as it is.** Vanilla turns loaded rounds into a count, so data on a loose round is gone once it is in a magazine or firearm; misfires and wear need a different carrier and are later work.
+- **Round quality is stored and shown, and changes nothing at the shot.** Vanilla turns loaded rounds into a count; the experimental quality tracking carries the casing quality across that as a tally (off by default). A box of ammunition keeps no record at all.
 - **Die-set loot and brass recycling have not been run in game yet.** The loot weights are deliberately small and untuned; toy caps and fertilizer are plain vanilla loot (toy caps exist in one Wild West location, so match heads are the practical priming charge). See `docs/LOOT_AND_RECYCLING.md`.
-- **The reloading press is prepared, not switched on.** Its recipes are generated and switched off. No vanilla sprite can be borrowed safely (a sprite claimed twice stops every world from loading), so the station has a tile sheet of its own, with placeholder art, built beside the mod in `art/reloading_press/`. Whether the game loads and draws it can only be checked in the game.
-- **Firing leaves no spent case.** Vanilla has no casing item and ejection is only a sound; recovery is researched, its effect on the brass economy is worked out in numbers, and nothing is built (`docs/SPENT_CASE_RESEARCH.md`).
-- **Multiplayer is not supported.** Mining and analyzer placement are switched off for clients; sampling and assays are not, and change items on the client only. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
-- **Ammo quality is not integrated into firearm failures.** The quality and inspection systems are data and UI prototypes only.
+- **The reloading press is an experimental add-on with placeholder art.** No vanilla sprite can be borrowed safely (a sprite claimed twice stops every world from loading), so the station has a tile sheet of its own. Whether the game loads and draws it can only be checked in the game.
+- **Spent cases are an experimental add-on, and cannot be reloaded.** They are scrap brass at a loss; reloading fired brass is not built (`docs/SPENT_CASE_RESEARCH.md`).
+- **Multiplayer is not supported.** Every action that changes the world or an item outside a recipe (sampling, assays, the analyzer, mining) is refused on a client; nothing is synchronised. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
+- **Ammo quality does not affect firearms.** The effect code exists and is locked off.
+- **All visuals are placeholders**: vanilla icons and models, a vanilla tile for the analyzer, programmer art for the press (`docs/PLACEHOLDER_ASSETS.md`, `docs/ART_HANDOFF.md`).
 - **The recipes for the assay kits and the laboratory analyzer have not been crafted in game yet.** They are what makes the chain playable without the debug menu, so they are the first thing to try. They are never loot.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
 - **Placing and picking up the analyzer is single-player only for now.** Multiplayer clients get disabled options; the laboratory itself has no server-side synchronisation yet.
@@ -653,44 +675,33 @@ Beside the chain:
 die sets: forged, or found as rare loot
 unwanted brass components → brass scrap (half the brass) → brass ingots
 finished rounds → vanilla boxes and cartons, by vanilla's own recipe
+a little gunpowder, primers and brass as loot
 ```
 
-Intended next stages (`docs/AMMUNITION_ROADMAP.md`):
+Behind switches (experimental, off by default):
 
 ```text
-reloading press station (docs/RELOADING_PRESS_DESIGN.md)
-        ↓
-spent case recovery and reloading (docs/SPENT_CASE_RESEARCH.md)
-        ↓
-round quality in use: misfires, wear (docs/AMMO_QUALITY_RUNTIME_DESIGN.md)
+reloading press: the same steps at a placed station, faster
+fired rounds → spent cases → brass scrap (a quarter of the brass)
+casing quality carried through magazines and firearms, and inspected there
 ```
 
-## 🚧 In Development
+## What is left
 
-🔄 Final Laboratory Analyzer visuals  
-🔄 Laboratory Analyzer directional sprites / visual rotation  
-🔄 Mining machine  
-🔄 Mining fuel consumption  
-🔄 Mining component wear  
+The code is complete as far as it can be without the game
+(`docs/AMMUNITION_ROADMAP.md`). What remains, in order:
 
-## 📋 Planned
+1. **In-game verification**: `docs/INGAME_VALIDATION.md`, one session.
+2. **Final art**: `docs/ART_HANDOFF.md`; every visual is a placeholder.
+3. **Balancing**, from play: loot weights, recipe costs, the press's time
+   advantage, the spent-case rate. All are central tunables.
+4. **Runtime bug fixing** from 1.
 
-⬜ Multiple brass alloys  
-⬜ Brass quality  
-⬜ Cartridge presses  
-⬜ Shotgun shell presses  
-⬜ Shotgun ammunition variants  
-⬜ Reloading  
-⬜ Spent casing recovery  
-⬜ Spent shotgun hull recovery  
-⬜ Casing degradation  
-⬜ Ammunition failures  
-⬜ Weapon damage from dangerous ammunition  
-⬜ Advanced ammunition types  
-⬜ Specialty ammunition  
-⬜ Skill books / manuals  
-⬜ Sandbox settings  
-⬜ Multiplayer support and synchronization  
+## Optional, not planned
+
+Multiplayer authority (designed in `docs/MULTIPLAYER_DESIGN.md`), reloading
+of fired brass, lead and cast bullets, shell variants, further calibres,
+skill books, a mining machine, directional analyzer sprites.
 
 ---
 
@@ -712,7 +723,8 @@ The mod is currently intended primarily for development and testing.
 
 Clone or download the repository.
 
-Place the `AmmoMaking` mod folder inside:
+Place the `AmmoMaking` mod folder (from `mod/`, or from the archive built by
+`python tools/build_release.py`) inside:
 
 ```text
 C:\Users\<USERNAME>\Zomboid\mods\
@@ -741,6 +753,11 @@ Zomboid
 
 Enable **Ammo Making** from the Project Zomboid Mods menu.
 
+The two experimental add-ons, `AmmoMakingPress` and `AmmoMakingSpentCases`,
+are folders of their own beside it. Copy them only to test them, and tick
+them separately; each requires Ammo Making. Leave them off for a normal
+game.
+
 ---
 
 # Repository Structure
@@ -752,6 +769,10 @@ PZ-AmmoMaking
 ├── docs
 │   ├── DEVELOPMENT.md                    module map, constants, tests, tools, what needs the game
 │   ├── AMMUNITION_ROADMAP.md             status and what comes next
+│   ├── INGAME_VALIDATION.md              the play session that checks what offline tests cannot
+│   ├── ART_HANDOFF.md                    what to draw, and which value each asset replaces
+│   ├── PLACEHOLDER_ASSETS.md             generated: every temporary visual and where it is set
+│   ├── REFERENCE_IMPLEMENTATIONS.md      patterns read in other mods; nothing copied
 │   ├── AMMUNITION_DESIGN.md              the component chain, balance and economy tables
 │   ├── METALLURGY_DESIGN.md
 │   ├── LOOT_AND_RECYCLING.md
@@ -767,6 +788,9 @@ PZ-AmmoMaking
 │   └── SHOTGUN_AMMUNITION_RESEARCH.md
 ├── tests
 │   ├── run_tests.lua                     the offline suite
+│   ├── suite_<name>.lua                  one file per feature, loaded by run_tests.lua
+│   ├── firearm_model.lua                 vanilla's firearm Lua as a model, for the hook tests
+│   ├── render_addons.lua                 generator of the add-ons' scripts and the placeholder table
 │   ├── mock_pz.lua                       the mocked game API, checked against engine_snapshot.lua
 │   ├── run_mutants.py                    mutation run over the suite
 │   ├── render_recipes.lua, render_balance.lua, write_recipes.lua
@@ -781,9 +805,11 @@ PZ-AmmoMaking
 │   ├── build_release.py                  gates, then a clean folder and archive
 │   └── build_tiles.py                    the game's tile-sheet formats
 ├── art
-│   └── reloading_press                   placeholder sprites, sheet, entity draft (not in the mod)
+│   └── reloading_press                   sources of the press's placeholder sprites and tile sheet
 │
 └── mod
+    ├── AmmoMakingPress                   experimental add-on: entity, skin, 27 recipes, tile sheet; no Lua
+    ├── AmmoMakingSpentCases              experimental add-on: 9 items, 3 recipes, a sandbox option; no Lua
     └── AmmoMaking
         ├── common
         │   └── media
@@ -799,6 +825,7 @@ PZ-AmmoMaking
             ├── mod.info
             │
             └── media
+                ├── sandbox-options.txt
                 ├── scripts
                 │   ├── AC_Items.txt
                 │   └── AC_Recipes.txt     generated
@@ -845,8 +872,9 @@ PZ-AmmoMaking
                         └── AC_WorldData.lua
 ```
 
-Only `mod/AmmoMaking` is the mod. `python tools/build_release.py` packages
-exactly that folder; tests, tools, documents and art are never shipped.
+`mod/AmmoMaking` is the mod; the two folders beside it are its optional
+add-ons. `python tools/build_release.py` packages exactly those three
+folders; tests, tools, documents and art sources are never shipped.
 
 ---
 

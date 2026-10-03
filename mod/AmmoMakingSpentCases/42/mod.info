@@ -1,6 +1,6 @@
 name=Ammo Making: Spent Cases (experimental)
 id=AmmoMakingSpentCases
 require=\AmmoMaking
-modversion=0.9.0
+modversion=0.10.0
 versionMin=42.20.0
 description=EXPERIMENTAL add-on for Ammo Making: fired rounds leave spent brass, which can only be scrapped, at a loss. Single player only. Not yet verified in game; leave it off unless you are testing it. Do not use together with another mod that leaves casings.

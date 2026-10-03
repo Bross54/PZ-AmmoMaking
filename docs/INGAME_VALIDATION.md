@@ -252,9 +252,8 @@ Result: ____
 ## 12. 9mm
 
 Steps
-1. Raise Ammo Making to level 5 with the vanilla debug cheats (the
-   recipes are level-gated; 9mm assembly needs 3, rifle and shotgun
-   steps up to 5). **Ammunition > Spawn Calibre Kit > 9mm** and **Spawn
+1. **Ammo Making Debug > Set Ammo Making Level > 5** (the recipes are
+   level-gated; 9mm assembly needs 3, rifle and shotgun steps up to 5). **Ammunition > Spawn Calibre Kit > 9mm** and **Spawn
    Primer and Powder Kit**.
 2. Craft, in order: *Forge 9mm Handloading Die Set* (forge), *Form 9mm
    Case*, *Swage 9mm Copper Bullets*, *Make Small Pistol Primers*,

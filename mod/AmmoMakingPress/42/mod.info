@@ -1,7 +1,7 @@
 name=Ammo Making: Reloading Press (experimental)
 id=AmmoMakingPress
 require=\AmmoMaking
-modversion=0.9.0
+modversion=0.10.0
 versionMin=42.20.0
 pack=AmmoMakingPress
 tiledef=ammomaking_press 6142

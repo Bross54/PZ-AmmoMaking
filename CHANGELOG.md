@@ -13,7 +13,65 @@ Everything else is checked offline only (data, Lua logic, and the installed
 game's files); what the running game has to confirm is listed in
 `docs/DEVELOPMENT.md`, *REQUIRES IN-GAME VERIFICATION*.
 
-## 0.9.0 (in development)
+## 0.10.0 (in development) Code complete, behind switches
+
+Everything that could be written without the game is written. What is new
+at the shot or in the world is **off by default**; a game with only *Ammo
+Making* ticked differs from 0.9.0 by a little loot, two menu entries and
+the multiplayer guards. Nothing in this entry has been seen in game; the
+session that checks it is `docs/INGAME_VALIDATION.md`.
+
+- **Feature switches** (`AC_Features.lua`): each optional system is
+  stable, experimental or disabled, and says why it is on or off in the
+  game-start check. A feature that is off adds no recipe, no menu entry
+  and no hook.
+- **Reloading Press, as an add-on mod** (`Ammo Making: Reloading Press
+  (experimental)`): a placed station built from a hammer, steel bars,
+  planks and nails. 27 recipes: the case, projectile and assembly steps of
+  all nine calibres with the same die sets, inputs, output and XP as by
+  hand, in less time. Placeholder sprites. Off unless the add-on is
+  ticked.
+- **Spent cases, as an add-on mod** (`Ammo Making: Spent Cases
+  (experimental)`): every round fired may leave a spent case of its
+  calibre, half of them found (a sandbox option, 0 to 100). Self-loaders
+  drop it at the shot, pump, bolt and lever guns at the rack, revolvers
+  and break-actions at the reload. A spent case cannot be reloaded: it
+  scraps to brass at a quarter of its brass, with no XP. Single player.
+  Stands down beside Hot Brass.
+- **Ammunition quality in magazines and firearms** (sandbox option, off):
+  the casing quality of handloaded rounds follows them through loading,
+  inserting, ejecting, racking, firing and unloading, as a count and a
+  sum on the magazine or firearm. It observes vanilla's own counts around
+  seven vanilla reload functions and never changes what they do; any
+  doubt resolves to factory rounds. Single player. It has no effect on
+  firing.
+- **Quality effects at the shot**: written (a small extra jam chance,
+  linear in the load's mean quality, through vanilla's own jam state) and
+  **locked off**: no setting switches it on in this version.
+- **Inspect Loaded Ammunition** on a magazine or firearm, and a debug
+  entry that lists every load carried.
+- **Component loot**: gunpowder, primers, brass scrap and small brass
+  sheets, a little, in gun stores, hunting stores and metalwork crates.
+  Never cases, bullets, rounds or die sets beyond what 0.8.0 added.
+- **Multiplayer**: digging a sample, both portable assays and using the
+  analyzer are now refused on a multiplayer client and shown as disabled
+  options that say why, as mining and analyzer placement already were.
+  Nothing is synchronised; multiplayer stays unsupported.
+- **Progression**: what each level from 0 to 10 gives, as a generated
+  table. No recipe was invented to fill the upper levels.
+- **Placeholder visuals** in one place (`AC_Visuals.lua`), marked
+  `PLACEHOLDER_VISUAL`, listed in `docs/PLACEHOLDER_ASSETS.md`.
+- **Debug tree**: Stations and Diagnostics (compatibility check, feature
+  flags, save schema, placeholder visuals).
+- **Game-update check**: body digests of the vanilla firearm functions
+  the mod wraps, so a rewritten function is reported, not only a renamed
+  one.
+- **Release**: one archive with the three mod folders; an add-on that
+  ships Lua, or a tile sheet that does not match its sources, is refused.
+- **Documents**: `INGAME_VALIDATION.md`, `ART_HANDOFF.md`,
+  `PLACEHOLDER_ASSETS.md`, `REFERENCE_IMPLEMENTATIONS.md`.
+
+## 0.9.0 (2026-10-03) Foundations, tooling, equipment recipes
 
 Three new recipes, one loot change and one fix. Otherwise foundations,
 tooling and hardening.

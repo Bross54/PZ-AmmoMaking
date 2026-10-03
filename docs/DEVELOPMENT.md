@@ -58,9 +58,14 @@ never move an item into that list.
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
 | `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the prepared press; builds the component recipes, their material units and the item list from that data; validates it |
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
-| `shared/AC_Recycling.lua` | shared | Brass recycling: the sources of brass (`getSources()`, one today), what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing, a dirtier source never returns more). Data and arithmetic only |
-| `shared/AC_Loot.lua` | shared | Die sets as rare loot: tier weights, target lists, `buildEntries`, `validate`, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists |
-| `shared/AC_QualityTally.lua` | shared | The quality tally of loaded ammunition as pure functions (`repair`, `reconcile`, `split`, `merge`, `consume`, `unload`). **Arithmetic only: no other file calls it**, nothing is stored and no vanilla function is wrapped (`AMMO_QUALITY_RUNTIME_DESIGN.md` 7, 8) |
+| `shared/AC_Features.lua` | shared | **The switches.** Every optional system with its state (stable, experimental, disabled), its switch (an add-on mod or a sandbox option), whether it is single player only, what it conflicts with and what it needs. `isEnabled(id)` is the only question the rest of the mod asks. A feature that is off adds no recipe, menu entry or hook |
+| `shared/AC_Visuals.lua` | shared | Every temporary visual that Lua names (`PLACEHOLDER_VISUAL`): the analyzer's world sprite, the press's sprites and window icon. `docs/PLACEHOLDER_ASSETS.md` is generated from it and the item scripts |
+| `shared/AC_SpentCases.lua` | shared | Feature `spentCases` (add-on `AmmoMakingSpentCases`): which case a round leaves, the recovery roll, the adapters by firearm family (at the shot, at the rack, at the reload), the one wrapped vanilla function and the shot listener. Installs at `OnGameStart` only when the feature is on |
+| `shared/AC_QualityCarrier.lua` | shared | Feature `qualityTracking` (sandbox option): the tally record in the ModData of magazines and firearms, kept in step by observing vanilla's counts around seven wrapped reload functions and the shot (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9) |
+| `shared/AC_QualityEffects.lua` | shared | Feature `qualityEffects`, **locked off**: a linear extra jam chance from a load's quality, through vanilla's own jam state. Returns at once while the feature is disabled |
+| `shared/AC_Recycling.lua` | shared | Brass recycling: the sources of brass (`getSources()`: unused brass, and spent cases at a quarter when that feature is on), what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing, a dirtier source never returns more). Data and arithmetic only |
+| `shared/AC_Loot.lua` | shared | Die sets as rare loot and a little component loot (`COMPONENTS`: gunpowder, primers, brass scrap, small brass sheets): weights, target lists, `buildEntries`, `buildComponentEntries`, the validators, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists in one walk |
+| `shared/AC_QualityTally.lua` | shared | The quality tally of loaded ammunition as pure functions (`repair`, `reconcile`, `split`, `merge`, `consume`, `unload`). Arithmetic only: it stores nothing and wraps nothing. Its one caller is `AC_QualityCarrier` (`AMMO_QUALITY_RUNTIME_DESIGN.md` 7, 8) |
 | `shared/AC_SaveData.lua` | shared | How persisted numbers are read (`number`, `whole`, `isFinite`), layout versions (`versionStatus`, `upgrade`) and the schema of every ModData key (`SCHEMA`, `check`). Stores nothing |
 | `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 55 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9, scrapping 3, recast 1 |
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
@@ -73,8 +78,11 @@ never move an item into that list.
 | `client/AC_MiningContextMenu.lua` | client | Mining options and tooltips |
 | `client/AC_MineOreAction.lua` | client | Pickaxe timed action |
 | `client/AC_GeologyAssayUI.lua`, `client/AC_AmmoInspectionUI.lua` | client | Result panels |
-| `client/AC_GeologyDebug.lua` | client | The "Ammo Making Debug" tree (`-debug` only): Geology, Analyzer, Metallurgy, Ammunition |
-| `client/AC_AmmoContextMenu.lua` | client | *Inspect Ammunition* on cases and loose handloaded rounds; the test cartridge's inspection and debug presets |
+| `client/AC_GeologyDebug.lua` | client | The "Ammo Making Debug" tree (`-debug` only): Geology, Analyzer, Metallurgy, Ammunition, Stations (only with the press), Diagnostics |
+| `client/AC_AmmoContextMenu.lua` | client | *Inspect Ammunition* on cases and loose handloaded rounds, *Inspect Loaded Ammunition* on magazines and firearms; the test cartridge's inspection and debug presets |
+| `media/sandbox-options.txt` | script | One option: `AmmoMaking.QualityTracking` (boolean, default false) |
+| `mod/AmmoMakingPress/` | add-on mod | The reloading press: entity, skin, tile sheet, 27 generated recipes, names. **No Lua**; its logic and probes are in the main mod |
+| `mod/AmmoMakingSpentCases/` | add-on mod | Spent cases: 9 generated items, 3 generated scrapping recipes, names, the sandbox option `AmmoMaking.SpentCaseRecovery`. **No Lua** |
 
 Load order is alphabetical within `shared/`, `client/` and `server/`. Modules
 reference each other from inside functions, so the order does not matter at
@@ -634,6 +642,18 @@ is still supported; placing it copies its state onto the object.
 | `casingQuality` | round | 1–100, the average of the consumed cases | written at assembly; **gone once the round is loaded or boxed** | not a finite number → none; clamped to 1–100 |
 | `AmmoMakingHandloaded` | round | `true` | with it | never read |
 
+### Item: a firearm or a loose magazine (only with quality tracking on)
+
+| Key | Value | Lifecycle | Malformed data |
+|---|---|---|---|
+| `AmmoMakingTally` | a table: `version`, `count`, `handloaded`, `qualitySum` | written by `AC_QualityCarrier` when the item holds at least one handloaded round; **removed** when it holds none, so an item that only ever held factory rounds carries nothing | read through `AC_QualityTally.repair` and brought into step with the item's own round count; anything unusable reads as factory rounds; a record of a later version is left untouched |
+
+With the option off the key is neither read nor written; a record left
+from an earlier session stays where it is and is reconciled against the
+count if the option is switched on again.
+
+Spent cases carry no ModData.
+
 ### Item: `AmmoMaking.TestCartridge` (prototype)
 
 `AmmoMakingQualityInitialized`, the four component qualities, `powderLoad`,
@@ -683,7 +703,7 @@ The strategy, as of 2026-10-02:
 | Structure | Version | Why |
 |---|---|---|
 | Depletion store (global) | `version = 1`, `AC_Deposits.CONFIG.version` | the one structure with a layout that could change (a table of records) |
-| Quality tally (not stored yet) | its own `version`, `AC_QualityTally.CONFIG.version` | a record that later releases may extend |
+| Quality tally (stored only with quality tracking on) | its own `version`, `AC_QualityTally.CONFIG.version` | a record that later releases may extend |
 | Sample, kits, analyzer, case, round, test cartridge | none | flat keys read one by one, each with its own range and default. A key added later is simply absent in an old save and reads as its default; the analyzer's one change of shape (`labReadyAt`) is recognised by shape |
 | Calibres, recipes, loot, recycling, XP values | not save data | code and scripts: changing them needs no migration |
 
@@ -791,6 +811,36 @@ built, is a vanilla entity with vanilla authority. No networking code was
 added in this pass: there is no current exploit to close, because the
 client-side systems are disabled for clients.
 
+## Feature switches
+
+`AC_Features.DEFINITIONS` is the whole list:
+
+| Feature | State | Switch | Single player only | Notes |
+|---|---|---|---|---|
+| `reloadingPress` | experimental | add-on mod `AmmoMakingPress` | no | a `CraftBench` is vanilla crafting |
+| `spentCases` | experimental | add-on mod `AmmoMakingSpentCases` | yes | off beside `HBVCEFb42` (Hot Brass) |
+| `qualityTracking` | experimental | sandbox `AmmoMaking.QualityTracking` | yes | |
+| `qualityEffects` | **disabled** | sandbox `AmmoMaking.QualityEffects` (not offered) | yes | needs `qualityTracking`; locked whatever is set |
+
+Rules, each with a test:
+
+- **Stable** is always on; **experimental** is on only when its switch is;
+  **disabled** is off whatever its switch says.
+- Content the engine reads before Lua (items, recipes, entities, tile
+  sheets) is switched by being in an add-on mod. Lua-only behaviour is
+  switched by a sandbox option, read as on only for the boolean `true`.
+- A feature that is off registers no event listener, replaces no vanilla
+  function, adds no recipe to the mirror, no unit to the material table
+  and no entry to a menu.
+- `getState(id)` answers `enabled, why` (`stable`, `on`, `off`, `locked`,
+  `multiplayer`, `conflict with <mod>`, `needs <feature>`); the game-start
+  check prints one line per feature with it.
+- An add-on ships no Lua: `tools/build_release.py` refuses one that does.
+
+To make a verified feature permanent: change its `state` to
+`AC_Features.STABLE` (for an add-on feature, also move its scripts into the
+main mod, or leave it an add-on and keep the switch).
+
 ## Compatibility self-check
 
 `AC_Compat.run()` executes once on `OnGameStart`. Every assumption is a
@@ -820,8 +870,12 @@ vanilla ammo boxes (each round's box item and the `place_ammo_in_box` recipe
 id), brass recycling (`AC_Recycling.validate`), and die-set loot: the model,
 and what the registration found when the world loaded (a list that is
 missing, emptied or named by no container on this build is a WARNING; die
-sets can then only be forged). It never changes game state and cannot raise.
-The debug menu can re-run it.
+sets can then only be forged), component loot in the same way, and the
+feature switches: one `feature <name>: ON|off (<why>)` line each, and for a
+feature that is on its own probes (`AC_Compat.FEATURE_CHECKS`: the press's
+entity script and sprites, the spent-case items and the vanilla functions
+the hooks rely on). It never changes game state and cannot raise. The debug
+menu can re-run it.
 
 ## Debug tools (`-debug` only)
 
@@ -839,9 +893,13 @@ Ammo Making Debug
 │                Inspect Station Recipes · Print Material Ledger (inventory)
 ├─ Ammunition    Spawn Calibre Kit ▸ one entry per calibre · Spawn Primer and Powder Kit ·
 │                Print Calibre Definitions · Print Primer Families ·
-│                Verify Ammo Dependencies · Inspect Ammo Components (inventory)
+│                Verify Ammo Dependencies · Inspect Ammo Components (inventory) ·
+│                Inspect Loads (magazines and firearms carried) ·
+│                (spent cases on:) Spawn Spent Cases Kit
+├─ Stations      (press on:) Spawn Press Build Kit
 ├─ Set Ammo Making Level ▸ 0 … 10
-└─ Run Compatibility Check
+└─ Diagnostics   Run Compatibility Check · Print Feature Flags · Print Save Schema ·
+                 Print Placeholder Visuals
 ```
 
 Everything prints to `console.txt`. From the Lua console:
@@ -850,6 +908,15 @@ Everything prints to `console.txt`. From the Lua console:
 - **Spawn Equipment Parts Kit**: exactly what one craft of each of the
   three equipment recipes consumes, and a screwdriver. Built from
   `AC_Materials.EQUIPMENT_RECIPES`, so it follows a change of the recipes.
+- **Inspect Loads**: every magazine and firearm carried, with its round
+  count and, when quality tracking is on, its tally record. Read-only.
+- **Spawn Spent Cases Kit**: ten spent cases of each calibre and a hammer:
+  one batch for each spent-scrapping recipe. Only with the feature on.
+- **Spawn Press Build Kit**: exactly `AC_Calibres.PRESS.buildKit`. The press
+  itself is built from the build menu; no placed object is spawned.
+- **Print Feature Flags**, **Print Save Schema**, **Print Placeholder
+  Visuals**: `AC_Features.describe()`, `AC_SaveData.SCHEMA` and
+  `AC_Visuals.LIST`, one line each. Read-only.
 - **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
   (it does not break), 22 charcoal, one zinc ore, ten scrap of each metal,
   six copper and two zinc ingots: every furnace recipe once, with the two
@@ -968,12 +1035,40 @@ whose ModData refuses every write, and startup cost (which events the mod
 listens to, and that no menu, action or callback validates the model or
 rebuilds a recipe list).
 
+Added in the code-complete pass of 2026-10-03, one file each
+(`tests/suite_<name>.lua`, loaded by `run_tests.lua` with a table of its
+helpers):
+
+- **features**: states, switches, both spellings of a mod id, sandbox
+  values that are not `true`, multiplayer, conflicts, requirements, and
+  that the locked feature stays locked whatever is set.
+- **press**: the add-on's files against the generators, the entity against
+  the tile sheet, same die set / inputs / output / XP as by hand, and the
+  main mod without any of it.
+- **spent**: one spent case per calibre, the adapters by firearm family
+  against `tests/firearm_model.lua`, never more cases than shots, the
+  recovery option's range, scrap at a quarter with no XP, off beside the
+  conflicting mod and in multiplayer.
+- **quality**: the carrier against the firearm model: every step for seven
+  firearms, 14,000 random operations with one ledger (4 seeds x 7
+  firearms x 500), unseen changes resolving toward factory, a failing
+  step never breaking vanilla's action, and nothing installed while off.
+- **loot**, **progression**, **multiplayer**, **docs**: component loot per
+  room, the level table, the client guards, and the handover documents
+  against the code.
+
+`tests/firearm_model.lua` is the mod's reading of vanilla's firearm Lua
+(`ISReloadWeaponAction`, `ISRackFirearm`, the magazine actions) as a small
+model; `tools/pz_compat.py` checks its firearms against vanilla's scripts
+and keeps a digest of each wrapped function's body. It is a model, not the
+game.
+
 Added in the second pass of 2026-10-02:
 
 - **Quality tally**: worked examples, a property run of 16,000 random
   operations with one ledger of rounds, handloaded rounds and quality, a
-  fuzz of every field through every function, and a check that no other
-  file uses the module.
+  fuzz of every field through every function, and a check that only
+  `AC_QualityCarrier` uses the module.
 - **Mock fidelity**: every call on a mocked engine object, Java global or
   static method is checked against the installed build's overloads; the
   closing section asserts nothing was refused that was not provoked.
@@ -1329,6 +1424,32 @@ session got none. It now resets on `OnInitGlobalModData`.
 
 ## REQUIRES IN-GAME VERIFICATION
 
+**The session to run is `docs/INGAME_VALIDATION.md`**: the items below in
+play order, with steps, expected results and a pass/fail field each. This
+list is the record of why each item is open.
+
+- **Added in the code-complete pass of 2026-10-03** (none of it seen in
+  game):
+  - the two add-on mods appear in the mod list, require Ammo Making, and a
+    world loads with each ticked (the press brings a tile sheet and an
+    entity: the one change that could stop a world from loading);
+  - `getActivatedMods()` lists an add-on under the id `AC_Features` looks
+    for (both spellings are accepted);
+  - the sandbox page *Ammo Making* and its options appear, and
+    `SandboxVars.AmmoMaking.*` reads what was set;
+  - the reloading press: built, placed, drawn, its 27 recipes listed and
+    faster, picked up, saved;
+  - spent cases: a case on the shooter's tile at the right moment for each
+    firearm family, never more than shots, the three scrapping recipes;
+  - quality tracking: the record staying in step through every reload
+    action and across save and load; unloaded rounds carrying a quality;
+    no change to any reload or shot;
+  - *Inspect Loaded Ammunition* on a magazine and a firearm;
+  - component loot in gun stores and metalwork crates;
+  - the disabled sampling, assay and analyzer options on a multiplayer
+    client;
+  - removing an add-on from a save that used it.
+
 - **Mining depletion persistence after save/reload** (extracted counts in
   global ModData).
 - **Laboratory analyzer processing persistence after save/reload** (state on
@@ -1420,15 +1541,15 @@ session got none. It now resets on `OnInitGlobalModData`.
 - **Per-interaction cost**: the mining action's per-tick sample lookup and
   the analyzer menu's repeated state update were left as they are; whether
   either shows in the game's profiler is unknown.
-- **Spent cases and a quality carrier** are not built; what would have to be
-  seen first is in `SPENT_CASE_RESEARCH.md` 6 and
+- **Spent cases and the quality carrier** are built behind switches (above);
+  what has to be seen is in `SPENT_CASE_RESEARCH.md` 6 and
   `AMMO_QUALITY_RUNTIME_DESIGN.md` 6.
 - **Case stock** (nothing in it has run in game): Forge Small Brass Sheets
   at a forge gives 10 sheets from one ingot and keeps hammer and tongs; Punch
   Brass Case Cups in the crafting menu at a surface gives 2 cups per sheet and
   keeps punch and hammer; the hammering animations; names, icons and models.
 - **Added in the second pass of 2026-10-02** (none of it seen in game):
-  - `mod.info`: the mod list shows version 0.9.0 and accepts
+  - `mod.info`: the mod list shows the version of `modversion=` and accepts
     `versionMin=42.20.0` on 42.20.4;
   - the analyzer's sprite probe prints `OK: analyzer world sprite
     (industry_03_61)` with `-debug` (it now rests on `IsoSprite:getID()`);
@@ -1439,11 +1560,10 @@ session got none. It now resets on `OnInitGlobalModData`.
     comparison and no other change);
   - the folder built by `tools/build_release.py` (LF line endings, as git
     stores them) loads exactly as the repository's `mod/AmmoMaking` does;
-  - nothing of the quality tally can be seen: it is loaded and unused. The
-    console shows `[AmmoMaking] Quality tally loaded` and no firearm
-    behaves differently;
-  - the reloading press, when it is switched on: `art/reloading_press/
-    README.md` and `RELOADING_PRESS_DESIGN.md` 9.
+  - with quality tracking off (the default), nothing of the quality tally
+    can be seen: no firearm behaves differently;
+  - the reloading press, with its add-on ticked: `RELOADING_PRESS_DESIGN.md`
+    9.
 - **Added in the third pass of 2026-10-02** (none of it seen in game):
   - (*Ammo Making Debug > Geology > Spawn Equipment Parts Kit* hands out
     the parts for one craft of each.)

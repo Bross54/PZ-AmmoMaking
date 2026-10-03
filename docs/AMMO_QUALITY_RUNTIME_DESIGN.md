@@ -1,10 +1,13 @@
 # Ammunition quality at run time: where it could live
 
-Status: **THE ARITHMETIC IS WRITTEN; NOTHING IS WIRED.** The tally of
-section 4 exists as pure functions (`AC_QualityTally.lua`, section 8) that
-no other file calls. No vanilla function is wrapped, nothing is stored on a
-firearm or magazine, and no combat effect exists or is proposed for this
-stage: no misfire, jam or damage change is part of the mod.
+Status: **IMPLEMENTED, EXPERIMENTAL, OFF BY DEFAULT, NEVER RUN IN THE
+GAME.** The tally of section 4 (`AC_QualityTally.lua`, section 8) is wired
+to vanilla's reload functions by `AC_QualityCarrier.lua` (section 9), behind
+the sandbox option *Track ammunition quality in magazines and firearms*,
+single player only. With the option off nothing is wrapped, listened to or
+stored. It has no effect on firing. An effect is written
+(`AC_QualityEffects.lua`, 9.4) and locked: no setting switches it on.
+Sections 1 to 7 are the research as it was written before the wiring.
 
 Today a handloaded round carries its casing quality in the loose item's
 ModData (`AC_CaseQuality`). The record is lost the moment vanilla turns the
@@ -332,8 +335,9 @@ of its arguments.
 | `unload(value, rounds)`, `qualities(value)` | rounds back to loose items: how many factory rounds, and a quality for each handloaded one, adding up to the sum exactly |
 | `getFactory`, `getMeanQuality`, `getHandloadedShare` | derived values |
 
-How the touch points of section 1 map onto them (the wiring itself is not
-written):
+How the touch points of section 1 map onto them (the wiring is section 9;
+it reaches the same results by observing counts instead of naming the
+step):
 
 | Vanilla step | Tally |
 |---|---|
@@ -368,9 +372,117 @@ The suite proves, without the game:
   and one at a time or several at once take the same rounds;
 - a later release's record comes back untouched from every function, and
   a record transferred into itself is unchanged;
-- the file registers no event, touches no ModData and no engine object,
-  and no other file of the mod refers to it. That last test is the switch:
-  it fails the day the tally is wired, which must be a deliberate step
-  taken with the game running.
+- the file registers no event and touches no ModData and no engine
+  object. Only `AC_QualityCarrier.lua` refers to it, and only behind the
+  feature switch; a test fails if any other file does.
 
 What it does not prove is everything in section 6.
+
+## 9. What is implemented: the wiring (`AC_QualityCarrier.lua`)
+
+Feature `qualityTracking` of `AC_Features.lua`: experimental, a sandbox
+option of the save, false by default, refused in multiplayer. Installed at
+`OnGameStart` and only when the feature is on.
+
+### 9.1 Carrier and rule
+
+Carrier D of section 2: one aggregate record (`count`, `handloaded`,
+`qualitySum`, a version) in the ModData key `AmmoMakingTally` of each loose
+magazine and each firearm, declared in `AC_SaveData.SCHEMA`. A record with
+no handloaded round is not stored at all: a gun that has only ever held
+factory rounds carries no data of the mod.
+
+The wrappers do **not** re-implement vanilla's steps and do not trust
+their own idea of them. Each one observes:
+
+| When | What |
+|---|---|
+| before | the live rounds of the magazine or gun (vanilla's count, plus the chambered round); the loose rounds of that calibre the character carries, with their qualities |
+| call | vanilla's function, once, with the arguments it was given; its result is handed on |
+| after | the same two observations |
+
+and the record follows the difference:
+
+| Difference | Meaning | Record |
+|---|---|---|
+| the container holds more | rounds went in | as many as left the inventory carrying a quality are handloaded, with those qualities; the rest are factory |
+| the container holds fewer, loose rounds appeared | unloaded | the record hands out its mix (`AC_QualityTally.unload`); the new loose rounds are given the qualities |
+| the container holds fewer, nothing appeared | fired, or lost | the record gives up that many at its mix |
+
+So the record cannot get ahead of vanilla: it only describes rounds
+vanilla says are there. A count that moved unseen (another mod's reload
+action, a debug command) is found the next time the item is looked at and
+resolved toward factory (`reconcile`). No path creates a round, a
+handloaded round or quality.
+
+### 9.2 The seven functions and the shot
+
+| Vanilla function | Step |
+|---|---|
+| `ISLoadBulletsInMagazine:animEvent` | a round into a loose magazine |
+| `ISUnloadBulletsFromMagazine:animEvent` | a round out of a loose magazine |
+| `ISInsertMagazine:loadAmmo` | magazine into the gun: the item is destroyed, its record merges into the gun's |
+| `ISEjectMagazine:unloadAmmo` | magazine out: a new item, the record is split off; a chambered round stays |
+| `ISReloadWeaponAction:loadAmmo` | a round into a gun without a magazine |
+| `ISUnloadBulletsFromFirearm:animEvent` | rounds out of such a gun |
+| `ISRackFirearm:removeBullet` | a live round racked out |
+
+Each is replaced by a wrapper stored in the same table field; the original
+is kept and called. The shot is a listener on `OnWeaponSwingHitPoint`,
+which runs after vanilla's own handler has taken the round.
+`tools/pz_compat.py` keeps a digest of each function's body: a game update
+that rewrites one is reported before the mod is trusted on it.
+
+Every step of the mod's own is `pcall`-guarded and logs once; a failure
+leaves vanilla's action exactly as it was and the record to be reconciled
+later.
+
+### 9.3 What the suite proves, and what it cannot
+
+Against a model of vanilla's firearm Lua (`tests/firearm_model.lua`: seven
+firearms covering magazine-fed, chambered, revolver, break-action, pump,
+bolt and lever guns, checked against vanilla's scripts by the drift tool):
+
+- loading, inserting, racking, firing, ejecting and unloading keep rounds,
+  handloaded rounds and the quality sum exactly, for each firearm;
+- 14,000 random operations (four seeds, seven firearms, 500 steps each)
+  with one ledger over everything that exists and everything fired: no
+  operation gains a handloaded round or quality;
+- a count changed behind the wrappers resolves toward factory;
+- a wrapper whose own step raises still performs vanilla's action and
+  returns vanilla's result;
+- with the option off, or on a multiplayer client, no function is replaced
+  and no listener added.
+
+The model is the mod's reading of vanilla's Lua, not the game. Section 6
+stays open in full, and `docs/INGAME_VALIDATION.md` 20 and 21 are the
+session that closes it.
+
+### 9.4 The effect, locked: `AC_QualityEffects.lua`
+
+Feature `qualityEffects`: **disabled**. It has no sandbox option and no
+add-on; `AC_Features` answers "locked" whatever is set, and `afterShot`
+returns before it looks at anything.
+
+What is written, for the day tracking has been seen to stay in step and a
+decision is made that quality should matter:
+
+```text
+extra jam % = maximumExtraJamPercent * (handloaded * 100 - qualitySum) / (99 * rounds in the load)
+```
+
+Linear in the quality sum, as 7.1 requires: mixing and unmixing rounds
+changes nothing in total. Factory rounds and quality-100 handloads add
+nothing; a load of quality-1 handloads adds the maximum (4 percentage
+points, a tunable). It sets vanilla's own jam state
+(`HandWeapon:setJammed(true)`), never applies to a firearm whose
+`JamGunChance` is 0, and touches no damage, range or accuracy. Unlocking it
+is one word in `AC_Features.DEFINITIONS`; that it behaves like vanilla's
+own jam is **REQUIRES FUTURE IN-GAME VERIFICATION**.
+
+### 9.5 Inspection
+
+*Inspect Loaded Ammunition* on a magazine or firearm reads the record
+(never writes it): how many rounds, how many handloaded, their mean
+quality as a word, and the figure itself at a high enough level. Without
+tracking it says only what vanilla knows: the count.

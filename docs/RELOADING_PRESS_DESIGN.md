@@ -1,13 +1,18 @@
 # Reloading press: research and design
 
-Status: **PREPARED, SWITCHED OFF. The station is not in the mod.** The press
-*recipes* are generated in the calibre model and switched off. A tile sheet
-of the mod's own (placeholder art, a verified builder for the game's two
-binary tile formats) and the entity script exist **beside** the mod, in
-`art/reloading_press/`, and nothing of them is shipped or loaded. A second
-sprite survey (2026-10-02, §2.4) confirmed that no vanilla sprite can be
+Status: **IMPLEMENTED AS AN ADD-ON MOD, EXPERIMENTAL, OFF BY DEFAULT, NEVER
+RUN IN THE GAME.** `mod/AmmoMakingPress` (*Ammo Making: Reloading Press
+(experimental)*, `require=\AmmoMaking`) ships the station's entity script,
+its skin, a tile sheet with placeholder art and 27 generated recipes, and no
+Lua. Ticking it is the switch: `AC_Features` reads "the add-on is active",
+`AC_Calibres.PRESS.enabled` follows, and the game-start check probes the
+entity and its sprites. Without it the main mod has no press recipe, no
+tile sheet and no entity. Section 10 says what was built; sections 1 to 8
+are the research and design it was built from, and section 9 is what the
+game still has to show (`docs/INGAME_VALIDATION.md` 18).
+
+A sprite survey (2026-10-02, §2.4) confirmed that no vanilla sprite can be
 shown to be a safe placeholder, which is why the sheet is the mod's own.
-What is left is a session with the game (§7.2, §9).
 
 Vanilla facts were read on 2026-10-02 from the installed Build 42.20.4
 scripts, Lua and `projectzomboid.jar` (paths relative to the install root).
@@ -610,3 +615,30 @@ None of the following can be established offline:
 - the tile-definition number chosen (6142) collides with no other enabled
   mod's tile sheet, and what the game does when two do collide;
 - the placeholder sprites sit on the tile as intended, at every zoom.
+
+## 10. What is implemented
+
+| Part | Where | Notes |
+|---|---|---|
+| Switch | `AC_Features.DEFINITIONS`, `reloadingPress` | experimental; on when the add-on `AmmoMakingPress` is active; not single-player only (a `CraftBench` is vanilla's own networked crafting) |
+| Entity | `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt` | follows vanilla's `Hand_Press` field for field; bench tag `AmmoMakingReloadingPress`; built from the build menu |
+| Build cost | `AC_Calibres.PRESS.buildKit` | a hammer (kept), 2 half steel bars, 4 planks, 8 nails |
+| Skin | `AC_ReloadingPress_xuiSkin.txt` | window icon `Build_Handpress` (placeholder) |
+| Tile sheet | `ammomaking_press.tiles`, `texturepacks/AmmoMakingPress.pack`; `pack=` and `tiledef=` in the add-on's `mod.info` | built by `tools/build_tiles.py` from `art/reloading_press/`; the release builder refuses a sheet that does not match its sources |
+| Recipes | `AC_PressRecipes.txt`, generated | 27: case, projectile and assembly for nine calibres. Same die set, inputs, output, level and XP as the hand recipe; only the time differs (§6.1). Die-set forging, primers and powder stay hand work |
+| Names | the add-on's `Recipes.json`, generated | the hand name with `(Press)` |
+| Probes | `AC_Compat.FEATURE_CHECKS.reloadingPress` | the entity script exists; both sprites are defined tiles |
+| Debug | *Stations > Spawn Press Build Kit* | only with the add-on |
+| Visuals | `AC_Visuals.LIST` | `pressSpriteSouth`, `pressSpriteEast`, `pressWindowIcon`, all `PLACEHOLDER_VISUAL` |
+
+Why an add-on and not a flag in Lua: the entity, the recipes and above
+all the tile sheet are read by the engine before any Lua of a mod runs, and
+a broken tile definition can stop a world from loading. In a folder of its
+own, the risk exists only for someone who ticked it, and unticking it
+removes it completely.
+
+What a save keeps if the add-on is later removed is **REQUIRES FUTURE
+IN-GAME VERIFICATION** (`docs/INGAME_VALIDATION.md` 21): the expectation,
+from how the engine treats objects whose sprite or script is missing, is
+that a placed press disappears or stays as an inert object and nothing
+else is affected.

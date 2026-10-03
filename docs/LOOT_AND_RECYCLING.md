@@ -170,10 +170,12 @@ nothing.
 
 ### 1.3 What is deliberately not loot
 
-No primer, case, cup, sheet, bullet or hull is added to any list. They are
-what the player manufactures; spawning them would skip the chain. Their raw
-materials are vanilla items that vanilla already distributes (FILE, live
-lists only):
+No case, cup, bullet, hull, shot charge or finished handload is added to
+any list. They are what the player manufactures; spawning them would skip
+the chain. A little gunpowder, a few primers and some brass stock are
+loot since the code-complete pass (section 4): a start, not a supply. The
+raw materials are vanilla items that vanilla already distributes (FILE,
+live lists only; the table is vanilla alone, before section 4):
 
 | Input | Where vanilla puts it |
 |---|---|
@@ -264,6 +266,26 @@ What is deliberately **not** recycled:
 - **Bullets and shot charges.** They are copper; two bullets are exactly one
   `Base.CopperScrap`, so a lossy recipe would have nothing sensible to
   return and a lossless one would be a reversal of crafting.
+
+### 2.5 Copper recycling: evaluated, not built
+
+Turning unwanted copper bullets or shot charges back into
+`Base.CopperScrap` was re-evaluated in the code-complete pass and left
+out, for three reasons:
+
+- **It solves nothing.** Copper scrap is in 24 live vanilla loot lists and
+  copper ore is what the mine gives most of. Brass is scarce and worth
+  getting back; copper is not.
+- **There is no honest yield.** Two 9mm bullets are exactly one copper
+  scrap. A lossless recipe is a reversal of crafting, which the mod has
+  nowhere else; the smallest loss in whole items is a half, which would
+  need batches of four for one scrap and would mostly be clutter.
+- **It opens an XP question for no gain.** Swaging awards XP; a way to
+  get the copper back makes swage-and-scrap a training loop that then has
+  to be priced out, as section 2.4 does for brass.
+
+If it is ever wanted: a second source in `AC_Recycling.getSources()` with
+its own loss; the XP-potential test says at once whether it opens a loop.
 
 ### 2.4 Why half
 
