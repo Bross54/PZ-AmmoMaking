@@ -47,6 +47,14 @@ M.FIREARMS = {
     leverRifle = { type = "Base.L94_Rifle", ammo = "Base.3030Bullets", maxAmmo = 6, rackAfterShoot = true },
 }
 
+-- NOT vanilla, and so not in FAMILIES: flag combinations no 42.20.4
+-- firearm has, as another mod's gun might. Only what the hooks do with
+-- them is tested; nothing says the game behaves like the model for them.
+M.MODDED = {
+    -- Emptied by hand like a revolver, but with a chamber.
+    chamberedRevolver = { type = "Base.Revolver", ammo = "Base.Bullets357", maxAmmo = 6, manual = true },
+}
+
 M.FAMILIES = { "pistol", "assaultRifle", "revolver", "doubleBarrel", "pumpShotgun", "boltRifle", "leverRifle" }
 
 -- zombie.scripting.objects.AmmoType: getItemKey() is the round's full type.
@@ -77,7 +85,7 @@ function M.newMagazine(MOCK, fullType, itemKey, maxAmmo, count)
 end
 
 function M.newFirearm(MOCK, family)
-    local spec = assert(M.FIREARMS[family], "no firearm family " .. tostring(family))
+    local spec = assert(M.FIREARMS[family] or M.MODDED[family], "no firearm family " .. tostring(family))
     local gun = ammoItem(MOCK, spec.type, spec.ammo, spec.maxAmmo)
     gun.family = family
     gun.roundChambered = false
@@ -105,6 +113,13 @@ function M.newFirearm(MOCK, family)
     function gun:setJammed(value) self.jammed = value end
     function gun:getJamGunChance() return 0 end
     function gun:checkJam() end
+    -- HandWeapon.checkUnJam answers true when the attempt FAILED. The model
+    -- has no dice: a test sets unjamFails for the next rack.
+    function gun:checkUnJam(character)
+        local fails = self.unjamFails == true
+        self.unjamFails = false
+        return fails
+    end
     function gun:getShellFallSound() return nil end
     -- Refuses a call HandWeapon would refuse (tests/engine_snapshot.lua).
     return MOCK.strict(gun, "HandWeapon")
@@ -340,6 +355,10 @@ function M.install(MOCK)
     -- :36-67
     function ISRackFirearm:rackBullet()
         if self.gun:haveChamber() then
+            -- :49-53 a failed attempt to clear a jam changes nothing
+            if self.gun:isJammed() and self.gun:checkUnJam(self.character) then
+                return
+            end
             if not self.gun:isJammed() and self.gun:isRoundChambered() then
                 self:removeBullet()
             end

@@ -214,4 +214,30 @@ return function(T)
 
         MOCK.activeMods, MOCK.debug = {}, false
     end
+
+    section("Feature content: what an add-on's scripts name follows the add-on, not the feature")
+    do
+        local F = AC_Features
+        MOCK.client, MOCK.server = false, false
+        MOCK.activeMods = { "AmmoMaking" }
+        eq(F.hasContent("spentCases"), false, "no add-on: no content")
+        eq(F.hasContent("reloadingPress"), false, "no add-on: no press content")
+        MOCK.activeMods = { "AmmoMaking", "AmmoMakingSpentCases", "AmmoMakingPress" }
+        eq(F.hasContent("spentCases"), true, "add-on ticked: content")
+        eq(F.hasContent("reloadingPress"), true, "add-on ticked: press content")
+        MOCK.client = true
+        eq(F.isEnabled("spentCases"), false, "on a client the feature stands down")
+        eq(F.hasContent("spentCases"), true, "its content is still in the game")
+        MOCK.client = false
+        MOCK.activeMods = { "AmmoMaking", "AmmoMakingSpentCases", "HBVCEFb42" }
+        eq(F.isEnabled("spentCases"), false, "beside a conflicting mod the feature stands down")
+        eq(F.hasContent("spentCases"), true, "and its content stays")
+        -- A Lua-only feature has no content of its own: it is the feature.
+        MOCK.activeMods = { "AmmoMaking" }
+        SandboxVars.AmmoMaking = { QualityTracking = true, QualityEffects = true }
+        eq(F.hasContent("qualityTracking"), F.isEnabled("qualityTracking"), "a sandbox feature: content is the feature")
+        eq(F.hasContent("qualityEffects"), false, "the locked feature has none")
+        eq(F.hasContent("nothing"), false, "an unknown feature has none")
+        SandboxVars.AmmoMaking = nil
+    end
 end

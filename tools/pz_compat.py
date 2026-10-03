@@ -114,7 +114,7 @@ DESIGN_METHODS = {
         "isManuallyRemoveSpentRounds", "isContainsClip", "getMagazineType", "getShellFallSound",
         "checkJam", "getJamGunChance", "isRanged",
         # The model of vanilla's reload actions (tests/firearm_model.lua).
-        "isInsertAllBulletsReload", "isJammed", "setJammed", "setContainsClip",
+        "isInsertAllBulletsReload", "isJammed", "setJammed", "setContainsClip", "checkUnJam",
     ],
     "InventoryItem": ["getCurrentAmmoCount", "setCurrentAmmoCount", "getAmmoType", "getMaxAmmo"],
 }

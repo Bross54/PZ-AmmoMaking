@@ -830,8 +830,13 @@ Rules, each with a test:
   sheets) is switched by being in an add-on mod. Lua-only behaviour is
   switched by a sandbox option, read as on only for the boolean `true`.
 - A feature that is off registers no event listener, replaces no vanilla
-  function, adds no recipe to the mirror, no unit to the material table
-  and no entry to a menu.
+  function and adds no entry to a menu.
+- What an add-on's scripts name in Lua (a recipe's `OnCreate` callback,
+  its mirror entry, the material units of its items) follows the add-on,
+  not the feature (`AC_Features.hasContent`): the engine loads the add-on's
+  recipes wherever it is ticked, also where the feature stands down
+  (multiplayer, a conflicting mod), and a loaded recipe must find its
+  callback. Without the add-on none of it exists.
 - `getState(id)` answers `enabled, why` (`stable`, `on`, `off`, `locked`,
   `multiplayer`, `conflict with <mod>`, `needs <feature>`); the game-start
   check prints one line per feature with it.

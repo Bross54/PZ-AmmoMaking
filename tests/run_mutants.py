@@ -174,7 +174,7 @@ MUTANTS = [
     (SHARED + "AC_Mining.lua", "    if samples == nil then\n", "    if not samples then\n", "an explicit 'no samples' makes findProspect scan again"),
 
     # ---- release metadata
-    ("mod/AmmoMaking/42/mod.info", "modversion=0.9.0", "modversion=1.0.0", "the mod calls itself 1.0 with no changelog entry"),
+    ("mod/AmmoMaking/42/mod.info", "modversion=0.10.0", "modversion=1.0.0", "the mod calls itself 1.0 with no changelog entry"),
     ("mod/AmmoMaking/42/mod.info", "versionMin=42.20.0", "versionMin=41.78.0", "the mod claims to run on Build 41"),
 
     # ---- data files
@@ -227,14 +227,18 @@ MUTANTS = [
     (SHARED + "AC_SpentCases.lua", "    return\n        not weapon:isRackAfterShoot()\n        and not weapon:isManuallyRemoveSpentRounds()\n", "    return\n        not weapon:isManuallyRemoveSpentRounds()\n", "a pump gun leaves its case at the shot and again at the rack"),
     (SHARED + "AC_SpentCases.lua", "    if weapon:isSpentRoundChambered() then\n        return 1\n    end", "    if weapon:isSpentRoundChambered() then\n        return 2\n    end", "a chambered spent round counts as two cases"),
     (SHARED + "AC_SpentCases.lua", "        local result = original(self, ...)\n", "        local result = nil\n", "the wrapper never calls vanilla's function"),
+    (SHARED + "AC_SpentCases.lua", "    if weapon:isManuallyRemoveSpentRounds() then\n        return 0\n    end\n", "", "a hand-emptied gun with a chamber hands out one case more than it fired"),
+    (SHARED + "AC_Features.lua", "    if definition.mod\n        and definition.stability ~= AC_Features.STABLE\n    then\n        return AC_Features.isModActive(definition.mod)\n    end\n", "", "an add-on's recipes lose their callbacks where its feature stands down"),
+    (SHARED + "AC_Materials.lua", "if AC_Features.hasContent(\"spentCases\") then", "if AC_Features.isEnabled(\"spentCases\") then", "spent cases have no material units on a server that loads their recipes"),
+    (SHARED + "AC_Recycling.lua", "    if AC_Features.hasContent(\"spentCases\") then", "    if AC_Features.isEnabled(\"spentCases\") then", "the spent-scrapping recipes are loaded without their callbacks beside a conflicting mod"),
     (SHARED + "AC_SpentCases.lua", "    if AC_SpentCases.installed then\n        return AC_SpentCases.installed\n    end\n", "", "the hooks are installed again on every call"),
     (SHARED + "AC_SpentCases.lua", "    if not AC_Features.isEnabled(\"spentCases\") then\n        return nil\n    end\n", "", "the hooks are installed whatever the feature says"),
     (SHARED + "AC_SpentCases.lua", "    if type(getDebug) == \"function\"\n        and getDebug()\n        and character\n        and character.isUnlimitedAmmo\n        and character:isUnlimitedAmmo()\n    then\n        return 0\n    end\n", "", "unlimited debug ammunition leaves real brass"),
     (SHARED + "AC_SpentCases.lua", "    local toGround =\n        AC_SpentCases.CONFIG.placement ~= \"inventory\"\n", "    local toGround = false\n", "cases always go to the inventory"),
     (SHARED + "AC_SpentCases.lua", "    if fired > config.maximumPerEvent then\n        fired = config.maximumPerEvent\n    end\n", "", "a damaged spent count leaves a pile of brass"),
-    (SHARED + "AC_Recycling.lua", "    if AC_Features.isEnabled(\"spentCases\") then\n\n        table.insert(\n            sources,", "    if true then\n\n        table.insert(\n            sources,", "the spent scrapping recipes exist without their items"),
+    (SHARED + "AC_Recycling.lua", "    if AC_Features.hasContent(\"spentCases\") then\n\n        table.insert(\n            sources,", "    if true then\n\n        table.insert(\n            sources,", "the spent scrapping recipes exist without their items"),
     (SHARED + "AC_Calibres.lua", "            \"AmmoMaking.Spent\"\n            .. (string.match(calibre.case, \"([^%.]+)$\") or calibre.suffix)", "            \"AmmoMaking.\"\n            .. (string.match(calibre.case, \"([^%.]+)$\") or calibre.suffix)", "a fired round leaves a case that can be loaded again"),
-    (SHARED + "AC_Materials.lua", "if AC_Features.isEnabled(\"spentCases\") then\n\n    for itemType,", "if true then\n\n    for itemType,", "spent cases are in the material table without their add-on"),
+    (SHARED + "AC_Materials.lua", "if AC_Features.hasContent(\"spentCases\") then\n\n    for itemType,", "if true then\n\n    for itemType,", "spent cases are in the material table without their add-on"),
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.005,", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.5,", "a spent case a hundred times as heavy as the case it was"),
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt", "            item 1 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "            item 2 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "the spent scrapping script hands back twice what the model says"),
 

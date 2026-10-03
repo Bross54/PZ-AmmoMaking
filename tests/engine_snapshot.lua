@@ -169,6 +169,7 @@ return {
             methods = {
                 Remove = { "" },
                 checkJam = { "IsoPlayer,boolean" },
+                checkUnJam = { "IsoPlayer" },
                 getAmmoPerShoot = { "" },
                 getAmmoType = { "" },
                 getCondition = { "" },

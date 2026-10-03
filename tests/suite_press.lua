@@ -176,7 +176,23 @@ return function(T)
         local script = T.parseScript(ROOT .. "/" .. ADDONS.PRESS_SCRIPT)
         eq(#script.blocks, #recipes, "one block each")
         local names, order = ADDONS.readNames(readFile(ROOT .. "/" .. ADDONS.PRESS_NAMES))
-        eq(#order, #recipes, "one name each")
+        eq(#order, #recipes + 1, "one name each, and the station's own")
+        eq(names[ADDONS.PRESS_ENTITY], ADDONS.PRESS_DISPLAY_NAME, "the station's build recipe has a name")
+        eq(ADDONS.PRESS_ENTITY, AC_Compat.PRESS_ENTITY, "under the entity's name, as the game-start check probes it")
+        check(string.find(readFile(ROOT .. "/mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt"), "entity " .. ADDONS.PRESS_ENTITY, 1, true) ~= nil, "which is the entity the script defines")
+        -- "Requires a <bench>": the recipe window looks the bench tag up as
+        -- IGUI_CraftingWindow_<tag> (ISWidgetTitleHeader.lua) and would show
+        -- the raw key without it.
+        eq(readFile(ROOT .. "/" .. ADDONS.PRESS_UI), ADDONS.pressUiNames(), "the add-on's IG_UI.json equals the rendering")
+        eq(ADDONS.readNames(readFile(ROOT .. "/" .. ADDONS.PRESS_UI))["IGUI_CraftingWindow_" .. P.benchTag], ADDONS.PRESS_DISPLAY_NAME, "the bench tag has a display name")
+        eq(readFile(ROOT .. "/" .. ADDONS.PRESS_MOVEABLES), ADDONS.pressMoveableNames(), "the add-on's Moveables.json equals the rendering")
+        do
+            -- The moveable's key is the tile's GroupName_CustomName.
+            local sheet = readFile(ROOT .. "/art/reloading_press/tiles.json")
+            local group = string.match(sheet, '"GroupName"%s*:%s*"([^"]+)"')
+            local custom = string.match(sheet, '"CustomName"%s*:%s*"([^"]+)"')
+            eq(ADDONS.readNames(readFile(ROOT .. "/" .. ADDONS.PRESS_MOVEABLES))[group .. "_" .. custom], ADDONS.PRESS_DISPLAY_NAME, "the placed object's name is keyed by its tile's group and custom name")
+        end
         local seenNames = {}
         for _, value in pairs(handNames) do seenNames[value] = true end
         local mainIds = {}

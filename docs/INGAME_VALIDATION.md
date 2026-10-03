@@ -368,6 +368,8 @@ Expected
 - The press is in the build menu with a name and an icon (vanilla's hand
   press icon: placeholder), costs the kit, and appears as a programmer-art
   sprite facing south or east.
+- A press recipe looked at elsewhere says "Requires a Reloading Press"
+  (not a raw `IGUI_...` key); the placed object is named Reloading Press.
 - Its window lists 27 recipes, all `(Press)`. They use the **same** die
   sets and inputs as the hand recipes, give the same output and the same
   XP, and take less time. The hand recipes still work without it.

@@ -366,6 +366,46 @@ end
 
 
 ------------------------------------------------
+-- CONTENT (is the feature's script content in the game?)
+------------------------------------------------
+--
+-- A feature switched by an add-on mod has items and
+-- recipes the engine loads whenever that mod is ticked,
+-- whether or not the feature then runs: spent cases stand
+-- down in multiplayer and beside a conflicting mod, and
+-- their three scrapping recipes are loaded all the same.
+-- What those scripts name in Lua (a recipe's OnCreate
+-- callback, the material a spent case holds) therefore
+-- follows the CONTENT, not the feature: a recipe that is
+-- in the game must find its callback.
+--
+-- For every other feature it is isEnabled(): Lua-only
+-- behaviour has no content to be left dangling.
+------------------------------------------------
+
+function AC_Features.hasContent(
+    id
+)
+
+    local definition =
+        AC_Features.get(id)
+
+    if not definition then
+        return false
+    end
+
+    if definition.mod
+        and definition.stability ~= AC_Features.STABLE
+    then
+        return AC_Features.isModActive(definition.mod)
+    end
+
+
+    return AC_Features.isEnabled(id)
+end
+
+
+------------------------------------------------
 -- VALIDATION
 ------------------------------------------------
 --

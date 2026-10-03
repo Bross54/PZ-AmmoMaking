@@ -332,7 +332,7 @@ return function(T)
     do
         start(true)
         local C = AC_QualityCarrier
-        local operations, exactRuns = 0, 0
+        local operations, exactRuns, jams, jamLosses = 0, 0, 0, 0
         for seedIndex, seed in ipairs({ 5, 20261003, 911, 60606 }) do
             -- Every other seed plays with nothing unseen and nothing
             -- damaged: there the ledger must balance EXACTLY to the end,
@@ -385,7 +385,7 @@ return function(T)
                 end
                 local unseen = false
                 for step = 1, 500 do
-                    local action = random(12)
+                    local action = random(14)
                     if clean and action >= 10 then action = action - 10 end
                     local loosest = nil
                     for _, item in ipairs(player.inventory.items) do
@@ -394,7 +394,17 @@ return function(T)
                     if action <= 3 then
                         if MODEL.fire(player, gun) then firedRounds = firedRounds + 1 end
                     elseif action == 4 then
+                        -- Racking a jammed gun that has a round chambered
+                        -- clears the jam and the round with it: vanilla
+                        -- hands nothing back (ISRackFirearm.lua:55-60). A
+                        -- failed attempt changes nothing.
+                        local doomed = gun:isJammed() and gun:haveChamber() and gun:isRoundChambered() and gun.unjamFails ~= true
                         MODEL.rack(player, gun)
+                        if doomed then
+                            lostRounds = lostRounds + 1
+                            jamLosses = jamLosses + 1
+                            unseen = true
+                        end
                     elseif action == 5 or action == 6 then
                         if spec.magazine then
                             if loosest then MODEL.loadMagazine(player, loosest, 1 + random(spec.maxAmmo)) end
@@ -425,6 +435,13 @@ return function(T)
                             lostRounds = lostRounds + taken
                             unseen = true
                         end
+                    elseif action >= 12 then
+                        -- The gun jams (vanilla's checkJam at the shot or
+                        -- at the rack). One time in two the next attempt to
+                        -- clear it fails.
+                        gun:setJammed(true)
+                        gun.unjamFails = action == 13
+                        jams = jams + 1
                     else
                         -- Or damages the record itself.
                         if gun.modData[C.KEY] then
@@ -469,10 +486,12 @@ return function(T)
                     eq(quality + firedQuality, startQuality, "seed " .. seed .. " " .. family .. ": every point of quality is accounted for at the end")
                     exactRuns = exactRuns + 1
                 end
-                check(firedRounds > 10, "seed " .. seed .. " " .. family .. ": the run fired (" .. firedRounds .. ")")
+                check(firedRounds > (clean and 10 or 5), "seed " .. seed .. " " .. family .. ": the run fired (" .. firedRounds .. ")")
             end
         end
         eq(exactRuns, 14, "two seeds of seven families ran clean and balanced exactly")
+        check(jams > 100, "the runs with unseen changes jammed the guns (" .. jams .. " jams)")
+        check(jamLosses > 10, "and racked chambered rounds away with the jam (" .. jamLosses .. "): a loss the record follows, never a gain")
         print(string.format("  Quality tracking: %d random operations over 7 firearm families and 4 seeds (two clean, two with unseen changes and damaged records); one ledger, nothing created", operations))
         finish()
     end

@@ -454,3 +454,38 @@ An installed Workshop mod (Hot Brass, `docs/REFERENCE_IMPLEMENTATIONS.md`)
 wraps the same two functions the same way, which is a clue that the
 pattern works in Build 42, not proof for this mod. With that mod active
 the feature stands down: both would leave a casing.
+
+### 7.1 Independent review against vanilla (2026-10-03)
+
+A second reading of the hooks against the installed 42.20.4 Lua and jar,
+by a reviewer that did not write them, found:
+
+- **Every one of the 20 vanilla firearms leaves exactly one case per
+  round**: nine at the shot, the three revolvers when opened (through
+  `getSpentRoundCount`), eight at the rack (through the chambered spent
+  round). The two cap guns have no calibre and leave nothing.
+- Replacing a function in the class table takes effect: vanilla calls
+  `self:ejectSpentRounds()` and no vanilla file keeps its own reference.
+- The listener runs after vanilla's `onShoot` (added at file load; the
+  mod's at `OnGameStart`), once per shot whatever the pellet count, and a
+  dry fire fires no event.
+
+Corrected after it:
+
+- A firearm emptied by hand now counts only `getSpentRoundCount()`. No
+  vanilla gun was affected; another mod's revolver *with* a chamber would
+  have left one case more than it fired.
+- The add-on's three recipes are loaded by the engine wherever the add-on
+  is ticked, also where the feature stands down (multiplayer, beside Hot
+  Brass). Their `OnCreate` callbacks and material units now follow the
+  add-on (`AC_Features.hasContent`), not the feature; before, the engine
+  would have logged a missing function there.
+
+Known limits, left as they are:
+
+- The case at the shot is left because the event fired, not because a
+  round was seen to leave. True for vanilla; a mod that fires
+  `OnWeaponSwingHitPoint` on a dry fire would get a free case.
+- A modded gun with `RackAfterShoot` and no chamber leaves none.
+- The listener order holds only while no other mod re-registers vanilla's
+  `onShoot` after game start.

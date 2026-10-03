@@ -188,9 +188,11 @@ do
 end
 
 
--- Spent cases, when that feature is on (their items are in
--- its add-on): the brass a fired case still holds.
-if AC_Features.isEnabled("spentCases") then
+-- Spent cases, when their add-on is in the game (it holds
+-- their items): the brass a fired case still holds. By
+-- content, not by isEnabled: the add-on's recipes are
+-- loaded even where the feature stands down.
+if AC_Features.hasContent("spentCases") then
 
     for itemType,
         entry

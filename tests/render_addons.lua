@@ -73,8 +73,26 @@ function A.pressScriptBody(RENDER)
 end
 
 -- handNames: the main mod's recipe names (id -> name).
+-- The station itself: vanilla names an entity's build recipe in
+-- Recipes.json under the entity's name ("Hand_Press"), the bench tag its
+-- recipes ask for in IG_UI.json ("IGUI_CraftingWindow_HandPress", read by
+-- ISWidgetTitleHeader for "Requires a ..."), and the placed object in
+-- Moveables.json under its tile's GroupName_CustomName.
+A.PRESS_ENTITY = "AmmoMaking_ReloadingPress"
+A.PRESS_DISPLAY_NAME = "Reloading Press"
+A.PRESS_UI = A.PRESS .. "common/media/lua/shared/Translate/EN/IG_UI.json"
+A.PRESS_MOVEABLES = A.PRESS .. "common/media/lua/shared/Translate/EN/Moveables.json"
+
+function A.pressUiNames()
+    return A.renderNames({ { "IGUI_CraftingWindow_" .. AC_Calibres.PRESS.benchTag, A.PRESS_DISPLAY_NAME } })
+end
+
+function A.pressMoveableNames()
+    return A.renderNames({ { "Reloading_Press", A.PRESS_DISPLAY_NAME } })
+end
+
 function A.pressNames(handNames)
-    local list = {}
+    local list = { { A.PRESS_ENTITY, A.PRESS_DISPLAY_NAME } }
     for _, recipe in ipairs(A.pressRecipes()) do
         local hand = handNames[recipe.handRecipe]
         assert(hand and hand ~= "", "no name for " .. tostring(recipe.handRecipe))
@@ -274,6 +292,8 @@ function A.writeAll(root, RENDER, which)
         writeScript(root .. "/" .. A.PRESS_SCRIPT, A.pressScriptBody(RENDER), RENDER)
         local handNames = A.readNames(assert(read(root .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
         write(root .. "/" .. A.PRESS_NAMES, A.pressNames(handNames))
+        write(root .. "/" .. A.PRESS_UI, A.pressUiNames())
+        write(root .. "/" .. A.PRESS_MOVEABLES, A.pressMoveableNames())
         table.insert(written, A.PRESS_SCRIPT)
         table.insert(written, A.PRESS_NAMES)
     end

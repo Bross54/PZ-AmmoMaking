@@ -626,7 +626,7 @@ None of the following can be established offline:
 | Skin | `AC_ReloadingPress_xuiSkin.txt` | window icon `Build_Handpress` (placeholder) |
 | Tile sheet | `ammomaking_press.tiles`, `texturepacks/AmmoMakingPress.pack`; `pack=` and `tiledef=` in the add-on's `mod.info` | built by `tools/build_tiles.py` from `art/reloading_press/`; the release builder refuses a sheet that does not match its sources |
 | Recipes | `AC_PressRecipes.txt`, generated | 27: case, projectile and assembly for nine calibres. Same die set, inputs, output, level and XP as the hand recipe; only the time differs (§6.1). Die-set forging, primers and powder stay hand work |
-| Names | the add-on's `Recipes.json`, generated | the hand name with `(Press)` |
+| Names | the add-on's `Recipes.json`, `IG_UI.json`, `Moveables.json`, generated | each recipe: the hand name with `(Press)`. The station: `AmmoMaking_ReloadingPress` (its build recipe, as vanilla's `Hand_Press`), `IGUI_CraftingWindow_AmmoMakingReloadingPress` (the "Requires a ..." line of a recipe, which `ISWidgetTitleHeader` builds from the bench tag) and `Reloading_Press` (the placed object, by its tile's group and custom name) |
 | Probes | `AC_Compat.FEATURE_CHECKS.reloadingPress` | the entity script exists; both sprites are defined tiles |
 | Debug | *Stations > Spawn Press Build Kit* | only with the add-on |
 | Visuals | `AC_Visuals.LIST` | `pressSpriteSouth`, `pressSpriteEast`, `pressWindowIcon`, all `PLACEHOLDER_VISUAL` |

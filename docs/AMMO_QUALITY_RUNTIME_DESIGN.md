@@ -449,10 +449,25 @@ bolt and lever guns, checked against vanilla's scripts by the drift tool):
   with one ledger over everything that exists and everything fired: no
   operation gains a handloaded round or quality;
 - a count changed behind the wrappers resolves toward factory;
+- a jam, and the rack that clears it: vanilla hands a chambered round back
+  only when the gun is not jammed, so the round is gone, and the record
+  gives it up as a loss (a failed attempt to clear the jam changes
+  nothing);
 - a wrapper whose own step raises still performs vanilla's action and
   returns vanilla's result;
 - with the option off, or on a multiplayer client, no function is replaced
   and no listener added.
+
+An independent review (2026-10-03) read the wrappers against the installed
+Lua and jar: the class-table replacement reaches both Lua callers
+(`self:loadAmmo()`) and the engine's `animEvent` dispatch (a `rawget` that
+falls through to the class); no vanilla class derives from the seven and
+no vanilla file keeps its own reference; a double barrel's nested
+`loadAmmo` settles to the exact record; and every path it found that
+changes a count unseen (a firearm consumed as a repair part,
+`inheritAmmunition`, a jammed rack) ends in a loss, never a gain. Not
+tested: rounds carried inside a bag (the census is recursive, vanilla's
+`getSomeType` is not; no fault was found by reading).
 
 The model is the mod's reading of vanilla's Lua, not the game. Section 6
 stays open in full, and `docs/INGAME_VALIDATION.md` 20 and 21 are the

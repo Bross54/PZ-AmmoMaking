@@ -206,19 +206,46 @@ return function(T)
 
         -- On a multiplayer client or server, and beside a casing mod, the
         -- add-on being ticked changes nothing.
+        --
+        -- The side is set BEFORE the mod loads, as it is in the game: what
+        -- is decided at file load is decided there too. And the add-on's
+        -- three recipes are in the game wherever the add-on is ticked, so
+        -- what they name must exist even where the feature stands down: a
+        -- recipe whose OnCreate callback is missing is an engine error.
+        local function contentIsWhole(where)
+            eq(AC_Features.isEnabled("spentCases"), false, where .. ": the feature is off")
+            eq(AC_Features.hasContent("spentCases"), true, where .. ": its content is in the game")
+            local script = T.parseScript(ROOT .. "/" .. ADDONS.SPENT_SCRIPT)
+            check(#script.blocks == 3, where .. ": the add-on's three recipes are loaded by the engine regardless")
+            for _, block in ipairs(script.blocks) do
+                local callback = string.match(block.fields.OnCreate or "", "AC_Materials%.([%w_]+)")
+                check(callback ~= nil and type(AC_Materials[callback]) == "function", where .. ": " .. block.name .. " finds its OnCreate callback " .. tostring(callback))
+                check(AC_Materials.getRecipe(block.name) ~= nil, where .. ": " .. block.name .. " is in the mirror")
+            end
+            for _, calibre in ipairs(AC_Calibres.LIST) do
+                check(AC_Materials.UNITS[calibre.spentCase] ~= nil, where .. ": " .. calibre.spentCase .. " has its material units")
+            end
+        end
         for _, case in ipairs({ { "client", "a multiplayer client" }, { "server", "a server" } }) do
             MOCK.activeMods = { "AmmoMaking", "AmmoMakingSpentCases" }
+            MOCK[case[1]] = true
             T.reloadMod()
             MODEL.install(MOCK)
-            MOCK[case[1]] = true
             eq(AC_SpentCases.installIfEnabled(), nil, "on " .. case[2] .. " nothing is installed")
             eq(#Events.OnWeaponSwingHitPoint.handlers, 1, "and no listener is added")
+            contentIsWhole("on " .. case[2])
             MOCK[case[1]] = false
         end
         MOCK.activeMods = { "AmmoMaking", "AmmoMakingSpentCases", "HBVCEFb42" }
         T.reloadMod()
         MODEL.install(MOCK)
         eq(AC_SpentCases.installIfEnabled(), nil, "beside a mod that already leaves casings nothing is installed")
+        contentIsWhole("beside the conflicting mod")
+        -- Without the add-on there is no content, and nothing names it.
+        MOCK.activeMods = { "AmmoMaking" }
+        T.reloadMod()
+        eq(AC_Features.hasContent("spentCases"), false, "without the add-on: no content")
+        eq(AC_Materials.onScrapSpentBrass5, nil, "without the add-on: no spent-scrapping callback")
         finish()
     end
 
@@ -334,6 +361,36 @@ return function(T)
                     eq(spentItemCount(square.worldItems, calibre.case), 0, family .. ": what is left is not a usable case")
                 end
             end
+        end
+
+        -- A gun no vanilla script describes: emptied by hand, but with a
+        -- chamber (another mod's revolver). Vanilla's onShoot both counts
+        -- the empty and leaves the spent-chambered flag set, and its
+        -- ejectSpentRounds clears one of the two per call. The cases are
+        -- the count, once: never one more than was fired.
+        do
+            local spec = MODEL.MODDED.chamberedRevolver
+            local square = MOCK.newSquare(10, 10, 0, T.GRASS)
+            local player = MODEL.newShooter(MOCK, square)
+            local gun = MODEL.newFirearm(MOCK, "chamberedRevolver")
+            MODEL.giveRounds(MOCK, player, spec.ammo, 12)
+            MODEL.reload(player, gun)
+            local fired = 0
+            for _ = 1, 8 do
+                if MODEL.fire(player, gun) then fired = fired + 1 end
+            end
+            check(fired >= 1, "a modded chambered revolver fires in the model (" .. fired .. ")")
+            for _ = 1, 3 do
+                MODEL.reload(player, gun)
+                MODEL.rack(player, gun)
+            end
+            local spentType = S.getSpentCaseForRound(spec.ammo)
+            check(spentItemCount(square.worldItems, spentType) <= fired, "a modded chambered revolver: never more cases than shots (" .. spentItemCount(square.worldItems, spentType) .. " of " .. fired .. ")")
+            gun:setSpentRoundCount(0)
+            gun:setSpentRoundChambered(true)
+            eq(S.countHeld(gun), 0, "a hand-emptied gun's chambered flag is not a case of its own")
+            gun:setSpentRoundCount(4)
+            eq(S.countHeld(gun), 4, "its count is")
         end
 
         -- Racking a live round out is an unload, not a shot: no case.

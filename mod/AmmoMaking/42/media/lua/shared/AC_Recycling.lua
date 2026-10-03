@@ -351,7 +351,7 @@ function AC_Recycling.getSources()
     }
 
 
-    if AC_Features.isEnabled("spentCases") then
+    if AC_Features.hasContent("spentCases") then
 
         table.insert(
             sources,

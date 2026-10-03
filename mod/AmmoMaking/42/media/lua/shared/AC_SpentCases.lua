@@ -336,6 +336,13 @@ end
 -- opened or racked now. Mirrors vanilla's
 -- ejectSpentRounds(): the counted ones, or else the one
 -- that is chambered.
+--
+-- A firearm emptied by hand (a revolver, a break-action)
+-- keeps its empties as a count, and only the count is
+-- cases. Vanilla's three revolvers have no chamber, so the
+-- chambered flag never arises for them; a modded one that
+-- has a chamber would otherwise hand out one case more
+-- than it fired (the flag outlives the counted ejection).
 function AC_SpentCases.countHeld(
     weapon
 )
@@ -351,6 +358,11 @@ function AC_SpentCases.countHeld(
 
     if count > 0 then
         return count
+    end
+
+
+    if weapon:isManuallyRemoveSpentRounds() then
+        return 0
     end
 
 
