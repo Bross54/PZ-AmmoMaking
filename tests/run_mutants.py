@@ -214,7 +214,7 @@ MUTANTS = [
     # ---- the press add-on
     ("mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt", "            Recipes = AmmoMakingReloadingPress,", "            Recipes = HandPress,", "the press station offers vanilla's hand press recipes instead of its own"),
     ("mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt", "                    row = ammomaking_press_01_1,", "                    row = crafted_01_73,", "the press claims a sprite of vanilla's hand press"),
-    ("mod/AmmoMakingPress/42/mod.info", "require=\AmmoMaking\n", "", "the press add-on can be enabled without the main mod"),
+    ("mod/AmmoMakingPress/42/mod.info", "require=\\AmmoMaking\n", "", "the press add-on can be enabled without the main mod"),
     ("mod/AmmoMakingPress/42/mod.info", "tiledef=ammomaking_press 6142\n", "", "the press add-on does not declare its tile sheet"),
     ("art/reloading_press/tiles.json", "\"output\": \"../../mod/AmmoMakingPress/42/media\",", "\"output\": \"../../mod/AmmoMaking/42/media\",", "the press tile sheet is built into the main mod"),
     (SHARED + "AC_Visuals.lua", "        value = \"ammomaking_press_01_1\",", "        value = \"ammomaking_press_01_0\",", "the game-start check probes the south sprite twice and never the east one"),
