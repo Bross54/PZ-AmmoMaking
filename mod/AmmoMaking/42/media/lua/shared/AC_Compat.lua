@@ -2017,6 +2017,100 @@ local function checkLoot(
             "die set loot (" .. (summary.added + summary.present) .. " entries in " .. #AC_Loot.TARGETS .. " lists)"
         )
     end
+
+
+    ------------------------------------------------
+    -- The reloading stock (AC_Loot.COMPONENTS): the same
+    -- questions, asked of its own table and summary.
+    ------------------------------------------------
+
+    local componentProblems =
+        safe(AC_Loot.validateComponents) or { "the component loot table could not be checked" }
+
+
+    for _,
+        problem
+    in ipairs(
+        componentProblems
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "no component is added to any loot list"
+        )
+    end
+
+
+    if #componentProblems > 0 then
+        return
+    end
+
+
+    local components =
+        AC_Loot.lastComponentSummary
+
+
+    if type(components) ~= "table"
+        or components.unavailable
+    then
+
+        addResult(
+            results,
+            "WARNING",
+            "component loot was not registered",
+            "the loot tables were not there when they were merged; reloading stock can only be made"
+        )
+
+
+        return
+    end
+
+
+    local componentsClean = true
+
+
+    for _,
+        bucket
+    in ipairs(
+        {
+            { "missing", "does not exist on this build" },
+            { "empty", "has been emptied by vanilla" },
+            { "unreferenced", "is used by no container" },
+        }
+    )
+    do
+
+        for _,
+            name
+        in ipairs(
+            components[bucket[1]] or {}
+        )
+        do
+
+            componentsClean = false
+
+
+            addResult(
+                results,
+                "WARNING",
+                "component loot list " .. tostring(name) .. " " .. bucket[2],
+                "reloading stock will not be found there; it can still be made"
+            )
+        end
+    end
+
+
+    if componentsClean then
+
+        addResult(
+            results,
+            "OK",
+            "component loot (" .. (components.added + components.present) .. " entries)"
+        )
+    end
 end
 
 

@@ -112,6 +112,8 @@ local DETAILED = {
     "GunStoreCounter", "GunStoreDisplayCase", "GunStoreShelf",
     "GunStoreAmmunition", "GunStoreLiterature", "ArmyStorageAmmunition",
     "PoliceStorageAmmunition", "MetalWorkerTools", "ToolFactoryTools",
+    -- The lists the component loot goes into, beside those above.
+    "CrateMetalwork", "CrateBlacksmithing",
 }
 -- Lists whose users are recorded in full: for each container that names
 -- the list, every list that container can be filled from. The engine fills

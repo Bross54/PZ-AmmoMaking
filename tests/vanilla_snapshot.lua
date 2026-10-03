@@ -206,6 +206,8 @@ return {
             PoliceStorageAmmunition = { rolls = 4, entries = 16, weight = 212, references = 0 },
             MetalWorkerTools = { rolls = 3, entries = 43, weight = 266.61, references = 0 },
             ToolFactoryTools = { rolls = 4, entries = 45, weight = 252.1, references = 1 },
+            CrateMetalwork = { rolls = 4, entries = 56, weight = 306.3, references = 7 },
+            CrateBlacksmithing = { rolls = 4, entries = 53, weight = 246.65, references = 2 },
         },
         -- For each of these lists: the containers that name it, each with every
         -- list it can be filled from, as { name, min, max, weightChance, forced }.

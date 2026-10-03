@@ -59,6 +59,7 @@ rewrite(DOCUMENT, BALANCE.replaceEconomy, "economy table")
 
 local VANILLA = dofile(ROOT .. "/tests/vanilla_snapshot.lua")
 rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", function(text) return BALANCE.replaceLoot(text, VANILLA) end, "loot table")
+rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", function(text) return BALANCE.replaceComponentLoot(text, VANILLA) end, "component loot table")
 rewrite(ROOT .. "/docs/LOOT_AND_RECYCLING.md", BALANCE.replaceRecycling, "recycling table")
 rewrite(ROOT .. "/docs/SPENT_CASE_RESEARCH.md", BALANCE.replaceSpent, "spent-case policy table")
 rewrite(ROOT .. "/README.md", BALANCE.replaceSummary, "calibre table")

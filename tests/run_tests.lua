@@ -8888,6 +8888,7 @@ do
     MOCK.resetCraftRecipes(ids)
     AC_Materials.applySkillRequirements()
     AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
+    AC_Loot.lastComponentSummary = AC_Loot.registerComponents(mockProceduralLists(), mockDistribution())
     MOCK.players = { MOCK.newPlayer({ square = MOCK.newSquare(1, 1, 0, GRASS) }) }
     local clean = boxRun(function() end, function() end)
     check(MOCK.printLogContains("[AmmoMaking] OK: vanilla ammo boxes (9 rounds, boxed by vanilla's own recipe)"), "the boxes are probed at game start")
@@ -8916,6 +8917,7 @@ do
     MOCK.translations = fullTranslations
     -- As after a world load: the loot registration has run.
     AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
+    AC_Loot.lastComponentSummary = AC_Loot.registerComponents(mockProceduralLists(), mockDistribution())
 
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
@@ -9994,7 +9996,8 @@ do
         mirrorCraft = mirrorCraft, mirrorCanCraft = mirrorCanCraft,
         fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu,
     }
-    for _, name in ipairs({ "features", "press", "spent", "quality" }) do
+    T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

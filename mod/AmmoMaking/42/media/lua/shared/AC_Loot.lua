@@ -1,12 +1,13 @@
--- Ammo Making - Die sets as rare loot
+-- Ammo Making - Die sets and a little reloading stock as rare loot
 -- Project Zomboid Build 42.20
 --
 -- A die set can be forged (AC_Calibres) or, rarely, found.
 -- This file adds each calibre's die set to a few vanilla
--- procedural loot lists. Nothing else of the mod is loot:
--- primers, cases, cups and sheets are what the player
--- manufactures, and their raw materials are vanilla items
--- that vanilla already distributes.
+-- procedural loot lists, and (COMPONENTS, below) a small
+-- amount of reloading stock: a jar of gunpowder, a loose
+-- primer, brass scrap, a small brass sheet. Never a case,
+-- a projectile or a round: those are what the player
+-- manufactures, and validate() refuses them.
 --
 -- How vanilla loot works, as read in the installed 42.20.4
 -- files (docs/AMMUNITION_ROADMAP.md, section 2):
@@ -86,6 +87,13 @@ AC_Loot.CONFIG = {
 
     -- A calibre's die set may be in at most this many lists.
     maxListsPerCalibre = 4,
+
+    -- COMPONENTS: no single entry may weigh more than
+    -- this, and all components of one list together not
+    -- more than that.
+    maxComponentWeight = 2.0,
+
+    maxComponentListWeight = 6.0,
 }
 
 
@@ -165,6 +173,242 @@ AC_Loot.TARGETS = {
         classes = { "rifle", "shotgun" },
     },
 }
+
+
+------------------------------------------------
+-- COMPONENTS (tunable)
+------------------------------------------------
+--
+-- A little reloading stock where it would believably be.
+-- Every loot number of the mod besides the die sets is in
+-- this table.
+--
+--   item     what is found. One item per find: the engine
+--            creates one for each successful roll.
+--   list     a live ProceduralDistributions.list (named by
+--            a container; tests/vanilla_snapshot.lua).
+--   weight   percent chance per roll, at most
+--            CONFIG.maxComponentWeight.
+--   what     for the documentation.
+--
+-- What it is worth, so that it cannot replace the
+-- crafting loop (docs/LOOT_AND_RECYCLING.md, 4):
+--
+--   a jar of gunpowder   ten uses: two to ten rounds'
+--                        powder. Vanilla's own item; it
+--                        has no loot list of its own.
+--   a loose primer       one round's primer. A find is a
+--                        curiosity, not a supply.
+--   brass scrap          ten units of brass, a tenth of an
+--                        ingot (vanilla's item).
+--   a small brass sheet  ten units: two case cups.
+--
+-- None of them is a case, a projectile, a round or a
+-- die set, and nothing here can be assembled without the
+-- rest of the chain.
+------------------------------------------------
+
+-- The kinds AC_Calibres.identify() knows that may never be
+-- in COMPONENTS.
+AC_Loot.NEVER_COMPONENT_LOOT = {
+
+    case = true,
+
+    bullet = true,
+
+    round = true,
+
+    dieSet = true,
+}
+
+
+AC_Loot.COMPONENTS = {
+
+    { item = "Base.GunPowder", list = "GunStoreMagsAmmo", weight = 1.0, what = "a jar of gunpowder among a gun store's ammunition" },
+
+    { item = "Base.GunPowder", list = "Hunter", weight = 0.5, what = "a jar of gunpowder among a hunter's things" },
+
+    { item = "Base.BrassScrap", list = "CrateMetalwork", weight = 2.0, what = "brass scrap in a metalwork crate" },
+
+    { item = "Base.BrassScrap", list = "CrateBlacksmithing", weight = 2.0, what = "brass scrap in a blacksmith's crate" },
+
+    { item = "AmmoMaking.SmallBrassSheet", list = "CrateMetalwork", weight = 1.0, what = "a small brass sheet in a metalwork crate" },
+}
+
+
+-- A loose primer of each family in a gun store, from the
+-- calibre model, so that no primer family is named here.
+AC_Loot.PRIMER_LOOT = { list = "GunStoreMagsAmmo", weight = 1.0 }
+
+
+for _,
+    primer
+in ipairs(
+    AC_Calibres.PRIMERS
+)
+do
+
+    table.insert(
+        AC_Loot.COMPONENTS,
+        {
+            item = primer.item,
+            list = AC_Loot.PRIMER_LOOT.list,
+            weight = AC_Loot.PRIMER_LOOT.weight,
+            what = "a loose primer among a gun store's ammunition",
+        }
+    )
+end
+
+
+-- The flat list of component entries:
+-- { list, item, weight, component = true }.
+function AC_Loot.buildComponentEntries(
+    components
+)
+
+    local entries = {}
+
+
+    for _,
+        component
+    in ipairs(
+        components or AC_Loot.COMPONENTS
+    )
+    do
+
+        if type(component.item) == "string"
+            and type(component.list) == "string"
+            and type(component.weight) == "number"
+        then
+
+            table.insert(
+                entries,
+                {
+                    list = component.list,
+                    item = component.item,
+                    weight = component.weight,
+                    component = true,
+                }
+            )
+        end
+    end
+
+
+    return entries
+end
+
+
+-- Problems of the component table, in the form of
+-- validate(): empty when it is sound.
+function AC_Loot.validateComponents(
+    components
+)
+
+    components =
+        components or AC_Loot.COMPONENTS
+
+
+    local config =
+        AC_Loot.CONFIG
+
+
+    local problems = {}
+
+    local seen = {}
+
+    local listWeight = {}
+
+
+    local function problem(
+        text
+    )
+
+        table.insert(
+            problems,
+            "loot: " .. text
+        )
+    end
+
+
+    for index,
+        component
+    in ipairs(
+        components
+    )
+    do
+
+        local label =
+            tostring(component.item or index)
+
+
+        if type(component.item) ~= "string"
+            or component.item == ""
+            or type(component.list) ~= "string"
+            or component.list == ""
+        then
+
+            problem("component " .. label .. " needs an item and a list")
+
+        else
+
+            -- The calibre-specific products are never loot
+            -- here: a case, a projectile or a round would
+            -- skip the forming steps, and die sets have
+            -- their own, rarer table. A loose primer is
+            -- allowed: it fits every calibre of its family
+            -- and makes nothing by itself.
+            local kind =
+                AC_Calibres.identify(component.item)
+
+
+            if AC_Loot.NEVER_COMPONENT_LOOT[tostring(kind)] then
+                problem(label .. " is a " .. tostring(kind) .. ": what the player forms and assembles is never component loot")
+            end
+
+
+            local pair =
+                component.list .. "|" .. component.item
+
+
+            if seen[pair] then
+                problem(label .. " is in " .. component.list .. " more than once")
+            end
+
+
+            seen[pair] = true
+        end
+
+
+        if type(component.weight) ~= "number"
+            or component.weight <= 0
+            or component.weight > config.maxComponentWeight
+        then
+
+            problem(label .. " must weigh more than 0 and at most " .. config.maxComponentWeight)
+
+        elseif type(component.list) == "string" then
+
+            listWeight[component.list] =
+                (listWeight[component.list] or 0) + component.weight
+        end
+    end
+
+
+    for list,
+        total
+    in pairs(
+        listWeight
+    )
+    do
+
+        if total > config.maxComponentListWeight then
+            problem("components weigh " .. total .. " in " .. list .. ", above " .. config.maxComponentListWeight)
+        end
+    end
+
+
+    return problems
+end
 
 
 ------------------------------------------------
@@ -627,9 +871,18 @@ local function hasItem(
 end
 
 
-function AC_Loot.register(
+-- entries: what to insert; names: the lists to look for
+-- among the containers; referenced: which lists a
+-- container names, when the caller has already walked
+-- the distribution table (it is walked once per world
+-- load, for the die sets and the components together).
+-- Shared by the die sets and the components.
+local function registerEntries(
+    entries,
+    names,
     procedural,
-    distribution
+    distribution,
+    referenced
 )
 
     local summary = {
@@ -644,13 +897,6 @@ function AC_Loot.register(
 
         unreferenced = {},
     }
-
-
-    if not AC_Loot.CONFIG.enabled
-        or #AC_Loot.validate() > 0
-    then
-        return summary
-    end
 
 
     if procedural == nil
@@ -698,32 +944,18 @@ function AC_Loot.register(
     end
 
 
-    local names = {}
+    if referenced == nil then
 
-
-    for _,
-        target
-    in ipairs(
-        AC_Loot.TARGETS
-    )
-    do
-
-        table.insert(
-            names,
-            target.list
-        )
+        referenced =
+            distribution
+            and AC_Loot.findReferencedLists(distribution, names)
     end
-
-
-    local referenced =
-        distribution
-        and AC_Loot.findReferencedLists(distribution, names)
 
 
     for _,
         entry
     in ipairs(
-        AC_Loot.buildEntries()
+        entries
     )
     do
 
@@ -782,12 +1014,266 @@ function AC_Loot.register(
 end
 
 
-local function registerLogged()
+local function emptySummary()
+
+    return {
+
+        added = 0,
+
+        present = 0,
+
+        missing = {},
+
+        empty = {},
+
+        unreferenced = {},
+    }
+end
+
+
+-- The die sets.
+function AC_Loot.register(
+    procedural,
+    distribution,
+    referenced
+)
+
+    if not AC_Loot.CONFIG.enabled
+        or #AC_Loot.validate() > 0
+    then
+        return emptySummary()
+    end
+
+
+    local names = {}
+
+
+    for _,
+        target
+    in ipairs(
+        AC_Loot.TARGETS
+    )
+    do
+
+        table.insert(
+            names,
+            target.list
+        )
+    end
+
+
+    return
+        registerEntries(
+            AC_Loot.buildEntries(),
+            names,
+            procedural,
+            distribution,
+            referenced
+        )
+end
+
+
+-- The reloading stock of COMPONENTS. Switched off with
+-- the die sets (CONFIG.enabled), and by a component table
+-- that does not validate.
+function AC_Loot.registerComponents(
+    procedural,
+    distribution,
+    referenced
+)
+
+    if not AC_Loot.CONFIG.enabled
+        or #AC_Loot.validateComponents() > 0
+    then
+        return emptySummary()
+    end
+
+
+    local entries =
+        AC_Loot.buildComponentEntries()
+
+
+    local names = {}
+
+    local seen = {}
+
+
+    for _,
+        entry
+    in ipairs(
+        entries
+    )
+    do
+
+        if not seen[entry.list] then
+
+            seen[entry.list] = true
+
+
+            table.insert(
+                names,
+                entry.list
+            )
+        end
+    end
+
+
+    return
+        registerEntries(
+            entries,
+            names,
+            procedural,
+            distribution,
+            referenced
+        )
+end
+
+
+-- Every list either table goes into, each once.
+function AC_Loot.getListNames()
+
+    local names = {}
+
+    local seen = {}
+
+
+    local function add(
+        name
+    )
+
+        if type(name) == "string"
+            and not seen[name]
+        then
+
+            seen[name] = true
+
+
+            table.insert(
+                names,
+                name
+            )
+        end
+    end
+
+
+    for _,
+        target
+    in ipairs(
+        AC_Loot.TARGETS
+    )
+    do
+        add(target.list)
+    end
+
+
+    for _,
+        component
+    in ipairs(
+        AC_Loot.COMPONENTS
+    )
+    do
+        add(component.list)
+    end
+
+
+    return names
+end
+
+
+-- Which of the mod's lists a container names: ONE walk of
+-- the distribution table per world load, shared by both
+-- registrations. nil when there is no table to walk.
+local function referencedOnce()
+
+    if type(Distributions) ~= "table"
+        or type(Distributions[1]) ~= "table"
+    then
+        return nil
+    end
+
+
+    return
+        AC_Loot.findReferencedLists(
+            Distributions[1],
+            AC_Loot.getListNames()
+        )
+end
+
+
+local function registerComponentsLogged(
+    referenced
+)
 
     local ok,
           summary =
         pcall(
-            AC_Loot.register
+            AC_Loot.registerComponents,
+            nil,
+            nil,
+            referenced
+        )
+
+
+    if not ok then
+
+        print(
+            "[AmmoMaking] WARNING: component loot not registered: "
+            .. tostring(summary)
+        )
+
+
+        return
+    end
+
+
+    AC_Loot.lastComponentSummary = summary
+
+
+    if summary.added > 0
+        or summary.unavailable
+        or #summary.missing > 0
+        or #summary.empty > 0
+        or #summary.unreferenced > 0
+    then
+
+        print(
+            "[AmmoMaking] Component loot: "
+            .. summary.added
+            .. " entries added, "
+            .. summary.present
+            .. " already present; lists missing: "
+            .. #summary.missing
+            .. ", empty: "
+            .. #summary.empty
+            .. ", used by no container: "
+            .. #summary.unreferenced
+        )
+    end
+end
+
+
+local function registerLogged()
+
+    local walked,
+          referenced =
+        pcall(referencedOnce)
+
+
+    if not walked then
+        referenced = nil
+    end
+
+
+    registerComponentsLogged(referenced)
+
+
+    local ok,
+          summary =
+        pcall(
+            AC_Loot.register,
+            nil,
+            nil,
+            referenced
         )
 
 

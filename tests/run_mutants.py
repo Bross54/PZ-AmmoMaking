@@ -269,6 +269,13 @@ MUTANTS = [
     (CLIENT + "AC_GeologyDebug.lua", "    if AC_Features.isEnabled(\"spentCases\") then\n\n        ammunition:addOption(", "    if true then\n\n        ammunition:addOption(", "the debug tree offers spent cases that do not exist"),
     (SHARED + "AC_Calibres.lua", "        { \"Base.SteelBarHalf\", 2 },", "        { \"Base.SteelBarHalf\", 1 },", "the press build kit is short of what the build recipe takes"),
 
+    # ---- component loot
+    (SHARED + "AC_Loot.lua", "    { item = \"Base.GunPowder\", list = \"GunStoreMagsAmmo\", weight = 1.0,", "    { item = \"Base.GunPowder\", list = \"GunStoreMagsAmmo\", weight = 2.0,", "gunpowder twice as common in gun stores"),
+    (SHARED + "AC_Loot.lua", "    case = true,\n\n    bullet = true,", "    bullet = true,", "a formed case may be component loot"),
+    (SHARED + "AC_Loot.lua", "    if not AC_Loot.CONFIG.enabled\n        or #AC_Loot.validateComponents() > 0\n    then\n        return emptySummary()\n    end\n", "", "component loot registers although it is switched off or invalid"),
+    (SHARED + "AC_Loot.lua", "    maxComponentWeight = 2.0,", "    maxComponentWeight = 50.0,", "a component may be as common as a staple item"),
+    (SHARED + "AC_Loot.lua", "    { item = \"Base.BrassScrap\", list = \"CrateBlacksmithing\", weight = 2.0,", "    { item = \"Base.BrassScrap\", list = \"MetalWorkerTools\", weight = 2.0,", "brass scrap in a list no container uses"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]
