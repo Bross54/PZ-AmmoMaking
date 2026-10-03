@@ -1,4 +1,4 @@
-"""Ammo Making - build a clean release of the mod folder.
+"""Ammo Making - build a clean release of the mod folders.
 
     python tools/build_release.py
     python tools/build_release.py --install "<Project Zomboid install>"
@@ -8,21 +8,29 @@
 What it does, in order, stopping at the first failure:
 
   1. reads the version from mod/AmmoMaking/42/mod.info (modversion=), the
-     one place the version is written
+     one place the version is decided; the add-on mods must carry the same
   2. refuses a working tree with uncommitted changes (--allow-dirty to
      override: the package is then built from HEAD anyway and says so)
-  3. validates the package: mod.info, file types, no test, doc, backup or
-     temporary file, no local path, valid JSON, a changelog entry
+  3. validates each mod folder: mod.info, file types, no test, doc, backup
+     or temporary file, no local path, valid JSON, a changelog entry; an
+     add-on must require the main mod and carry its version
   4. runs the gates: Lua 5.1 syntax of every file, the offline suite, the
-     generated files against the model, the drift tool's self-test, that
-     every mutant still applies, and (with --install) the installed game
-     against what the mod relies on
-  5. writes release/AmmoMaking/ and release/AmmoMaking-<version>.zip from
-     the files git tracks under mod/AmmoMaking, as committed in HEAD
+     generated files against the model, the built tile sheet against its
+     art, the drift tool's self-test, that every mutant still applies, and
+     (with --install) the installed game against what the mod relies on
+  5. writes release/<mod folder>/ for each mod and one
+     release/AmmoMaking-<version>.zip holding all of them, from the files
+     git tracks under mod/, as committed in HEAD
+
+What is shipped is the main mod and its experimental ADD-ON mods (MODS
+below). The add-ons are separate entries in the game's mod list and are
+off unless ticked; they sit beside the main mod, as they would under
+Contents/mods/ of a Workshop item.
 
 The archive is deterministic: the same commit gives the same bytes (sorted
 entries, fixed timestamps, LF line endings as stored in git). Nothing
-outside mod/AmmoMaking is shipped: no tests, tools or documents.
+outside the mod folders is shipped: no tests, tools, documents or art
+sources.
 
 It does not publish anything. The Steam Workshop wants the folder inside
 Contents/mods/ of a workshop item, with a preview.png and workshop.txt next
@@ -43,6 +51,10 @@ import zipfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))).replace("\\", "/")
 MOD = "mod/AmmoMaking"
 MOD_INFO = MOD + "/42/mod.info"
+# Every mod folder of the release: the main mod first, then its add-ons.
+MODS = [MOD, "mod/AmmoMakingPress", "mod/AmmoMakingSpentCases"]
+# Tile sheets built from art: description -> the mod that ships the result.
+TILE_SHEETS = ["art/reloading_press/tiles.json"]
 
 # What a release may contain.
 ALLOWED_EXTENSIONS = {".lua", ".txt", ".json", ".info", ".png", ".tiles", ".pack"}
@@ -84,8 +96,9 @@ def read_mod_info(text):
     return info
 
 
-def validate_package(files):
-    """files: path under mod/AmmoMaking -> bytes. Returns a list of problems."""
+def validate_package(files, folder=MOD, main=None):
+    """files: path under the mod folder -> bytes. main: the main mod's
+    mod.info when this is an add-on. Returns a list of problems."""
     problems = []
     if "42/mod.info" not in files:
         return ["42/mod.info is missing"]
@@ -93,8 +106,18 @@ def validate_package(files):
     for key in REQUIRED_KEYS:
         if not info.get(key):
             problems.append("mod.info has no %s=" % key)
-    if info.get("id") and info["id"] != os.path.basename(MOD):
-        problems.append("mod.info id=%s is not the folder name %s" % (info["id"], os.path.basename(MOD)))
+    if info.get("id") and info["id"] != os.path.basename(folder):
+        problems.append("mod.info id=%s is not the folder name %s" % (info["id"], os.path.basename(folder)))
+    if main is not None:
+        # An add-on: it needs the main mod, and is the same release.
+        required = [name.strip().lstrip("\\") for name in info.get("require", "").split(",") if name.strip()]
+        if main.get("id") not in required:
+            problems.append("an add-on must require the main mod: require=\\%s" % main.get("id"))
+        for key in ("modversion", "versionMin"):
+            if info.get(key) != main.get(key):
+                problems.append("%s=%s differs from the main mod's %s" % (key, info.get(key), main.get(key)))
+        if not any(path.startswith("common/") for path in files):
+            problems.append("no common/ folder: Build 42 expects one beside 42/")
     if info.get("modversion") and not VERSION.match(info["modversion"]):
         problems.append("modversion=%s is not MAJOR.MINOR.PATCH" % info["modversion"])
     if info.get("versionMin") and not re.match(r"^\d+\.\d+", info["versionMin"]):
@@ -135,8 +158,12 @@ def validate_package(files):
             problems.append("%s is empty" % path)
 
     lua_files = [path for path in files if path.endswith(".lua")]
-    if not any(path.startswith("42/media/lua/") for path in lua_files):
+    if main is None and not any(path.startswith("42/media/lua/") for path in lua_files):
         problems.append("no Lua under 42/media/lua")
+    if main is not None and lua_files:
+        # The logic of every feature is in the main mod, behind
+        # AC_Features; an add-on carries scripts and data only.
+        problems.append("an add-on ships Lua (%s): its logic belongs in the main mod" % ", ".join(sorted(lua_files)))
     if not any(path.startswith("42/media/scripts/") for path in files):
         problems.append("no scripts under 42/media/scripts")
     return problems
@@ -230,8 +257,11 @@ def main():
     arguments = parser.parse_args()
 
     try:
-        tracked = [path for path in git("ls-files", MOD).split("\n") if path]
-        files = {path[len(MOD) + 1:]: git_bytes(path) for path in tracked}
+        packages = {}
+        for folder in MODS:
+            tracked = [path for path in git("ls-files", folder).split("\n") if path]
+            packages[folder] = {path[len(folder) + 1:]: git_bytes(path) for path in tracked}
+        files = packages[MOD]
         info = read_mod_info(files.get("42/mod.info", b"").decode("utf-8", "replace"))
         version = info.get("modversion", "")
         commit = git("rev-parse", "--short", "HEAD").strip()
@@ -243,16 +273,24 @@ def main():
         if dirty:
             print("WARNING  uncommitted changes are NOT in the package: it is built from HEAD")
 
-        untracked = [line[3:] for line in git("status", "--porcelain", "--ignored", MOD).split("\n") if line[:2] in ("??", "!!")]
+        untracked = [line[3:] for line in git("status", "--porcelain", "--ignored", "mod").split("\n") if line[:2] in ("??", "!!")]
         if untracked:
             print("NOTE     not tracked by git, not shipped: " + ", ".join(untracked))
 
-        problems = validate_package(files)
+        problems = []
+        for folder in MODS:
+            found = validate_package(packages[folder], folder, None if folder == MOD else info)
+            problems.extend("%s: %s" % (os.path.basename(folder), problem) for problem in found)
+        stray = sorted(set(path.split("/")[1] for path in git("ls-files", "mod").split("\n") if path) - set(os.path.basename(folder) for folder in MODS))
+        if stray:
+            problems.append("mod/ holds a folder the release does not know: " + ", ".join(stray))
         if not changelog_has(version):
             problems.append("CHANGELOG.md has no '## %s' entry" % version)
         if problems:
             raise Failure("the package is not valid:\n  " + "\n  ".join(problems))
-        print("PASS     package: %d files, mod.info complete, no stray files, no local paths" % len(files))
+        for folder in MODS:
+            print("PASS     package %s: %d files, mod.info complete, no stray files, no local paths%s" % (
+                os.path.basename(folder), len(packages[folder]), "" if folder == MOD else ", requires the main mod at the same version"))
 
         print("PASS     " + gate_syntax())
         print("PASS     " + gate_suite())
@@ -270,6 +308,12 @@ def main():
         if code != 0:
             raise Failure("tools/build_tiles.py --selftest fails: " + last)
         print("PASS     " + last)
+
+        for sheet in TILE_SHEETS:
+            code, last, _ = gate_python("tools/build_tiles.py", "tile sheet", sheet, "--check")
+            if code != 0:
+                raise Failure("the tile sheet built from %s is stale: %s" % (sheet, last))
+            print(last)
 
         code, last, output = gate_python("tests/run_mutants.py", "mutants", *([] if arguments.mutants else ["check"]))
         if code != 0:
@@ -289,30 +333,38 @@ def main():
             return 0
 
         out = os.path.join(ROOT, arguments.out)
-        target = os.path.join(out, "AmmoMaking")
-        if os.path.isdir(target):
-            shutil.rmtree(target)
         archive = os.path.join(out, "AmmoMaking-%s.zip" % version)
         os.makedirs(out, exist_ok=True)
+        targets = []
         with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as bundle:
-            for path in sorted(files):
-                destination = os.path.join(target, path)
-                os.makedirs(os.path.dirname(destination), exist_ok=True)
-                with open(destination, "wb") as handle:
-                    handle.write(files[path])
-                entry = zipfile.ZipInfo("AmmoMaking/" + path, date_time=(2020, 1, 1, 0, 0, 0))
-                entry.compress_type = zipfile.ZIP_DEFLATED
-                entry.external_attr = 0o644 << 16
-                bundle.writestr(entry, files[path], compresslevel=9)
+            for folder in MODS:
+                name = os.path.basename(folder)
+                target = os.path.join(out, name)
+                if os.path.isdir(target):
+                    shutil.rmtree(target)
+                targets.append(target)
+                for path in sorted(packages[folder]):
+                    data = packages[folder][path]
+                    destination = os.path.join(target, path)
+                    os.makedirs(os.path.dirname(destination), exist_ok=True)
+                    with open(destination, "wb") as handle:
+                        handle.write(data)
+                    entry = zipfile.ZipInfo(name + "/" + path, date_time=(2020, 1, 1, 0, 0, 0))
+                    entry.compress_type = zipfile.ZIP_DEFLATED
+                    entry.external_attr = 0o644 << 16
+                    bundle.writestr(entry, data, compresslevel=9)
         with open(archive, "rb") as handle:
             checksum = hashlib.sha256(handle.read()).hexdigest()
 
         print("")
         print("Included files:")
-        for path in sorted(files):
-            print("  %7d  %s" % (len(files[path]), path))
+        for folder in MODS:
+            name = os.path.basename(folder)
+            for path in sorted(packages[folder]):
+                print("  %7d  %s/%s" % (len(packages[folder][path]), name, path))
         print("")
-        print("Wrote %s" % os.path.relpath(target, ROOT).replace("\\", "/"))
+        for target in targets:
+            print("Wrote %s" % os.path.relpath(target, ROOT).replace("\\", "/"))
         print("Wrote %s  (%d bytes, sha256 %s)" % (os.path.relpath(archive, ROOT).replace("\\", "/"), os.path.getsize(archive), checksum))
         return 0
     except Failure as failure:

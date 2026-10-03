@@ -91,8 +91,12 @@ AC_SpentCases.CONFIG = {
 
     -- Of a hundred rounds fired, how many leave a case
     -- that can be found. Whole number, 0 to 100. The rest
-    -- roll under the furniture.
+    -- roll under the furniture. This is the default; a
+    -- save may set its own in the sandbox options
+    -- (sandboxOption, shipped by the add-on).
     recoveryPercent = 50,
+
+    sandboxOption = "SpentCaseRecovery",
 
     -- "ground": on the shooter's square, to be picked up.
     -- "inventory": straight into the shooter's inventory.
@@ -363,6 +367,41 @@ end
 -- RECOVERY (how many of the fired cases are found)
 ------------------------------------------------
 
+-- The percentage in force: the save's sandbox option when
+-- it is a whole number from 0 to 100, otherwise the
+-- default of CONFIG. Anything else in the option (a
+-- word, a fraction, 250) is not a setting and is ignored.
+function AC_SpentCases.getRecoveryPercent()
+
+    local config =
+        AC_SpentCases.CONFIG
+
+
+    local options =
+        type(SandboxVars) == "table"
+        and SandboxVars[AC_Features.SANDBOX_TABLE]
+        or nil
+
+
+    local chosen =
+        type(options) == "table"
+        and options[config.sandboxOption]
+        or nil
+
+
+    if type(chosen) == "number"
+        and chosen == math.floor(chosen)
+        and chosen >= 0
+        and chosen <= 100
+    then
+        return chosen
+    end
+
+
+    return tonumber(config.recoveryPercent) or 0
+end
+
+
 function AC_SpentCases.roll(
     fired
 )
@@ -390,7 +429,7 @@ function AC_SpentCases.roll(
 
 
     local percent =
-        tonumber(config.recoveryPercent) or 0
+        AC_SpentCases.getRecoveryPercent()
 
 
     if percent <= 0 then
@@ -797,7 +836,7 @@ function AC_SpentCases.install()
         .. ", reload "
         .. tostring(done.reload)
         .. "; "
-        .. tostring(AC_SpentCases.CONFIG.recoveryPercent)
+        .. tostring(AC_SpentCases.getRecoveryPercent())
         .. " % found, placed on the "
         .. tostring(AC_SpentCases.CONFIG.placement)
         .. ")"

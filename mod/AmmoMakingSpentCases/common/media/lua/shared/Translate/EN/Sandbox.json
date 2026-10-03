@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Spent cases found, per hundred rounds fired (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, single player only. How many of a hundred fired rounds leave a spent case that can be picked up. A spent case can only be scrapped, at a quarter of its brass. 0 leaves none."
+}

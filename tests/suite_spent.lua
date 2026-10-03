@@ -410,6 +410,36 @@ return function(T)
             eq(S.roll(1), 1, "a roll just under the percentage finds the case")
             eq(S.roll(1), 0, "a roll at the percentage does not")
             MOCK.randomSequence = nil
+
+            -- The save's sandbox option overrides the default, when it is a
+            -- whole percentage; anything else is not a setting.
+            eq(S.getRecoveryPercent(), 50, "no sandbox option: the default")
+            SandboxVars = { AmmoMaking = { SpentCaseRecovery = 100 } }
+            eq(S.getRecoveryPercent(), 100, "the sandbox option is used")
+            eq(S.roll(7), 7, "and decides what is found")
+            SandboxVars = { AmmoMaking = { SpentCaseRecovery = 0 } }
+            eq(S.roll(7), 0, "0 leaves nothing")
+            for _, value in ipairs({ 250, -5, 33.3, "all", true, 0 / 0 }) do
+                SandboxVars = { AmmoMaking = { SpentCaseRecovery = value } }
+                eq(S.getRecoveryPercent(), 50, "the option value " .. tostring(value) .. " is ignored")
+            end
+            SandboxVars = { AmmoMaking = "broken" }
+            eq(S.getRecoveryPercent(), 50, "a broken option table is ignored")
+            SandboxVars = {}
+            -- The option the add-on ships is that option, with the default
+            -- of CONFIG and the whole range.
+            local options = readFile(ADDON .. "42/media/sandbox-options.txt")
+            check(string.find(options, "^VERSION = 1,") ~= nil and string.find(options, "/*", 1, true) == nil, "the add-on's sandbox file has the version line and no comment")
+            local body = string.match(options, "option%s+AmmoMaking%." .. S.CONFIG.sandboxOption .. "%s*(%b{})")
+            check(body ~= nil, "it offers " .. S.CONFIG.sandboxOption)
+            eq(string.match(body or "", "type%s*=%s*(%a+)"), "integer", "as a whole number")
+            eq(tonumber(string.match(body or "", "default%s*=%s*(%d+)")), S.CONFIG.recoveryPercent, "whose default is the mod's")
+            eq(tonumber(string.match(body or "", "min%s*=%s*(%d+)")), 0, "from 0")
+            eq(tonumber(string.match(body or "", "max%s*=%s*(%d+)")), 100, "to 100")
+            local texts = ADDONS.readNames(readFile(ADDON .. "common/media/lua/shared/Translate/EN/Sandbox.json"))
+            local translation = string.match(body or "", "translation%s*=%s*([%w_]+)")
+            check(texts["Sandbox_" .. tostring(translation)] ~= nil and texts["Sandbox_" .. tostring(translation) .. "_tooltip"] ~= nil, "with a label and a tooltip")
+            check(string.find(readFile(ROOT .. "/mod/AmmoMaking/42/media/sandbox-options.txt"), S.CONFIG.sandboxOption, 1, true) == nil, "the main mod does not offer it: without the add-on it would set nothing")
         end
 
         -- validate() refuses a configuration that would hand out brass.

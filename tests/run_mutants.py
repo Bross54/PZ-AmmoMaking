@@ -238,6 +238,8 @@ MUTANTS = [
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.005,", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.5,", "a spent case a hundred times as heavy as the case it was"),
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt", "            item 1 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "            item 2 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "the spent scrapping script hands back twice what the model says"),
 
+    (SHARED + "AC_SpentCases.lua", "        and chosen >= 0\n        and chosen <= 100\n", "        and chosen >= 0\n", "a sandbox value above 100 % is taken as a setting"),
+
     # ---- quality tracking in magazines and firearms
     (SHARED + "AC_QualityCarrier.lua", "    local keep =\n        type(record) == \"table\"\n        and (tonumber(record.handloaded) or 0) > 0\n", "    local keep =\n        type(record) == \"table\"\n", "every gun that is touched gets a record, factory rounds or not"),
     (SHARED + "AC_QualityCarrier.lua", "        local unloaded =\n            math.min(appeared, left)\n", "        local unloaded = 0\n", "unloaded rounds are treated as fired: their quality is lost"),
