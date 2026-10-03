@@ -1,11 +1,13 @@
 # Multiplayer: authority map and design
 
-Status: **DESIGN ONLY. No networking code exists in the mod**: no
-`sendClientCommand`, no `OnClientCommand`, no `ModData.transmit`. The mod is
-single player. This document says where each system's state lives today,
-who would have to own it on a server, and how each known duplication would
-be closed. The mining part is worked out further in
-`MULTIPLAYER_MINING.md`.
+Status: **DESIGN, AND EXPLICIT GUARDS. No networking code exists in the
+mod**: no `sendClientCommand`, no `OnClientCommand`, no `ModData.transmit`.
+The mod is single player. Since the third pass every system that changes
+items or world state from Lua is **explicitly refused on a multiplayer
+client** (section 2.1), so nothing happens there by accident. This
+document says where each system's state lives today, who would have to own
+it on a server, and how each known duplication would be closed. The mining
+part is worked out further in `MULTIPLAYER_MINING.md`.
 
 Nothing here has been run on a server. Vanilla facts are marked **FILE**
 (installed 42.20.4 Lua), **JAR** or **INFERRED**.
@@ -42,10 +44,10 @@ files do not settle it.
 | System | State it changes | Where that happens today | Class | On a server it must |
 |---|---|---|---|---|
 | Geology (concentrations, grades) | none: computed from the save's identity | each machine | **CLIENT-ONLY**, if every machine derives the same seed | use the server's world identity on every client (**UNKNOWN** whether a client sees the same identity; `AC_WorldData`) |
-| Digging a sample | a new item with hidden geology in its ModData; shovel wear | the acting client (`AddItem`) | **NEEDS SERVER** | create the item on the server (`complete()`), which sends it to the client |
-| Field and advanced assay | kit uses, the sample's ModData, XP | the acting client | **NEEDS SERVER** | a server command; uses and result decided there |
+| Digging a sample | a new item with hidden geology in its ModData; shovel wear | single player only: **refused on a client** (`AC_GeologySampling.isAvailable`) | **NEEDS SERVER** | create the item on the server (`complete()`), which sends it to the client |
+| Field and advanced assay | kit uses, the sample's ModData, XP | single player only: **refused on a client** | **NEEDS SERVER** | a server command; uses and result decided there |
 | Laboratory analyzer: place, pick up | a world object, an inventory item | disabled for clients | **NEEDS SERVER** | vanilla's build path already creates on the server (`ISBuildAction`); pickup needs a `complete()` |
-| Laboratory analyzer: start, cancel, collect | object ModData, a sample removed and re-created, XP | whichever client opens the menu | **NEEDS SERVER** + **WORLD MODDATA** | server commands; `transmitModData()` after each change |
+| Laboratory analyzer: start, cancel, collect | object ModData, a sample removed and re-created, XP | single player only: **refused on a client** (`AC_LaboratoryAnalyzer.isAvailable`) | **NEEDS SERVER** + **WORLD MODDATA** | server commands; `transmitModData()` after each change |
 | Laboratory analyzer: time accounting | hours credited lazily, on interaction | whichever client looks | **NEEDS SERVER** | credit on the server only; a client reads |
 | Mining | the depletion store, an ore item, XP, pickaxe wear | disabled for clients | **NEEDS SERVER** + **WORLD MODDATA** | `MULTIPLAYER_MINING.md` |
 | Depletion store | global ModData | the machine that mines | **WORLD MODDATA** | exist on the server only; clients get a copy for their menus |
@@ -59,12 +61,45 @@ files do not settle it.
 | Ammo boxes | – | vanilla's recipe | **VANILLA** | nothing |
 | Save-data repairs | whatever the owning system stores | where that system reads | as the owner | only write on the server |
 | Debug tools | anything | the client, `-debug` | **CLIENT-ONLY**, and unsafe on a server | be refused on a client, or be admin commands |
-| *Reloading press (not built)* | a placed entity | – | **VANILLA** | nothing: a `CraftBench` entity is built, saved and synced by the engine |
-| *Quality tally (not wired)* | ModData on a weapon or magazine | – | **NEEDS SERVER** | change only where vanilla changes the count (`not isClient()`); it then rides on `syncHandWeaponFields` |
-| *Spent cases (not built)* | new items at the shot or the rack | – | **NEEDS SERVER** | spawn on the server only, once per shot id |
+| Reloading press (add-on, experimental) | a placed entity; items in and out at its recipes | the engine | **VANILLA** | nothing: a `CraftBench` entity is built, saved and synced by the engine, and its recipes are vanilla `craftRecipe`s. The feature is not switched off in multiplayer |
+| Quality tracking (sandbox option, experimental) | ModData on a weapon or magazine; quality on unloaded rounds | single player only: **the feature is off on a client and on a server** (`AC_Features`) | **NEEDS SERVER** | change only where vanilla changes the count (`not isClient()`); the record then rides on `syncHandWeaponFields` and `syncItemFields`. The census of loose rounds must be the server's inventory |
+| Quality firing effects (locked) | vanilla's jam state | nowhere: locked | **NEEDS SERVER** | roll on the server only, once per shot id |
+| Spent cases (add-on, experimental) | new items at the shot or the rack | single player only: **off on a client and on a server** | **NEEDS SERVER** | spawn on the server only, once per shot id (`network.fields.hit.Player.attack` triggers the event there) |
+| Component and die-set loot | the loot tables in memory | every machine at world load | **VANILLA** once the server's tables hold the entries | nothing |
 
 Six of the present systems are vanilla's and need nothing. Everything that
 is the mod's own (sampling, assays, the analyzer, mining) needs the server.
+
+### 2.1 The guards that exist today
+
+Nothing below is networking; each is a refusal, so that a multiplayer
+client does nothing rather than something local and wrong. All read the
+engine's `isClient()` (and the features also `isServer()`).
+
+| System | Guard | What a client sees |
+|---|---|---|
+| Mining | `AC_Mining.isAvailable()` in `extract()` and in the menu | a disabled option: "Ore extraction is not available in multiplayer yet" |
+| Analyzer: place, pick up | `AC_LaboratoryAnalyzer.isPlacementAvailable()` | disabled options with the reason |
+| Analyzer: start, cancel, collect | `AC_LaboratoryAnalyzer.isAvailable()` in the three functions and in the menu | disabled options with the reason; *Check* still works, it only reads |
+| Digging a sample | `AC_GeologySampling.isAvailable()` in `createSample()` and in the menu | a disabled option: "Geological sampling and assays are not available in multiplayer yet" |
+| Field and advanced assay | the same, in `analyzeSample()` and in the menu | disabled options with the reason |
+| Spent cases, quality tracking, firing effects | `singlePlayerOnly` in `AC_Features`: off on a client **and** on a server | nothing: no hook is installed, no entry is added |
+
+What a client can still do is what vanilla owns: every recipe, the press,
+loot, boxes. What remains **UNKNOWN** there is unchanged: whether the XP
+call of the recipes' `OnCreate` and the quality written there behave on a
+server (rows above).
+
+**Server commands a multiplayer version would need** (none exists):
+
+| Command (client to server) | The server does | It answers with |
+|---|---|---|
+| `mine` (square, metal) | checks the sample, the reserve and the tool; records the extraction; drops the ore; grants XP | the remaining grade, or the refusal |
+| `digSample` (square) | creates the sample with its hidden geology; wears the shovel | the item, through the engine's own item sync |
+| `assay` (sample id, kit id) | spends a kit use, writes the result, grants XP | `syncItemFields` on both items |
+| `labStart` / `labCancel` / `labCollect` (object) | changes the object's ModData, removes or creates the sample, grants XP | `transmitModData()` |
+| `labPickUp` (object) | removes the object, creates the item | the engine's object and item sync |
+| *(none for the press, the recipes, loot)* | vanilla | – |
 
 ## 3. The duplications, one by one
 

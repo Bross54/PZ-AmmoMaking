@@ -118,6 +118,8 @@
   "IGUI_AmmoMaking_NeedAssayedSample": "You need an assayed sample of this site",
   "IGUI_AmmoMaking_PickaxeNotUsable": "Your pickaxe is not usable",
   "IGUI_AmmoMaking_MiningMultiplayer": "Ore extraction is not available in multiplayer yet",
+  "IGUI_AmmoMaking_Sampling_Multiplayer": "Geological sampling and assays are not available in multiplayer yet",
+  "IGUI_AmmoMaking_LabUse_Multiplayer": "Using the laboratory analyzer is not available in multiplayer yet",
   "IGUI_AmmoMaking_CouldNotExtract": "Could not extract ore",
 
   "IGUI_AmmoMaking_InspectAmmo": "Inspect Ammunition",

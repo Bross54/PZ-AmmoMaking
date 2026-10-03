@@ -10005,10 +10005,11 @@ do
         reloadMod = reloadMod, readFile = readFile, parseScript = parseScript, parseItemLine = parseItemLine,
         sameList = sameList, listText = listText, declaredItems = declaredItems,
         mirrorCraft = mirrorCraft, mirrorCanCraft = mirrorCanCraft,
-        fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu,
+        fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu, fillAnalyzerMenu = fillAnalyzerMenu,
+        makeSample = makeSample, equipShovel = equipShovel, placeAnalyzerObject = placeAnalyzerObject, poweredLabSquare = poweredLabSquare,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "progression" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "progression", "multiplayer" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

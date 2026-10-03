@@ -276,6 +276,12 @@ MUTANTS = [
     (SHARED + "AC_Loot.lua", "    maxComponentWeight = 2.0,", "    maxComponentWeight = 50.0,", "a component may be as common as a staple item"),
     (SHARED + "AC_Loot.lua", "    { item = \"Base.BrassScrap\", list = \"CrateBlacksmithing\", weight = 2.0,", "    { item = \"Base.BrassScrap\", list = \"MetalWorkerTools\", weight = 2.0,", "brass scrap in a list no container uses"),
 
+    # ---- multiplayer guards
+    (SHARED + "AC_GeologySampling.lua", "    if not AC_GeologySampling.isAvailable() then\n        return nil, \"multiplayer_unsupported\"\n    end\n", "", "a multiplayer client digs samples locally"),
+    (SHARED + "AC_GeologySampling.lua", "    if not AC_GeologySampling.isAvailable() then\n        return false, \"multiplayer_unsupported\"\n    end\n", "", "a multiplayer client runs assays locally"),
+    (SHARED + "AC_LaboratoryAnalyzer.lua", "function AC_LaboratoryAnalyzer.isAvailable()\n\n    return\n        not isClient()\nend", "function AC_LaboratoryAnalyzer.isAvailable()\n\n    return\n        true\nend", "a multiplayer client uses the analyzer locally"),
+    (CLIENT + "AC_GeologySamplingContextMenu.lua", "    if available then\n        return context:addOption(name, ...)\n    end\n", "    if true then\n        return context:addOption(name, ...)\n    end\n", "a multiplayer client is offered live sampling and analyzer options"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]

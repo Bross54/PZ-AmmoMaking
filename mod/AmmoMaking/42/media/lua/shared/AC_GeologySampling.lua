@@ -330,11 +330,35 @@ end
 -- CREATE SAMPLE
 ------------------------------------------------
 
+------------------------------------------------
+-- AVAILABILITY
+------------------------------------------------
+--
+-- Digging a sample creates an item, and an assay changes
+-- a kit's uses, the sample's ModData and the character's
+-- XP, all on the machine that runs the code. On a
+-- multiplayer client that machine is not authoritative,
+-- so both are refused there until a server command exists
+-- (docs/MULTIPLAYER_DESIGN.md), the same rule as mining.
+-- Single player and local split-screen are fine.
+------------------------------------------------
+
+function AC_GeologySampling.isAvailable()
+
+    return
+        not isClient()
+end
+
+
 function AC_GeologySampling.createSample(
     player,
     square,
     shovel
 )
+
+    if not AC_GeologySampling.isAvailable() then
+        return nil, "multiplayer_unsupported"
+    end
 
     if not player then
         return nil, "no_player"
@@ -1106,6 +1130,10 @@ function AC_GeologySampling.analyzeSample(
     sample,
     kit
 )
+
+    if not AC_GeologySampling.isAvailable() then
+        return false, "multiplayer_unsupported"
+    end
 
     if not AC_GeologySampling.isSample(
         sample

@@ -157,6 +157,53 @@ local function addUnavailableOption(
 end
 
 
+-- An option that changes something only where the game is
+-- authoritative: offered normally there, and on a
+-- multiplayer client shown disabled, with the reason.
+-- unavailableText is a function: the reason is looked up
+-- only when it is shown, never in a single-player menu.
+local function addAuthoritativeOption(
+    available,
+    unavailableText,
+    context,
+    name,
+    ...
+)
+
+    if available then
+        return context:addOption(name, ...)
+    end
+
+
+    return
+        addUnavailableOption(
+            context,
+            name,
+            unavailableText()
+        )
+end
+
+
+local function getSamplingMultiplayerText()
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_Sampling_Multiplayer",
+            "Geological sampling and assays are not available in multiplayer yet"
+        )
+end
+
+
+local function getLabUseMultiplayerText()
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_LabUse_Multiplayer",
+            "Using the laboratory analyzer is not available in multiplayer yet"
+        )
+end
+
+
 local function getMultiplayerText()
 
     return
@@ -1105,7 +1152,10 @@ local function addLaboratoryAnalyzerOptions(
                         )
 
 
-                    context:addOption(
+                    addAuthoritativeOption(
+                        AC_LaboratoryAnalyzer.isAvailable(),
+                        getLabUseMultiplayerText,
+                        context,
                         optionName,
                         player,
                         startLaboratoryAssay,
@@ -1158,7 +1208,10 @@ local function addLaboratoryAnalyzerOptions(
         )
 
 
-        context:addOption(
+        addAuthoritativeOption(
+            AC_LaboratoryAnalyzer.isAvailable(),
+            getLabUseMultiplayerText,
+            context,
             AC_Text.get(
                 "IGUI_AmmoMaking_Lab_Cancel",
                 "Cancel Laboratory Assay"
@@ -1186,7 +1239,10 @@ local function addLaboratoryAnalyzerOptions(
 
     if info.state == "ready" then
 
-        context:addOption(
+        addAuthoritativeOption(
+            AC_LaboratoryAnalyzer.isAvailable(),
+            getLabUseMultiplayerText,
+            context,
             AC_Text.get(
                 "IGUI_AmmoMaking_Lab_Collect",
                 "Collect Laboratory Sample"
@@ -1282,7 +1338,10 @@ local function onFillWorldObjectContextMenu(
     end
 
 
-    context:addOption(
+    addAuthoritativeOption(
+        AC_GeologySampling.isAvailable(),
+        getSamplingMultiplayerText,
+        context,
         AC_Text.get(
                 "IGUI_AmmoMaking_DigSample",
                 "Dig Geological Sample"
@@ -1406,7 +1465,10 @@ local function onFillInventoryContextMenu(
 
                 if fieldKit then
 
-                    context:addOption(
+                    addAuthoritativeOption(
+                        AC_GeologySampling.isAvailable(),
+                        getSamplingMultiplayerText,
+                        context,
                         AC_Text.get(
                 "IGUI_AmmoMaking_AnalyzeField",
                 "Analyze with Field Assay Kit"
@@ -1448,7 +1510,10 @@ local function onFillInventoryContextMenu(
                     end
 
 
-                    context:addOption(
+                    addAuthoritativeOption(
+                        AC_GeologySampling.isAvailable(),
+                        getSamplingMultiplayerText,
+                        context,
                         optionName,
                         player,
                         analyzeSample,

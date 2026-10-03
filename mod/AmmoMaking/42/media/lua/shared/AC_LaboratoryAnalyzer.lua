@@ -1259,6 +1259,13 @@ function AC_LaboratoryAnalyzer.startAssay(
     sample
 )
 
+    if not AC_LaboratoryAnalyzer.isAvailable() then
+
+        return false,
+            "multiplayer_unsupported"
+    end
+
+
     if not player then
 
         return false,
@@ -1440,6 +1447,13 @@ function AC_LaboratoryAnalyzer.collectSample(
     player,
     worldObject
 )
+
+    if not AC_LaboratoryAnalyzer.isAvailable() then
+
+        return nil,
+            "multiplayer_unsupported"
+    end
+
 
     if not player then
 
@@ -1646,6 +1660,13 @@ function AC_LaboratoryAnalyzer.cancelAssay(
     worldObject
 )
 
+    if not AC_LaboratoryAnalyzer.isAvailable() then
+
+        return nil,
+            "multiplayer_unsupported"
+    end
+
+
     if not player then
 
         return nil,
@@ -1788,6 +1809,17 @@ end
 -- a server command exists, the same rule as mining.
 -- Single-player and local split-screen are fine.
 ------------------------------------------------
+
+-- Starting, cancelling and collecting an assay change the
+-- analyzer's ModData, remove or create a sample and grant
+-- XP on the machine that runs the code. Refused on a
+-- multiplayer client for the same reason.
+function AC_LaboratoryAnalyzer.isAvailable()
+
+    return
+        not isClient()
+end
+
 
 function AC_LaboratoryAnalyzer.isPlacementAvailable()
 
