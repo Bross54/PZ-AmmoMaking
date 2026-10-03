@@ -238,6 +238,28 @@ MUTANTS = [
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.005,", "        DisplayName = Spent 9mm Case,\n        DisplayCategory = Ammo,\n        ItemType = base:normal,\n        Weight = 0.5,", "a spent case a hundred times as heavy as the case it was"),
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt", "            item 1 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "            item 2 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "the spent scrapping script hands back twice what the model says"),
 
+    # ---- quality tracking in magazines and firearms
+    (SHARED + "AC_QualityCarrier.lua", "    local keep =\n        type(record) == \"table\"\n        and (tonumber(record.handloaded) or 0) > 0\n", "    local keep =\n        type(record) == \"table\"\n", "every gun that is touched gets a record, factory rounds or not"),
+    (SHARED + "AC_QualityCarrier.lua", "        local unloaded =\n            math.min(appeared, left)\n", "        local unloaded = 0\n", "unloaded rounds are treated as fired: their quality is lost"),
+    (SHARED + "AC_QualityCarrier.lua", "                if fresh[index] then\n", "                if false then\n", "unloaded handloaded rounds come back as factory rounds"),
+    (SHARED + "AC_QualityCarrier.lua", "    local merged =\n        AC_QualityTally.merge(\n            context.gunRecord,\n            context.magazineRecord\n        )\n", "    local merged =\n        context.gunRecord\n", "an inserted magazine's record is dropped"),
+    (SHARED + "AC_QualityCarrier.lua", "    local merged =\n        AC_QualityTally.merge(\n            context.gunRecord,\n            context.magazineRecord\n        )\n", "    local merged =\n        AC_QualityTally.merge(\n            context.magazineRecord,\n            context.magazineRecord\n        )\n", "an inserted magazine's rounds are counted twice"),
+    (SHARED + "AC_QualityCarrier.lua", "        if not context.carried[item] then\n", "        if false then\n", "an ejected magazine gets no record"),
+    (SHARED + "AC_QualityCarrier.lua", "    if record.count > live then\n", "    if false then\n", "a shot is never told apart from rounds that vanished"),
+    (SHARED + "AC_QualityCarrier.lua", "    if item.isRoundChambered\n        and item:isRoundChambered()\n    then\n        count = count + 1\n    end\n", "", "the chambered round is not counted"),
+    (SHARED + "AC_QualityCarrier.lua", "    return record, status ~= AC_QualityTally.NEWER\n", "    return record, true\n", "a later release's record is written over"),
+    (SHARED + "AC_QualityCarrier.lua", "        local result = original(self, event, ...)\n\n\n        if context then", "        local result = nil\n\n\n        if context then", "a wrapped reload function never calls vanilla"),
+    (SHARED + "AC_QualityCarrier.lua", "    if not AC_Features.isEnabled(\"qualityTracking\") then\n        return nil\n    end\n", "", "quality tracking installs itself whatever the sandbox option says"),
+    (SHARED + "AC_QualityCarrier.lua", "        if events\n            and not events[event]\n        then\n            return original(self, event, ...)\n        end\n", "", "the inventory is scanned for every animation event"),
+    (SHARED + "AC_CaseQuality.lua", "        clamp(\n            math.floor(quality),\n            config.minQuality,\n            config.maxQuality\n        )\n\n\n    return true", "        clamp(\n            math.floor(quality) + 5,\n            config.minQuality,\n            config.maxQuality\n        )\n\n\n    return true", "a round gains quality every time it is unloaded"),
+    ("mod/AmmoMaking/42/media/sandbox-options.txt", "    default = false,", "    default = true,", "quality tracking is on by default"),
+
+    # ---- quality effects (locked)
+    (SHARED + "AC_QualityEffects.lua", "    if not AC_Features.isEnabled(\"qualityEffects\") then\n        return nil\n    end\n", "", "firing effects run although the feature is locked"),
+    (SHARED + "AC_QualityEffects.lua", "        config.maximumExtraJamPercent * missing / (span * count)", "        config.maximumExtraJamPercent * missing / (span * handloaded)", "factory rounds in a load do not dilute the jam chance"),
+    (SHARED + "AC_QualityEffects.lua", "            if (tonumber(weapon:getJamGunChance()) or 0) <= 0\n                or weapon:isJammed()\n            then\n                return false\n            end\n", "", "a firearm that cannot jam is jammed by a poor handload"),
+    (SHARED + "AC_QualityEffects.lua", "    local missing =\n        handloaded * config.bestQuality - qualitySum\n", "    local missing =\n        handloaded * config.bestQuality\n", "the jam chance ignores how good the handloads are"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]

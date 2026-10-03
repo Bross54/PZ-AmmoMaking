@@ -1149,7 +1149,7 @@ MOCK.MOD_FILES = {
     "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality",
     "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
-    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
     "shared/AC_WorldData",
     "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
     "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
@@ -1195,6 +1195,8 @@ function MOCK.resetLuaState()
     AC_Loot = nil
     AC_Recycling = nil
     AC_QualityTally = nil
+    AC_QualityCarrier = nil
+    AC_QualityEffects = nil
     AC_SaveData = nil
     AC_MineOreAction = nil
     AC_PickUpAnalyzerAction = nil

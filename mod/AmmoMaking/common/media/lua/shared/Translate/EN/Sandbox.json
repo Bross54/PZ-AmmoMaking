@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making",
+    "Sandbox_AmmoMaking_QualityTracking": "Track ammunition quality in magazines and firearms (experimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, single player only. The casing quality of handloaded rounds is kept when they are loaded into a magazine or firearm, and given back when they are unloaded. It has no effect on firing. Not yet verified in game."
+}

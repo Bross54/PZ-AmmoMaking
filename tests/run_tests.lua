@@ -6302,6 +6302,15 @@ do
     local Q = AC_CaseQuality.CONFIG
     local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, copper = true, zinc = true }
     for key in pairs(AmmoQuality.DEFAULTS) do byConfig[key] = true end
+    -- The tally record: its key is a constant of the carrier, and its
+    -- fields are written by the carrier as a table constructor, which the
+    -- scan above does not read as "data.key".
+    byConfig[AC_QualityCarrier.KEY] = true
+    local carrierSource = readFile(LUA .. "shared/AC_QualityCarrier.lua")
+    for _, entry in ipairs(S.getStructure("tally").keys) do
+        check(string.find(carrierSource, entry.key .. " = record." .. entry.key, 1, true) ~= nil, "the carrier writes the tally's " .. entry.key)
+        byConfig[entry.key] = true
+    end
     for _, structure in ipairs(S.SCHEMA) do
         for _, entry in ipairs(structure.keys) do
             if not entry.family then
@@ -6661,13 +6670,13 @@ do
     eq(looked, 0, "consults no migration step")
 
     -- Every structure states its version policy, and only the store and
-    -- the (unwired) tally carry a version field.
+    -- the tally record carry a version field.
     for _, structure in ipairs(S.SCHEMA) do
         local versioned = false
         for _, entry in ipairs(structure.keys) do
             if entry.key == "version" then versioned = true end
         end
-        eq(versioned, structure.id == "deposits", structure.id .. (versioned and " carries a version" or " carries no version field"))
+        eq(versioned, structure.id == "deposits" or structure.id == "tally", structure.id .. (versioned and " carries a version" or " carries no version field"))
     end
     eq(AC_QualityTally.CONFIG.version, 1, "the tally's record has its own layout number")
 end
@@ -7972,12 +7981,17 @@ do
         for _, engine in ipairs({ "getPlayer", "getCell", "instanceItem", "ZombRand", "isClient", "isServer", "getCurrentAmmoCount", "ISReloadWeaponAction" }) do
             check(string.find(source, engine .. "(", 1, true) == nil, "calls no " .. engine)
         end
+        -- The tally is wired in ONE place, the carrier, and that is behind
+        -- the feature "qualityTracking" (tests/suite_quality.lua). No other
+        -- file may reach for it: the save schema only describes its record.
+        local users = { ["shared/AC_QualityTally"] = true, ["shared/AC_QualityCarrier"] = true, ["shared/AC_SaveData"] = true }
         for _, name in ipairs(MOCK.MOD_FILES) do
-            if name ~= "shared/AC_QualityTally" then
-                check(string.find(readFile(LUA .. name .. ".lua"), "AC_QualityTally", 1, true) == nil, name .. ".lua does not use the quality tally (it is not wired to anything)")
+            if not users[name] then
+                check(string.find(readFile(LUA .. name .. ".lua"), "AC_QualityTally", 1, true) == nil, name .. ".lua does not use the quality tally: only the carrier does")
             end
         end
-        eq(AC_SaveData.getStructure("tally"), nil, "and no tally is declared as persisted, because none is")
+        check(string.find(readFile(LUA .. "shared/AC_QualityCarrier.lua"), 'AC_Features.isEnabled("qualityTracking")', 1, true) ~= nil, "and the carrier installs nothing unless its feature is on")
+        check(AC_SaveData.getStructure("tally") ~= nil and AC_SaveData.getStructure("tallyCarrier") ~= nil, "the tally's record and its ModData key are declared as persisted")
     end
 end
 
@@ -9975,7 +9989,7 @@ do
         mirrorCraft = mirrorCraft, mirrorCanCraft = mirrorCanCraft,
         fillWorldMenu = fillWorldMenu, fillInventoryMenu = fillInventoryMenu,
     }
-    for _, name in ipairs({ "features", "press", "spent" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

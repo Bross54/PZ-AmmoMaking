@@ -834,6 +834,8 @@ PZ-AmmoMaking
                         ├── AC_Loot.lua
                         ├── AC_Materials.lua
                         ├── AC_Mining.lua
+                        ├── AC_QualityCarrier.lua
+                        ├── AC_QualityEffects.lua
                         ├── AC_QualityTally.lua
                         ├── AC_Recycling.lua
                         ├── AC_SaveData.lua

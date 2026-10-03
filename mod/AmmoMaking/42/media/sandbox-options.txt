@@ -1,0 +1,9 @@
+VERSION = 1,
+
+option AmmoMaking.QualityTracking
+{
+    type = boolean,
+    default = false,
+    page = AmmoMaking,
+    translation = AmmoMaking_QualityTracking,
+}

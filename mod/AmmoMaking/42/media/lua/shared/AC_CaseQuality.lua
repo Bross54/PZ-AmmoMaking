@@ -276,6 +276,45 @@ function AC_CaseQuality.getRoundQuality(
 end
 
 
+-- Marks a loose round as handloaded with this casing
+-- quality: the same two keys an assembled round gets.
+-- Used when a round comes back out of a magazine or gun
+-- (AC_QualityCarrier). A quality that is not a finite
+-- number writes nothing: the round stays a factory round.
+function AC_CaseQuality.setRoundQuality(
+    item,
+    quality
+)
+
+    if not item
+        or not AC_SaveData.isFinite(quality)
+    then
+        return false
+    end
+
+
+    local config =
+        AC_CaseQuality.CONFIG
+
+
+    local data =
+        item:getModData()
+
+
+    data[config.roundFlagKey] = true
+
+    data[config.roundQualityKey] =
+        clamp(
+            math.floor(quality),
+            config.minQuality,
+            config.maxQuality
+        )
+
+
+    return true
+end
+
+
 function AC_CaseQuality.getLabel(
     quality
 )

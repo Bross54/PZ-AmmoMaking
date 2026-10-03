@@ -604,6 +604,44 @@ AC_SaveData.SCHEMA = {
     },
 
     {
+        id = "tallyCarrier",
+
+        owner = "AC_QualityCarrier",
+
+        carrier = "item ModData of a firearm or a loose magazine; only with the feature qualityTracking, and only while the item holds a handloaded round (the key is removed otherwise)",
+
+        version = "inside the record (below)",
+
+        keys = {
+
+            { key = "AmmoMakingTally", type = "table", default = "none", repair = "read through AC_QualityTally.repair and brought into step with the item's own round count; anything unusable reads as factory rounds" },
+        },
+    },
+
+    {
+        id = "tally",
+
+        owner = "AC_QualityTally",
+
+        carrier = "the table under AmmoMakingTally",
+
+        version = "version = 1, AC_QualityTally.CONFIG.version. A record of a later release is read as nothing known and is never written over.",
+
+        keys = {
+
+            { key = "version", type = "number", default = 1, repair = "missing or unusable: the whole record reads as factory rounds" },
+
+            { key = "count", type = "number", whole = true, min = 0, default = 0, repair = "vanilla's own count is the authority; the record follows it" },
+
+            { key = "handloaded", type = "number", whole = true, min = 0, default = 0, repair = "more than count, or not a whole number: all factory" },
+
+            { key = "qualitySum", type = "number", whole = true, min = 0, default = 0, repair = "a sum the handloaded rounds cannot hold: all factory, never clamped" },
+
+            { key = "phase", type = "number", min = 0, max = 1, default = 0.5, repair = "not a number from 0 to below 1: all factory" },
+        },
+    },
+
+    {
         id = "testCartridge",
 
         owner = "AmmoQuality",
