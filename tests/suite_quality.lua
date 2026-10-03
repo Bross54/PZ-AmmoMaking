@@ -91,6 +91,15 @@ return function(T)
         eq(next(gun.modData), nil, "off: nor does firing or unloading")
         local _, handloaded = loose(player, spec.ammo)
         eq(handloaded, 0, "off: the rounds that come back are plain, as vanilla makes them")
+        -- Off: no load inspection, no menu entry, and a loose round still
+        -- says its record is lost at loading.
+        MODEL.reload(player, gun)
+        eq(AmmoInspection.getLoad(gun), nil, "off: a loaded gun has nothing to inspect")
+        eq(T.fillInventoryMenu(player, gun):find("Inspect Loaded Ammunition"), nil, "off: and no menu entry")
+        local offRound = MODEL.giveRounds(MOCK, player, spec.ammo, 1)[1]
+        AC_CaseQuality.setRoundQuality(offRound, 50)
+        player.perkLevel = 3
+        check(string.find(table.concat(AmmoInspection.inspectComponent(player, offRound).lines, "\n"), "loading or boxing it keeps only a count", 1, true) ~= nil, "off: a loose round says loading keeps only a count")
 
         -- The option on a multiplayer client or server changes nothing.
         for _, side in ipairs({ "client", "server" }) do
@@ -202,6 +211,71 @@ return function(T)
             eq(count, spec.maxAmmo, what .. ": every round came back")
             eq(backHandloaded, #qualities, what .. ": every handloaded round came back handloaded")
             eq(backQuality, total, what .. ": with every point of quality")
+        end
+
+        -- Inspecting a load: a menu entry on a loaded magazine or firearm,
+        -- lines gated by skill, and nothing written.
+        do
+            local player, gun, spec = shooter("revolver", { 82, 60 }, 2)
+            MODEL.reload(player, gun)
+            local record = gun.modData[C.KEY]
+            local calibre, load = AmmoInspection.getLoad(gun)
+            eq(calibre and calibre.round, spec.ammo, "a loaded revolver is a load of its calibre")
+            eq(load.rounds, 4, "of four rounds")
+            local menu = T.fillInventoryMenu(player, gun)
+            check(menu:find("Inspect Loaded Ammunition") ~= nil, "its context menu offers the inspection")
+            player.perkLevel = 0
+            local lines = AmmoInspection.inspectLoad(player, gun).lines
+            check(string.find(lines[1], "Loaded: 4 x ", 1, true) ~= nil, "the first line counts the rounds: " .. lines[1])
+            eq(#lines, 2, "level 0: the count and nothing about quality")
+            check(string.find(table.concat(lines, " "), "71", 1, true) == nil and string.find(table.concat(lines, " "), "andloaded", 1, true) == nil, "level 0 learns nothing about the handloads")
+            player.perkLevel = 2
+            local novice = table.concat(AmmoInspection.inspectLoad(player, gun).lines, "\n")
+            check(string.find(novice, "Handloaded rounds: 2, case quality ", 1, true) ~= nil, "level 2 sees how many are handloaded and a word for their quality")
+            check(string.find(novice, "Factory rounds: 2", 1, true) ~= nil, "and how many are factory rounds")
+            check(string.find(novice, "71", 1, true) == nil, "but not the number")
+            check(string.find(novice, "average of the handloaded rounds", 1, true) ~= nil, "and is told it is an average")
+            player.perkLevel = 6
+            local expert = table.concat(AmmoInspection.inspectLoad(player, gun).lines, "\n")
+            check(string.find(expert, "(71)", 1, true) ~= nil, "level 6 sees the mean quality as a number")
+            check(string.find(expert, "[debug]", 1, true) == nil, "no debug line in a normal game")
+            MOCK.debug = true
+            local debugLines = table.concat(AmmoInspection.inspectLoad(player, gun).lines, "\n")
+            check(string.find(debugLines, "[debug] stored record: version 1, count 4, handloaded 2, qualitySum 142", 1, true) ~= nil, "in -debug the stored record is shown")
+            check(string.find(debugLines, "[debug] record: ok", 1, true) ~= nil, "and that it is sound")
+            MOCK.debug = false
+            check(gun.modData[C.KEY] == record, "inspecting writes nothing")
+
+            -- Not a load: an empty gun, a loose round, something else.
+            eq(AmmoInspection.getLoad(MODEL.newFirearm(MOCK, "revolver")), nil, "an empty gun has nothing to inspect")
+            eq(AmmoInspection.getLoad(MOCK.newItem("Base.Plank")), nil, "nor has a plank")
+            eq(AmmoInspection.getLoad(nil), nil, "nor nothing")
+            eq(T.fillInventoryMenu(player, MODEL.newFirearm(MOCK, "revolver")):find("Inspect Loaded Ammunition"), nil, "an empty gun gets no menu entry")
+            -- All factory: said in one line.
+            local plainPlayer, plainGun = shooter("pumpShotgun", {}, 3)
+            MODEL.reload(plainPlayer, plainGun)
+            plainPlayer.perkLevel = 3
+            local plain = table.concat(AmmoInspection.inspectLoad(plainPlayer, plainGun).lines, "\n")
+            check(string.find(plain, "Factory rounds, as far as you can tell.", 1, true) ~= nil, "a load of factory rounds says so")
+
+            -- A loose handloaded round says what loading it does now.
+            local round = MODEL.giveRounds(MOCK, player, spec.ammo, 1)[1]
+            AC_CaseQuality.setRoundQuality(round, 77)
+            player.perkLevel = 3
+            local component = table.concat(AmmoInspection.inspectComponent(player, round).lines, "\n")
+            check(string.find(component, "Loading this round keeps its quality", 1, true) ~= nil, "with tracking on, a loose round says loading keeps its quality")
+
+            -- The debug printout of everything carried.
+            MOCK.debug = true
+            MOCK.clearPrintLog()
+            MOCK.capturePrint(true)
+            player.inventory:addItem(gun)
+            AC_GeologyDebug.inspectLoads(player)
+            MOCK.capturePrint(false)
+            MOCK.debug = false
+            check(MOCK.printLogContains("AMMUNITION LOADS (quality tracking ON)"), "the debug printout says tracking is on")
+            check(MOCK.printLogContains("4 rounds, 2 handloaded (mean quality 71.0), 2 factory"), "and describes the carried revolver")
+            check(MOCK.printLogContains("stored: version 1, count 4, handloaded 2, qualitySum 142"), "with its stored record")
         end
 
         -- Factory rounds only: the gun never gets ModData from this file.

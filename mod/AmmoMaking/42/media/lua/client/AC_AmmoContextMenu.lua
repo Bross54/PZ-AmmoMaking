@@ -77,6 +77,27 @@ local function onInspectComponent(player, item)
 end
 
 
+-- What a magazine or firearm holds (only with the feature
+-- qualityTracking). Reads the item, writes nothing.
+local function onInspectLoad(player, item)
+
+    if not player or not item then
+        return
+    end
+
+    local inspection = AmmoInspection.inspectLoad(player, item)
+
+    if not inspection then
+        return
+    end
+
+    AC_AmmoInspectionUI.open(
+        player,
+        inspection
+    )
+end
+
+
 ------------------------------------------------
 -- DEBUG AMMO QUALITY PRESETS
 ------------------------------------------------
@@ -357,6 +378,29 @@ local function onFillInventoryContextMenu(
                 item
             )
 
+            return
+        end
+
+
+        ------------------------------------------------
+        -- A loaded magazine or firearm, when the save
+        -- tracks quality in them. With the feature off
+        -- getLoad() returns nil after one table lookup,
+        -- and no entry is added.
+        ------------------------------------------------
+        if item
+            and AmmoInspection.getLoad(item)
+        then
+
+            context:addOption(
+                AC_Text.get(
+                    "IGUI_AmmoMaking_InspectLoad",
+                    "Inspect Loaded Ammunition"
+                ),
+                player,
+                onInspectLoad,
+                item
+            )
 
             return
         end

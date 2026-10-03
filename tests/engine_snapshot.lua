@@ -489,6 +489,7 @@ return {
                 contains = { "IParam2,boolean", "InventoryItem", "InventoryItem,boolean", "String", "String,boolean", "String,boolean,boolean", "T,ICallback,boolean" },
                 containsID = { "int" },
                 getItemById = { "long" },
+                getItems = { "" },
                 getItemsFromFullType = { "String", "String,boolean" },
                 getSquare = { "" },
                 getType = { "" },

@@ -653,6 +653,30 @@ return function(T)
             check(rounds <= first / (1 - 0.25) + 1, calibre.id .. ": " .. first .. " cases never make more than " .. math.floor(first / 0.75) .. " rounds in all (" .. rounds .. ")")
         end
 
+        -- The debug tree offers ten spent cases of each calibre and a
+        -- hammer, enough for every spent scrapping recipe.
+        MOCK.debug = true
+        local debugPlayer = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, T.GRASS) })
+        local ammunition = T.fillWorldMenu(debugPlayer, debugPlayer.square):find("Ammo Making Debug").submenu:find("Ammunition")
+        local entry = ammunition.submenu:find("Spawn Spent Cases Kit")
+        check(entry ~= nil, "on: the debug tree offers the spent cases kit")
+        MOCK.capturePrint(true)
+        AC_GeologyDebug.spawnSpentCasesKit(debugPlayer)
+        MOCK.capturePrint(false)
+        local mirror = { ["base:hammer"] = debugPlayer.inventory:count("Base.BallPeenHammer") }
+        eq(mirror["base:hammer"], 1, "the kit holds a hammer")
+        for _, fullType in ipairs(S.getItems()) do
+            eq(debugPlayer.inventory:count(fullType), 10, "the kit holds ten " .. fullType)
+            mirror[fullType] = 10
+        end
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.recyclingSource == "spent" then
+                check(T.mirrorCraft(mirror, recipe), "the kit is enough for " .. recipe.id)
+            end
+        end
+        check((mirror["Base.BrassScrap"] or 0) >= 3, "and scrapping it gives brass scrap (" .. tostring(mirror["Base.BrassScrap"]) .. ")")
+        MOCK.debug = false
+
         -- The game-start check reports the feature and its parts.
         local ids = {}
         for _, recipe in ipairs(AC_Materials.RECIPES) do table.insert(ids, recipe.id) end
@@ -685,6 +709,11 @@ return function(T)
         found = labels((AC_Compat.run(false)))
         MOCK.capturePrint(false)
         eq(found["feature Spent Cases: off (off)"], "OK", "off: the check says so")
+        MOCK.debug = true
+        local offPlayer = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, T.GRASS) })
+        local offAmmunition = T.fillWorldMenu(offPlayer, offPlayer.square):find("Ammo Making Debug").submenu:find("Ammunition")
+        eq(offAmmunition.submenu:find("Spawn Spent Cases Kit"), nil, "off: the debug tree has no spent cases kit")
+        MOCK.debug = false
         for label in pairs(found) do
             check(string.find(label, "spent case", 1, true) == nil, "off: nothing of the spent cases is probed (" .. label .. ")")
         end

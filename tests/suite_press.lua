@@ -251,6 +251,43 @@ return function(T)
         eq(granted, AC_Materials.getRecipeXP(sample), "a press craft grants its hand recipe's XP")
         eq(#player.xpLog, 1, "once")
 
+        -- The debug tree gets a Stations group, with the kit the station
+        -- is built from: exactly the consumed and kept items of the
+        -- entity's build recipe.
+        MOCK.debug = true
+        local debugPlayer = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, T.GRASS) })
+        local tree = T.fillWorldMenu(debugPlayer, debugPlayer.square):find("Ammo Making Debug")
+        local stations = tree.submenu:find("Stations")
+        check(stations ~= nil and stations.submenu ~= nil, "add-on active: the debug tree has a Stations group")
+        eq(table.concat(stations.submenu:names(), " | "), "Spawn Press Build Kit (hammer, steel bars, planks, nails)", "with the press build kit")
+        local entityText = (string.gsub(readFile(ADDON .. "42/media/scripts/AC_ReloadingPress.txt"), "/%*.-%*/", ""))
+        local wanted = {}
+        for count, item in string.gmatch(entityText, "item%s+(%d+)%s+%[(Base%.[%w_]+)%]") do wanted[item] = tonumber(count) end
+        local kit, addedToMock = {}, {}
+        for _, entry in ipairs(pressOn.buildKit) do
+            kit[entry[1]] = entry[2]
+            if not MOCK.knownScriptItems[entry[1]] then
+                MOCK.knownScriptItems[entry[1]] = true
+                addedToMock[entry[1]] = true
+            end
+        end
+        for item, count in pairs(wanted) do eq(kit[item], count, "the build kit holds the " .. count .. " " .. item .. " the build recipe takes") end
+        eq(kit["Base.Hammer"], 1, "and a hammer for its kept tool line")
+        local kitSize = 0
+        for _ in pairs(kit) do kitSize = kitSize + 1 end
+        local wantedSize = 1
+        for _ in pairs(wanted) do wantedSize = wantedSize + 1 end
+        eq(kitSize, wantedSize, "and nothing else")
+        MOCK.capturePrint(true)
+        AC_GeologyDebug.spawnPressBuildKit(debugPlayer)
+        MOCK.capturePrint(false)
+        for item, count in pairs(kit) do eq(debugPlayer.inventory:count(item), count, "the debug kit hands out " .. count .. " " .. item) end
+        -- What the mock did not know before, it forgets again; that these
+        -- items exist in the installed game is the snapshot's statement
+        -- (ENGINE.pressDraft.items), checked above.
+        for item in pairs(addedToMock) do MOCK.knownScriptItems[item] = nil end
+        MOCK.debug = false
+
         -- The game-start check: the feature line, the entity, both sprites.
         local function labels(results)
             local found = {}
@@ -297,6 +334,10 @@ return function(T)
         found = labels((AC_Compat.run(false)))
         MOCK.capturePrint(false)
         eq(found["feature Reloading Press: off (off)"], "OK", "the check reports the press as off")
+        MOCK.debug = true
+        local offPlayer = MOCK.newPlayer({ square = MOCK.newSquare(7, 5, 0, T.GRASS) })
+        eq(T.fillWorldMenu(offPlayer, offPlayer.square):find("Ammo Making Debug").submenu:find("Stations"), nil, "off: the debug tree has no Stations group")
+        MOCK.debug = false
         for label in pairs(found) do
             check(string.find(label, "reloading press", 1, true) == nil, "off: nothing of the press is probed (" .. label .. ")")
         end

@@ -506,14 +506,25 @@ function AmmoInspection.inspectComponent(player, item)
     end
 
     if kind == "round" then
-
-        table.insert(
-            result.lines,
-            text(
-                "IGUI_AmmoMaking_Insp_LooseOnly",
-                "This record stays with the loose round; loading or boxing it keeps only a count."
+        -- What becomes of the record depends on whether the
+        -- save tracks quality in magazines and firearms.
+        if AC_Features.isEnabled("qualityTracking") then
+            table.insert(
+                result.lines,
+                text(
+                    "IGUI_AmmoMaking_Insp_LooseTracked",
+                    "Loading this round keeps its quality; boxing it keeps only a count."
+                )
             )
-        )
+        else
+            table.insert(
+                result.lines,
+                text(
+                    "IGUI_AmmoMaking_Insp_LooseOnly",
+                    "This record stays with the loose round; loading or boxing it keeps only a count."
+                )
+            )
+        end
     end
 
     ------------------------------------------------
@@ -554,6 +565,155 @@ function AmmoInspection.inspectComponent(player, item)
             result.lines,
             "[debug] save data: " .. (#problems == 0 and "ok" or table.concat(problems, "; "))
         )
+    end
+
+    return result
+end
+
+
+------------------------------------------------
+-- A LOAD: what a magazine or firearm holds
+------------------------------------------------
+--
+-- Only with the feature "qualityTracking": without it a
+-- loaded round is a count and there is nothing to say.
+--
+-- getLoad(item) returns the calibre and what
+-- AC_QualityCarrier.describe() says, for a magazine or
+-- firearm of a calibre the mod makes that holds at least
+-- one round; nil otherwise. Reads only.
+--
+-- inspectLoad(player, item) turns it into lines, gated by
+-- skill like the component inspection: nothing at level
+-- 0, a word for the quality up to level 4, the number
+-- from level 5. The quality is the MEAN of the handloaded
+-- rounds in the load; the lines say so. Raw data only in
+-- -debug.
+------------------------------------------------
+
+function AmmoInspection.getLoad(item)
+    if not item
+        or not AC_Features.isEnabled("qualityTracking")
+        or not AC_QualityCarrier
+    then
+        return nil, nil
+    end
+
+    local roundType = AC_QualityCarrier.getRoundType(item)
+    if not roundType then
+        return nil, nil
+    end
+
+    local kind, calibre = AC_Calibres.identify(roundType)
+    if kind ~= "round" then
+        return nil, nil
+    end
+
+    -- The loose round itself is a component, not a load.
+    if item:getFullType() == roundType then
+        return nil, nil
+    end
+
+    local load = AC_QualityCarrier.describe(item)
+    if not load or load.rounds < 1 then
+        return nil, nil
+    end
+
+    return calibre, load
+end
+
+function AmmoInspection.inspectLoad(player, item)
+    if not player then
+        return nil
+    end
+
+    local calibre, load = AmmoInspection.getLoad(item)
+    if not calibre then
+        return nil
+    end
+
+    local level = AmmoMakingSkill.getLevel(player)
+
+    local result = {
+        level = level,
+        kind = "load",
+        calibre = calibre.id,
+        title = text("IGUI_AmmoMaking_Insp_Title", "Ammo Inspection"),
+        lines = {}
+    }
+
+    table.insert(
+        result.lines,
+        text("IGUI_AmmoMaking_Insp_Loaded", "Loaded: %1 x %2", load.rounds, calibre.id)
+    )
+
+    if level <= 0 then
+        table.insert(
+            result.lines,
+            text(
+                "IGUI_AmmoMaking_Insp_NoKnowledgeComponent",
+                "You do not know enough about ammunition to judge it."
+            )
+        )
+    elseif load.handloaded < 1 then
+        table.insert(
+            result.lines,
+            text("IGUI_AmmoMaking_Insp_AllFactory", "Factory rounds, as far as you can tell.")
+        )
+    else
+        table.insert(
+            result.lines,
+            text("IGUI_AmmoMaking_Insp_LoadFactory", "Factory rounds: %1", load.factory)
+        )
+        if level < 5 then
+            table.insert(
+                result.lines,
+                text("IGUI_AmmoMaking_Insp_LoadHandloaded", "Handloaded rounds: %1, case quality %2",
+                    load.handloaded,
+                    AmmoQuality.labelFor(load.meanQuality))
+            )
+        else
+            table.insert(
+                result.lines,
+                text("IGUI_AmmoMaking_Insp_LoadHandloadedExact", "Handloaded rounds: %1, case quality %2 (%3)",
+                    load.handloaded,
+                    AmmoQuality.labelFor(load.meanQuality),
+                    round(load.meanQuality))
+            )
+        end
+        table.insert(
+            result.lines,
+            text("IGUI_AmmoMaking_Insp_LoadMean", "The quality is the average of the handloaded rounds in this load.")
+        )
+    end
+
+    if type(isDebugEnabled) == "function"
+        and isDebugEnabled()
+    then
+        local raw, problems = AC_QualityCarrier.rawRecord(item)
+        table.insert(
+            result.lines,
+            "[debug] " .. tostring(item:getFullType())
+        )
+        if type(raw) == "table" then
+            table.insert(
+                result.lines,
+                "[debug] stored record: version " .. tostring(raw.version)
+                    .. ", count " .. tostring(raw.count)
+                    .. ", handloaded " .. tostring(raw.handloaded)
+                    .. ", qualitySum " .. tostring(raw.qualitySum)
+                    .. ", phase " .. tostring(raw.phase)
+            )
+            table.insert(
+                result.lines,
+                "[debug] record: " .. (#problems == 0 and "ok" or table.concat(problems, "; "))
+            )
+        else
+            table.insert(
+                result.lines,
+                "[debug] stored record: " .. tostring(raw) .. " (factory rounds)"
+            )
+        end
     end
 
     return result

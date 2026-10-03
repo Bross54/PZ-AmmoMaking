@@ -1389,6 +1389,27 @@ function AC_QualityCarrier.describe(
 end
 
 
+-- For the -debug inspection and the debug menu: the
+-- record exactly as it is stored (nil when there is
+-- none), and what is wrong with it (an empty list for a
+-- sound record or none). Reads only.
+function AC_QualityCarrier.rawRecord(
+    item
+)
+
+    local raw =
+        stored(item)
+
+
+    if type(raw) ~= "table" then
+        return raw, {}
+    end
+
+
+    return raw, AC_QualityTally.check(raw)
+end
+
+
 ------------------------------------------------
 -- GAME-START CHECK (when the feature is on)
 ------------------------------------------------

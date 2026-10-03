@@ -2272,6 +2272,287 @@ end
 
 
 ------------------------------------------------
+-- DIAGNOSTICS: what the mod is, in this game
+------------------------------------------------
+
+-- Every switched feature, its state and its switch.
+local function printFeatureFlags(
+    player
+)
+
+    log("FEATURES")
+
+
+    local lines =
+        AC_Features.describe()
+
+
+    local on = 0
+
+
+    for index,
+        line
+    in ipairs(
+        lines
+    )
+    do
+
+        log("  " .. line)
+
+
+        if AC_Features.isEnabled(AC_Features.DEFINITIONS[index].id) then
+            on = on + 1
+        end
+    end
+
+
+    halo(
+        player,
+        "Features: " .. on .. " of " .. #lines .. " on (see console)"
+    )
+end
+
+
+-- What the mod persists: every structure of the save
+-- schema, where it lives and its keys.
+local function printSaveSchema(
+    player
+)
+
+    log("SAVE DATA SCHEMA")
+
+
+    local keys = 0
+
+
+    for _,
+        structure
+    in ipairs(
+        AC_SaveData.SCHEMA
+    )
+    do
+
+        log("  " .. tostring(structure.id) .. " (" .. tostring(structure.owner) .. "): " .. tostring(structure.carrier))
+
+        log("    version: " .. tostring(structure.version))
+
+
+        for _,
+            entry
+        in ipairs(
+            structure.keys
+        )
+        do
+
+            keys = keys + 1
+
+            log("    " .. tostring(entry.key) .. " [" .. tostring(entry.type) .. "]: " .. tostring(entry.repair))
+        end
+    end
+
+
+    halo(
+        player,
+        "Save schema: " .. #AC_SaveData.SCHEMA .. " structures, " .. keys .. " keys (see console)"
+    )
+end
+
+
+-- Every temporary visual Lua names (AC_Visuals).
+local function printPlaceholderVisuals(
+    player
+)
+
+    log(AC_Visuals.MARK)
+
+
+    for _,
+        visual
+    in ipairs(
+        AC_Visuals.LIST
+    )
+    do
+
+        log("  " .. visual.key .. " = " .. visual.value .. " (" .. visual.kind .. "; " .. visual.feature .. ")")
+
+        log("    final: " .. visual.final)
+    end
+
+
+    halo(
+        player,
+        "Placeholder visuals: " .. #AC_Visuals.LIST .. " (see console)"
+    )
+end
+
+
+------------------------------------------------
+-- LOADS: what each magazine and firearm carried holds
+------------------------------------------------
+--
+-- For every carried item that takes ammunition of a
+-- calibre the mod makes: the rounds, what the tally says
+-- of them, and the stored record with anything wrong
+-- with it. Reads only. Works with quality tracking off
+-- too: everything then reads as factory rounds.
+------------------------------------------------
+
+local function inspectLoads(
+    player
+)
+
+    if not player then
+        return
+    end
+
+
+    local enabled,
+          why =
+        AC_Features.getState("qualityTracking")
+
+
+    log("AMMUNITION LOADS (quality tracking " .. (enabled and "ON" or "off: " .. tostring(why)) .. ")")
+
+
+    local items =
+        player:getInventory():getItems()
+
+
+    local found = 0
+
+
+    for index = 0, items:size() - 1 do
+
+        local item =
+            items:get(index)
+
+
+        local roundType =
+            AC_QualityCarrier.getRoundType(item)
+
+
+        if roundType
+            and item:getFullType() ~= roundType
+            and AC_Calibres.identify(roundType) == "round"
+        then
+
+            local load =
+                AC_QualityCarrier.describe(item)
+
+            local raw,
+                  problems =
+                AC_QualityCarrier.rawRecord(item)
+
+
+            found = found + 1
+
+
+            log(
+                "  "
+                .. tostring(item:getFullType())
+                .. ": "
+                .. load.rounds
+                .. " rounds, "
+                .. load.handloaded
+                .. " handloaded"
+                .. (load.meanQuality and string.format(" (mean quality %.1f)", load.meanQuality) or "")
+                .. ", "
+                .. load.factory
+                .. " factory"
+            )
+
+
+            if type(raw) == "table" then
+
+                log(
+                    "    stored: version "
+                    .. tostring(raw.version)
+                    .. ", count "
+                    .. tostring(raw.count)
+                    .. ", handloaded "
+                    .. tostring(raw.handloaded)
+                    .. ", qualitySum "
+                    .. tostring(raw.qualitySum)
+                    .. ", phase "
+                    .. tostring(raw.phase)
+                    .. (#problems == 0 and " (ok)" or " (" .. table.concat(problems, "; ") .. ")")
+                )
+
+            else
+
+                log("    stored: " .. tostring(raw))
+            end
+        end
+    end
+
+
+    halo(
+        player,
+        "Loads: " .. found .. " magazines and firearms (see console)"
+    )
+end
+
+
+------------------------------------------------
+-- STATIONS AND SPENT CASES (their features must be on)
+------------------------------------------------
+
+-- What the reloading press is built from. Building it
+-- also needs the build recipe's skill (the add-on's
+-- entity script); vanilla's own debug build cheat covers
+-- that.
+local function spawnPressBuildKit(
+    player
+)
+
+    spawnKit(
+        player,
+        AC_Calibres.PRESS.buildKit,
+        "Press build kit"
+    )
+end
+
+
+-- Ten spent cases of every calibre, to try the spent
+-- scrapping recipes without firing a shot.
+local function buildSpentCasesKit()
+
+    local kit = {
+        { AC_Materials.ITEMS.BallPeenHammer, 1 },
+    }
+
+
+    for _,
+        fullType
+    in ipairs(
+        AC_SpentCases.getItems()
+    )
+    do
+
+        table.insert(
+            kit,
+            { fullType, 10 }
+        )
+    end
+
+
+    return kit
+end
+
+
+local function spawnSpentCasesKit(
+    player
+)
+
+    spawnKit(
+        player,
+        buildSpentCasesKit(),
+        "Spent cases kit"
+    )
+end
+
+
+------------------------------------------------
 -- PUBLIC ENTRY POINTS
 ------------------------------------------------
 --
@@ -2361,6 +2642,27 @@ AC_GeologyDebug.inspectAnalyzer =
 
 AC_GeologyDebug.completeAnalyzerJob =
     completeAnalyzerJob
+
+AC_GeologyDebug.printFeatureFlags =
+    printFeatureFlags
+
+AC_GeologyDebug.printSaveSchema =
+    printSaveSchema
+
+AC_GeologyDebug.printPlaceholderVisuals =
+    printPlaceholderVisuals
+
+AC_GeologyDebug.inspectLoads =
+    inspectLoads
+
+AC_GeologyDebug.spawnPressBuildKit =
+    spawnPressBuildKit
+
+AC_GeologyDebug.spawnSpentCasesKit =
+    spawnSpentCasesKit
+
+AC_GeologyDebug.buildSpentCasesKit =
+    buildSpentCasesKit
 
 
 ------------------------------------------------
@@ -2617,6 +2919,33 @@ local function onFillWorldObjectContextMenu(
 
     ammunition:addOption("Inspect Ammo Components (inventory)", player, inspectAmmoComponents)
 
+    ammunition:addOption("Inspect Loads (magazines and firearms carried)", player, inspectLoads)
+
+
+    -- Only with its feature: the items exist in the add-on.
+    if AC_Features.isEnabled("spentCases") then
+
+        ammunition:addOption("Spawn Spent Cases Kit (10 of each + hammer)", player, spawnSpentCasesKit)
+    end
+
+
+    ------------------------------------------------
+    -- Stations: only when a station feature is on, so
+    -- the tree has no entry that leads nowhere
+    ------------------------------------------------
+
+    if AC_Features.isEnabled("reloadingPress") then
+
+        local stations =
+            addSubMenu(
+                menu,
+                "Stations"
+            )
+
+
+        stations:addOption("Spawn Press Build Kit (hammer, steel bars, planks, nails)", player, spawnPressBuildKit)
+    end
+
 
     ------------------------------------------------
     -- Skill / diagnostics
@@ -2628,7 +2957,24 @@ local function onFillWorldObjectContextMenu(
     )
 
 
-    menu:addOption("Run Compatibility Check", player, runCompatibilityCheck)
+    ------------------------------------------------
+    -- Diagnostics: what the mod is in this game
+    ------------------------------------------------
+
+    local diagnostics =
+        addSubMenu(
+            menu,
+            "Diagnostics"
+        )
+
+
+    diagnostics:addOption("Run Compatibility Check", player, runCompatibilityCheck)
+
+    diagnostics:addOption("Print Feature Flags", player, printFeatureFlags)
+
+    diagnostics:addOption("Print Save Schema", player, printSaveSchema)
+
+    diagnostics:addOption("Print Placeholder Visuals", player, printPlaceholderVisuals)
 end
 
 

@@ -627,6 +627,8 @@ local function newInventory()
         end
         return false
     end
+    -- ItemContainer.getItems(): every item, as an ArrayList.
+    function inv:getItems() return arrayList(self.items) end
     function inv:getItemsFromFullType(fullType, recurse)
         local found = {}
         for _, it in ipairs(self.items) do

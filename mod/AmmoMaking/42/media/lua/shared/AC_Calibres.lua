@@ -395,10 +395,20 @@ AC_Calibres.PRESS = {
     idSuffix = "AtPress",
 
     -- What a press recipe is called: its hand recipe's
-    -- name with this added. No name is written until the
-    -- press is switched on (Recipes.json then needs one
-    -- per press recipe; the tests say which).
+    -- name with this added. The names are generated into
+    -- the add-on's Recipes.json.
     nameSuffix = " (Press)",
+
+    -- What the station is built from: a mirror of the
+    -- build recipe in the add-on's entity script (the
+    -- tests compare the two), for the debug kit. The
+    -- engine reads the script, not this.
+    buildKit = {
+        { "Base.Hammer", 1 },
+        { "Base.SteelBarHalf", 2 },
+        { "Base.Plank", 4 },
+        { "Base.Nails", 8 },
+    },
 }
 
 

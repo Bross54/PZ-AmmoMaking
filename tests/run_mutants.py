@@ -262,6 +262,13 @@ MUTANTS = [
     (SHARED + "AC_QualityEffects.lua", "            if (tonumber(weapon:getJamGunChance()) or 0) <= 0\n                or weapon:isJammed()\n            then\n                return false\n            end\n", "", "a firearm that cannot jam is jammed by a poor handload"),
     (SHARED + "AC_QualityEffects.lua", "    local missing =\n        handloaded * config.bestQuality - qualitySum\n", "    local missing =\n        handloaded * config.bestQuality\n", "the jam chance ignores how good the handloads are"),
 
+    # ---- inspection of a load, and the debug tree
+    (SHARED + "AC_AmmoInspection.lua", "    if not item\n        or not AC_Features.isEnabled(\"qualityTracking\")\n        or not AC_QualityCarrier\n    then\n        return nil, nil\n    end", "    if not item\n        or not AC_QualityCarrier\n    then\n        return nil, nil\n    end", "a load can be inspected although quality tracking is off"),
+    (SHARED + "AC_AmmoInspection.lua", "        if level < 5 then\n            table.insert(\n                result.lines,\n                text(\"IGUI_AmmoMaking_Insp_LoadHandloaded\"", "        if false then\n            table.insert(\n                result.lines,\n                text(\"IGUI_AmmoMaking_Insp_LoadHandloaded\"", "a novice sees the exact quality of a load"),
+    (CLIENT + "AC_GeologyDebug.lua", "    if AC_Features.isEnabled(\"reloadingPress\") then\n\n        local stations =", "    if true then\n\n        local stations =", "the debug tree has a Stations group although no station exists"),
+    (CLIENT + "AC_GeologyDebug.lua", "    if AC_Features.isEnabled(\"spentCases\") then\n\n        ammunition:addOption(", "    if true then\n\n        ammunition:addOption(", "the debug tree offers spent cases that do not exist"),
+    (SHARED + "AC_Calibres.lua", "        { \"Base.SteelBarHalf\", 2 },", "        { \"Base.SteelBarHalf\", 1 },", "the press build kit is short of what the build recipe takes"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]

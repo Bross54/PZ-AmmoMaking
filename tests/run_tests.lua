@@ -2325,10 +2325,15 @@ do
         { "Ammunition", {
             "Spawn Calibre Kit", "Spawn Primer and Powder Kit", "Print Calibre Definitions",
             "Print Primer Families", "Verify Ammo Dependencies", "Inspect Ammo Components (inventory)",
+            "Inspect Loads (magazines and firearms carried)",
         } },
         { "Set Ammo Making Level" },
-        { "Run Compatibility Check" },
+        { "Diagnostics", {
+            "Run Compatibility Check", "Print Feature Flags", "Print Save Schema", "Print Placeholder Visuals",
+        } },
     }
+    -- (No Stations group and no spent-case entry: their features are off
+    -- here. tests/suite_press.lua and suite_spent.lua check them on.)
     eq(#root.submenu.options, #expected, "six entries at the top of the debug tree")
     for index, group in ipairs(expected) do
         local entry = root.submenu.options[index]

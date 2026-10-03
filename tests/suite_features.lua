@@ -176,4 +176,42 @@ return function(T)
         refused("conflicts that are not a list", function(d) d[2].conflicts = "HBVCEFb42" end, "other than a list")
         eq(problems(function() end), "", "(the unchanged table passes)")
     end
+
+    section("Debug diagnostics: features, save schema and placeholder visuals print what the mod is")
+    do
+        MOCK.activeMods, MOCK.debug = { "AmmoMakingPress" }, true
+        SandboxVars = {}
+        local player = MOCK.newPlayer()
+        local function printed(action)
+            MOCK.clearPrintLog()
+            HaloTextHelper.clear()
+            MOCK.capturePrint(true)
+            action(player)
+            MOCK.capturePrint(false)
+            return table.concat(MOCK.printLog, "\n"), HaloTextHelper.last()
+        end
+
+        local text, halo = printed(AC_GeologyDebug.printFeatureFlags)
+        for _, line in ipairs(AC_Features.describe()) do
+            check(string.find(text, line, 1, true) ~= nil, "the feature printout has the line: " .. line)
+        end
+        eq(halo, "Features: 1 of " .. #AC_Features.DEFINITIONS .. " on (see console)", "and says how many are on")
+
+        text, halo = printed(AC_GeologyDebug.printSaveSchema)
+        local keys = 0
+        for _, structure in ipairs(AC_SaveData.SCHEMA) do
+            check(string.find(text, "  " .. structure.id .. " (" .. structure.owner .. ")", 1, true) ~= nil, "the schema printout names " .. structure.id)
+            keys = keys + #structure.keys
+        end
+        eq(halo, "Save schema: " .. #AC_SaveData.SCHEMA .. " structures, " .. keys .. " keys (see console)", "and counts structures and keys")
+
+        text, halo = printed(AC_GeologyDebug.printPlaceholderVisuals)
+        check(string.find(text, AC_Visuals.MARK, 1, true) ~= nil, "the visuals printout is headed " .. AC_Visuals.MARK)
+        for _, visual in ipairs(AC_Visuals.LIST) do
+            check(string.find(text, visual.key .. " = " .. visual.value, 1, true) ~= nil, "it lists " .. visual.key)
+        end
+        eq(halo, "Placeholder visuals: " .. #AC_Visuals.LIST .. " (see console)", "and counts them")
+
+        MOCK.activeMods, MOCK.debug = {}, false
+    end
 end
