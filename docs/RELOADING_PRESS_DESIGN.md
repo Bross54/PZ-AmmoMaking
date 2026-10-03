@@ -351,9 +351,11 @@ That is the "uncertain world-object engine behaviour" case, so the world
 object waits for a session that can run the game. `PRESS.enabled` stays
 `false`; nothing of the press is in the mod's scripts or its `mod.info`.
 
-## 6. What is prepared
+## 6. What was prepared (now built: section 10)
 
-In `AC_Calibres.lua`, tested and switched off:
+Written before the add-on existed; kept as the record of the design. In
+`AC_Calibres.lua`, tested, and at that time switched off (`enabled` now
+follows the add-on):
 
 - `AC_Calibres.PRESS`: `enabled = false`, `benchTag =
   "AmmoMakingReloadingPress"`, `timedAction = "UseHandPress"`,
@@ -428,7 +430,7 @@ nothing of the press; that switching it on adds exactly three recipes per
 calibre; and that each press recipe's name can be derived from its hand
 recipe's and collides with nothing.
 
-## 7. Building the first prototype (next session with the game)
+## 7. Building the first prototype (the plan; carried out offline in section 10)
 
 The files for steps 1 and 2 now exist (§7.2); the steps themselves are
 spelled out in `art/reloading_press/README.md`.
@@ -440,7 +442,7 @@ spelled out in `art/reloading_press/README.md`.
    the vanilla stations: `BlocksPlacement`, `solidtrans`, and for pickup
    `IsMoveAble`, `PickUpWeight`, `CustomName`.
 2. **The entity**, `media/scripts/entities/AC_ReloadingPress.txt`. A draft,
-   following `Hand_Press` field for field; **it is not in the mod**:
+   following `Hand_Press` field for field (at the time of writing it was not in the mod; it is now the add-on's `AC_ReloadingPress.txt`):
 
    ```text
    module Base

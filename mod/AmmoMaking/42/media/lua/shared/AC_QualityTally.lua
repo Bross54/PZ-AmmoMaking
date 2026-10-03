@@ -1,15 +1,16 @@
 -- Ammo Making - Quality tally of loaded ammunition (pure)
 -- Project Zomboid Build 42.20
 --
--- STATUS: ARITHMETIC ONLY. Nothing in the mod calls this
--- file yet. No firearm, magazine or vanilla function is
--- touched, nothing is stored in a save and no event is
--- listened to. It is the part of the future quality
--- carrier (docs/AMMO_QUALITY_RUNTIME_DESIGN.md) that can
--- be proven without the game, written first so that the
--- part that cannot be proven offline - wrapping vanilla's
--- reload functions - has nothing left to get wrong but
--- the wiring.
+-- STATUS: ARITHMETIC ONLY. This file touches no firearm,
+-- magazine or vanilla function, stores nothing in a save
+-- and listens to no event. Its one caller is
+-- AC_QualityCarrier (feature "qualityTracking", off by
+-- default), which does all of that. It is the part of the
+-- quality carrier (docs/AMMO_QUALITY_RUNTIME_DESIGN.md)
+-- that can be proven without the game, kept apart so that
+-- the part that cannot - wrapping vanilla's reload
+-- functions - has nothing left to get wrong but the
+-- wiring.
 --
 -- THE PROBLEM. A handloaded round carries its casing
 -- quality on the loose item. Loading turns the item into
@@ -39,7 +40,7 @@
 -- takes its share of the quality sum with it. See
 -- docs/AMMO_QUALITY_RUNTIME_DESIGN.md, section 7, for why
 -- this was chosen over a per-round queue and what it
--- means for a future effect.
+-- means for an effect (AC_QualityEffects, locked).
 --
 -- RULES, all of them asserted by the tests:
 --

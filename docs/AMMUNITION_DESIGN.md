@@ -491,7 +491,7 @@ fractions (a brass batch is ten ingots), not a crafting plan. Prospecting is
 one field assay per nine ore.
 
 The third table counts crafts and adds up the `time` of the station recipes
-at the level each unlocks, by hand and with the prepared press
+at the level each unlocks, by hand and with the press add-on
 (`RELOADING_PRESS_DESIGN.md` 6.1). The unit is the recipe script's own;
 mining and prospecting are timed actions on another clock and are counted,
 not timed. How long a unit lasts on screen is `REQUIRES FUTURE IN-GAME

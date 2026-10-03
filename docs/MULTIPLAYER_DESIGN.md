@@ -216,7 +216,6 @@ call to the server and replacing it with a request is the whole change.
   the client.
 - That `OnPreDistributionMerge` runs on a dedicated server before its loot
   tables are parsed.
-- That sampling and assays, which are **not** switched off for clients
-  today, do something sensible on one. They create and change items on the
-  client; until step 4 they should be considered broken in multiplayer.
-  Mining and analyzer placement are switched off there.
+- That the disabled options and refusals of section 2.1 are what a
+  client actually sees: sampling, assays, the analyzer and mining are all
+  refused there since 0.10.0, and nothing was tried on a server.

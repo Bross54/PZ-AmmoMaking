@@ -372,7 +372,7 @@ A handloaded round carries its casing quality in the item's ModData
 | Round lies in an inventory or container | the item is saved with its ModData (JAR `InventoryItem.save`) | kept |
 | `place_ammo_in_box` | consumes the round items, creates one box item; no `OnCreate` copies anything | **lost here** |
 | `OpenBoxOf…` | creates 50, 20 or 25 fresh round items | nothing to restore |
-| Loaded into a magazine or firearm | the round item is removed, a counter goes up (`ISLoadBulletsInMagazine`, `ISReloadWeaponAction`) | **lost here** |
+| Loaded into a magazine or firearm | the round item is removed, a counter goes up (`ISLoadBulletsInMagazine`, `ISReloadWeaponAction`) | **lost here**, unless the experimental quality tracking is on: then it is kept as a tally on the magazine or firearm and handed back, as the load's average, to rounds unloaded again (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9) |
 | Unloaded | a fresh round item per count (`instanceItem`) | nothing to restore |
 
 No attempt is made to carry the record through a box. A box holds a count,

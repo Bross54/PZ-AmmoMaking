@@ -56,7 +56,7 @@ never move an item into that list.
 | `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology, depletion records in global ModData |
 | `shared/AC_Mining.lua` | shared | Pickaxe rules, prospect lookup, `extract()` (the only mutation point of the mining loop) |
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
-| `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the prepared press; builds the component recipes, their material units and the item list from that data; validates it |
+| `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the press (its tag, time advantage and build kit); builds the component recipes, their material units and the item list from that data; validates it |
 | `shared/AC_CaseQuality.lua` | shared | Case quality: pure roll, ModData read/write, the two recipe effects (quality on formed cases, inherited by assembled rounds) |
 | `shared/AC_Features.lua` | shared | **The switches.** Every optional system with its state (stable, experimental, disabled), its switch (an add-on mod or a sandbox option), whether it is single player only, what it conflicts with and what it needs. `isEnabled(id)` is the only question the rest of the mod asks. A feature that is off adds no recipe, menu entry or hook |
 | `shared/AC_Visuals.lua` | shared | Every temporary visual that Lua names (`PLACEHOLDER_VISUAL`): the analyzer's world sprite, the press's sprites and window icon. `docs/PLACEHOLDER_ASSETS.md` is generated from it and the item scripts |
@@ -460,10 +460,11 @@ and recycling: `docs/AMMUNITION_ROADMAP.md`.
   the shot charge (explicit item ids), with `wads = 1`: one more assembly
   input, `AC_Calibres.WAD.items`, written `mode:destroy` (a mirror input with
   `destroy = true`).
-- **The press** is described and switched off: `AC_Calibres.PRESS`,
-  `buildPressRecipes(calibre)` and `validatePress()`. `buildRecipes()` adds
-  the press recipes only when `PRESS.enabled`; with it off nothing of the
-  press exists outside `AC_Calibres.lua` and the tests.
+- **The press** is data: `AC_Calibres.PRESS`, `buildPressRecipes(calibre)`
+  and `validatePress()`. `PRESS.enabled` is the feature `reloadingPress`
+  (the add-on `AmmoMakingPress` is active); `buildRecipes()` adds the press
+  recipes only then, and without the add-on nothing of the press exists
+  in the game.
 - **One place for balance.** `CONFIG`, `POWDER`, `COMPOUND_SOURCES`,
   `PRIMERS`, `DEFAULTS`, `CLASSES`, `LIST` and `PRESS` in `AC_Calibres.lua`
   hold every number. `AC_Recipes.txt`, the balance tables of
@@ -870,7 +871,7 @@ methods, `ISBuildingObject`, `IsoThumpable.new`, that the `server/` cursor file
 loaded, and that the world sprite exists), and metallurgy (the vanilla and
 zinc item ids, each furnace recipe script, its `OnCreate` callback, whether
 `CraftRecipe:addRequiredSkill` exists and whether the Ammo Making requirement
-is attached). It also reports the calibre model, the prepared press, the
+is attached). It also reports the calibre model, the press model, the
 vanilla ammo boxes (each round's box item and the `place_ammo_in_box` recipe
 id), brass recycling (`AC_Recycling.validate`), and die-set loot: the model,
 and what the registration found when the world loaded (a list that is
@@ -1034,7 +1035,7 @@ Later sections: whole-chain random crafting (about 44,000 valid crafts from
 ore to rounds over eight seeds, every recipe run at least once, one ledger
 per material checked after every craft), the generated tables (balance,
 economy, loot, recycling and the README's calibre table equal the rendering
-of the model), the prepared press recipes (same material, same die set, 60 %
+of the model), the press recipes (same material, same die set, 60 %
 of the time, absent from the live list), component inspection against items
 whose ModData refuses every write, and startup cost (which events the mod
 listens to, and that no menu, action or callback validates the model or
@@ -1426,6 +1427,25 @@ context-menu fills. Nothing per frame, tick or minute.
 The compatibility check used to run once per Lua session; the Lua state
 survives a return to the main menu, so a second save loaded in the same
 session got none. It now resets on `OnInitGlobalModData`.
+
+## Marker audit (2026-10-03, code-complete pass)
+
+Every `.lua`, `.txt` and `.info` file of the three mod folders was searched
+for the words that usually mark unfinished work. What each hit is:
+
+| Marker | Hits | What they are |
+|---|---|---|
+| `TODO`, `FIXME`, `HACK`, `TEMP`, `not implemented`, `unreachable` | 0 | |
+| `PLACEHOLDER_VISUAL`, `placeholder`, `temporary` | 28 lines | **VISUAL PLACEHOLDER**: the registry `AC_Visuals.lua`, the press's sprites and window icon, the analyzer's world sprite, and the comments that point at them. All are in `docs/PLACEHOLDER_ASSETS.md`. One is a number, not a visual: the test cartridge's "temporary balancing formula" (below) |
+| `disabled`, `DISABLED` | 13 | **Intended**: the state `AC_Features.DISABLED` and the locked feature `qualityEffects`; menu options shown disabled with a reason (no power, multiplayer, exhausted) |
+| `future` (outside the phrase REQUIRES FUTURE IN-GAME VERIFICATION) | 3 | **Optional future work**, none blocking: a recipe that mixes case inputs (`AC_CaseQuality` already averages), a server-side XP grant (`AC_Materials`; part of multiplayer authority), a "damaged brass" source (`AC_Recycling`: one more table entry) |
+| `debug only` | 1 | **Intended**: `AC_LaboratoryAnalyzer.debugFinishProcessing` refuses outside `-debug` |
+| `prototype` | 6 | **Kept on purpose**: `AmmoMaking.TestCartridge` and `AC_AmmoQuality.lua`, the first quality experiment. The item is in no recipe, no loot list and no kit of the mod's debug menu (only the game's own debug item list can spawn it), and its failure chances are shown, never applied. It stays because the inspection panel's tests use it; removing it is a clean-up, not a fix |
+
+Nothing found was unfinished ordinary implementation. What is open is in
+three places and nowhere else: `docs/INGAME_VALIDATION.md` (the game has
+to be run), `docs/ART_HANDOFF.md` (art), and section 4 of
+`docs/AMMUNITION_ROADMAP.md` (optional).
 
 ## REQUIRES IN-GAME VERIFICATION
 

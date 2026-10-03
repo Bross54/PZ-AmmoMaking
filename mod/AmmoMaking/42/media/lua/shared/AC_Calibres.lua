@@ -10,8 +10,8 @@
 --                   blocks (AC_Materials appends it to
 --                   AC_Materials.RECIPES)
 --   buildPressRecipes()
---                   the same steps at the future reloading
---                   press; prepared, switched off (PRESS)
+--                   the same steps at the reloading press,
+--                   only with its add-on active (PRESS)
 --   buildUnits()    what each component contains, for the
 --                   material-conservation checks
 --   getItems()      the item ids the compatibility check
@@ -327,19 +327,18 @@ AC_Calibres.PRIMERS = {
 --
 -- Rifles are made by hand with the same kind of die set
 -- as pistols; what sets them apart is level, time,
--- material and powder, not a quality penalty. A future
--- press takes the same die sets.
+-- material and powder, not a quality penalty. The press
+-- takes the same die sets.
 ------------------------------------------------
 
 ------------------------------------------------
--- RELOADING PRESS (prepared, switched off)
+-- RELOADING PRESS (feature "reloadingPress": an add-on)
 ------------------------------------------------
 --
--- The press is a future placed station
--- (docs/RELOADING_PRESS_DESIGN.md). Its recipes are
--- already described here so that the day the station
--- entity exists, they are generated like every other
--- recipe: the same calibre's case, bullet and assembly
+-- The press is a placed station that exists only with the
+-- add-on mod AmmoMakingPress (docs/RELOADING_PRESS_DESIGN.md
+-- 10). Its recipes are described here and generated like
+-- every other recipe: the same calibre's case, bullet and assembly
 -- steps, the SAME die set kept, exactly the same
 -- material, less time, and no hammer (the press does the
 -- pressing).
