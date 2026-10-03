@@ -556,6 +556,20 @@ return {
         ["ISUnloadBulletsFromFirearm:animEvent"] = true,
         ["ISUnloadBulletsFromMagazine:animEvent"] = true,
     },
+    designBodies = {
+        ["ISEjectMagazine:unloadAmmo"] = "4f48f3713339",
+        ["ISInsertMagazine:loadAmmo"] = "fb21612e35fa",
+        ["ISLoadBulletsInMagazine:animEvent"] = "3bfcc26eea03",
+        ["ISRackFirearm:ejectSpentRounds"] = "ab5e717bcacb",
+        ["ISRackFirearm:rackBullet"] = "bfa5b34a06b8",
+        ["ISRackFirearm:removeBullet"] = "83010426f88a",
+        ["ISReloadWeaponAction.OnPlayerAttackFinished"] = "3bf56f294a31",
+        ["ISReloadWeaponAction.onShoot"] = "dd08a0178e0f",
+        ["ISReloadWeaponAction:ejectSpentRounds"] = "6946f3503f8f",
+        ["ISReloadWeaponAction:loadAmmo"] = "2e76908dbb3a",
+        ["ISUnloadBulletsFromFirearm:animEvent"] = "0dfd83d84519",
+        ["ISUnloadBulletsFromMagazine:animEvent"] = "5ea45a6d30ee",
+    },
     events = {
         OnFillInventoryObjectContextMenu = true,
         OnFillWorldObjectContextMenu = true,
@@ -1197,6 +1211,9 @@ return {
     pressDraft = {
         entityNameFree = true,
         handPressTileProperties = { "BlocksPlacement", "CustomName", "Facing", "GroupName", "IsMoveAble", "PickUpWeight", "solidtrans" },
+        iconsInVanillaSkins = {
+            Build_Handpress = true,
+        },
         items = {
             ["Base.Nails"] = true,
             ["Base.Plank"] = true,

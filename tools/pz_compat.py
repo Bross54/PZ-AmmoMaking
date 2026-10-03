@@ -85,9 +85,13 @@ CLASSES = {
     "GlobalObject": "zombie.Lua.LuaManager$GlobalObject",
 }
 
-# Vanilla Lua the firearm designs (docs/SPENT_CASE_RESEARCH.md,
-# docs/AMMO_QUALITY_RUNTIME_DESIGN.md) are built on. Nothing shipped calls
-# these, so a change is a WARNING: the design has to be read again.
+# Vanilla Lua the firearm features are built on (docs/SPENT_CASE_RESEARCH.md,
+# docs/AMMO_QUALITY_RUNTIME_DESIGN.md): the spent-case and quality-tracking
+# hooks wrap these functions or listen beside them, and tests/firearm_model
+# .lua models their bodies. Both features are off by default, so a function
+# that is gone is a WARNING, and so is a body that changed (designBodies):
+# the hooks and the model were written against the recorded one and have
+# to be read again.
 DESIGN_LUA = [
     "ISReloadWeaponAction.onShoot",
     "ISReloadWeaponAction.OnPlayerAttackFinished",
@@ -275,6 +279,7 @@ def press_draft():
         "tilesets": [tileset["name"] for tileset in sheet["tilesets"]],
         "properties": sorted(set(key for tileset in sheet["tilesets"] for tile in tileset["tiles"] for key in tile.get("properties", {}))),
         "fileNumber": sheet["fileNumber"],
+        "icons": sorted(set(re.findall(r"Icon\s*=\s*(\w+)", re.sub(r"/\*.*?\*/", "", read(os.path.dirname(entity_path) + "/AC_ReloadingPress_xuiSkin.txt"), flags=re.S)))),
     }
 
 
@@ -453,6 +458,36 @@ class Install:
             if at >= 0:
                 open_at = text.find("{", at)
                 return properties(text[open_at + 1:text.find("}", open_at)])
+        return None
+
+    def skin_icons(self):
+        """Every Icon = name a vanilla xui skin script uses."""
+        if getattr(self, "_skin_icons", None) is None:
+            icons = set()
+            for path in glob.glob(self.root + "/media/scripts/**/*.txt", recursive=True):
+                text = read(path)
+                if "xuiSkin" in text:
+                    icons.update(re.findall(r"Icon\s*=\s*(\w+)", text))
+            self._skin_icons = icons
+        return self._skin_icons
+
+    def lua_function_body(self, name):
+        """The source of a vanilla Lua function 'Table.member' or
+        'Table:member', from its header to the 'end' in the first column
+        that closes it; None when it is not found."""
+        table, separator, member = re.match(r"([A-Za-z_]\w*)([.:])([A-Za-z_]\w*)$", name).groups()
+        headers = (
+            r"(?m)^function\s+%s[.:]%s\s*\(" % (re.escape(table), re.escape(member)),
+            r"(?m)^%s\.%s\s*=\s*function\s*\(" % (re.escape(table), re.escape(member)),
+        )
+        for path in sorted(glob.glob(self.root + "/media/lua/**/*.lua", recursive=True)):
+            text = read(path).lstrip("\ufeff").replace("\r", "")
+            for header in headers:
+                found = re.search(header, text)
+                if found:
+                    end = re.search(r"(?m)^end\b", text[found.start():])
+                    if end:
+                        return text[found.start():found.start() + end.end()]
         return None
 
     def lua_index(self):
@@ -863,10 +898,19 @@ def build_snapshot(install, jar, facts, calls):
             "tilesetNamesFree": not any(name in vanilla_tilesets for name in draft["tilesets"]),
             "spritesUnclaimed": not any(sprite in claimed for sprite in draft["sprites"]),
             "handPressTileProperties": sorted(key for key in reference if key != "xy"),
+            # The window icon the press borrows: named by a vanilla skin.
+            "iconsInVanillaSkins": {icon: icon in install.skin_icons() for icon in draft.get("icons", [])},
         }
 
     lua_names, lua_members = install.lua_index()
     snapshot["design"] = {name: (name in lua_members) for name in DESIGN_LUA}
+    # A digest of each of those functions' bodies: the hooks wrap them and
+    # the test model re-implements them, so a changed body matters even
+    # when the name is still there.
+    snapshot["designBodies"] = {}
+    for name in DESIGN_LUA:
+        body = install.lua_function_body(name)
+        snapshot["designBodies"][name] = digest(body) if body else False
     # Methods of the vanilla Lua classes the mod itself uses (and of their
     # parents): a receiver:name() call may be one of those.
     lua_classes = set(name for name in calls["globals"] if name in lua_names)
@@ -1143,10 +1187,18 @@ def judge(snapshot, facts, calls, recorded, have_jar):
             findings.append(("WARNING", "vanilla now has a tileset with the press sheet's name"))
         if not draft["spritesUnclaimed"]:
             findings.append(("WARNING", "a vanilla entity now claims one of the press's sprite names"))
+        for icon, present in (draft.get("iconsInVanillaSkins") or {}).items():
+            if not present:
+                findings.append(("WARNING", "the press's window icon %s is used by no vanilla skin any more" % icon))
     report.group("the press add-on's entity and tile sheet", findings)
 
-    findings = [("WARNING", "%s is gone: the firearm designs rely on it" % name) for name, present in snapshot["design"].items() if not present]
-    report.group("vanilla firearm Lua the designs rely on (%d)" % len(snapshot["design"]), findings)
+    findings = [("WARNING", "%s is gone: the spent-case and quality-tracking hooks rely on it" % name) for name, present in snapshot["design"].items() if not present]
+    for name, body in snapshot["designBodies"].items():
+        if snapshot["design"].get(name) and not body:
+            findings.append(("WARNING", "the body of %s could not be read: it is no longer defined as a function in one piece" % name))
+        elif recorded and (recorded.get("designBodies") or {}).get(name) not in (None, body):
+            findings.append(("WARNING", "the body of %s changed: read the hooks (AC_SpentCases, AC_QualityCarrier) and tests/firearm_model.lua against it again" % name))
+    report.group("vanilla firearm Lua the hooks wrap and the tests model (%d)" % len(snapshot["design"]), findings)
 
     if not have_jar:
         report.add("WARNING", "javap not found: the game version, ammo types, events, globals and Java methods were not checked")
@@ -1254,6 +1306,8 @@ def judge(snapshot, facts, calls, recorded, have_jar):
         if have_jar and recorded.get("version") != snapshot["version"]:
             findings.append(("WARNING", "game version %s, recorded %s" % (snapshot["version"], recorded.get("version"))))
         for section in ("items", "art", "pressDraft", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
+            # (designBodies is compared, with what to do about it, in its
+            # own group above.)
             for line in difference(recorded.get(section) or {}, snapshot[section] or {}, section):
                 findings.append(("WARNING", line))
     report.group("the installed game against the recorded snapshot", findings)

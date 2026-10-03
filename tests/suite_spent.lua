@@ -251,6 +251,42 @@ return function(T)
             end
         end
 
+        -- The model's seven firearms are vanilla's: each has the flags the
+        -- installed 42.20.4 script gives it (tests/engine_snapshot.lua).
+        local recordedFirearms = ENGINE.firearms
+        for _, family in ipairs(MODEL.FAMILIES) do
+            local spec = MODEL.FIREARMS[family]
+            local recorded = recordedFirearms[string.match(spec.type, "([^%.]+)$")]
+            check(recorded ~= nil, family .. ": " .. spec.type .. " is a vanilla firearm")
+            if recorded then
+                eq(ENGINE.ammoTypes[recorded.ammoType], spec.ammo, family .. " fires what the vanilla script says")
+                eq(recorded.maxAmmo, spec.maxAmmo, family .. " holds what the vanilla script says")
+                eq(recorded.magazine, spec.magazine, family .. " takes the vanilla magazine, or none")
+                eq(recorded.rackAfterShoot == "true", spec.rackAfterShoot == true, family .. ": RackAfterShoot as in the script")
+                eq(recorded.manuallyRemoveSpentRounds == "true", spec.manual == true, family .. ": ManuallyRemoveSpentRounds as in the script")
+                eq(recorded.haveChamber == "false", spec.haveChamber == false, family .. ": HaveChamber as in the script")
+                eq(recorded.insertAllBulletsReload == "true", spec.insertAll == true, family .. ": InsertAllBulletsReload as in the script")
+            end
+        end
+        -- And every vanilla firearm behaves like one of them: the same two
+        -- flags, chamber and magazine as a modelled family. A firearm of a
+        -- kind nobody modelled would fail here by name.
+        local kinds = {}
+        local function kindOf(rack, manual, chamber, magazine)
+            return (rack and "rack" or "") .. (manual and "manual" or "") .. (chamber and "" or "nochamber") .. (magazine and "magazine" or "")
+        end
+        for _, family in ipairs(MODEL.FAMILIES) do
+            local spec = MODEL.FIREARMS[family]
+            kinds[kindOf(spec.rackAfterShoot == true, spec.manual == true, spec.haveChamber ~= false, spec.magazine ~= nil)] = family
+        end
+        local firearms = 0
+        for name, recorded in pairs(recordedFirearms) do
+            firearms = firearms + 1
+            local kind = kindOf(recorded.rackAfterShoot == "true", recorded.manuallyRemoveSpentRounds == "true", recorded.haveChamber ~= "false", recorded.magazine ~= nil)
+            check(kinds[kind] ~= nil, "vanilla's " .. name .. " behaves like a modelled family (" .. tostring(kinds[kind]) .. ")")
+        end
+        check(firearms >= 20, "every vanilla firearm was looked at (" .. firearms .. ")")
+
         -- Which family ejects when: the two script flags decide.
         local atShot = { pistol = true, assaultRifle = true, doubleBarrel = true }
         for _, family in ipairs(MODEL.FAMILIES) do
