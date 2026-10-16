@@ -869,6 +869,10 @@ def build_snapshot(install, jar, facts, calls):
             for key, field in (("MagazineType", "magazine"), ("RackAfterShoot", "rackAfterShoot"), ("ManuallyRemoveSpentRounds", "manuallyRemoveSpentRounds"), ("HaveChamber", "haveChamber"), ("InsertAllBulletsReload", "insertAllBulletsReload"), ("JamGunChance", "jamGunChance")):
                 if key in script:
                     entry[field] = script[key]
+            # Pellets per shot are a property of the gun, not of the round
+            # (shell variants: docs/SHOTGUN_AMMUNITION_RESEARCH.md 5).
+            if "Projectilecount" in script:
+                entry["projectileCount"] = number(script["Projectilecount"])
             snapshot["firearms"][short] = entry
 
     snapshot["sprites"] = {}

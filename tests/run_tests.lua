@@ -10443,6 +10443,45 @@ do
     check(type(analyzerTile) == "table" and analyzerTile.entity == false and analyzerTile.moveable == false, "the analyzer's tile exists, is claimed by no entity and is not a vanilla moveable")
 end
 
+section("Shell variants: one round per ammo type, the pellets are the gun's")
+do
+    -- Evidence pin for docs/SHOTGUN_AMMUNITION_RESEARCH.md 5.1 (pure data
+    -- from the recorded build, no mock): buckshot, birdshot and slug loads
+    -- are not built because the engine has no place for them. If a game
+    -- update adds a second shell or moves pellets to the round, this fails
+    -- and the decision has to be taken again.
+    local types, itemOwner = 0, {}
+    for ammoType, item in pairs(ENGINE.ammoTypes) do
+        types = types + 1
+        check(type(item) == "string" and not string.find(item, "[;,]"), ammoType .. " names one item, not a list")
+        check(itemOwner[item] == nil, item .. " is the round of one ammo type only")
+        itemOwner[item] = ammoType
+    end
+    eq(types, 10, "the engine registers ten ammo types, AmmoType's ten constants")
+    local calibreOfType, multiPellet = {}, {}
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        check(calibreOfType[calibre.ammoType] == nil, calibre.id .. ": one calibre per ammo type (no variant calibre)")
+        calibreOfType[calibre.ammoType] = calibre
+        if calibre.class == "shotgun" then
+            multiPellet[calibre.ammoType] = true
+        end
+    end
+    check(next(multiPellet) ~= nil, "the model has a shotgun-class calibre")
+    local firearms, shotguns = 0, 0
+    for name, entry in pairs(ENGINE.firearms) do
+        firearms = firearms + 1
+        check(type(entry.ammoType) == "string" and not string.find(entry.ammoType, "[;,]"), name .. " names one ammo type")
+        check(type(entry.projectileCount) == "number", name .. ": its script sets the pellets per shot")
+        if multiPellet[entry.ammoType] then
+            shotguns = shotguns + 1
+            check((entry.projectileCount or 0) > 1, name .. " fires several pellets: the load is the gun's")
+        else
+            eq(entry.projectileCount, 1, name .. " fires one projectile")
+        end
+    end
+    check(firearms >= 20 and shotguns >= 5, "every vanilla firearm was looked at (" .. firearms .. ", " .. shotguns .. " shotguns)")
+end
+
 ------------------------------------------------
 -- SUMMARY
 ------------------------------------------------

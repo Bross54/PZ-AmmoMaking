@@ -514,9 +514,12 @@ Examples include:
 - Hollow Point
 - Soft Point
 - armor-oriented ammunition variants
-- shotgun shells
-- multiple shotgun load types
+- shotgun shells (built: the vanilla 12 gauge shell)
 - specialty ammunition
+
+Multiple shotgun loads (buckshot, birdshot, slugs) are not planned: Build 42
+has one shell item and takes the pellets and damage from the shotgun, so a
+slug would need replaced vanilla shotguns (`docs/SHOTGUN_AMMUNITION_RESEARCH.md` 5.1).
 
 Some advanced ammunition will require higher Ammo Making skill levels and specialized equipment.
 

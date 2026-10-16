@@ -833,7 +833,8 @@ select, with no further edit.
 ## 12. Out of scope, deliberately
 
 A reloading press object (designed: `docs/RELOADING_PRESS_DESIGN.md`), shell
-variants (buckshot, birdshot, slugs), paper or plastic hulls, lead ore and
+variants (buckshot, birdshot, slugs: not buildable without replacing the
+vanilla shotguns, `SHOTGUN_AMMUNITION_RESEARCH.md` 5.1), paper or plastic hulls, lead ore and
 cast rifle bullets (§6.1), deeper
 primer or powder chemistry, misfires, failures to fire, jams, firearm
 damage, custom ballistics, any use of round quality (a carrier is designed:

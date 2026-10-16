@@ -101,7 +101,12 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
   flags, save schema, placeholder visuals).
 - **Game-update check**: body digests of the vanilla firearm functions
   the mod wraps, so a rewritten function is reported, not only a renamed
-  one.
+  one. The snapshot also records each firearm's pellets per shot.
+- **Shell variants researched, not built** (buckshot, birdshot, slug):
+  vanilla has one 12 gauge item, each shotgun names one ammo type, a
+  loaded shell is only a count and the pellets, spread and damage are the
+  gun's. A variant would mean replacing the vanilla shotguns
+  (`docs/SHOTGUN_AMMUNITION_RESEARCH.md` 5.1); a test pins the evidence.
 - **Release**: one archive with the three mod folders; an add-on that
   ships Lua, or a tile sheet that does not match its sources, is refused.
 - **Documents**: `INGAME_VALIDATION.md`, `ART_HANDOFF.md`,

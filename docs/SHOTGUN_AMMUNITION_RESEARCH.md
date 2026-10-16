@@ -253,10 +253,61 @@ do not prove the engine's behaviour.
 
 ## 5. Not built
 
-Buckshot / birdshot / slug variants (vanilla has one shell item and puts the
-pellet count on the gun, so a variant would need a new ammunition item and
-firearm changes), paper or plastic hulls, steel or lead shot, a shotshell
-primer family, recovering fired hulls (vanilla ejects none).
+Paper or plastic hulls, steel shot, a shotshell primer family, recovering
+fired hulls (vanilla ejects none). Lead shot is built: the buckshot mould
+casts a lead charge for the same `Base.ShotgunShells`
+(`METALLURGY_DESIGN.md` 12); it is a cheaper charge, not a different load.
+
+### 5.1 Shell variants (buckshot, birdshot, slug): not buildable without replacing vanilla firearms
+
+Researched again on 2026-10-17 against the installed 42.20.4 (scripts, Lua,
+`projectzomboid.jar`). Every question has the same answer: the round is a
+counter, the load is the gun.
+
+| Question | Answer | Evidence |
+|---|---|---|
+| More than one 12 gauge item? | **No.** `Base.ShotgunShells` is the only item with `base:shotgunshell`, and no item, model, translation or recipe names buckshot, birdshot or a shotgun slug (`Base.SteelSlug` is bar stock, `Slug` an animal). The model `ShotGunShellsMold_Ground` exists in `models_items.txt` but no item or recipe uses it. | FILE `scripts/generated/items/*.txt`, `models_items.txt`, `recipes/*.txt` |
+| How many ammo types? | Ten, a closed set of constants: `BULLETS_3030` … `SHOTGUN_SHELLS`, `CAP_GUN_CAP`. Each holds **one** `itemKey` (`private final String itemKey`); `getByItemKey` returns the first match. `register(String, String)` is public, so a new type could in principle be registered; nothing would fire it (next row). | JAR `zombie.scripting.objects.AmmoType` |
+| How does a shotgun pick its ammo? | One `AmmoType` per weapon: `Item.Load` reads the `AmmoType` line with `AmmoType.get(ResourceLocation.of(value))` into a single field, copied to `InventoryItem.ammoType`. No list, no tag. | JAR `Item` (string `AmmoType`, `putfield ammoType`), `InventoryItem.getAmmoType()` |
+| How is a shell loaded? | `ISReloadWeaponAction` asks the gun for `getAmmoType():getItemKey()`, finds items of that one key, removes one and calls `setCurrentAmmoCount(count + 1)`. The magazine path (`reloadMagazine`, `transferBullets`) does the same. | FILE `lua/shared/TimedActions/ISReloadWeaponAction.lua` lines 121–126, 235–242, 305, 362 |
+| Does the gun remember what was loaded? | **No.** A loaded round is the integer `currentAmmoCount`; the shell item is gone. | JAR `InventoryItem.currentAmmoCount` (int) |
+| Where do pellets, spread and damage come from? | The weapon. `CombatManager.fireWeapon` and `processBallisticsTargets` read `HandWeapon.getProjectileCount()` / `getProjectileSpread()`; `attackCollisionCheck` reads `getMinDamage()` / `getMaxDamage()`. `CombatManager` touches `AmmoType` only to pick an impact sound. Every shotgun script has `Projectilecount = 9`, every other firearm 1. | JAR `zombie.CombatManager`; FILE `items/weapon.txt` |
+| Can a mod change them per shot without new scripts? | Only by mutating the vanilla gun at run time: `HandWeapon.setProjectileCount`, `setProjectileSpread`, `setMinDamage`, `setMaxDamage` exist. In multiplayer, `SyncHandWeaponFieldsPacket` syncs damage but **not** projectile count or spread, and `AntiCheatHitWeapon` sizes its hit-rate check by `getProjectileCount() * getMaxHitCount()`. | JAR `HandWeapon`, `SyncHandWeaponFieldsPacket`, `AntiCheatHitWeapon` |
+
+**Conclusion (DECISION).** A slug or birdshot shell cannot be a different
+round to the game. Vanilla's shotguns accept exactly one item, keep no
+record of which item went in, and take every ballistic number from their
+own script. So no variant is built: a second item would not load into any
+shotgun, and a recipe that made "slugs" as `Base.ShotgunShells` would be a
+name with nothing behind it.
+
+What building them would take, any one of which changes vanilla firearms:
+
+1. **Replace the five shotgun scripts** (or add five copies per variant)
+   with a different `AmmoType` and `Projectilecount`: a slug-only Remington
+   is a new firearm, not a new shell. Breaks every other mod that edits
+   the vanilla shotguns, and loot, boxes and bandoliers would need the new
+   items too.
+2. **Rewrite the gun at run time**: wrap reloading so it accepts a second
+   item, record the order of the loaded shells in the gun's ModData (the
+   count alone loses it), and before each shot call `setProjectileCount` /
+   `setProjectileSpread` / damage setters, restoring them after. That is a
+   per-round queue the quality research rejected for the same counters
+   (`AMMO_QUALITY_RUNTIME_DESIGN.md` 2 C and 7: vanilla's counts cannot
+   say which round is next), a per-shot rewrite of vanilla firing that
+   this mod does not do even for the locked quality effects, unsynchronised
+   in multiplayer (projectile count is not in
+   `SyncHandWeaponFieldsPacket`), and an in-game pass for every shotgun.
+3. **Register a new `AmmoType`** through `AmmoType.register`: still needs a
+   firearm that names it, so it reduces to 1.
+
+Pinned by the test *Shell variants: one round per ammo type, the pellets
+are the gun's* (`tests/run_tests.lua`) against `tests/engine_snapshot.lua`:
+the engine registers ten ammo types, each naming one distinct item; every
+firearm of a shotgun-class calibre fires more than one projectile and every
+other firearm one; the calibre model has one calibre per ammo type. A game
+update that adds a second shell or moves pellets to the round fails it,
+and `tools/pz_compat.py` reports the change.
 
 ## 6. REQUIRES FUTURE IN-GAME VERIFICATION
 

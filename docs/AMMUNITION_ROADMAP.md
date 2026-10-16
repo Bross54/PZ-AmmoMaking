@@ -37,6 +37,7 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Copper recycling | not built, on purpose | | `LOOT_AND_RECYCLING.md` 2.5 |
 | Lead and cast bullets (pistol calibres, buckshot; lead melted from vanilla junk; two moulds, forged or found) | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `METALLURGY_DESIGN.md` 12, `AMMUNITION_DESIGN.md` 6.1 |
 | Lead ore and geology | not built, on purpose: it would change the sampling and assays seen in game | | `METALLURGY_DESIGN.md` 12.5 |
+| 12 gauge shell variants (buckshot, birdshot, slug) | not built: not buildable without replacing vanilla firearms | | `SHOTGUN_AMMUNITION_RESEARCH.md` 5.1 |
 | Ammo boxes | nothing to build: vanilla boxes handloaded rounds | | `LOOT_AND_RECYCLING.md` 3 |
 | Inspection: case, round, magazine, firearm | IMPLEMENTED | | `AC_AmmoInspection.lua` |
 | Save data: schema, repairs, versions, upgrade runner | IMPLEMENTED | | `DEVELOPMENT.md`, `AC_SaveData.lua` |
@@ -62,6 +63,9 @@ the spent-cases add-on 9 items and 12 recipes (3 scrapping, 9 resizing).
 
 Kept here in one line each; the evidence is in the documents named above.
 
+- **Shell variants.** One shell item, one `AmmoType` per gun, pellets
+  and damage on the gun: a slug or birdshot load cannot be a different
+  round without replacing the vanilla shotguns.
 - **Boxes.** `place_ammo_in_box` takes the nine rounds by item type, with no
   box item, tool or `OnCreate`. A handloaded round is the vanilla item. The
   casing-quality record is lost at boxing.
@@ -157,7 +161,15 @@ Nothing here is needed for a first release.
   is a `define{}` entry and three items.
 - Lead ore and its geology (lead comes from vanilla junk instead,
   `METALLURGY_DESIGN.md` 12.5); cast rifle bullets (gas checks, hardened
-  alloy); a press version of the cast assembly; shell variants.
+  alloy); a press version of the cast assembly.
+- Shell variants (buckshot, birdshot, slug): **not buildable without
+  replacing vanilla firearms**. Vanilla has one 12 gauge item, each gun
+  names one `AmmoType`, a loaded shell is only a count, and pellets,
+  spread and damage are read from the gun (`SHOTGUN_AMMUNITION_RESEARCH.md`
+  5.1). It would take new or replaced shotgun scripts per load, or a
+  run-time rewrite of the gun before each shot with a per-shell queue,
+  which multiplayer does not synchronise. Pinned by a test against the
+  engine snapshot.
 - Primer and powder chemistry beyond the present stand-ins.
 - Better presses as further bench tags; batch recipes.
 - Component depth (match-grade cases, case trimming, tooling wear).
