@@ -227,6 +227,36 @@ entry above 2, no list with more than 6 of book weight in all, no list
 named twice, no component in the table. A table it refuses registers
 nothing.
 
+### 1.5 Bullet moulds
+
+The two bullet moulds of lead casting (`METALLURGY_DESIGN.md` 12) are
+forged from two iron bar quarters, or found, in `AC_Loot.MOULDS`. A find
+saves the forge and opens nothing: the cast recipes keep their levels.
+Weight 0.5 per mould, times the list's scale:
+
+| List | Scale | Moulds | Weight in all | Who fills from it |
+|---|---|---|---|---|
+| `GunStoreMagsAmmo` | 1 | pistol and buckshot | 1 | at most one display case of a gun store |
+| `GarageFirearms` | 0.5 | pistol | 0.25 | a garage storage room's gun locker; every military locker |
+| `Hunter` | 0.5 | buckshot | 0.25 | a hunter's things in an attic, closet, hall, living room, storage unit or garage |
+
+They sit beside the die sets because that is where a caster's tools would
+be, and they are judged per room the same way (§1.1). The fullest room of
+twelve containers is a row of military lockers, filled from
+`GarageFirearms` alone: 0.12 moulds on average; a gun store of eight
+display cases holds about one in sixty. A test fails if any room of twelve
+containers is expected to hold more than one mould, at the default or at
+the die-set option's maximum (x2).
+
+A mould is a `Tool` (`DisplayCategory`), so the sandbox's tool loot
+setting scales it, and the mod's die-set option (`BALANCE_OPTIONS.md`)
+scales it with the die sets: both are a handloader's tools. Lead scrap and
+cast bullets are never loot (`NEVER_COMPONENT_LOOT` names `castBullet`).
+
+Limits `AC_Loot.validateMoulds()` enforces: a mould at most 1, a scale at
+most 1, no list with more than 1 of mould weight, every mould in some list,
+no list named twice, no class without a mould, no component in the table.
+
 ## 2. Brass recycling
 
 Brass components the player no longer wants (case cups, small sheets, the
@@ -515,6 +545,9 @@ section 1.2):
 - Containers generated before the mod was added keep what they have: only
   unexplored ones can hold a die set (INFERRED from loot being rolled when a
   container is first filled).
+- That the bullet moulds appear in the three lists of 1.5 (log line
+  `[AmmoMaking] Bullet mould loot: 4 entries added, ...`, check line
+  `OK: bullet mould loot (4 entries)`), and how rare they feel.
 - That the skill books appear in the four lists of 1.4 (log line
   `[AmmoMaking] Skill book loot: 20 entries added, ...`, check line
   `OK: skill book loot (20 entries)`), and that the sandbox's skill book

@@ -51,6 +51,16 @@
                                             Base.BrassScrap out, half the brass lost, no XP
      AmmoMaking_CastBrassIngotFromScrap  <- the casting block, ten brass scrap in
 
+   Lead and cast bullets, generated from AC_Casting.lua:
+
+     AmmoMaking_MeltLeadFrom<junk>       <- ExtractIronFromSmallItem (kept empty crucible and
+                                            tongs, one charcoal, the junk line mode:destroy
+                                            flags[AllowDestroyedItem], PrimitiveFurnace)
+     AmmoMaking_ForgeBulletMould<class>  <- the die set's forging block, iron bar quarters
+     AmmoMaking_CastBullets<calibre>     <- the melt block with the class's mould kept
+     AmmoMaking_AssembleCastRound<calibre> -> the copper assembly with the cast bullet: the
+                                            same VANILLA round
+
    The recipes live in module Base, like every vanilla recipe, so the engine
    handles them exactly as its own; the AmmoMaking_ prefix keeps the ids
    unique. Station attachment is the Tags line only; the furnaces and forges
@@ -1136,6 +1146,333 @@ module Base
             item 1 [AmmoMaking.Hull12Gauge],
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.ShotCharge12Gauge],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,
+        }
+        outputs
+        {
+            item 1 Base.ShotgunShells,
+        }
+    }
+
+    craftRecipe AmmoMaking_MeltLeadFromLeadPipe
+    {
+        time = 200,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onMeltLeadFromLeadPipe,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [Base.LeadPipe] mode:destroy flags[AllowDestroyedItem],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.LeadScrap,
+        }
+    }
+
+    craftRecipe AmmoMaking_MeltLeadFromJigLures
+    {
+        time = 200,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onMeltLeadFromJigLures,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 5 [Base.JigLure],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.LeadScrap,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeBulletMouldPistol
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeBulletMouldPistol,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.IronBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.BulletMouldPistol,
+        }
+    }
+
+    craftRecipe AmmoMaking_ForgeBulletMouldShotgun
+    {
+        time = 300,
+        timedAction = HammerMetalStanding,
+        Tags = Forge,
+        category = Tools,
+        OnCreate = AC_Materials.onForgeBulletMouldShotgun,
+        inputs
+        {
+            item 2 tags[base:charcoal],
+            item 2 [Base.IronBarQuarter],
+            item 1 tags[base:ballpeenhammer] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:metalworkingpliers;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:whetstone;base:file] mode:keep flags[MayDegradeLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.BulletMouldShotgun,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBullets9mm
+    {
+        time = 80,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBullets9mm,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [AmmoMaking.LeadScrap],
+            item 1 [AmmoMaking.BulletMouldPistol] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.CastBullet9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound9mm
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound9mm,
+        inputs
+        {
+            item 1 [AmmoMaking.Case9mm],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet9mm],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBullets38Special
+    {
+        time = 80,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBullets38Special,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [AmmoMaking.LeadScrap],
+            item 1 [AmmoMaking.BulletMouldPistol] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.CastBullet38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound38Special
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound38Special,
+        inputs
+        {
+            item 1 [AmmoMaking.Case38Special],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet38Special],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets38,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBullets45ACP
+    {
+        time = 80,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBullets45ACP,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [AmmoMaking.LeadScrap],
+            item 1 [AmmoMaking.BulletMouldPistol] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.CastBullet45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound45ACP
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound45ACP,
+        inputs
+        {
+            item 1 [AmmoMaking.Case45ACP],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.CastBullet45ACP],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets45,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBullets357Magnum
+    {
+        time = 80,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBullets357Magnum,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [AmmoMaking.LeadScrap],
+            item 1 [AmmoMaking.BulletMouldPistol] mode:keep,
+        }
+        outputs
+        {
+            item 2 AmmoMaking.CastBullet357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound357Magnum
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound357Magnum,
+        inputs
+        {
+            item 1 [AmmoMaking.Case357Magnum],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet357Magnum],
+            item 2 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets357,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBullets44Magnum
+    {
+        time = 80,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBullets44Magnum,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [AmmoMaking.LeadScrap],
+            item 1 [AmmoMaking.BulletMouldPistol] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.CastBullet44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound44Magnum
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound44Magnum,
+        inputs
+        {
+            item 1 [AmmoMaking.Case44Magnum],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.CastBullet44Magnum],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+        }
+        outputs
+        {
+            item 1 Base.Bullets44,
+        }
+    }
+
+    craftRecipe AmmoMaking_CastBullets12Gauge
+    {
+        time = 80,
+        Tags = PrimitiveFurnace,
+        category = Blacksmithing,
+        OnCreate = AC_Materials.onCastBullets12Gauge,
+        inputs
+        {
+            item 1 [Base.CeramicCrucible] mode:keep flags[IsEmpty],
+            item 1 tags[base:crudetongs;base:tongs] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:charcoal],
+            item 1 [AmmoMaking.LeadScrap],
+            item 1 [AmmoMaking.BulletMouldShotgun] mode:keep,
+        }
+        outputs
+        {
+            item 1 AmmoMaking.LeadShotCharge12Gauge,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound12Gauge
+    {
+        time = 40,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound12Gauge,
+        inputs
+        {
+            item 1 [AmmoMaking.Hull12Gauge],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.LeadShotCharge12Gauge],
             item 3 [Base.GunPowder],
             item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
             item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,

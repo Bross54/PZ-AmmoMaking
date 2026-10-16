@@ -184,6 +184,16 @@ AC_Visuals.ICONS = {
 
     { name = "AmmoMakingShot", mod = "AmmoMaking", prefix = "Item_", size = 32 },
 
+    { name = "AmmoMakingLeadScrap", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingCastBullet", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingLeadShot", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingBulletMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingShotMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
     { name = "AmmoMakingSample", mod = "AmmoMaking", prefix = "Item_", size = 32 },
 
     { name = "AmmoMakingFieldKit", mod = "AmmoMaking", prefix = "Item_", size = 32 },

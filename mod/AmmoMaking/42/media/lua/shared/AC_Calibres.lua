@@ -17,6 +17,11 @@
 --   getItems()      the item ids the compatibility check
 --                   probes
 --
+-- Cast lead bullets (AC_Casting) read two things from
+-- here and nothing else: which classes have a bullet mould
+-- (CLASSES[class].mould) and each such calibre's cast
+-- bullet item (calibre.castBullet). Rifles have neither.
+--
 -- Adding a calibre is a new entry in AC_Calibres.LIST, its
 -- three items in AC_Items.txt, their names, and a
 -- regenerated AC_Recipes.txt (tests/write_recipes.lua
@@ -271,6 +276,12 @@ AC_Calibres.PRIMERS = {
 --          the calibre's three mod items; when left out
 --          they are AmmoMaking.Case<suffix>,
 --          AmmoMaking.Bullet<suffix>, AmmoMaking.DieSet<suffix>
+-- castBullet
+--          the cast lead bullet (AC_Casting), only for a
+--          class with a mould; when left out it is
+--          AmmoMaking.CastBullet<suffix>. Same lead per
+--          bullet as copper per copper bullet
+--          (bulletsPerScrap).
 -- primerFamily
 --          a PRIMERS id
 -- cupsPerCase
@@ -479,6 +490,11 @@ AC_Calibres.CLASSES = {
     pistol = {
 
         label = "Pistol calibres",
+
+        -- The bullet mould of the class (AC_Casting): one
+        -- kept tool casts the lead bullets of every pistol
+        -- calibre, as a die set is kept for copper ones.
+        mould = "AmmoMaking.BulletMouldPistol",
     },
 
     ------------------------------------------------
@@ -513,7 +529,23 @@ AC_Calibres.CLASSES = {
             case = 2,
             assemble = 3,
         },
+
+        -- Buckshot is cast too: a mould of round cavities.
+        mould = "AmmoMaking.BulletMouldShotgun",
     },
+
+    ------------------------------------------------
+    -- No mould for rifles, on purpose: a rifle bullet
+    -- keeps its copper. A plain cast lead bullet leaves
+    -- lead in the bore and strips in the rifling at the
+    -- 2,200 to 3,000 ft/s of the three rifle rounds; the
+    -- real fixes (a gas check, a hardened alloy, a jacket)
+    -- are a second item and a chemistry the mod does not
+    -- model. Pistol rounds and buckshot stay below about
+    -- 1,400 ft/s, where plain lead is what was loaded for
+    -- a century. And the top tier stays on the mine
+    -- (docs/METALLURGY_DESIGN.md 12).
+    ------------------------------------------------
 
     rifle = {
 
@@ -641,6 +673,16 @@ function AC_Calibres.define(
 
     calibre.dieSet =
         calibre.dieSet or ("AmmoMaking.DieSet" .. calibre.suffix)
+
+
+    -- Only a class with a bullet mould casts lead. A
+    -- definition that names a cast bullet anyway is
+    -- reported by validate().
+    if class.mould then
+
+        calibre.castBullet =
+            calibre.castBullet or ("AmmoMaking.CastBullet" .. calibre.suffix)
+    end
 
 
     -- What a fired round leaves behind: the case's own
@@ -929,6 +971,8 @@ AC_Calibres.LIST = {
         case = "AmmoMaking.Hull12Gauge",
 
         bullet = "AmmoMaking.ShotCharge12Gauge",
+
+        castBullet = "AmmoMaking.LeadShotCharge12Gauge",
     }),
 }
 
@@ -1084,6 +1128,27 @@ function AC_Calibres.validate(
         then
             problem("class " .. className, "unknown primer class " .. tostring(class.primerClass))
         end
+
+
+        -- A bullet mould is the mod's own item and belongs
+        -- to one class.
+        if class.mould ~= nil then
+
+            if type(class.mould) ~= "string"
+                or string.sub(class.mould, 1, 11) ~= "AmmoMaking."
+            then
+
+                problem("class " .. className, "the mould must be an item of the mod")
+
+            elseif itemOwner[class.mould] then
+
+                problem("class " .. className, "mould item " .. class.mould .. " is already used by " .. itemOwner[class.mould])
+
+            else
+
+                itemOwner[class.mould] = "class " .. className .. " mould"
+            end
+        end
     end
 
 
@@ -1164,6 +1229,40 @@ function AC_Calibres.validate(
 
                 itemOwner[itemType] = name .. " " .. kind
             end
+        end
+
+
+        -- The cast bullet: only where the class has a
+        -- mould, and like every component it belongs to one
+        -- calibre.
+        local mould =
+            (AC_Calibres.CLASSES[calibre.class] or {}).mould
+
+
+        if calibre.castBullet ~= nil then
+
+            if not mould then
+
+                problem(name, "a " .. tostring(calibre.class) .. " calibre has no cast bullet: its class has no mould")
+
+            elseif type(calibre.castBullet) ~= "string"
+                or calibre.castBullet == ""
+            then
+
+                problem(name, "no castBullet item")
+
+            elseif itemOwner[calibre.castBullet] then
+
+                problem(name, "castBullet item " .. calibre.castBullet .. " is already used by " .. itemOwner[calibre.castBullet])
+
+            else
+
+                itemOwner[calibre.castBullet] = name .. " castBullet"
+            end
+
+        elseif mould then
+
+            problem(name, "its class has a mould but it has no cast bullet")
         end
 
 
@@ -1349,15 +1448,16 @@ end
 
 ------------------------------------------------
 -- Finds what an item is in the calibre model.
--- Returns kind ("case", "bullet", "dieSet", "round",
--- "primer") and the calibre or primer definition, or
+-- Returns kind ("case", "bullet", "castBullet", "dieSet",
+-- "round", "primer") and the calibre or primer definition, or
 -- nil for anything else.
 ------------------------------------------------
 
 -- The item roles of a calibre, in the order identify()
 -- tries them. One table, not one per call: identify()
--- runs for every item of an inventory right-click.
-local ITEM_KINDS = { "case", "bullet", "dieSet", "round" }
+-- runs for every item of an inventory right-click. A
+-- calibre without a cast bullet simply never matches it.
+local ITEM_KINDS = { "case", "bullet", "castBullet", "dieSet", "round" }
 
 
 function AC_Calibres.identify(

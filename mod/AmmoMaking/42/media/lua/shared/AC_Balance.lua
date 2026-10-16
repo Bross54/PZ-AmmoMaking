@@ -98,7 +98,7 @@ AC_Balance.OPTIONS = {
 
         appliedBy = "lua",
 
-        what = "the loot weight of every die set; 0 removes them from loot",
+        what = "the loot weight of every die set and bullet mould; 0 removes them from loot",
     },
 
     {

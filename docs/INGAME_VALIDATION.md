@@ -40,9 +40,11 @@ Console
   `Compatibility check loaded`, `Spent cases loaded`,
   `Quality tracking loaded`, `Debug tools loaded`, ...).
 - `[AmmoMaking] Die set loot: 22 entries added, ...`,
-  `[AmmoMaking] Component loot: ... entries added, ...` and
-  `[AmmoMaking] Skill book loot: 20 entries added, ...` with
+  `[AmmoMaking] Component loot: ... entries added, ...`,
+  `[AmmoMaking] Skill book loot: 20 entries added, ...` and
+  `[AmmoMaking] Bullet mould loot: 4 entries added, ...` with
   `lists missing: 0`.
+- `[AmmoMaking] Lead casting loaded (6 castable calibres)`.
 - `[AmmoMaking] Skill books: Ammo Making entered in vanilla's reading table (server Lua)`
   once per world load. If it says `(game start)` instead, the server file
   ran before vanilla's table existed: note it, the books still work.
@@ -70,6 +72,9 @@ Expected / Console
 - `OK: skill books entered in vanilla's reading table (server Lua)` and
   `OK: skill book loot (20 entries)`; the five book items
   (`OK: AmmoMaking.BookAmmoMaking1` ...) among the item lines.
+- `OK: lead casting (6 castable calibres, 2 moulds, no XP for melting)`
+  and `OK: bullet mould loot (4 entries)`; `OK: Base.LeadPipe`,
+  `OK: Base.JigLure` and `OK: AmmoMaking.LeadScrap` among the item lines.
 
 Any `WARNING` or `UNVERIFIED` line is a finding: copy it whole.
 
@@ -228,6 +233,11 @@ Steps
    furnaces.
 2. At a **Primitive Furnace**: *Smelt Zinc Ore*. At a **Simple Furnace**:
    *Cast Zinc Ingot*, *Cast Copper Ingot*.
+3. Lead (`docs/METALLURGY_DESIGN.md` 12): take two Lead Pipes and five Jig
+   Lures from the vanilla debug item list; break one pipe on a zombie or a
+   wall first if you can. At the **Primitive Furnace**, with the crucible
+   and tongs: *Melt Lead from Lead Pipe* (once whole, once broken) and
+   *Melt Lead from Jig Lures*.
 
 Expected
 - Each recipe is listed at its furnace with its name, not a raw id.
@@ -235,6 +245,9 @@ Expected
   logs one XP line.
 - Zinc scrap and zinc ingot have a name and an icon (placeholders: the
   aluminium scrap and silver ingot icons).
+- Lead: two Lead Scrap per pipe, broken or whole; one per five jig lures.
+  The crucible and tongs are kept. No Ammo Making XP line for a melt. The
+  recipes are listed at a Primitive Furnace (and at the higher furnaces).
 
 Debug shortcut: **Metallurgy > Inspect Station Recipes**, **Print
 Material Ledger (inventory)**.
@@ -267,6 +280,11 @@ Steps
    *Assemble 9mm Round*.
 3. Right click a case and a finished round: **Inspect Ammunition**.
 4. Load the rounds into a 9mm magazine, fire them at a wall.
+5. Cast bullets: take two Iron Bar Quarters from the vanilla debug item
+   list; at the forge *Forge Pistol Bullet Mould*. With the lead scrap of
+   section 10, at the **Primitive Furnace**: *Cast 9mm Lead Bullets*; then
+   *Assemble 9mm Round (Cast Bullet)*. Inspect and fire one as in steps 3
+   and 4.
 
 Expected
 - One round per assembly craft; the die set is kept; powder is taken by
@@ -276,6 +294,10 @@ Expected
 - The inspection window opens and shows a case quality; in `-debug` three
   `[debug]` lines follow.
 - A recipe above your level is shown but locked.
+- Step 5: the mould is kept; two cast bullets per lead scrap; the cast
+  round is the same vanilla 9mm round (it stacks with the others) and logs
+  the same XP as a copper one. No cast recipe exists for the rifle
+  calibres.
 
 Debug shortcut: **Ammunition > Verify Ammo Dependencies**, **Print Calibre
 Definitions**, **Print Primer Families**, **Inspect Ammo Components
@@ -302,10 +324,13 @@ Steps
 1. Kit `12 Gauge`. Craft *Form 12 Gauge Brass Hull*, *Swage 12 Gauge
    Copper Shot Charge*, *Assemble 12 Gauge Shell*.
 2. Fire from a vanilla shotgun.
+3. Lead shot: *Forge Buckshot Mould* (forge), *Cast 12 Gauge Lead Shot
+   Charge* (Primitive Furnace), *Assemble 12 Gauge Shell (Lead Shot)*.
 
 Expected
 - The wad material is consumed; one shell per craft; the shell is
   vanilla's and behaves as one (pellets, boxes, bandolier).
+- A shell with lead shot is the same vanilla shell.
 
 Result: ____
 
@@ -346,6 +371,10 @@ Expected
 - Die sets, and now and then a primer box or gunpowder, in gun stores;
   brass scrap or a small brass sheet in metalwork crates. Rare: several
   containers may be needed.
+- Rarer still, a bullet mould: either mould in a gun store's ammunition
+  case, the pistol mould in a garage gun locker, the buckshot mould among
+  a hunter's things. The die-set option scales them too: in the second
+  world they turn up about twice as often.
 - No cases, bullets or finished handloads anywhere.
 - An Ammo Making book now and then, most often on a gun store's shelves;
   rarely in a bookstore, a library or a survivalist's crate. Its icon is a

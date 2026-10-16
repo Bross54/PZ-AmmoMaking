@@ -63,6 +63,9 @@
 -- (in an older session of the save) keep what they hold:
 -- only containers filled from now on see the new weights.
 --
+-- BULLET MOULDS (MOULDS, below) are tools like the die
+-- sets and take the die-set multiplier.
+--
 -- SKILL BOOKS (BOOKS, below) take neither multiplier.
 -- A book is DisplayCategory = SkillBook, so the engine
 -- files it under the "SkillBook" loot type and the
@@ -73,6 +76,8 @@
 -- count the same setting twice.
 
 require "AC_Calibres"
+
+require "AC_Casting"
 
 require "AC_Balance"
 
@@ -139,6 +144,11 @@ AC_Loot.CONFIG = {
     maxBookWeight = 2.0,
 
     maxBookListWeight = 6.0,
+
+    -- MOULDS: all moulds of one list together may not
+    -- weigh more than this. A single mould is held to
+    -- maxWeight, like a die set.
+    maxMouldListWeight = 1.0,
 }
 
 
@@ -260,6 +270,8 @@ AC_Loot.NEVER_COMPONENT_LOOT = {
     case = true,
 
     bullet = true,
+
+    castBullet = true,
 
     round = true,
 
@@ -699,6 +711,275 @@ function AC_Loot.validateBooks(
 
         if total > config.maxBookListWeight then
             problem("books weigh " .. total .. " in " .. list .. ", above " .. config.maxBookListWeight)
+        end
+    end
+
+
+    return problems
+end
+
+
+------------------------------------------------
+-- MOULDS (tunable)
+------------------------------------------------
+--
+-- The bullet moulds of AC_Casting, where a handloader's
+-- tools turn up: beside the die sets. An entry's weight
+-- is
+--
+--   weight * scale of the list
+--
+-- for each class mould the list takes (classes; left out,
+-- every mould). Every mould is also forged (AC_Casting),
+-- so a find saves the forge and never opens a recipe: the
+-- cast recipes keep their Ammo Making levels.
+--
+-- They are tools like the die sets, so the sandbox's die
+-- set loot multiplier scales them too (AC_Balance
+-- "dieSetLoot"), and the engine files them under its
+-- "Tool" loot type (DisplayCategory = Tool). Judged per
+-- room in the tests: a room of twelve containers holds
+-- less than one mould on average, at the default and at
+-- the multiplier's maximum.
+------------------------------------------------
+
+AC_Loot.MOULDS = {
+
+    weight = 0.5,
+
+    lists = {
+
+        { list = "GunStoreMagsAmmo", scale = 1, where = "at most one display case of a gun store" },
+
+        { list = "GarageFirearms", scale = 0.5, classes = { "pistol" }, where = "the gun locker of a garage storage room; military lockers" },
+
+        { list = "Hunter", scale = 0.5, classes = { "shotgun" }, where = "a hunter's things in an attic, closet, hall, living room, storage unit or garage" },
+    },
+}
+
+
+-- The flat list of mould entries:
+-- { list, item, weight, mould = class }, list by list,
+-- in the order of AC_Casting.getMoulds().
+function AC_Loot.buildMouldEntries(
+    moulds,
+    castMoulds
+)
+
+    moulds =
+        moulds or AC_Loot.MOULDS
+
+    castMoulds =
+        castMoulds or AC_Casting.getMoulds()
+
+
+    local entries = {}
+
+
+    for _,
+        target
+    in ipairs(
+        moulds.lists or {}
+    )
+    do
+
+        local wanted = nil
+
+
+        if type(target.classes) == "table" then
+
+            wanted = {}
+
+
+            for _,
+                class
+            in ipairs(
+                target.classes
+            )
+            do
+                wanted[class] = true
+            end
+        end
+
+
+        for _,
+            mould
+        in ipairs(
+            castMoulds
+        )
+        do
+
+            if (not wanted or wanted[mould.class])
+                and type(target.list) == "string"
+                and type(target.scale) == "number"
+                and type(moulds.weight) == "number"
+            then
+
+                table.insert(
+                    entries,
+                    {
+                        list = target.list,
+                        item = mould.item,
+                        weight = moulds.weight * target.scale,
+                        mould = mould.class,
+                    }
+                )
+            end
+        end
+    end
+
+
+    return entries
+end
+
+
+function AC_Loot.validateMoulds(
+    moulds,
+    castMoulds
+)
+
+    moulds =
+        moulds or AC_Loot.MOULDS
+
+    castMoulds =
+        castMoulds or AC_Casting.getMoulds()
+
+
+    local config =
+        AC_Loot.CONFIG
+
+
+    local problems = {}
+
+
+    local function problem(
+        text
+    )
+
+        table.insert(
+            problems,
+            "loot: " .. text
+        )
+    end
+
+
+    if type(moulds.weight) ~= "number"
+        or moulds.weight <= 0
+        or moulds.weight > config.maxWeight
+    then
+        problem("a mould must weigh more than 0 and at most " .. config.maxWeight)
+    end
+
+
+    local hasMould = {}
+
+
+    for _,
+        mould
+    in ipairs(
+        castMoulds
+    )
+    do
+        hasMould[mould.class] = true
+    end
+
+
+    local seen = {}
+
+
+    for _,
+        target
+    in ipairs(
+        moulds.lists or {}
+    )
+    do
+
+        local name =
+            tostring(target.list)
+
+
+        if type(target.list) ~= "string"
+            or target.list == ""
+        then
+            problem("a mould list has no name")
+        elseif seen[target.list] then
+            problem("mould list " .. name .. " is named twice")
+        end
+
+
+        seen[name] = true
+
+
+        if type(target.scale) ~= "number"
+            or target.scale <= 0
+            or target.scale > 1
+        then
+            problem("mould list " .. name .. " must have a scale above 0 and at most 1")
+        end
+
+
+        for _,
+            class
+        in ipairs(
+            type(target.classes) == "table" and target.classes or {}
+        )
+        do
+
+            if not hasMould[class] then
+                problem("mould list " .. name .. " names " .. tostring(class) .. ", a class without a mould")
+            end
+        end
+    end
+
+
+    local listWeight = {}
+
+    local listsOfItem = {}
+
+
+    for _,
+        entry
+    in ipairs(
+        AC_Loot.buildMouldEntries(moulds, castMoulds)
+    )
+    do
+
+        if AC_Calibres.identify(entry.item) ~= nil then
+            problem(entry.item .. " is a calibre's component, not a mould")
+        end
+
+
+        listWeight[entry.list] =
+            (listWeight[entry.list] or 0) + entry.weight
+
+
+        listsOfItem[entry.item] =
+            (listsOfItem[entry.item] or 0) + 1
+    end
+
+
+    for list,
+        total
+    in pairs(
+        listWeight
+    )
+    do
+
+        if total > config.maxMouldListWeight then
+            problem("moulds weigh " .. total .. " in " .. list .. ", above " .. config.maxMouldListWeight)
+        end
+    end
+
+
+    for _,
+        mould
+    in ipairs(
+        castMoulds
+    )
+    do
+
+        if (listsOfItem[mould.item] or 0) == 0 then
+            problem(mould.item .. " is in no list")
         end
     end
 
@@ -1199,6 +1480,7 @@ function AC_Loot.own(
 
     -- A book has no option: the engine's own skill book
     -- setting scales it (see the header).
+    -- A mould is a tool like a die set: the same option.
     local option = "dieSetLoot"
 
 
@@ -1651,6 +1933,50 @@ function AC_Loot.registerComponents(
 end
 
 
+-- The bullet moulds of MOULDS. Switched off with the
+-- die sets (CONFIG.enabled), and by a mould table that
+-- does not validate.
+function AC_Loot.registerMoulds(
+    procedural,
+    distribution,
+    referenced
+)
+
+    if not AC_Loot.CONFIG.enabled
+        or #AC_Loot.validateMoulds() > 0
+    then
+        return emptySummary()
+    end
+
+
+    local names = {}
+
+
+    for _,
+        target
+    in ipairs(
+        AC_Loot.MOULDS.lists
+    )
+    do
+
+        table.insert(
+            names,
+            target.list
+        )
+    end
+
+
+    return
+        registerEntries(
+            AC_Loot.buildMouldEntries(),
+            names,
+            procedural,
+            distribution,
+            referenced
+        )
+end
+
+
 -- The skill books of BOOKS. Switched off with the die
 -- sets (CONFIG.enabled), and by a book table that does
 -- not validate.
@@ -1695,7 +2021,7 @@ function AC_Loot.registerBooks(
 end
 
 
--- Every list any of the three tables goes into, each
+-- Every list any of the four tables goes into, each
 -- once.
 function AC_Loot.getListNames()
 
@@ -1747,6 +2073,16 @@ function AC_Loot.getListNames()
         target
     in ipairs(
         AC_Loot.BOOKS.lists
+    )
+    do
+        add(target.list)
+    end
+
+
+    for _,
+        target
+    in ipairs(
+        AC_Loot.MOULDS.lists
     )
     do
         add(target.list)
@@ -1881,6 +2217,58 @@ local function registerBooksLogged(
 end
 
 
+local function registerMouldsLogged(
+    referenced
+)
+
+    local ok,
+          summary =
+        pcall(
+            AC_Loot.registerMoulds,
+            nil,
+            nil,
+            referenced
+        )
+
+
+    if not ok then
+
+        print(
+            "[AmmoMaking] WARNING: bullet mould loot not registered: "
+            .. tostring(summary)
+        )
+
+
+        return
+    end
+
+
+    AC_Loot.lastMouldSummary = summary
+
+
+    if summary.added > 0
+        or summary.unavailable
+        or #summary.missing > 0
+        or #summary.empty > 0
+        or #summary.unreferenced > 0
+    then
+
+        print(
+            "[AmmoMaking] Bullet mould loot: "
+            .. summary.added
+            .. " entries added, "
+            .. summary.present
+            .. " already present; lists missing: "
+            .. #summary.missing
+            .. ", empty: "
+            .. #summary.empty
+            .. ", used by no container: "
+            .. #summary.unreferenced
+        )
+    end
+end
+
+
 local function registerLogged()
 
     local walked,
@@ -1897,6 +2285,9 @@ local function registerLogged()
 
 
     registerBooksLogged(referenced)
+
+
+    registerMouldsLogged(referenced)
 
 
     local ok,

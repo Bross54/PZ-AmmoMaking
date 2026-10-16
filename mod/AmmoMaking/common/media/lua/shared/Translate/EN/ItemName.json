@@ -44,5 +44,14 @@
     "AmmoMaking.BookAmmoMaking3": "Ammo Making III: Powder Charges and Pressure",
     "AmmoMaking.BookAmmoMaking4": "Ammo Making IV: The Bench and the Gauge",
     "AmmoMaking.BookAmmoMaking5": "Ammo Making V: The Complete Handloader's Reference",
+    "AmmoMaking.LeadScrap": "Lead Scrap",
+    "AmmoMaking.BulletMouldPistol": "Pistol Bullet Mould",
+    "AmmoMaking.BulletMouldShotgun": "Buckshot Mould",
+    "AmmoMaking.CastBullet9mm": "9mm Cast Lead Bullet",
+    "AmmoMaking.CastBullet38Special": ".38 Special Cast Lead Bullet",
+    "AmmoMaking.CastBullet45ACP": ".45 ACP Cast Lead Bullet",
+    "AmmoMaking.CastBullet357Magnum": ".357 Magnum Cast Lead Bullet",
+    "AmmoMaking.CastBullet44Magnum": ".44 Magnum Cast Lead Bullet",
+    "AmmoMaking.LeadShotCharge12Gauge": "12 Gauge Lead Shot Charge",
     "AmmoMaking.TestCartridge": "Test 9mm Cartridge"
 }

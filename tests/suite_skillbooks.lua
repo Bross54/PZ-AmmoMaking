@@ -256,6 +256,7 @@ return function(T)
             return found
         end
         AC_Loot.lastBookSummary = AC_Loot.registerBooks(T.mockProceduralLists(), T.mockDistribution())
+        AC_Loot.lastMouldSummary = AC_Loot.registerMoulds(T.mockProceduralLists(), T.mockDistribution())
         local found = labels()
         eq(found["skill books entered in vanilla's reading table (game start)"], "OK", "the report says the books can be read")
         eq(found["skill book loot (" .. #AC_Loot.buildBookEntries() .. " entries)"], "OK", "and where they are found")

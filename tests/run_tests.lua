@@ -2816,7 +2816,7 @@ do
     local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true }
     local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true }
     local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true, Electrical = true }
-    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true, NoBrokenItems = true }
+    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true, NoBrokenItems = true, AllowDestroyedItem = true }
     local destroyLines = 0
     local knownItemTags = {
         ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true,
@@ -2867,7 +2867,9 @@ do
                 eq(parsed.mode == "destroy", mirror.destroy == true, recipe.id .. " input " .. i .. " destroy")
                 check(parsed.mode == nil or parsed.mode == "keep" or parsed.mode == "destroy", recipe.id .. " input " .. i .. " uses no other mode")
                 check(not (mirror.keep and mirror.destroy), recipe.id .. " input " .. i .. " is not both kept and destroyed")
-                if mirror.destroy then
+                -- And vanilla junk melted for lead, as vanilla melts its
+                -- own junk (ExtractIronFromSmallItem).
+                if mirror.destroy and recipe.step ~= "leadSource" then
                     destroyLines = destroyLines + 1
                     check(sameList(mirror.items, AC_Calibres.WAD.items), recipe.id .. " input " .. i .. ": only the wad line is mode:destroy")
                 end
@@ -2901,8 +2903,10 @@ do
     local wadded = 0
     for _, calibre in ipairs(AC_Calibres.LIST) do
         if calibre.wads > 0 then wadded = wadded + 1 end
+        -- Its cast-shot assembly takes the same wad.
+        if calibre.wads > 0 and calibre.castBullet then wadded = wadded + 1 end
     end
-    eq(destroyLines, wadded, "one mode:destroy line per calibre that takes a wad")
+    eq(destroyLines, wadded, "one mode:destroy line per assembly that takes a wad")
 
     -- Design decisions pinned.
     eq(AC_Materials.getRecipe("AmmoMaking_SmeltZincOre").benchTag, "PrimitiveFurnace", "zinc ore smelts where copper ore smelts")
@@ -2914,9 +2918,10 @@ do
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
-    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST + #AC_Recycling.buildGroups() + 1,
-        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, one scrapping recipe per brass size and the recast")
-    eq(#AC_Materials.RECIPES, 58, "fifty-eight recipes")
+    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST
+        + #AC_Casting.SOURCES + #AC_Casting.getMoulds() + 2 * #AC_Casting.getCastable() + #AC_Recycling.buildGroups() + 1,
+        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, one melt per lead source, one mould per casting class, two per castable calibre, one scrapping recipe per brass size and the recast")
+    eq(#AC_Materials.RECIPES, 74, "seventy-four recipes")
 
     -- The script body is exactly what tests/render_recipes.lua makes of the
     -- mirror: the file is generated, never typed.
@@ -2951,6 +2956,14 @@ do
         -- Material declaration: every output is either tracked or a declared tool,
         -- and every consumed item named by id is tracked or a known untracked input.
         local untracked = { ["Base.SteelBarQuarter"] = true, ["Base.Fertilizer"] = true }
+        -- Iron for the moulds; vanilla junk only where it is melted for lead
+        -- (a declared source).
+        if recipe.step == "mould" then untracked[AC_Casting.CONFIG.mouldBarItem] = true end
+        if recipe.step == "leadSource" then
+            for _, source in ipairs(AC_Casting.SOURCES) do
+                for _, id in ipairs(source.items) do untracked[id] = true end
+            end
+        end
         for _, id in ipairs(AC_Calibres.WAD.items) do untracked[id] = true end
         -- What a kit or the analyzer is put together from holds no metal
         -- the accounting follows; only those three recipes may take it.
@@ -3001,9 +3014,13 @@ do
     eq(families.powder, 1, "one gunpowder recipe")
     eq(families.primer, 8, "eight primer recipes")
     for _, step in ipairs({ "dieSet", "case", "bullet", "assemble" }) do eq(families[step], #AC_Calibres.LIST, "one " .. step .. " recipe per calibre") end
+    eq(families.leadSource, 2, "two lead melts")
+    eq(families.mould, 2, "two bullet moulds")
+    eq(families.cast, #AC_Casting.getCastable(), "one cast per castable calibre")
+    eq(families.assembleCast, #AC_Casting.getCastable(), "one cast assembly per castable calibre")
     eq(families.scrap, 3, "three scrapping recipes")
     eq(families.recast, 1, "one recast")
-    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **58** |", 1, true) ~= nil, "the audit table counts 58 recipes")
+    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **74** |", 1, true) ~= nil, "the audit table counts 74 recipes")
 end
 
 section("Material conservation: no recipe or chain creates metal")
@@ -3365,9 +3382,10 @@ do
 
     for _, recipe in ipairs(AC_Materials.RECIPES) do
         local xp = AC_Materials.getRecipeXP(recipe)
-        -- Two families award nothing: recycling, and the geology equipment
-        -- (a kit pays its XP per assay, not when it is put together).
-        local unpaid = recipe.recycling == true or recipe.step == "equipment"
+        -- Four families award nothing: recycling, the geology equipment (a
+        -- kit pays its XP per assay, not when it is put together), melting
+        -- junk for lead, and the bullet moulds (a mould pays per cast).
+        local unpaid = recipe.recycling == true or recipe.step == "equipment" or recipe.step == "leadSource" or recipe.step == "mould"
         eq(xp > 0, not unpaid, recipe.id .. (unpaid and " awards no XP" or " awards XP"))
         local player = MOCK.newPlayer()
         MOCK.clearPrintLog()
@@ -3809,7 +3827,7 @@ do
     eq(custom.time.case, D.time.case, "pistol times are untouched by the rifle class")
     eq(D.time.case, 80, "DEFAULTS were not written to")
     for key in pairs(AC_Calibres.CLASSES.pistol) do
-        eq(key, "label", "the pistol class adds nothing to DEFAULTS but its label")
+        check(key == "label" or key == "mould", "the pistol class adds nothing to DEFAULTS but its label and its bullet mould (" .. key .. ")")
     end
     for name, class in pairs(AC_Calibres.CLASSES) do
         check(type(class.label) == "string" and class.label ~= "", "class " .. name .. " has a label for the summaries")
@@ -4119,7 +4137,7 @@ do
             for _, id in ipairs(input.items or {}) do
                 local kind, family = AC_Calibres.identify(id)
                 if kind == "primer" then
-                    eq(recipe.step, "assemble", recipe.id .. " is the only kind of recipe that consumes a primer")
+                    check(recipe.step == "assemble" or recipe.step == "assembleCast", recipe.id .. " is the only kind of recipe that consumes a primer")
                     eq(AC_Calibres.get(recipe.calibre).primerFamily, family.id, recipe.id .. " consumes its own family's primer")
                 end
             end
@@ -4516,7 +4534,7 @@ do
         local built = 0
         local realBuild = AC_Recycling.buildRecipes
         reloadMod()
-        eq(#AC_Materials.RECIPES, 58, "the reloaded mod has its 58 recipes")
+        eq(#AC_Materials.RECIPES, 74, "the reloaded mod has its 74 recipes")
         eq(type(AC_Loot.lastSummary), "nil", "loading the mod registers no loot by itself")
         check(realBuild ~= nil and built == 0, "the counters above were removed before the reload")
     end
@@ -4936,10 +4954,10 @@ do
         if recipe.effect then
             effects = effects + 1
             check(type(AC_CaseQuality.EFFECTS[recipe.effect]) == "function", recipe.id .. " effect exists")
-            check(recipe.step == "case" or recipe.step == "assemble", recipe.id .. " is a case or assembly step")
+            check(recipe.step == "case" or recipe.step == "assemble" or recipe.step == "assembleCast", recipe.id .. " is a case or assembly step")
         end
     end
-    eq(effects, 2 * #AC_Calibres.LIST, "nothing upstream of the case carries quality")
+    eq(effects, 2 * #AC_Calibres.LIST + #AC_Casting.getCastable(), "nothing upstream of the case carries quality; a round with a cast bullet inherits its case's")
 
     -- A broken effect must not break the craft or the XP.
     local form = calibreRecipe(first, "case")
@@ -5009,9 +5027,11 @@ do
         if level > highest then highest = level end
         if recipe.calibre then
             local calibre = AC_Calibres.get(recipe.calibre)
-            eq(level, calibre.levels[recipe.step], recipe.id .. " level comes from its calibre definition")
-            eq(AC_Materials.getRecipeXP(recipe), calibre.xp[recipe.step], recipe.id .. " xp comes from its calibre definition")
-            eq(recipe.time, calibre.time[recipe.step], recipe.id .. " time comes from its calibre definition")
+            -- A cast step takes its copper step's values.
+            local step = AC_Casting.STEP_OF[recipe.step] or recipe.step
+            eq(level, calibre.levels[step], recipe.id .. " level comes from its calibre definition")
+            eq(AC_Materials.getRecipeXP(recipe), calibre.xp[step], recipe.id .. " xp comes from its calibre definition")
+            eq(recipe.time, calibre.time[step], recipe.id .. " time comes from its calibre definition")
         end
     end
     eq(highest, 5, "the ladder tops out at level 5: no recipe sits behind the steep part of the XP curve")
@@ -5723,7 +5743,8 @@ do
     for _, recipe in ipairs(AC_Materials.RECIPES) do
         if recipe.source then table.insert(sources, recipe.id .. ":" .. recipe.source) end
     end
-    eq(table.concat(sources, ","), "AmmoMaking_MixGunpowder:powder", "gunpowder mixing is the only source recipe")
+    eq(table.concat(sources, ","), "AmmoMaking_MixGunpowder:powder,AmmoMaking_MeltLeadFromLeadPipe:lead,AmmoMaking_MeltLeadFromJigLures:lead",
+        "gunpowder mixing and melting vanilla junk for lead are the only source recipes")
     local mix = R("AmmoMaking_MixGunpowder")
     check(AC_Materials.checkConservation(mix), "gunpowder mixing is a declared source")
     check(not AC_Materials.checkConservation({ id = "free_powder", source = "powder", inputs = { mix.inputs[3] }, outputs = mix.outputs }), "powder from a kept tool alone is rejected")
@@ -5806,15 +5827,26 @@ do
     for _, r in ipairs(AC_Materials.VANILLA_RECIPES) do table.insert(all, r) end
     local brassRecipe = AC_Materials.getRecipe("AmmoMaking_CastBrassIngots")
     local mix = AC_Materials.getRecipe("AmmoMaking_MixGunpowder")
-    local MATERIALS = { "copper", "zinc", "brass", "compound", "powder" }
+    local MATERIALS = { "copper", "zinc", "brass", "compound", "powder", "lead" }
 
+    -- A vanilla round is the same item whichever bullet is in it, so the
+    -- run keeps a second count beside the inventory: how many of each
+    -- round type hold lead (cast assembly). Those count with the cast
+    -- assembly's own contents, the rest with the copper round's. A round
+    -- taken apart is taken from the copper ones first; that can only lower
+    -- a ledger, never raise one.
+    local leadRounds = {}
     local function ledger(inventory)
-        local totals = { copper = 0, zinc = 0, brass = 0, compound = 0, powder = 0 }
+        local totals = { copper = 0, zinc = 0, brass = 0, compound = 0, powder = 0, lead = 0 }
         for id, count in pairs(inventory) do
             local entry = U[id]
             if entry then
+                local cast = math.min(count, leadRounds[id] and leadRounds[id].count or 0)
                 for material, units in pairs(entry.contents or { [entry.metal] = entry.units }) do
-                    totals[material] = totals[material] + units * count
+                    totals[material] = totals[material] + units * (count - cast)
+                end
+                for material, units in pairs(cast > 0 and leadRounds[id].contents or {}) do
+                    totals[material] = totals[material] + units * cast
                 end
             end
         end
@@ -5852,7 +5884,10 @@ do
             ["base:screwdriver"] = 1, ["Base.MagnifyingGlass"] = 4, ["Base.Tweezers"] = 4, ["Base.SheetPaper2"] = 20,
             ["Base.Calculator"] = 2, ["Base.ElectronicsScrap"] = 20, ["Base.ElectricWire"] = 6, ["Base.Amplifier"] = 2,
             ["Base.LightBulb"] = 2, ["Base.Screws"] = 12, ["Base.SheetMetal"] = 8, ["Base.CarBatteryCharger"] = 2,
+            -- Lead: junk to melt, and iron for two of each mould.
+            ["Base.LeadPipe"] = 30, ["Base.JigLure"] = 50, [AC_Casting.CONFIG.mouldBarItem] = 4 * AC_Casting.CONFIG.mouldBars * #AC_Casting.getMoulds(),
         }
+        leadRounds = {}
         local tools = {}
         for id, count in pairs(inv) do
             if string.sub(id, 1, 5) == "base:" and id ~= "base:charcoal" then tools[id] = count end
@@ -5872,10 +5907,17 @@ do
             local dieSetsBefore = 0
             for _, calibre in ipairs(AC_Calibres.LIST) do dieSetsBefore = dieSetsBefore + (inv[calibre.dieSet] or 0) end
             check(mirrorCraft(inv, recipe), "a craftable recipe crafts")
+            for _, output in ipairs(recipe.outputs) do
+                if output.contents then
+                    leadRounds[output.item] = leadRounds[output.item] or { count = 0, contents = output.contents }
+                    leadRounds[output.item].count = leadRounds[output.item].count + output.count
+                end
+            end
+            for id, held in pairs(leadRounds) do held.count = math.min(held.count, inv[id] or 0) end
             crafts = crafts + 1
             ran[recipe.id] = (ran[recipe.id] or 0) + 1
             xp = xp + AC_Materials.getRecipeXP(recipe)
-            if recipe.step == "assemble" then
+            if recipe.step == "assemble" or recipe.step == "assembleCast" then
                 local calibre = AC_Calibres.get(recipe.calibre)
                 assembled = assembled + 1
                 classesSeen[calibre.class] = true
@@ -5898,6 +5940,15 @@ do
             end
             -- Metal as a whole never grows.
             if now.copper + now.zinc + now.brass > before.copper + before.zinc + before.brass then violation(what .. " created metal") end
+            -- Lead appears only where vanilla junk is melted, exactly as
+            -- much as the melt says, and nothing turns lead into anything
+            -- but lead.
+            if recipe.step == "leadSource" then
+                if now.lead - before.lead ~= recipe.outputs[1].count * AC_Casting.CONFIG.scrapUnits then violation(what .. " melted another amount of lead") end
+            elseif now.lead > before.lead then
+                violation(what .. " created lead")
+            end
+            if recipe.step == "assembleCast" and now.copper ~= before.copper then violation(what .. " touched copper") end
             -- Scrapping loses exactly half of the brass it takes, and no
             -- recycling craft earns anything.
             if recipe.loss then
@@ -5931,6 +5982,7 @@ do
         for _, material in ipairs({ "copper", "zinc", "compound" }) do
             check(finish[material] <= start[material], "seed " .. startSeed .. ": no more " .. material .. " at the end than at the start")
         end
+        eq(start.lead, 0, "seed " .. startSeed .. ": lead starts at nothing: every unit of it was melted from junk")
         check(finish.copper + finish.zinc + finish.brass <= start.copper + start.zinc + start.brass, "seed " .. startSeed .. ": no more metal at the end than at the start")
         -- Rounds are counted as they are assembled: vanilla's Gather
         -- Gunpowder is one of the recipes drawn, and takes them apart again.
@@ -8917,6 +8969,7 @@ do
     AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
     AC_Loot.lastComponentSummary = AC_Loot.registerComponents(mockProceduralLists(), mockDistribution())
     AC_Loot.lastBookSummary = AC_Loot.registerBooks(mockProceduralLists(), mockDistribution())
+    AC_Loot.lastMouldSummary = AC_Loot.registerMoulds(mockProceduralLists(), mockDistribution())
     MOCK.players = { MOCK.newPlayer({ square = MOCK.newSquare(1, 1, 0, GRASS) }) }
     local clean = boxRun(function() end, function() end)
     check(MOCK.printLogContains("[AmmoMaking] OK: vanilla ammo boxes (9 rounds, boxed by vanilla's own recipe)"), "the boxes are probed at game start")
@@ -8947,6 +9000,7 @@ do
     AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
     AC_Loot.lastComponentSummary = AC_Loot.registerComponents(mockProceduralLists(), mockDistribution())
     AC_Loot.lastBookSummary = AC_Loot.registerBooks(mockProceduralLists(), mockDistribution())
+    AC_Loot.lastMouldSummary = AC_Loot.registerMoulds(mockProceduralLists(), mockDistribution())
 
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
@@ -10038,7 +10092,7 @@ do
         if not (consumed[id] or produced[id] or handled[id] or prototype) then table.insert(unused, id) end
         if not (produced[id] or looted[id]) then table.insert(noSource, id) end
     end
-    eq(count, 46, "forty-six items")
+    eq(count, 55, "fifty-five items")
     -- The five items of the geology stage name no world model; every item
     -- of the later stages does. (What the game draws for an item without
     -- one is engine behaviour; the sample and the dropped analyzer were
@@ -10175,7 +10229,7 @@ do
         makeSample = makeSample, equipShovel = equipShovel, placeAnalyzerObject = placeAnalyzerObject, poweredLabSquare = poweredLabSquare,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "skillbooks", "docs" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "skillbooks", "casting", "docs" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

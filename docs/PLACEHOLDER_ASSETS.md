@@ -85,6 +85,15 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | 12 Gauge Handloading Die Set (`AmmoMaking.DieSet12Gauge`) | `AmmoMakingDieSet`, the mod's own | `SmallMetalworkingPunches`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `DieSet12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 | Empty 12 Gauge Brass Hull (`AmmoMaking.Hull12Gauge`) | `AmmoMakingHull`, the mod's own | `ShotGunShells`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `Hull12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 | 12 Gauge Copper Shot Charge (`AmmoMaking.ShotCharge12Gauge`) | `AmmoMakingShot`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `ShotCharge12Gauge`: `Icon`, `WorldStaticModel` | a world model |
+| Lead Scrap (`AmmoMaking.LeadScrap`) | `AmmoMakingLeadScrap`, the mod's own | `SilverScrap`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `LeadScrap`: `Icon`, `WorldStaticModel` | a world model |
+| Pistol Bullet Mould (`AmmoMaking.BulletMouldPistol`) | `AmmoMakingBulletMould`, the mod's own | `Pliers`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BulletMouldPistol`: `Icon`, `WorldStaticModel` | a world model |
+| Buckshot Mould (`AmmoMaking.BulletMouldShotgun`) | `AmmoMakingShotMould`, the mod's own | `Pliers`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BulletMouldShotgun`: `Icon`, `WorldStaticModel` | a world model |
+| 9mm Cast Lead Bullet (`AmmoMaking.CastBullet9mm`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet9mm`: `Icon`, `WorldStaticModel` | a world model |
+| .38 Special Cast Lead Bullet (`AmmoMaking.CastBullet38Special`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet38Special`: `Icon`, `WorldStaticModel` | a world model |
+| .45 ACP Cast Lead Bullet (`AmmoMaking.CastBullet45ACP`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet45ACP`: `Icon`, `WorldStaticModel` | a world model |
+| .357 Magnum Cast Lead Bullet (`AmmoMaking.CastBullet357Magnum`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet357Magnum`: `Icon`, `WorldStaticModel` | a world model |
+| .44 Magnum Cast Lead Bullet (`AmmoMaking.CastBullet44Magnum`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet44Magnum`: `Icon`, `WorldStaticModel` | a world model |
+| 12 Gauge Lead Shot Charge (`AmmoMaking.LeadShotCharge12Gauge`) | `AmmoMakingLeadShot`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `LeadShotCharge12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 | Geological Sample (`AmmoMaking.GeologicalSample`) | `AmmoMakingSample`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `GeologicalSample`: `Icon`, `WorldStaticModel` | none; a world model is optional |
 | Field Assay Kit (`AmmoMaking.FieldAssayKit`) | `AmmoMakingFieldKit`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `FieldAssayKit`: `Icon`, `WorldStaticModel` | none; a world model is optional |
 | Advanced Field Assay Kit (`AmmoMaking.AdvancedFieldAssayKit`) | `AmmoMakingAdvancedKit`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `AdvancedFieldAssayKit`: `Icon`, `WorldStaticModel` | none; a world model is optional |
@@ -110,7 +119,7 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Spent .308 Case (`AmmoMaking.SpentCase308Win`) | `AmmoMakingSpentCaseRifle`, the mod's own | `RifleAmmo`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentCase308Win`: `Icon`, `WorldStaticModel` | a world model |
 | Spent 12 Gauge Brass Hull (`AmmoMaking.SpentHull12Gauge`) | `AmmoMakingSpentHull`, the mod's own | `ShotGunShells`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentHull12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 
-4 visuals named in Lua, 46 items of the main mod, 9 of the spent-cases add-on: 59 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
+4 visuals named in Lua, 55 items of the main mod, 9 of the spent-cases add-on: 68 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
 
 <!-- END PLACEHOLDER ASSET TABLE -->
 

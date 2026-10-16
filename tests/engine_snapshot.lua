@@ -38,9 +38,11 @@ return {
             CapGunCap = true,
             IronOre = true,
             MetalworkingPunch = true,
+            Pliers = true,
             RifleAmmo = true,
             ShotGunShells = true,
             SilverBar = true,
+            SilverScrap = true,
             SmallCopperSheet = true,
             SmallMetalworkingPunches = true,
             SteelSlug = true,
@@ -977,9 +979,23 @@ return {
             type = "base:weapon",
             weight = 1,
         },
+        ["Base.IronBarQuarter"] = {
+            tags = "base:barstockquarter;base:hasmetal;base:ironmaterial;base:smeltableironsmall",
+            type = "base:normal",
+            weight = 0.5,
+        },
         ["Base.IronIngotMold"] = {
             type = "base:normal",
             weight = 6,
+        },
+        ["Base.JigLure"] = {
+            type = "base:normal",
+            weight = 0.1,
+        },
+        ["Base.LeadPipe"] = {
+            tags = "base:hasmetal;base:killanimal;base:nomaintenancexp",
+            type = "base:weapon",
+            weight = 1.5,
         },
         ["Base.LightBulb"] = {
             tags = "base:hasmetal;base:showcondition",

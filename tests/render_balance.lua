@@ -788,6 +788,10 @@ local FAMILIES = {
     { "case", "Cases and hulls" },
     { "bullet", "Bullets and shot" },
     { "assemble", "Assembly" },
+    { "leadSource", "Lead melted from vanilla junk" },
+    { "mould", "Bullet moulds" },
+    { "cast", "Cast lead bullets and shot" },
+    { "assembleCast", "Assembly with a cast bullet" },
     { "scrap", "Scrapping brass" },
     { "recast", "Recasting brass scrap" },
 }

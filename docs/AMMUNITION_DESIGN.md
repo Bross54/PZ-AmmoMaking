@@ -25,7 +25,8 @@ All balance numbers in this document are **tunable and untuned**.
 - **A genuine raw-material loop.** No recipe in the chain consumes finished
   ammunition. A test fails if one ever does.
 - Vanilla items, stations, tools and recipe patterns first. No custom world
-  object, no chemistry subsystem, no lead geology.
+  object, no chemistry subsystem, no lead geology (lead is melted from
+  vanilla junk, §6.1).
 - Ammo Making is the only skill. It changes access, time and case quality,
   never the amount of material.
 - A calibre is data. No Lua outside `AC_Calibres.lua` names a calibre or a
@@ -124,8 +125,9 @@ of ripped sheet or cotton (`docs/SHOTGUN_AMMUNITION_RESEARCH.md`).
 
 All in `media/scripts/AC_Recipes.txt`, **generated** from the Lua mirror
 (§11): 51 blocks = metallurgy 4 + case stock 2 + gunpowder 1 + primers 8 +
-4 per calibre × 9. "Level" is the Ammo Making level attached to the recipe
-script at boot.
+4 per calibre × 9, and 16 for lead (2 melts, 2 moulds, a cast and a cast
+assembly for each of the six castable calibres, §6.1). "Level" is the Ammo
+Making level attached to the recipe script at boot.
 
 Shared component recipes (9):
 
@@ -226,6 +228,38 @@ Reasoning:
 **Per 100 rounds** (third table of §2): each row is run in the tests from
 exactly those inputs to exactly 100 rounds with nothing left over, plus two
 `Base.SteelBarQuarter`, once, for the calibre's die set.
+
+### 6.1 Cast lead bullets
+
+A pistol calibre or the shell can also take a **cast lead bullet**
+(`AmmoMaking.CastBullet<suffix>`; the shell `AmmoMaking.LeadShotCharge12Gauge`),
+cast at a Primitive Furnace in the class's bullet mould from lead melted
+out of vanilla lead pipes and jig lures. The metal, the sources and the
+numbers are `METALLURGY_DESIGN.md` 12; what changes for the round is below.
+
+- **The round is the vanilla round.** A parallel recipe,
+  `AmmoMaking_AssembleCastRound<S>` ("Assemble 9mm Round (Cast Bullet)"),
+  is the copper assembly with its bullet line swapped: same case, primer,
+  powder, wad, die set, level, XP, time and round-quality effect
+  (`AC_Casting.buildCalibreRecipes`, checked line by line in the tests).
+- **One material model.** A cast bullet holds as much lead as the swaged
+  bullet holds copper (`bulletsPerScrap` of a 10-unit scrap). The round
+  item is shared, so the cast assembly says what it made
+  (`outputs[1].contents`, read by `AC_Materials.getRecipeUnits`): the
+  copper round's contents with lead in place of copper. The conservation
+  check and the whole-chain random crafting follow lead as a sixth
+  material; a round counted as copper from a lead bullet is refused.
+- **No quality penalty for lead.** The round's record is its *case's*
+  quality (§8); a cast bullet has no record of its own, as a swaged one has
+  none. A lower record for lead would describe nothing the mod stores, and
+  the quality effects are locked (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4), so
+  it would balance nothing either: the same reason rifles carry no penalty
+  (§7).
+- **Rifles keep copper.** The rifle class has no mould; the reason is in
+  `METALLURGY_DESIGN.md` 12.4 and beside `AC_Calibres.CLASSES`.
+- **The press** assembles copper-bullet rounds only: its recipes are the
+  hand steps of `PRESS.steps` (`buildPressRecipes`), and the cast
+  assembly is not one of them. A cast round is assembled by hand.
 
 **Resource pressure of the powder scale.** One bag of fertilizer (8 uses) is
 four mixes, 40 charges: 40 rounds of 9 mm, 13 of 5.56, 10 of .30-30, 8 of
@@ -354,12 +388,12 @@ from:
 
 | Ammo Making level | Recipes it opens | A formed case's quality (worst, typical, best) | Mining one ore takes | Forming a 9mm case takes |
 |---|---|---|---|---|
-| 0 | 11 | 35, 50, 65 | 400 | – |
+| 0 | 13 | 35, 50, 65 | 400 | – |
 | 1 | 5 | 39, 54, 69 | 384 | 80 |
-| 2 | 11 | 43, 58, 73 | 368 | 76 |
-| 3 | 16 | 47, 62, 77 | 352 | 72 |
-| 4 | 11 | 51, 66, 81 | 336 | 68 |
-| 5 | 4 | 55, 70, 85 | 320 | 64 |
+| 2 | 14 | 43, 58, 73 | 368 | 76 |
+| 3 | 22 | 47, 62, 77 | 352 | 72 |
+| 4 | 15 | 51, 66, 81 | 336 | 68 |
+| 5 | 5 | 55, 70, 85 | 320 | 64 |
 | 6 | – | 59, 74, 89 | 304 | 60 |
 | 7 | – | 63, 78, 93 | 288 | 56 |
 | 8 | – | 67, 82, 97 | 272 | 52 |
@@ -741,6 +775,7 @@ What catches what, when a definition or recipe is tampered with:
 | `shared/AC_CaseQuality.lua` | `roll`, `set` / `get`, `onCasesFormed`, `onRoundsAssembled`, `EFFECTS` |
 | `shared/AC_Materials.lua` | appends the component recipes and units; per-recipe `xp`, `requiredLevel`, `effect`, `source`; multi-material conservation |
 | `shared/AC_Recycling.lua` | which components are plain brass, the scrapping recipes by brass content, the recast, `validate` |
+| `shared/AC_Casting.lua` | lead: the junk it is melted from, the moulds, the cast and cast-assembly recipes per castable calibre, their units, `validate` (§6.1) |
 | `shared/AC_Loot.lua` | die-set loot: tier weights, target lists, `buildEntries`, `validate`, `register` |
 | `shared/AC_Compat.lua` | calibre model validation, one completeness line per calibre, gunpowder uses per jar, vanilla ammo boxes, recycling, die-set loot |
 | `scripts/AC_Recipes.txt` | **generated** from `AC_Materials.RECIPES` |
@@ -767,6 +802,7 @@ Every field of a definition has a consumer:
 | `class` | `define` (class defaults), the validator's primer rule |
 | `suffix` | recipe ids, callback names, default item ids |
 | `round`, `case`, `bullet`, `dieSet` | recipes, units, `identify`, compatibility probes, debug kits |
+| `castBullet` (pistol and shotgun classes, from `CLASSES[class].mould`) | `AC_Casting`: the cast and cast-assembly recipes, lead units, `identify` |
 | `ammoType` | reference only: checked against the recorded vanilla ammo types |
 | `primerFamily` | the assembly recipe, units, kits |
 | `cupsPerCase`, `bulletsPerScrap`, `powderUses`, `wads` | recipes, units, kits; `cupsPerCase` also decides which scrapping recipe takes the case |
@@ -781,8 +817,9 @@ Every field of a definition has a consumer:
    class and `DEFAULTS` (`lootTier` among them).
 2. Three items in `AC_Items.txt` (`Case<suffix>`, `Bullet<suffix>`,
    `DieSet<suffix>`, or the explicit ids the definition names), their names
-   in `ItemName.json`.
-3. Four recipe names in `Recipes.json`.
+   in `ItemName.json`; for a pistol or shotgun calibre a fourth,
+   `CastBullet<suffix>`.
+3. Four recipe names in `Recipes.json` (six with a cast bullet).
 4. `lua5.1 tests/write_recipes.lua` (the recipe script and the tables of §2),
    then the suite.
 5. In the tests: the new ids in `MOCK.knownScriptItems`, a row in the pinned
@@ -796,7 +833,8 @@ select, with no further edit.
 ## 12. Out of scope, deliberately
 
 A reloading press object (designed: `docs/RELOADING_PRESS_DESIGN.md`), shell
-variants (buckshot, birdshot, slugs), paper or plastic hulls, lead, deeper
+variants (buckshot, birdshot, slugs), paper or plastic hulls, lead ore and
+cast rifle bullets (§6.1), deeper
 primer or powder chemistry, misfires, failures to fire, jams, firearm
 damage, custom ballistics, any use of round quality (a carrier is designed:
 `docs/AMMO_QUALITY_RUNTIME_DESIGN.md`), spent casings (researched:
@@ -809,7 +847,7 @@ custom UI. What is waiting on what: `docs/AMMUNITION_ROADMAP.md`.
 Everything above is implemented and passes the offline suite. None of it has
 been seen running. To be confirmed in game:
 
-- The 51 manufacturing recipes appear at their stations and in the surface
+- The 67 manufacturing recipes (51, and 16 for lead) appear at their stations and in the surface
   crafting menu with their names (the four recycling recipes:
   `LOOT_AND_RECYCLING.md` 5).
 - One assembly craft yields one round, for each of the nine vanilla rounds.
@@ -831,3 +869,6 @@ been seen running. To be confirmed in game:
   share an icon; the hull looks like a loaded shell.
 - The skill books of §9.2: read at the right levels, the multiplier applied
   to Ammo Making XP, found as loot.
+- Cast bullets (§6.1): the cast assembly makes the same vanilla round, which
+  stacks with factory and copper-bullet rounds and fires as one; the
+  furnace side is `METALLURGY_DESIGN.md` 12.7.

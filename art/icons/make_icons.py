@@ -46,6 +46,9 @@ OLIVE = [(150, 156, 104), (116, 124, 78), (86, 94, 58), (60, 68, 42), (42, 48, 3
 CASE = [(196, 204, 210), (150, 160, 170), (108, 118, 130), (72, 80, 92), (46, 52, 62)]
 CREAM = [(240, 232, 208), (212, 202, 174), (174, 164, 138), (130, 122, 102), (90, 84, 70)]
 WOOD = [(190, 146, 96), (156, 114, 70), (122, 86, 52), (90, 62, 38), (62, 42, 28)]
+# Lead: a dull blue-grey, darker and bluer than zinc or steel.
+LEAD = [(176, 182, 196), (134, 140, 158), (100, 106, 124), (72, 76, 92), (48, 50, 62)]
+IRON = [(150, 150, 150), (112, 112, 114), (82, 82, 86), (58, 58, 62), (38, 38, 42)]
 SOOT = (44, 38, 34)
 HOLE = (52, 38, 24)
 
@@ -243,8 +246,8 @@ def icon_bullet_rifle():
     return row_of(bullet_shape(6, 20, 12), [(-9, -3), (8, -1), (0, 2)])
 
 
-def icon_shot():
-    """A small heap of copper shot."""
+def icon_shot(ramp=COPPER):
+    """A small heap of shot: copper, or lead."""
     image = blank()
     draw = ImageDraw.Draw(image)
     balls = [
@@ -255,11 +258,106 @@ def icon_shot():
         (15, 9),
     ]
     for x, y in balls:
-        draw.ellipse([x - 2, y - 2, x + 2, y + 2], fill=rgba(COPPER[2]))
-        draw.ellipse([x - 2, y - 2, x + 1, y + 1], fill=rgba(COPPER[1]))
-        draw.point((x - 1, y - 1), fill=rgba(COPPER[0]))
-        draw.point((x + 1, y + 2), fill=rgba(COPPER[4]))
-        draw.point((x + 2, y + 1), fill=rgba(COPPER[3]))
+        draw.ellipse([x - 2, y - 2, x + 2, y + 2], fill=rgba(ramp[2]))
+        draw.ellipse([x - 2, y - 2, x + 1, y + 1], fill=rgba(ramp[1]))
+        draw.point((x - 1, y - 1), fill=rgba(ramp[0]))
+        draw.point((x + 1, y + 2), fill=rgba(ramp[4]))
+        draw.point((x + 2, y + 1), fill=rgba(ramp[3]))
+    return outline(image)
+
+
+def icon_lead_shot():
+    """The same heap, cast in lead."""
+    return icon_shot(LEAD)
+
+
+def cast_bullet_shape():
+    """A cast lead bullet: a round nose, and two lube grooves where a swaged bullet has a cannelure."""
+    image = bullet_shape(8, 12, 4, LEAD)
+    draw = ImageDraw.Draw(image)
+    left, right, bottom = 12, 19, 27
+    for row in (bottom - 5, bottom - 2):
+        draw.line([(left, row), (right, row)], fill=rgba(LEAD[4]))
+        draw.line([(left + 1, row - 1), (right - 2, row - 1)], fill=rgba(LEAD[0]))
+    return image
+
+
+def icon_cast_bullet():
+    return row_of(cast_bullet_shape(), [(-9, -6), (9, -4), (0, 2)])
+
+
+# ---------------------------------------------------------------- lead and moulds
+
+def icon_lead_scrap():
+    """Lumps of melted-down lead: two flat puddles and a dripped bead."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    # A wide puddle, cooled flat, its rim catching the light.
+    draw.ellipse([3, 15, 21, 27], fill=rgba(LEAD[2]))
+    draw.ellipse([4, 15, 19, 24], fill=rgba(LEAD[1]))
+    draw.arc([4, 15, 19, 24], 180, 290, fill=rgba(LEAD[0]))
+    draw.ellipse([8, 18, 14, 21], fill=rgba(LEAD[2]))
+    # A thicker lump behind it.
+    draw.ellipse([14, 6, 28, 18], fill=rgba(LEAD[3]))
+    draw.ellipse([15, 6, 26, 15], fill=rgba(LEAD[2]))
+    draw.arc([15, 6, 26, 15], 180, 280, fill=rgba(LEAD[0]))
+    # A bead that dripped off the ladle.
+    draw.ellipse([22, 21, 28, 27], fill=rgba(LEAD[2]))
+    draw.point((24, 22), fill=rgba(LEAD[0]))
+    draw.point((27, 26), fill=rgba(LEAD[4]))
+    speckle(image, 2, LEAD, 37, 0.12)
+    return outline(image)
+
+
+def mould_handles(draw, hinge_x, hinge_y):
+    """Two wooden handles running down-left from the hinge, slightly apart."""
+    for dx, ramp_index in ((0, 1), (4, 2)):
+        x0, y0 = hinge_x + dx, hinge_y
+        draw.line([(x0, y0), (x0 - 5, y0 + 6)], fill=rgba(STEEL[3]), width=2)
+        draw.line([(x0 - 5, y0 + 6), (x0 - 11, y0 + 14)], fill=rgba(WOOD[ramp_index]), width=3)
+        draw.point((x0 - 11, y0 + 14), fill=rgba(WOOD[4]))
+
+
+def mould_block(draw, x0, y0, x1, y1):
+    """The two halves of an iron mould block, closed, seen from the side."""
+    draw.rectangle([x0, y0, x1, y1], fill=rgba(IRON[2]))
+    draw.line([(x0, y0), (x1, y0)], fill=rgba(IRON[0]))
+    draw.line([(x0, y0), (x0, y1)], fill=rgba(IRON[1]))
+    draw.line([(x0, y1), (x1, y1)], fill=rgba(IRON[4]))
+    draw.line([(x1, y0), (x1, y1)], fill=rgba(IRON[3]))
+    # The parting line between the halves.
+    middle = (x0 + x1) // 2
+    draw.line([(middle, y0 + 1), (middle, y1 - 1)], fill=rgba(IRON[4]))
+    # The sprue plate across the top.
+    draw.rectangle([x0 - 1, y0 - 2, x1 + 1, y0 - 1], fill=rgba(STEEL[2]))
+    draw.line([(x0 - 1, y0 - 2), (x1 + 1, y0 - 2)], fill=rgba(STEEL[0]))
+    return middle
+
+
+def icon_bullet_mould():
+    """A single-cavity pistol bullet mould on wooden handles, the cavity open toward the viewer."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    mould_handles(draw, 16, 15)
+    middle = mould_block(draw, 12, 4, 28, 15)
+    # The bullet-shaped cavity, cut across the parting line.
+    draw.rectangle([middle - 2, 8, middle + 2, 13], fill=rgba(HOLE))
+    draw.ellipse([middle - 2, 5, middle + 2, 10], fill=rgba(HOLE))
+    draw.line([(middle - 1, 9), (middle - 1, 12)], fill=rgba(LEAD[1]))
+    return outline(image)
+
+
+def icon_shot_mould():
+    """A gang mould for buckshot: a row of round cavities along the parting line."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    mould_handles(draw, 16, 15)
+    mould_block(draw, 8, 4, 29, 15)
+    for cx in (11, 15, 19, 23, 27):
+        draw.ellipse([cx - 1, 8, cx + 1, 10], fill=rgba(HOLE))
+        draw.point((cx - 1, 8), fill=rgba(LEAD[1]))
+    for cx in (13, 17, 21, 25):
+        draw.ellipse([cx - 1, 11, cx + 1, 13], fill=rgba(HOLE))
     return outline(image)
 
 
@@ -668,6 +766,11 @@ ICONS = [
     ("AmmoMakingBulletPistol", MAIN, "Item_", icon_bullet_pistol),
     ("AmmoMakingBulletRifle", MAIN, "Item_", icon_bullet_rifle),
     ("AmmoMakingShot", MAIN, "Item_", icon_shot),
+    ("AmmoMakingLeadScrap", MAIN, "Item_", icon_lead_scrap),
+    ("AmmoMakingCastBullet", MAIN, "Item_", icon_cast_bullet),
+    ("AmmoMakingLeadShot", MAIN, "Item_", icon_lead_shot),
+    ("AmmoMakingBulletMould", MAIN, "Item_", icon_bullet_mould),
+    ("AmmoMakingShotMould", MAIN, "Item_", icon_shot_mould),
     ("AmmoMakingSample", MAIN, "Item_", icon_sample),
     ("AmmoMakingFieldKit", MAIN, "Item_", icon_field_kit),
     ("AmmoMakingAdvancedKit", MAIN, "Item_", icon_advanced_kit),

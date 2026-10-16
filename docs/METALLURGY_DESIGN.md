@@ -9,7 +9,9 @@ Target: Project Zomboid Build 42.20.4.
 Guiding decision (project owner): **metallurgy extends Build 42's own furnace
 system; it is not a parallel one.** There is no custom furnace object, fuel,
 heat, timer or persistence. The mod contributes three zinc items, four recipes
-attached to vanilla furnace bench tags, and one small Lua module.
+attached to vanilla furnace bench tags, and one small Lua module. Lead, a
+second projectile metal melted from vanilla junk and cast into bullets, is
+§12.
 
 Evidence for every vanilla fact used here is in
 `docs/VANILLA_METALLURGY_RESEARCH.md` (read from the installed game files and
@@ -207,3 +209,136 @@ line: ore smelting at the Primitive Furnace and casting at the Simple Furnace
   ore behaves like copper ore when carried.
 - Clay mold and crude tongs break as with vanilla casting.
 - The compatibility check reports every metallurgy line as OK.
+
+## 12. Lead and cast bullets
+
+Status: **implemented on 2026-10-17, offline-verified only.**
+`media/lua/shared/AC_Casting.lua`; the per-calibre half is in
+`AC_Calibres.lua` (`CLASSES[class].mould`, `calibre.castBullet`). The
+ammunition side (what a cast round is) is `AMMUNITION_DESIGN.md` 6.1.
+
+A second projectile metal, cheaper than copper because it needs no mine:
+melted from vanilla junk, cast in a mould over the same furnaces.
+
+```text
+Base.LeadPipe (1)  ──Melt Lead from Lead Pipe──►  2 ┐
+Base.JigLure  (5)  ──Melt Lead from Jig Lures──►  1 ┤ AmmoMaking.LeadScrap (10 lead)
+                     Primitive Furnace, 1 charcoal, │
+                     kept crucible and tongs, 0 XP  │
+                                                    ▼
+                     Cast <calibre> Lead Bullets: 1 scrap, 1 charcoal,
+                     kept crucible, tongs and the class's mould
+                                                    ▼
+             AmmoMaking.CastBullet<suffix> ×bulletsPerScrap
+             (12 gauge: AmmoMaking.LeadShotCharge12Gauge)
+                                                    ▼
+             Assemble <calibre> Round (Cast Bullet): the copper assembly
+             with its bullet line swapped ──► the same vanilla round
+```
+
+### 12.1 What vanilla 42.20.4 has (FILE)
+
+Searched in `scripts/generated/items/`, `recipes/`, `entities/`, the
+translations and the loot tables:
+
+| Candidate | In 42.20.4 | Used |
+|---|---|---|
+| `Base.LeadPipe` "Lead Pipe" (`items/weapon.txt`) | `base:weapon`, Weight 1.5, `base:hasmetal`; no recipe consumes it. Loot (live lists, `tests/vanilla_snapshot.lua`): `PlumbingSupplies` (20), `MeleeWeapons`, `_Mid`, `_Late`, `DrugShackWeapons` (8 each), `DerelictHouseCrime` (0.1), and the junk tables of bins, closets and derelict houses; carried by zombies (`shared/Definitions/AttachedWeaponDefinitions.lua`); foraged as junk (`Foraging/Categories/JunkWeapons.lua`) | yes |
+| `Base.JigLure` "Jig Lure" (`items/normal.txt`) | `base:normal`, Weight 0.1, a fishing lure; no recipe consumes it. Loot: `CrateFishing`, `SurvivalGear` (10 each), `FishingStoreGear` (6), `CrateRandomJunk` (1) | yes |
+| Car batteries `Base.CarBattery1` to `3` | `base:drainable`, `UseDelta = 0.00001`, a vehicle part | no: a recipe line counts uses of a drainable, so `item 1` would take one use of charge, not the battery; and it is a scarce vehicle part |
+| Lead ingot, scrap or ore; fishing sinker; wheel weight | none (no item, no tag; `grep -i lead` over the items finds only the pipe) | — |
+| Bullet mould | none; vanilla's molds are ingot, bar, sheet, vise and anvil molds | the mod's own |
+
+### 12.2 Recipes
+
+All generated into `AC_Recipes.txt` from `AC_Casting.buildRecipes()`,
+`module Base`, appended to `AC_Materials.RECIPES` after the calibre
+recipes.
+
+| Recipe | Station | Consumed | Kept | Output | Level | XP | time |
+|---|---|---|---|---|---|---|---|
+| `AmmoMaking_MeltLeadFromLeadPipe` | `PrimitiveFurnace` | 1 `Base.LeadPipe` (`mode:destroy flags[AllowDestroyedItem]`), 1 charcoal | crucible, tongs | 2 `AmmoMaking.LeadScrap` | 0 | 0 | 200 |
+| `AmmoMaking_MeltLeadFromJigLures` | `PrimitiveFurnace` | 5 `Base.JigLure`, 1 charcoal | crucible, tongs | 1 `AmmoMaking.LeadScrap` | 0 | 0 | 200 |
+| `AmmoMaking_ForgeBulletMouldPistol`, `...Shotgun` | `Forge` | 2 `Base.IronBarQuarter`, 2 charcoal | ball-peen hammer, pliers or tongs, whetstone or file | 1 mould | 2 / 3 | 0 | 300 |
+| `AmmoMaking_CastBullets<S>` (six) | `PrimitiveFurnace` | 1 `AmmoMaking.LeadScrap`, 1 charcoal | crucible, tongs, the class's mould | `bulletsPerScrap` cast bullets | the swage's | the swage's | the swage's |
+| `AmmoMaking_AssembleCastRound<S>` (six) | `AnySurfaceCraft` | the copper assembly's lines, the cast bullet for the copper one | die set | 1 vanilla round | the assembly's | the assembly's | the assembly's |
+
+Templates: the melt is vanilla's `ExtractIronFromSmallItem` (kept empty
+crucible and tongs, one charcoal, the junk line `mode:destroy
+flags[...AllowDestroyedItem]`, `PrimitiveFurnace`); the mould is the die
+set's forging line (`Forge_Small_Metalworking_Punch_Set`) with iron for
+steel; the cast is the melt with a mould kept as vanilla keeps its ingot
+mold. Category `Blacksmithing` for the furnace recipes, so the
+`base:breakonsmithing` of clay molds and crude tongs applies as in vanilla.
+
+Items: `AmmoMaking.LeadScrap` copies `Base.CopperScrap` (0.5,
+`base:hasmetal`); the moulds are `Tool`s of 0.8 (two bar quarters weigh
+1.0); each cast bullet weighs its copper bullet. Own icons; world models
+borrowed (`docs/PLACEHOLDER_ASSETS.md`).
+
+### 12.3 Why these numbers
+
+- **Same metal per bullet.** A lead scrap holds 10 units, a copper scrap's
+  amount, and casts `bulletsPerScrap` bullets: the units, the bullet
+  counts and the per-100 tables are the copper ones with lead for copper.
+  `validate()` refuses a lead scrap of another size.
+- **Melting by weight, with a loss.** 1.5 kg of pipe gives 1.0 kg of
+  scrap; five lures (0.5 kg, lead heads on steel hooks) one 0.5 kg scrap.
+  The tests check every source against the installed game's weights.
+- **Melting teaches nothing (0 XP).** The junk is loot; paying for melting
+  it would pay for searching. The same rule as recycling.
+- **Casting pays what swaging pays.** Same level, XP and time per craft
+  (`AC_Casting.STEP_OF`), and the cast round's assembly is the copper
+  round's. A round earns the same XP with either bullet, so lead opens no
+  faster climb; the career numbers of `AMMUNITION_DESIGN.md` 9.1 hold.
+- **A mould pays nothing when forged**, as a kit pays per assay: iron bar
+  quarters are cheap, and a free XP recipe would be a grind. Its level is
+  that of the first bullet it casts (pistol 2, buckshot 3).
+- **It does not undercut the mine.** Lead replaces only the bullet. The
+  brass of the case and primer, and so all the zinc, which only an assayed
+  deposit gives, is unchanged: a hundred cast 9mm rounds still take 6
+  brass ingots (1.8 zinc ore), and save the 5 copper ore of the bullets;
+  for the heavy .45 and .44 bullets the saving is 10 copper ore a hundred.
+  The tests check that a cast round takes all of its brass and no copper.
+  What limits lead is supply, what the world holds: one pipe is four 9mm
+  bullets, a hundred rounds 25 pipes or 250 lures (50 pipes for .45);
+  one copper ore is 20 bullets.
+- **One charcoal per craft** at a furnace that has no fuel of its own
+  (`VANILLA_METALLURGY_RESEARCH.md` 3): the heat a melt or a pour costs.
+- **No way back.** No recipe turns a cast bullet or a round into lead
+  (vanilla's Gather Gunpowder returns powder only), so lead recycling has
+  nothing to recover: `AC_Recycling.getSources()` is unchanged.
+
+### 12.4 Rifles keep copper
+
+No mould for the rifle class (`AC_Calibres.CLASSES`): a plain cast bullet
+strips in the rifling and leads the bore at the 2,200 to 3,000 ft/s of the
+5.56, .30-30 and .308; the fixes (gas check, hardened alloy, jacket) are
+another item and a chemistry the mod does not model. Pistol rounds and
+buckshot stay under about 1,400 ft/s, where plain lead was the usual load.
+The validator refuses a cast bullet on a class without a mould.
+
+### 12.5 Lead geology: not built
+
+`AC_Deposits.METALS` is `{ copper, zinc }`, iterated by sampling and the
+assay results, and `AC_Deposits.getConcentration` and `AC_Geology`
+branch per metal (`getCopperConcentration`, `getZincConcentration`, one
+threshold each). A third ore would change what every sample, assay and
+deposit tile reports, which is the system seen working in game. Lead comes
+from vanilla junk instead; a lead ore could be added later as a deposit
+generator of its own without touching the two that exist.
+
+### 12.6 Loot
+
+The two moulds are also found (`LOOT_AND_RECYCLING.md` 1.5), scaled by the
+die-set loot option. Lead scrap and cast bullets are never loot.
+
+### 12.7 REQUIRES FUTURE IN-GAME VERIFICATION
+
+- The melts and casts appear at a Primitive Furnace (and the higher
+  furnaces), the moulds at a Forge; each consumes and keeps as written.
+- A broken lead pipe is accepted (`AllowDestroyedItem` with
+  `mode:destroy`, as vanilla's junk melt).
+- The cast round is the vanilla round and stacks with factory rounds.
+- The borrowed world models (`SilverScrap`, `Pliers`, `SteelSlug`) look
+  acceptable; the mould and lead icons read in the inventory.

@@ -2,7 +2,8 @@
 -- Project Zomboid Build 42.20
 --
 -- Metallurgy (ore to brass), case stock (brass to case
--- cups), the ammunition components of AC_Calibres and the
+-- cups), the ammunition components of AC_Calibres, the
+-- lead and cast bullets of AC_Casting and the
 -- brass recycling of AC_Recycling extend
 -- the vanilla stations; they are not systems of their own.
 -- The recipes are ordinary craftRecipe blocks
@@ -37,6 +38,7 @@
 -- calibre definitions, which must be loaded first.
 require "AC_Features"
 require "AC_Calibres"
+require "AC_Casting"
 require "AC_Recycling"
 
 AC_Materials = AC_Materials or {}
@@ -181,6 +183,19 @@ for itemType,
     entry
 in pairs(
     AC_Calibres.buildUnits()
+)
+do
+
+    AC_Materials.UNITS[itemType] = entry
+end
+
+
+-- Lead: the scrap melted from vanilla junk and the cast
+-- bullets (AC_Casting).
+for itemType,
+    entry
+in pairs(
+    AC_Casting.buildUnits()
 )
 do
 
@@ -658,6 +673,23 @@ do
 end
 
 
+-- Lead: melted from vanilla junk (no XP), the bullet
+-- moulds, and per pistol calibre and the shell the cast
+-- bullet and its assembly (docs/METALLURGY_DESIGN.md 12).
+for _,
+    recipe
+in ipairs(
+    AC_Casting.buildRecipes()
+)
+do
+
+    table.insert(
+        AC_Materials.RECIPES,
+        recipe
+    )
+end
+
+
 -- Brass recycling: components to brass scrap, with a loss
 -- and no XP, and brass scrap back to an ingot.
 for _,
@@ -826,6 +858,11 @@ end
 -- An input that accepts several items counts the
 -- alternative with the FEWEST units: the invariant
 -- must hold for the cheapest way to pay.
+--
+-- An output may say what it holds (output.contents): a
+-- vanilla round assembled around a cast lead bullet is
+-- the same item as one with a copper bullet, so the
+-- recipe, not the item, knows which metal is in it.
 ------------------------------------------------
 
 local function addUnits(
@@ -953,6 +990,15 @@ function AC_Materials.getRecipeUnits(
             AC_Materials.UNITS[output.item]
 
 
+        if output.contents then
+
+            entry = {
+                contents = output.contents,
+                uses = entry and entry.uses,
+            }
+        end
+
+
         if entry then
 
             local perItem = 1
@@ -1023,6 +1069,11 @@ end
 -- metal and what is locked into components and rounds,
 -- so the same inventory gives the same ledger before and
 -- after any craft that is not marked as a loss.
+--
+-- A vanilla round counts with its copper recipe's
+-- contents: an item does not say which bullet is in it,
+-- so a round with a cast lead bullet shows as copper here
+-- (the recipes, and the tests, count it as lead).
 --
 -- For the -debug material ledger; nothing in normal play
 -- calls it.

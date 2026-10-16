@@ -162,6 +162,8 @@ local RAW_INPUTS = {
     "Base.MagnifyingGlass", "Base.Loupe", "Base.Tweezers", "Base.Tweezers_Forged", "Base.SheetPaper2",
     "Base.Calculator", "Base.ElectronicsScrap", "Base.ElectricWire", "Base.Amplifier", "Base.RadioReceiver", "Base.LightBulb",
     "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger", "Base.Speaker",
+    -- Lead melted from vanilla junk, and the iron of the bullet moulds.
+    "Base.LeadPipe", "Base.JigLure", "Base.IronBarQuarter",
 }
 
 ------------------------------------------------

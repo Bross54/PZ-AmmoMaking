@@ -35,6 +35,8 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Component loot (powder, primers, brass) | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 4 |
 | Brass recycling | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 2 |
 | Copper recycling | not built, on purpose | | `LOOT_AND_RECYCLING.md` 2.5 |
+| Lead and cast bullets (pistol calibres, buckshot; lead melted from vanilla junk; two moulds, forged or found) | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `METALLURGY_DESIGN.md` 12, `AMMUNITION_DESIGN.md` 6.1 |
+| Lead ore and geology | not built, on purpose: it would change the sampling and assays seen in game | | `METALLURGY_DESIGN.md` 12.5 |
 | Ammo boxes | nothing to build: vanilla boxes handloaded rounds | | `LOOT_AND_RECYCLING.md` 3 |
 | Inspection: case, round, magazine, firearm | IMPLEMENTED | | `AC_AmmoInspection.lua` |
 | Save data: schema, repairs, versions, upgrade runner | IMPLEMENTED | | `DEVELOPMENT.md`, `AC_SaveData.lua` |
@@ -50,9 +52,10 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Game-update check | IMPLEMENTED | | `tools/pz_compat.py` |
 | Release packaging | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
 
-Numbers: the main mod has 46 items, 58 recipes (51 manufacturing, 3 for
-the geology equipment, 3 scrapping, 1 recast) and 51 loot entries (22 die
-sets, 9 components, 20 skill books) in 10 vanilla lists. The press add-on has 27 recipes;
+Numbers: the main mod has 55 items, 74 recipes (67 manufacturing, 16 of
+them for lead; 3 for the geology equipment, 3 scrapping, 1 recast) and 55
+loot entries (22 die sets, 9 components, 20 skill books, 4 bullet moulds)
+in 10 vanilla lists. The press add-on has 27 recipes;
 the spent-cases add-on 9 items and 3 recipes.
 
 ## 2. What the research settled
@@ -148,7 +151,9 @@ Nothing here is needed for a first release.
 - Copper recycling: low value, see `LOOT_AND_RECYCLING.md` 2.5.
 - More calibres: every vanilla round with a firearm is covered. A new one
   is a `define{}` entry and three items.
-- Lead and its geology; jacketed and cast bullets; shell variants.
+- Lead ore and its geology (lead comes from vanilla junk instead,
+  `METALLURGY_DESIGN.md` 12.5); cast rifle bullets (gas checks, hardened
+  alloy); a press version of the cast assembly; shell variants.
 - Primer and powder chemistry beyond the present stand-ins.
 - Better presses as further bench tags; batch recipes.
 - Component depth (match-grade cases, case trimming, tooling wear).

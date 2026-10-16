@@ -36,6 +36,7 @@
 require "AC_Features"
 require "AC_Visuals"
 require "AC_Calibres"
+require "AC_Casting"
 require "AC_Loot"
 require "AC_Recycling"
 require "AC_SkillBooks"
@@ -194,6 +195,42 @@ do
         AC_Compat.REQUIRED_ITEMS,
         itemType
     )
+end
+
+
+-- Lead and cast bullets: the vanilla junk that is melted,
+-- the iron the moulds are forged from, and the mod's lead
+-- items, from their own model.
+for _,
+    itemType
+in ipairs(
+    AC_Casting.getItems()
+)
+do
+
+    local known = false
+
+
+    for _,
+        existing
+    in ipairs(
+        AC_Compat.REQUIRED_ITEMS
+    )
+    do
+
+        if existing == itemType then
+            known = true
+        end
+    end
+
+
+    if not known then
+
+        table.insert(
+            AC_Compat.REQUIRED_ITEMS,
+            itemType
+        )
+    end
 end
 
 
@@ -1879,6 +1916,186 @@ end
 
 
 ------------------------------------------------
+-- Lead casting (AC_Casting): the model is sound, and the
+-- bullet moulds went into the loot lists (AC_Loot
+-- .MOULDS). Its recipes and items are probed with every
+-- other recipe and item (checkMetallurgyRecipes,
+-- REQUIRED_ITEMS). A mould list that is gone leaves the
+-- moulds to the forge, which still works.
+------------------------------------------------
+
+local function checkMouldLoot(
+    results
+)
+
+    if type(AC_Loot) ~= "table" then
+        return
+    end
+
+
+    local problems =
+        safe(AC_Loot.validateMoulds) or { "the bullet mould loot table could not be checked" }
+
+
+    for _,
+        problem
+    in ipairs(
+        problems
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "no bullet mould is added to any loot list"
+        )
+    end
+
+
+    if #problems > 0 then
+        return
+    end
+
+
+    local moulds =
+        AC_Loot.lastMouldSummary
+
+
+    if type(moulds) ~= "table"
+        or moulds.unavailable
+    then
+
+        addResult(
+            results,
+            "WARNING",
+            "bullet mould loot was not registered",
+            "the loot tables were not there when they were merged; moulds can only be forged"
+        )
+
+
+        return
+    end
+
+
+    local clean = true
+
+
+    for _,
+        bucket
+    in ipairs(
+        {
+            { "missing", "does not exist on this build" },
+            { "empty", "has been emptied by vanilla" },
+            { "unreferenced", "is used by no container" },
+        }
+    )
+    do
+
+        for _,
+            name
+        in ipairs(
+            moulds[bucket[1]] or {}
+        )
+        do
+
+            clean = false
+
+
+            addResult(
+                results,
+                "WARNING",
+                "bullet mould loot list " .. tostring(name) .. " " .. bucket[2],
+                "the moulds will not be found there"
+            )
+        end
+    end
+
+
+    if clean then
+
+        addResult(
+            results,
+            "OK",
+            "bullet mould loot (" .. (moulds.added + moulds.present) .. " entries)"
+        )
+    end
+end
+
+local function checkCasting(
+    results
+)
+
+    if type(AC_Casting) ~= "table" then
+
+        addResult(
+            results,
+            "WARNING",
+            "lead casting",
+            "AC_Casting is not loaded"
+        )
+
+
+        return
+    end
+
+
+    local problems,
+          err =
+        safe(
+            AC_Casting.validate
+        )
+
+
+    if err then
+
+        addResult(
+            results,
+            "UNVERIFIED",
+            "lead casting model",
+            tostring(err)
+        )
+
+
+        return
+    end
+
+
+    if #problems == 0 then
+
+        addResult(
+            results,
+            "OK",
+            "lead casting ("
+            .. #AC_Casting.getCastable()
+            .. " castable calibres, "
+            .. #AC_Casting.getMoulds()
+            .. " moulds, no XP for melting)"
+        )
+    end
+
+
+    for _,
+        problem
+    in ipairs(
+        problems
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "cast bullets may create lead or award XP"
+        )
+    end
+
+
+    checkMouldLoot(results)
+end
+
+
+------------------------------------------------
 -- Die set loot (AC_Loot): the model is sound, and the
 -- registration that ran when the world loaded found
 -- every list it targets, in use.
@@ -2728,6 +2945,8 @@ function AC_Compat.run(
     checkBoxes(results)
 
     checkRecycling(results)
+
+    checkCasting(results)
 
     checkLoot(results)
 

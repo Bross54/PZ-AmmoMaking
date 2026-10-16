@@ -312,6 +312,23 @@ MUTANTS = [
     (SHARED + "AC_Loot.lua", "    volumeWeight = { 1.0, 0.8, 0.6, 0.4, 0.2 },", "    volumeWeight = { 0.2, 0.4, 0.6, 0.8, 1.0 },", "the last volume is the commonest"),
     (SHARED + "AC_Compat.lua", "    elseif safe(AC_SkillBooks.isRegistered) == true then", "    elseif true then", "the check reports the books readable without the entry"),
 
+    # ---- lead and cast bullets
+    (SHARED + "AC_Casting.lua", "    recoverXp = 0,", "    recoverXp = 1,", "melting junk for lead pays XP"),
+    (SHARED + "AC_Casting.lua", "    scrapUnits = 10,", "    scrapUnits = 20,", "a lead scrap holds two copper scraps' metal"),
+    (SHARED + "AC_Casting.lua", "        count = 1,\n\n        scrap = 2,", "        count = 1,\n\n        scrap = 4,", "a lead pipe melts to more lead than it weighs"),
+    (SHARED + "AC_Casting.lua", "        count = 5,\n\n        scrap = 1,", "        count = 1,\n\n        scrap = 1,", "one jig lure melts to a whole lead scrap"),
+    (SHARED + "AC_Casting.lua", "    mouldXp = 0,", "    mouldXp = 10,", "forging a mould pays XP"),
+    (SHARED + "AC_Casting.lua", "        xp = calibre.xp.bullet,", "        xp = calibre.xp.assemble,", "a cast pays more than a swage"),
+    (SHARED + "AC_Casting.lua", "        requiredLevel = calibre.levels.bullet,", "        requiredLevel = 1,", "cast bullets open before swaged ones"),
+    (SHARED + "AC_Casting.lua", "    contents.copper = nil\n", "", "a cast round counts the copper it never had"),
+    (SHARED + "AC_Casting.lua", "                { count = input.count, items = { calibre.castBullet } }", "                { count = input.count, items = { calibre.bullet } }", "the cast assembly takes the copper bullet"),
+    (SHARED + "AC_Casting.lua", "            { count = 1, items = { class.mould }, keep = true },", "            { count = 1, items = { class.mould } },", "the cast consumes the mould"),
+    (SHARED + "AC_Calibres.lua", "    if class.mould then\n\n        calibre.castBullet =", "    if true then\n\n        calibre.castBullet =", "rifles cast lead bullets"),
+    (SHARED + "AC_Materials.lua", "        if output.contents then\n", "        if false then\n", "the cast assembly is counted as a copper round"),
+    (SHARED + "AC_Loot.lua", "AC_Loot.MOULDS = {\n\n    weight = 0.5,", "AC_Loot.MOULDS = {\n\n    weight = 1.0,", "bullet moulds twice as common"),
+    (SHARED + "AC_Loot.lua", "        { list = \"GarageFirearms\", scale = 0.5, classes = { \"pistol\" },", "        { list = \"GarageFirearms\", scale = 0.5, classes = { \"shotgun\" },", "the buckshot mould in the handgun locker"),
+    (SHARED + "AC_Loot.lua", "    castBullet = true,\n\n", "", "a cast bullet may be component loot"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]

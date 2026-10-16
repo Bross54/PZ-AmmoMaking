@@ -74,6 +74,11 @@ drop that entry from the script so `--check` does not overwrite it.
 | `Item_AmmoMakingBulletPistol` | AmmoMaking | the pistol and magnum copper bullets |
 | `Item_AmmoMakingBulletRifle` | AmmoMaking | the rifle copper bullets |
 | `Item_AmmoMakingShot` | AmmoMaking | 12 Gauge Copper Shot Charge |
+| `Item_AmmoMakingLeadScrap` | AmmoMaking | Lead Scrap |
+| `Item_AmmoMakingCastBullet` | AmmoMaking | the pistol and magnum cast lead bullets |
+| `Item_AmmoMakingLeadShot` | AmmoMaking | 12 Gauge Lead Shot Charge |
+| `Item_AmmoMakingBulletMould` | AmmoMaking | Pistol Bullet Mould |
+| `Item_AmmoMakingShotMould` | AmmoMaking | Buckshot Mould |
 | `Item_AmmoMakingSample` | AmmoMaking | Geological Sample |
 | `Item_AmmoMakingFieldKit` | AmmoMaking | Field Assay Kit |
 | `Item_AmmoMakingAdvancedKit` | AmmoMaking | Advanced Field Assay Kit |

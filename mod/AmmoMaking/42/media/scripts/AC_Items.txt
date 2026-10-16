@@ -433,6 +433,113 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    /* Lead (docs/METALLURGY_DESIGN.md, section 12). Vanilla 42.20.4 has no
+       lead item but the Lead Pipe and the Jig Lure, which are melted into
+       LeadScrap (a copy of Base.CopperScrap: 0.5, base:hasmetal). One bullet
+       mould per class that casts, forged like a die set (0.8, Tool). A cast
+       bullet weighs what the copper bullet of its calibre weighs; rifles have
+       none. Icons are the mod's own; the models on the ground are vanilla's,
+       borrowed. */
+
+    item LeadScrap
+    {
+        DisplayName = Lead Scrap,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = AmmoMakingLeadScrap,
+        WorldStaticModel = SilverScrap,
+        Tags = base:hasmetal,
+    }
+
+    item BulletMouldPistol
+    {
+        DisplayName = Pistol Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.8,
+        Icon = AmmoMakingBulletMould,
+        WorldStaticModel = Pliers,
+        Tags = base:hasmetal,
+    }
+
+    item BulletMouldShotgun
+    {
+        DisplayName = Buckshot Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.8,
+        Icon = AmmoMakingShotMould,
+        WorldStaticModel = Pliers,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet9mm
+    {
+        DisplayName = 9mm Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = AmmoMakingCastBullet,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet38Special
+    {
+        DisplayName = .38 Special Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.008,
+        Icon = AmmoMakingCastBullet,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet45ACP
+    {
+        DisplayName = .45 ACP Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.016,
+        Icon = AmmoMakingCastBullet,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet357Magnum
+    {
+        DisplayName = .357 Magnum Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = AmmoMakingCastBullet,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet44Magnum
+    {
+        DisplayName = .44 Magnum Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.016,
+        Icon = AmmoMakingCastBullet,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item LeadShotCharge12Gauge
+    {
+        DisplayName = 12 Gauge Lead Shot Charge,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.03,
+        Icon = AmmoMakingLeadShot,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
     item GeologicalSample
     {
         DisplayName = Geological Sample,

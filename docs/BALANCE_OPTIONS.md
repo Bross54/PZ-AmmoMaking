@@ -19,7 +19,7 @@ Engine facts are marked **JAR** (`javap` of the 42.20.4
 | Option (sandbox name) | Range | Default | Applied by | What it scales |
 |---|---|---|---|---|
 | `AmmoMaking.DepositReserveMultiplier` | 0.5 to 3 | 1 | the mod (`AC_Deposits`) | ore units per worked copper or zinc tile |
-| `AmmoMaking.DieSetLootMultiplier` | 0 to 2 | 1 | the mod (`AC_Loot`) | the loot weight of every die set; 0 takes them out of loot |
+| `AmmoMaking.DieSetLootMultiplier` | 0 to 2 | 1 | the mod (`AC_Loot`) | the loot weight of every die set and bullet mould; 0 takes them out of loot |
 | `AmmoMaking.ComponentLootMultiplier` | 0 to 2 | 1 | the mod (`AC_Loot`) | the loot weight of the gunpowder, loose primers, brass scrap and small brass sheets the mod adds; 0 takes them out |
 | `MultiplierConfig.AmmoMaking` | 0 to 1000 | 1 | the engine | Ammo Making XP, when vanilla's global XP multiplier is switched off |
 
@@ -130,6 +130,11 @@ with the weights scaled, not by multiplying the default's result. Above it
 die sets would be ordinary finds in the rooms that name the lists, and
 forging them (the main path) would stop mattering. The sandbox's own
 tool-loot setting scales die sets on top (they are `Tool` loot).
+
+The bullet moulds of lead casting (`LOOT_AND_RECYCLING.md` 1.5) take the
+same option: they are tools found beside the die sets. Their fullest room
+of twelve containers holds 0.12 moulds at the default, 0.24 at x2
+(`tests/suite_casting.lua`).
 
 Components at x2 stay under 4 % per roll, under 2 % of their list's weight
 and under 16 % of the containers filled from the list. Brass scrap is ten

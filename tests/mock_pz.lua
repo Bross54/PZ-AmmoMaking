@@ -459,6 +459,13 @@ MOCK.knownScriptItems = {
     ["Base.Matches"] = true,
     ["Base.Matchbox"] = true,
     ["Base.SteelBarQuarter"] = true,
+    -- Lead and cast bullets (AC_Casting): the vanilla junk melted for lead
+    -- and the iron the moulds are forged from (items/weapon.txt,
+    -- items/normal.txt of 42.20.4), and the mod's own lead items.
+    ["Base.LeadPipe"] = true, ["Base.JigLure"] = true, ["Base.IronBarQuarter"] = true,
+    ["AmmoMaking.LeadScrap"] = true, ["AmmoMaking.BulletMouldPistol"] = true, ["AmmoMaking.BulletMouldShotgun"] = true,
+    ["AmmoMaking.CastBullet9mm"] = true, ["AmmoMaking.CastBullet38Special"] = true, ["AmmoMaking.CastBullet45ACP"] = true,
+    ["AmmoMaking.CastBullet357Magnum"] = true, ["AmmoMaking.CastBullet44Magnum"] = true, ["AmmoMaking.LeadShotCharge12Gauge"] = true,
     ["Base.MortarPestle"] = true,
     ["Base.Hammer"] = true,
 }
@@ -1171,7 +1178,7 @@ end
 -- mocked instead of loaded).
 MOCK.MOD_FILES = {
     "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Balance",
-    "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
+    "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Casting", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
     "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SkillBooks", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
     "shared/AC_WorldData",
@@ -1212,6 +1219,7 @@ function MOCK.resetLuaState()
     AC_Mining = nil
     AC_Materials = nil
     AC_Calibres = nil
+    AC_Casting = nil
     AC_Features = nil
     AC_Visuals = nil
     AC_SpentCases = nil

@@ -62,6 +62,16 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
   Own icons; the Reloading books' model. No recipe magazines: a learned
   recipe still needs its level, and an auto-learn line cannot name a
   skill registered from Lua (`docs/AMMUNITION_DESIGN.md` 9.2).
+- **Lead and cast bullets** (`docs/METALLURGY_DESIGN.md` 12): lead is
+  melted at any furnace from vanilla's Lead Pipe (two lead scrap) and Jig
+  Lures (one from five), with no XP; a pistol bullet mould and a buckshot
+  mould are forged from iron bar quarters or found beside the die sets;
+  cast bullets and lead shot for the five pistol calibres and the shell
+  are cast at a Primitive Furnace and assembled into the same vanilla
+  rounds, at the copper recipes' levels, XP and times. Rifles keep
+  copper. Lead replaces only the bullet's copper; the brass, and so the
+  zinc, still comes from the mine. 16 recipes, 9 items with icons of
+  their own; no lead ore (geology is unchanged).
 - **Balance options for server owners** (sandbox page *Ammo Making*):
   ore per deposit tile (x0.5 to x3), die sets as loot (x0 to x2),
   reloading stock as loot (x0 to x2) and an Ammo Making XP multiplier

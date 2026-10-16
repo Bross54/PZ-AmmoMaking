@@ -438,6 +438,7 @@ Base.BrassIngot
 Empty 9mm Case  (its quality is rolled here)
 
 Base.CopperScrap ── Swage 9mm Copper Bullets ──► 2 bullets
+  (or: Lead Scrap ── Cast 9mm Lead Bullets, Primitive Furnace, pistol bullet mould ──► 2 cast bullets)
 2 charcoal + 2 uses of fertilizer ── Mix Gunpowder (mortar and pestle) ──► 1 jar of vanilla Base.GunPowder (10 charges)
 
 case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bullets9mm
@@ -446,7 +447,7 @@ case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bul
 - **Calibres**: all five vanilla pistol calibres (9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum), all three vanilla rifle calibres (5.56, .30-30, .308) and the vanilla 12 gauge shell; table below. A calibre is one data entry; no code names one, and pistol rounds, rifle rounds and the shell share one model. Each has its own case, bullet and die set, and nothing of one calibre fits another.
 - **12 gauge shells**: a brass hull drawn from three case cups, a charge of copper shot swaged from one copper scrap, a large pistol primer, three charges of gunpowder and a wad of ripped sheet or cotton, assembled into the vanilla `Base.ShotgunShells`. Vanilla has a single shell and puts the nine pellets on the gun, so there are no buckshot or slug variants.
 - **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is designed as the faster tier above it and will take the same die sets (`docs/RELOADING_PRESS_DESIGN.md`); its recipes, a tile sheet with placeholder art and its station script are prepared and switched off, and none of it is in the mod yet.
-- **Bullets are copper**: vanilla has no lead, and copper is already mined.
+- **Bullets are copper, or cast lead**: copper is mined and swaged with the die set. Vanilla has no lead item except the **Lead Pipe** and the **Jig Lure**: melt them at any furnace (*Melt Lead from Lead Pipe*, two lead scrap; *Melt Lead from Jig Lures*, one from five), forge a **bullet mould** (one for pistols, one for buckshot, from two iron bar quarters) or find one, and cast bullets at the furnace. *Assemble 9mm Round (Cast Bullet)* makes the same vanilla round with the same XP. Lead saves the bullet's copper, never the brass, so zinc still comes from the mine. Rifle rounds keep copper: plain lead does not hold up at rifle speeds. Melting gives no XP; nothing turns a bullet back into lead.
 - **Primers** come in four families (small and large pistol, small and large rifle), all made the same way from a small brass sheet and toy cap-gun caps or match heads. A large primer holds twice the material of a small one; a rifle primer takes half as much priming charge again and is never interchangeable with a pistol primer. **Gunpowder** is charcoal and fertilizer. Vanilla has no sulfur or nitrate item and none is invented.
 - **Case quality**: 1–100, rolled when a case is formed from the maker's Ammo Making level with a random spread, stored on the case and passed on to the assembled round. It never changes how much material a recipe uses. Nothing reads it in combat yet.
 - **Inspection**: right-click an empty case, or a loose round you loaded yourself, and choose *Inspect Ammunition* to see its calibre and case quality (a label from level 1, the number from level 5). Factory rounds have nothing to inspect. The record stays with the loose round: a magazine or firearm keeps only a count.
@@ -899,6 +900,7 @@ PZ-AmmoMaking
                         ├── AC_Balance.lua
                         ├── AC_Calibres.lua
                         ├── AC_CaseQuality.lua
+                        ├── AC_Casting.lua
                         ├── AC_Compat.lua
                         ├── AC_Deposits.lua
                         ├── AC_Features.lua

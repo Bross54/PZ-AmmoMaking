@@ -64,6 +64,7 @@ never move an item into that list.
 | `shared/AC_SpentCases.lua` | shared | Feature `spentCases` (add-on `AmmoMakingSpentCases`): which case a round leaves, the recovery roll, the adapters by firearm family (at the shot, at the rack, at the reload), the one wrapped vanilla function and the shot listener. Installs at `OnGameStart` only when the feature is on |
 | `shared/AC_QualityCarrier.lua` | shared | Feature `qualityTracking` (sandbox option): the tally record in the ModData of magazines and firearms, kept in step by observing vanilla's counts around seven wrapped reload functions and the shot (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9) |
 | `shared/AC_QualityEffects.lua` | shared | Feature `qualityEffects`, **locked off**: a linear extra jam chance from a load's quality, through vanilla's own jam state. Returns at once while the feature is disabled |
+| `shared/AC_Casting.lua` | shared | Lead and cast bullets (`METALLURGY_DESIGN.md` 12): the vanilla junk lead is melted from (`SOURCES`), the bullet moulds of the classes that cast, the cast and cast-assembly recipes of each castable calibre, their units (`buildUnits`), `getItems` for the compatibility check, and `validate()` (melting pays nothing, a lead scrap holds a copper scrap's units, every mould casts). Names no calibre. Data and arithmetic only |
 | `shared/AC_Recycling.lua` | shared | Brass recycling: the sources of brass (`getSources()`: unused brass, and spent cases at a quarter when that feature is on), what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing, a dirtier source never returns more). Data and arithmetic only |
 | `shared/AC_Loot.lua` | shared | Die sets as rare loot and a little component loot (`COMPONENTS`: gunpowder, primers, brass scrap, small brass sheets): weights, target lists, `buildEntries`, `buildComponentEntries`, the validators, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists in one walk, and the `OnLoadedMapZones` handler that sets the entries it added (`owned`) to the save's loot multipliers and, only if a weight changed, has the engine read the tables again (`ItemPickerJava.Parse()`) |
 | `shared/AC_QualityTally.lua` | shared | The quality tally of loaded ammunition as pure functions (`repair`, `reconcile`, `split`, `merge`, `consume`, `unload`). Arithmetic only: it stores nothing and wraps nothing. Its one caller is `AC_QualityCarrier` (`AMMO_QUALITY_RUNTIME_DESIGN.md` 7, 8) |
@@ -1302,9 +1303,13 @@ files, every Lua file and the installed game's item scripts.
 | Cases and hulls | 9 | `AnySurfaceCraft` | 1 to 3 | 1 to 3 | 80 to 160 | 2 | 1 | 1 |
 | Bullets and shot | 9 | `AnySurfaceCraft` | 2 to 4 | 1 | 80 to 120 | 2 | 1 | 1 |
 | Assembly | 9 | `AnySurfaceCraft` | 3 to 5 | 2 to 5 | 40 to 80 | 1 | 4 to 5 | 1 |
+| Lead melted from vanilla junk | 2 | `PrimitiveFurnace` | 0 | 0 | 200 | 2 | 2 | 1 |
+| Bullet moulds | 2 | `Forge` | 2 to 3 | 0 | 300 | 3 | 2 | 1 |
+| Cast lead bullets and shot | 6 | `PrimitiveFurnace` | 2 to 4 | 1 | 80 | 3 | 2 | 1 |
+| Assembly with a cast bullet | 6 | `AnySurfaceCraft` | 3 to 5 | 2 to 4 | 40 | 1 | 4 to 5 | 1 |
 | Scrapping brass | 3 | `AnySurfaceCraft` | 0 | 0 | 100 | 1 | 1 | 1 |
 | Recasting brass scrap | 1 | `Furnace` | 0 | 0 | 200 | 3 | 2 | 1 |
-| **All** | **58** | | | | | | | |
+| **All** | **74** | | | | | | | |
 
 <!-- END RECIPE AUDIT TABLE -->
 
