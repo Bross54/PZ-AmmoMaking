@@ -114,11 +114,18 @@ return function(T)
             check(fields ~= nil, calibre.spentCase .. " is defined by the add-on")
             if fields then
                 for _, key in ipairs(S.ITEM_FIELDS) do
-                    eq(fields[key], original[key], calibre.spentCase .. ": " .. key .. " is its unused case's")
+                    if key == "Icon" then
+                        -- The same drawing, spent: tarnished and sooted.
+                        eq(fields[key], AC_Visuals.getSpentIcon(original[key]), calibre.spentCase .. ": its icon is the spent form of its unused case's")
+                        check(fields[key] ~= original[key], calibre.spentCase .. " does not look like an unused case")
+                    else
+                        eq(fields[key], original[key], calibre.spentCase .. ": " .. key .. " is its unused case's")
+                    end
                 end
                 check(string.sub(fields.DisplayName, 1, 6) == "Spent ", calibre.spentCase .. " is called Spent ...")
                 check(fields.DisplayName ~= original.DisplayName, calibre.spentCase .. " is not called what the unused case is")
-                eq(art.icons[fields.Icon], true, calibre.spentCase .. ": its icon is one a vanilla item uses")
+                local ownIcon = AC_Visuals.findIcon(fields.Icon)
+                check(ownIcon ~= nil and ownIcon.mod == "AmmoMakingSpentCases", calibre.spentCase .. ": its icon is one the add-on ships")
                 eq(art.models[fields.WorldStaticModel], true, calibre.spentCase .. ": its world model is one vanilla defines")
                 -- Lighter than, or as heavy as, the round it came from.
                 local round = ENGINE.items[calibre.round]

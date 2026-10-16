@@ -199,7 +199,7 @@ MUTANTS = [
 
     (CLIENT + "AC_GeologyDebug.lua", "                entry[2] =\n                    entry[2] + input.count\n", "                entry[2] =\n                    entry[2] + 1\n", "the debug parts kit holds one of each part, not what the recipes take"),
 
-    (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.Amplifier\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.HomeAlarm\" } },", "the analyzer takes a part that is not probed and whose availability nobody recorded"),
+    (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.Amplifier\", \"Base.RadioReceiver\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.HomeAlarm\" } },", "the analyzer takes a part that is not probed and whose availability nobody recorded"),
     (SHARED + "AC_Materials.lua", "            { count = 1, items = { \"Base.LightBulb\" }, flags = { \"NoBrokenItems\" } },", "            { count = 1, items = { \"Base.LightBulb\" } },", "a burnt-out bulb builds an analyzer"),
 
     # ---- feature switches

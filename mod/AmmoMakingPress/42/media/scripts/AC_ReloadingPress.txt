@@ -16,9 +16,10 @@
    PLACEHOLDER_VISUAL: the two sprites are the add-on's own tile sheet
    (art/reloading_press/, built by tools/build_tiles.py), programmer art
    drawn from boxes. They are the add-on's own names, so no other entity
-   can claim them. The window icon is vanilla's Build_Handpress. Both are
-   listed in docs/PLACEHOLDER_ASSETS.md; replacing the art means replacing
-   two PNG files and rebuilding the sheet, nothing here.
+   can claim them. The window icon, Build_AmmoMakingReloadingPress, is the
+   add-on's own (art/icons/make_icons.py). All are listed in
+   docs/PLACEHOLDER_ASSETS.md; replacing the art means replacing PNG files
+   and rebuilding the sheet, nothing here.
 
    The build recipe's skill is a vanilla one: the Ammo Making perk is
    registered from Lua after scripts are parsed, and the engine drops a

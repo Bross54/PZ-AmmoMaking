@@ -478,11 +478,21 @@ AC_Materials.RECIPES = {
 --   * a part with a condition must not be broken: the
 --     amplifier and bulb lines carry flags[NoBrokenItems],
 --     as in vanilla's radio recipes (recipes_radio.txt);
+--   * no single scarce part gates an instrument. An
+--     amplifier is in three procedural lists of 42.20.4
+--     (two tool lists and survivor safehouses), so the
+--     analyzer's signal part is an amplifier or a radio
+--     receiver, which six lists hold: one line naming
+--     comparable parts, as vanilla's own trap recipe does
+--     ([Base.Receiver;Base.RadioReceiver;Base.CordlessPhone],
+--     recipes_traps.txt);
 --   * what goes in weighs at least what comes out: the
 --     analyzer is a 12 kg machine, so it is built into a
---     sheet metal cabinet around a car battery charger
---     (the item whose icon it borrows), not conjured from
---     a handful of scrap;
+--     sheet metal cabinet around a car battery charger,
+--     not conjured from a handful of scrap. The lighter
+--     part of a line is what counts: with a radio
+--     receiver (0.1) in place of the amplifier (0.3),
+--     ten electronics scrap keep the parts at 12 kg;
 --   * no XP for the craft. A kit already pays XP once per
 --     assay; paying for the kit too would pay twice;
 --   * a kit is never an ingredient of another kit, so a
@@ -603,9 +613,9 @@ AC_Materials.EQUIPMENT_RECIPES = {
             },
             { count = 4, items = { "Base.SheetMetal" } },
             { count = 1, items = { "Base.CarBatteryCharger" } },
-            { count = 8, items = { "Base.ElectronicsScrap" } },
+            { count = 10, items = { "Base.ElectronicsScrap" } },
             { count = 3, items = { "Base.ElectricWire" } },
-            { count = 1, items = { "Base.Amplifier" }, flags = { "NoBrokenItems" } },
+            { count = 1, items = { "Base.Amplifier", "Base.RadioReceiver" }, flags = { "NoBrokenItems" } },
             { count = 1, items = { "Base.LightBulb" }, flags = { "NoBrokenItems" } },
             { count = 6, items = { "Base.Screws" } },
         },

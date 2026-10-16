@@ -383,7 +383,7 @@ MOCK.knownScriptItems = {
     -- installed 42.20.4 scripts; tests/engine_snapshot.lua records them).
     ["Base.MagnifyingGlass"] = true, ["Base.Tweezers"] = true, ["Base.SheetPaper2"] = true,
     ["Base.Calculator"] = true, ["Base.ElectronicsScrap"] = true, ["Base.ElectricWire"] = true,
-    ["Base.Amplifier"] = true, ["Base.LightBulb"] = true, ["Base.Screws"] = true, ["Base.SheetMetal"] = true, ["Base.CarBatteryCharger"] = true,
+    ["Base.Amplifier"] = true, ["Base.RadioReceiver"] = true, ["Base.LightBulb"] = true, ["Base.Screws"] = true, ["Base.SheetMetal"] = true, ["Base.CarBatteryCharger"] = true,
     ["Base.Screwdriver"] = true, ["Base.Loupe"] = true, ["Base.Tweezers_Forged"] = true,
     ["Base.PickAxe"] = true,
     ["Base.PickAxeForged"] = true,

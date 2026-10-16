@@ -489,14 +489,14 @@ spelled out in `art/reloading_press/README.md`.
            {
                LuaWindowClass = ISEntityWindow,
                DisplayName = Reloading Press,
-               Icon = Build_Handpress,
+               Icon = Build_AmmoMakingReloadingPress,
                components
                {
                    CraftLogic
                    {
                        LuaPanelClass = ISCraftDefaultPanel,
                        DisplayName = Press,
-                       Icon = Build_Handpress,
+                       Icon = Build_AmmoMakingReloadingPress,
                    }
                }
            }
@@ -625,7 +625,7 @@ None of the following can be established offline:
 | Switch | `AC_Features.DEFINITIONS`, `reloadingPress` | experimental; on when the add-on `AmmoMakingPress` is active; not single-player only (a `CraftBench` is vanilla's own networked crafting) |
 | Entity | `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt` | follows vanilla's `Hand_Press` field for field; bench tag `AmmoMakingReloadingPress`; built from the build menu |
 | Build cost | `AC_Calibres.PRESS.buildKit` | a hammer (kept), 2 half steel bars, 4 planks, 8 nails |
-| Skin | `AC_ReloadingPress_xuiSkin.txt` | window icon `Build_Handpress` (placeholder) |
+| Skin | `AC_ReloadingPress_xuiSkin.txt` | window icon `Build_AmmoMakingReloadingPress`, the add-on's own (48 x 48) |
 | Tile sheet | `ammomaking_press.tiles`, `texturepacks/AmmoMakingPress.pack`; `pack=` and `tiledef=` in the add-on's `mod.info` | built by `tools/build_tiles.py` from `art/reloading_press/`; the release builder refuses a sheet that does not match its sources |
 | Recipes | `AC_PressRecipes.txt`, generated | 27: case, projectile and assembly for nine calibres. Same die set, inputs, output, level and XP as the hand recipe; only the time differs (§6.1). Die-set forging, primers and powder stay hand work |
 | Names | the add-on's `Recipes.json`, `IG_UI.json`, `Moveables.json`, generated | each recipe: the hand name with `(Press)`. The station: `AmmoMaking_ReloadingPress` (its build recipe, as vanilla's `Hand_Press`), `IGUI_CraftingWindow_AmmoMakingReloadingPress` (the "Requires a ..." line of a recipe, which `ISWidgetTitleHeader` builds from the bench tag) and `Reloading_Press` (the placed object, by its tile's group and custom name) |

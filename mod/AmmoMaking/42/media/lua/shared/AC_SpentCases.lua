@@ -79,6 +79,7 @@
 require "AC_Features"
 require "AC_Calibres"
 require "AC_Compat"
+require "AC_Visuals"
 
 AC_SpentCases = AC_SpentCases or {}
 
@@ -258,9 +259,20 @@ function AC_SpentCases.buildItems(
 
             if clean[key] ~= nil then
 
+                local value =
+                    clean[key]
+
+
+                if key == "Icon" then
+
+                    value =
+                        AC_Visuals.getSpentIcon(value)
+                end
+
+
                 table.insert(
                     fields,
-                    { key, clean[key] }
+                    { key, value }
                 )
             end
         end

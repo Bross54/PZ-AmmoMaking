@@ -1037,6 +1037,10 @@ return {
             type = "base:normal",
             weight = 2,
         },
+        ["Base.RadioReceiver"] = {
+            type = "base:normal",
+            weight = 0.1,
+        },
         ["Base.RippedSheets"] = {
             tags = "base:binding;base:fitswallet;base:isfirefuel;base:isfiretinder;base:nopour;base:simpleweaponbinding",
             type = "base:normal",

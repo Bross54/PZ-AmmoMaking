@@ -234,9 +234,9 @@ module Base
             item 1 tags[base:screwdriver] mode:keep flags[Prop1],
             item 4 [Base.SheetMetal],
             item 1 [Base.CarBatteryCharger],
-            item 8 [Base.ElectronicsScrap],
+            item 10 [Base.ElectronicsScrap],
             item 3 [Base.ElectricWire],
-            item 1 [Base.Amplifier] flags[NoBrokenItems],
+            item 1 [Base.Amplifier;Base.RadioReceiver] flags[NoBrokenItems],
             item 1 [Base.LightBulb] flags[NoBrokenItems],
             item 6 [Base.Screws],
         }

@@ -28,7 +28,7 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Assay kits and analyzer obtainable | IMPLEMENTED (three recipes from vanilla items) | | `DEVELOPMENT.md`, *Item and recipe audit* |
 | Mining, depletion | IMPLEMENTED | | `DEVELOPMENT.md` |
 | Metallurgy, case stock | IMPLEMENTED | | `METALLURGY_DESIGN.md` |
-| Nine calibres: die sets, cases, bullets, primers, powder, assembly | IMPLEMENTED; VISUAL PLACEHOLDER (vanilla icons) | | `AMMUNITION_DESIGN.md` |
+| Nine calibres: die sets, cases, bullets, primers, powder, assembly | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `AMMUNITION_DESIGN.md` |
 | Die sets as loot | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 1 |
 | Component loot (powder, primers, brass) | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 4 |
 | Brass recycling | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 2 |
@@ -99,7 +99,9 @@ it is an add-on), then the two systems that touch firearm code.
 
 ### 3.2 Final art
 
-Every visual is a placeholder. `docs/PLACEHOLDER_ASSETS.md` lists each one
+The inventory icons and the press's window icon are the mod's own
+(`art/icons/make_icons.py`). Every other visual is a placeholder.
+`docs/PLACEHOLDER_ASSETS.md` lists each one
 and where it is set; `docs/ART_HANDOFF.md` says what to draw. Also
 missing: a `poster=` image and a Workshop `preview.png`.
 

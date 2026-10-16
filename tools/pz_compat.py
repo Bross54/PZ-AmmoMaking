@@ -228,18 +228,27 @@ def mod_facts():
     return facts
 
 
+def own_texture(name):
+    """True for an icon the mod ships itself (media/textures of one of its mods)."""
+    for folder in glob.glob(ROOT + "/mod/*/42/media/textures"):
+        if os.path.isfile(folder + "/Item_" + name + ".png") or os.path.isfile(folder + "/" + name + ".png"):
+            return True
+    return False
+
+
 def mod_item_art():
     """What the mod's item script borrows from vanilla: name -> first item that uses it.
 
-    Icons, models, display categories and item tags are vanilla's own: the
-    mod ships no texture or model. A build that drops one leaves an item
-    without a picture or invisible on the ground.
+    Models, display categories, item tags and some icons are vanilla's own
+    (the mod ships its own icons for most items, and no model). A build
+    that drops one leaves an item without a picture or invisible on the
+    ground.
     """
     text = read(ROOT + "/mod/AmmoMaking/42/media/scripts/AC_Items.txt")
     art = {"icons": {}, "models": {}, "categories": {}, "tags": {}, "types": {}}
     for name, body in blocks(text, "item"):
         fields = properties(body)
-        if fields.get("Icon"):
+        if fields.get("Icon") and not own_texture(fields["Icon"]):
             art["icons"].setdefault(fields["Icon"], name)
         for key in ("StaticModel", "WorldStaticModel"):
             if fields.get(key):
@@ -279,7 +288,8 @@ def press_draft():
         "tilesets": [tileset["name"] for tileset in sheet["tilesets"]],
         "properties": sorted(set(key for tileset in sheet["tilesets"] for tile in tileset["tiles"] for key in tile.get("properties", {}))),
         "fileNumber": sheet["fileNumber"],
-        "icons": sorted(set(re.findall(r"Icon\s*=\s*(\w+)", re.sub(r"/\*.*?\*/", "", read(os.path.dirname(entity_path) + "/AC_ReloadingPress_xuiSkin.txt"), flags=re.S)))),
+        # Window icons the skin borrows from vanilla; one the add-on ships itself is not listed.
+        "icons": sorted(icon for icon in set(re.findall(r"Icon\s*=\s*(\w+)", re.sub(r"/\*.*?\*/", "", read(os.path.dirname(entity_path) + "/AC_ReloadingPress_xuiSkin.txt"), flags=re.S))) if not own_texture(icon)),
     }
 
 

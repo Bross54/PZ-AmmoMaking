@@ -128,6 +128,8 @@ AC_Compat.REQUIRED_ITEMS = {
 
     "Base.Amplifier",
 
+    "Base.RadioReceiver",
+
     "Base.LightBulb",
 
     "Base.Screws",

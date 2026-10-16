@@ -304,6 +304,9 @@ def main():
             raise Failure("tools/test_pz_compat.py fails: " + last)
         print("PASS     drift tool self-test: " + last)
 
+        code, last, _ = gate_python("art/icons/make_icons.py", "icons", "--check")
+        if code != 0:
+            raise Failure("art/icons/make_icons.py --check fails: " + last)
         code, last, _ = gate_python("tools/build_tiles.py", "tile builder", "--selftest")
         if code != 0:
             raise Failure("tools/build_tiles.py --selftest fails: " + last)

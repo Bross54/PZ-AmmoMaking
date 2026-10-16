@@ -2940,7 +2940,7 @@ do
         -- the accounting follows; only those three recipes may take it.
         if recipe.step == "equipment" then
             for _, id in ipairs({ "Base.MagnifyingGlass", "Base.Loupe", "Base.Tweezers", "Base.Tweezers_Forged", "Base.SheetPaper2", "Base.Calculator", "Base.ElectronicsScrap",
-                "Base.ElectricWire", "Base.Amplifier", "Base.LightBulb", "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger" }) do
+                "Base.ElectricWire", "Base.Amplifier", "Base.RadioReceiver", "Base.LightBulb", "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger" }) do
                 untracked[id] = true
             end
         end
@@ -9615,12 +9615,53 @@ do
         check(weightIn <= 2 * weightOut, what .. ": and not more than twice that (" .. weightIn .. " in, " .. weightOut .. " out)")
     end
 
-    -- The amplifier is the scarce part, and meant to be: three tool lists.
-    -- Vanilla's other way to one is to take a speaker apart
-    -- (DismantleMiscElectronics); a speaker is in more lists, most of them
-    -- the junk tables of bins.
-    check(#VANILLA.loot.items["Base.Amplifier"] <= 5, "(the amplifier is in few lists: " .. #VANILLA.loot.items["Base.Amplifier"] .. ")")
-    check(#VANILLA.loot.items["Base.Speaker"] > #VANILLA.loot.items["Base.Amplifier"], "a speaker, which vanilla dismantles into an amplifier, is in more (" .. #VANILLA.loot.items["Base.Speaker"] .. ", junk tables included)")
+    -- No single scarce part gates an instrument. An amplifier is in three
+    -- lists of the installed game, so the analyzer's signal part is an
+    -- amplifier or a radio receiver: together at least three times the
+    -- lists, and several times the weight, of the amplifier alone.
+    -- (Vanilla's other way to an amplifier is to take a speaker apart,
+    -- DismantleMiscElectronics; a speaker is mostly in the junk tables.)
+    local function lootOf(id)
+        local lists, weight = 0, 0
+        for _, list in ipairs(VANILLA.loot.items[id] or {}) do
+            if not list.junk then
+                lists = lists + 1
+                weight = weight + list.weight
+            end
+        end
+        return lists, weight
+    end
+    local ampLists, ampWeight = lootOf("Base.Amplifier")
+    local signalLine = nil
+    for _, recipe in ipairs(AC_Materials.EQUIPMENT_RECIPES) do
+        for _, input in ipairs(recipe.inputs) do
+            for _, id in ipairs(input.items or {}) do
+                if id == "Base.Amplifier" then signalLine = input end
+            end
+        end
+    end
+    check(signalLine ~= nil, "the analyzer takes an amplifier")
+    if signalLine ~= nil then
+        local lists, weight = 0, 0
+        for _, id in ipairs(signalLine.items) do
+            local l, w = lootOf(id)
+            lists, weight = lists + l, weight + w
+        end
+        check(#signalLine.items >= 2, "the amplifier's line names a comparable part beside it")
+        check(lists >= 3 * ampLists, "the analyzer's signal part is in at least three times the lists of the amplifier alone (" .. lists .. " against " .. ampLists .. ")")
+        check(weight >= 3 * ampWeight, "and at least three times its weight (" .. weight .. " against " .. ampWeight .. ")")
+    end
+    -- No part of any instrument is rarer than the amplifier was: every
+    -- consumed line is in at least six lists outside the junk tables.
+    for _, recipe in ipairs(AC_Materials.EQUIPMENT_RECIPES) do
+        for _, input in ipairs(recipe.inputs) do
+            if not input.keep then
+                local lists = 0
+                for _, id in ipairs(input.items or {}) do lists = lists + lootOf(id) end
+                check(lists >= 6, recipe.id .. ": " .. table.concat(input.items or {}, " / ") .. " is in at least six loot lists (" .. lists .. ")")
+            end
+        end
+    end
 
     local G = AC_GeologySampling
     local field, advanced, analyzer = made[G.ITEMS.FieldKit], made[G.ITEMS.AdvancedFieldKit], made[AC_LaboratoryAnalyzer.ITEMS.Analyzer]
@@ -9819,14 +9860,89 @@ do
 end
 
 ------------------------------------------------
+-- THE MOD'S OWN ICONS
+------------------------------------------------
+
+section("Icons: every icon of the mod's own is a file of the right size, in the mod that names it, and in use")
+do
+    -- Width and height of a PNG, from its IHDR chunk.
+    local function pngSize(path)
+        local handle = io.open(path, "rb")
+        if not handle then return nil end
+        local head = handle:read(24)
+        handle:close()
+        if not head or #head < 24 or string.sub(head, 2, 4) ~= "PNG" or string.sub(head, 13, 16) ~= "IHDR" then return nil end
+        local function number(from)
+            local a, b, c, e = string.byte(head, from, from + 3)
+            return ((a * 256 + b) * 256 + c) * 256 + e
+        end
+        return number(17), number(21)
+    end
+
+    -- What names an icon: the items of each mod, and the press's window skin.
+    local ADDONS = dofile(ROOT .. "/tests/render_addons.lua")
+    local usedBy = { AmmoMaking = {}, AmmoMakingSpentCases = {}, AmmoMakingPress = {} }
+    for _, item in ipairs(ADDONS.readItemsInOrder(readFile(ROOT .. "/mod/AmmoMaking/42/media/scripts/AC_Items.txt"))) do
+        usedBy.AmmoMaking["Item_" .. item.fields.Icon] = true
+    end
+    for _, item in ipairs(ADDONS.readItemsInOrder(readFile(ROOT .. "/" .. ADDONS.SPENT_ITEMS))) do
+        usedBy.AmmoMakingSpentCases["Item_" .. item.fields.Icon] = true
+    end
+    for icon in string.gmatch(readFile(ROOT .. "/mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress_xuiSkin.txt"), "Icon%s*=%s*([%w_]+)") do
+        usedBy.AmmoMakingPress[icon] = true
+    end
+
+    check(#AC_Visuals.ICONS >= 20, "the mod draws its own icons (" .. #AC_Visuals.ICONS .. ")")
+    local seen = {}
+    for _, icon in ipairs(AC_Visuals.ICONS) do
+        local file = icon.prefix .. icon.name
+        eq(seen[file], nil, file .. " is listed once")
+        seen[file] = true
+        -- Never a vanilla name: the mod must not change what a vanilla item looks like.
+        eq(string.sub(icon.name, 1, 10), "AmmoMaking", file .. " carries the mod's name")
+        eq(ENGINE.art.icons[icon.name], nil, file .. " is not an icon the snapshot knows as vanilla's")
+        check(usedBy[icon.mod] ~= nil, file .. " belongs to one of the three mods")
+        local width, height = pngSize(ROOT .. "/mod/" .. icon.mod .. "/42/media/textures/" .. file .. ".png")
+        check(width ~= nil, file .. ".png is a PNG in " .. icon.mod .. "'s media/textures")
+        eq(width, icon.size, file .. " is " .. icon.size .. " wide")
+        eq(height, icon.size, file .. " is " .. icon.size .. " high")
+        -- 32 for an item (drawn 1:1 in the inventory), 48 for a Build_ icon, as vanilla's are.
+        eq(icon.size, icon.prefix == "Item_" and 32 or 48, file .. " has the size vanilla uses for its kind")
+        eq((usedBy[icon.mod] or {})[file], true, file .. " is named by a script of " .. icon.mod)
+    end
+    -- And the other way: a script never names an AmmoMaking icon that is not listed.
+    for mod, names in pairs(usedBy) do
+        for file in pairs(names) do
+            if string.find(file, "AmmoMaking", 1, true) then
+                eq(seen[file], true, mod .. " names " .. file .. ", which is listed with its file")
+            end
+        end
+    end
+    -- A spent case's drawing exists for every drawing of a case.
+    for clean, spent in pairs(AC_Visuals.SPENT_ICONS) do
+        check(AC_Visuals.findIcon(clean) ~= nil and AC_Visuals.findIcon(clean).mod == "AmmoMaking", clean .. " is an icon of the main mod")
+        check(AC_Visuals.findIcon(spent) ~= nil and AC_Visuals.findIcon(spent).mod == "AmmoMakingSpentCases", spent .. " is an icon of the spent-cases add-on")
+        eq(AC_Visuals.getSpentIcon(clean), spent, clean .. " spent is " .. spent)
+    end
+    eq(AC_Visuals.getSpentIcon("PistolAmmo"), "PistolAmmo", "a case without a spent drawing keeps its icon")
+    -- Every case has a spent drawing, so a spent and an unused case can be told apart.
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local icon = declaredItems[calibre.case].fields.Icon
+        check(AC_Visuals.SPENT_ICONS[icon] ~= nil, calibre.case .. ": its icon " .. tostring(icon) .. " has a spent form")
+    end
+end
+
+------------------------------------------------
 -- ITEM AUDIT
 ------------------------------------------------
 
-section("Item audit: every item has vanilla art that exists, a probe, a use and a source")
+section("Item audit: every item has art that exists, a probe, a use and a source")
 do
-    -- The mod ships no texture and no model: every icon, model, display
-    -- category and tag of its items is vanilla's. The engine snapshot
-    -- records, from the installed scripts, whether each still exists.
+    -- An icon is the mod's own (AC_Visuals.ICONS, a file in the mod) or
+    -- one a vanilla item uses. The mod ships no model: every model,
+    -- display category and tag of its items is vanilla's. The engine
+    -- snapshot records, from the installed scripts, whether each still
+    -- exists.
     local art = ENGINE.art
     local count = 0
     local probed = {}
@@ -9858,7 +9974,13 @@ do
         check(type(f.DisplayName) == "string" and f.DisplayName ~= "", id .. " has a display name")
         eq(art.types[f.ItemType], true, id .. ": its item type " .. tostring(f.ItemType) .. " is one vanilla items have")
         eq(art.categories[f.DisplayCategory], true, id .. ": its display category " .. tostring(f.DisplayCategory) .. " is one vanilla items have")
-        eq(art.icons[f.Icon], true, id .. ": its icon " .. tostring(f.Icon) .. " is one a vanilla item uses")
+        local ownIcon = AC_Visuals.findIcon(f.Icon)
+        if ownIcon then
+            eq(ownIcon.mod, "AmmoMaking", id .. ": its icon " .. f.Icon .. " is shipped by the main mod, which defines the item")
+            eq(ownIcon.prefix, "Item_", id .. ": and is an item icon")
+        else
+            eq(art.icons[f.Icon], true, id .. ": its icon " .. tostring(f.Icon) .. " is one a vanilla item uses")
+        end
         if not f.WorldStaticModel then table.insert(noWorldModel, id) end
         for _, key in ipairs({ "StaticModel", "WorldStaticModel" }) do
             if f[key] then eq(art.models[f[key]], true, id .. ": its " .. key .. " " .. f[key] .. " is a model vanilla defines") end

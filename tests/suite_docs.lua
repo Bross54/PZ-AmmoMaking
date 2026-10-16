@@ -51,19 +51,19 @@ return function(T)
             check(string.find(document, "`" .. visual.key .. "`", 1, true) ~= nil, "the brief covers the visual " .. visual.key)
             check(string.find(document, visual.value, 1, true) ~= nil, visual.key .. ": and names what it replaces (" .. visual.value .. ")")
         end
-        -- Every "Icon = X" the brief says it replaces is an icon an item of
-        -- the mod uses today.
+        -- Every "Icon = X" the brief quotes is an icon an item of the mod
+        -- uses today, and it lists every icon the mod already draws.
         local used = {}
         for _, item in ipairs(ADDONS.readItemsInOrder(readFile(ROOT .. "/mod/AmmoMaking/42/media/scripts/AC_Items.txt"))) do
             used[item.fields.Icon] = true
         end
         used[AC_Visuals.get("pressWindowIcon")] = true
-        local named = 0
         for icon in string.gmatch(document, "`Icon = ([%w_]+)") do
-            named = named + 1
             eq(used[icon], true, "the brief's icon " .. icon .. " is in use")
         end
-        check(named >= 8, "the brief names the icons it replaces (" .. named .. ")")
+        for _, icon in ipairs(AC_Visuals.ICONS) do
+            check(string.find(document, "`" .. icon.prefix .. icon.name .. "`", 1, true) ~= nil, "the brief lists the drawn icon " .. icon.prefix .. icon.name)
+        end
         for _, heading in ipairs({ "Inventory icon", "World model", "Tile sprite", "Priority 1", "Naming and delivery", "What not to draw" }) do
             check(string.find(document, heading, 1, true) ~= nil, "section: " .. heading)
         end

@@ -4,7 +4,8 @@ module AmmoMaking
        ZincOre   = Base.CopperOre   (40.0, two-handed heavy item)
        ZincScrap = Base.CopperScrap (0.5)
        ZincIngot = Base.CopperIngot (6.0, base:ingot)
-       Icons and models are vanilla placeholders until zinc art exists. */
+       Icons are the mod's own (art/icons/make_icons.py, media/textures);
+       the models on the ground are vanilla's, borrowed. */
 
     item ZincOre
     {
@@ -12,7 +13,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 40.0,
-        Icon = IronOre,
+        Icon = AmmoMakingZincOre,
         StaticModel = IronOre,
         WorldStaticModel = IronOre,
         Tags = base:hasmetal;base:heavyitem,
@@ -25,7 +26,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 0.5,
-        Icon = AluminumScrap,
+        Icon = AmmoMakingZincScrap,
         WorldStaticModel = AluminumScrap,
         Tags = base:hasmetal,
     }
@@ -36,7 +37,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 6.0,
-        Icon = Ingot_Silver,
+        Icon = AmmoMakingZincIngot,
         StaticModel = SilverBar,
         WorldStaticModel = SilverBar,
         Tags = base:hasmetal;base:ingot,
@@ -53,7 +54,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 0.5,
-        Icon = Sheet_Copper_Small,
+        Icon = AmmoMakingBrassSheet,
         WorldStaticModel = SmallCopperSheet,
         Tags = base:hasmetal,
     }
@@ -64,7 +65,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 0.05,
-        Icon = BrassScrap,
+        Icon = AmmoMakingCaseCup,
         WorldStaticModel = BrassScrap,
         Tags = base:hasmetal,
     }
@@ -81,7 +82,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.001,
-        Icon = SnapCap,
+        Icon = AmmoMakingPrimerSmallPistol,
         WorldStaticModel = CapGunCap,
         Tags = base:hasmetal,
     }
@@ -92,7 +93,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -104,7 +105,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingCasePistol,
         WorldStaticModel = 9mmRounds,
         Tags = base:hasmetal,
     }
@@ -115,7 +116,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.01,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletPistol,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -126,7 +127,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -138,7 +139,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingCaseMagnum,
         WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
@@ -149,7 +150,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.008,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletPistol,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -160,7 +161,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.002,
-        Icon = SnapCap,
+        Icon = AmmoMakingPrimerLargePistol,
         WorldStaticModel = CapGunCap,
         Tags = base:hasmetal,
     }
@@ -171,7 +172,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -183,7 +184,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingCasePistol,
         WorldStaticModel = 9mmRounds,
         Tags = base:hasmetal,
     }
@@ -194,7 +195,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.016,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletPistol,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -205,7 +206,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -217,7 +218,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingCaseMagnum,
         WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
@@ -228,7 +229,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.01,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletPistol,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -239,7 +240,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -251,7 +252,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.01,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingCaseMagnum,
         WorldStaticModel = 9mmRounds,
         Tags = base:hasmetal,
     }
@@ -262,7 +263,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.016,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletPistol,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -276,7 +277,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.001,
-        Icon = SnapCap,
+        Icon = AmmoMakingPrimerSmallRifle,
         WorldStaticModel = CapGunCap,
         Tags = base:hasmetal,
     }
@@ -287,7 +288,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.002,
-        Icon = SnapCap,
+        Icon = AmmoMakingPrimerLargeRifle,
         WorldStaticModel = CapGunCap,
         Tags = base:hasmetal,
     }
@@ -298,7 +299,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -310,7 +311,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.008,
-        Icon = RifleAmmo308loose,
+        Icon = AmmoMakingCaseRifle,
         WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
@@ -321,7 +322,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletRifle,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -332,7 +333,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -344,7 +345,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.012,
-        Icon = RifleAmmo308loose,
+        Icon = AmmoMakingCaseRifle,
         WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
@@ -355,7 +356,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.01,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletRifle,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -366,7 +367,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -378,7 +379,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.012,
-        Icon = RifleAmmo308loose,
+        Icon = AmmoMakingCaseRifle,
         WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
@@ -389,7 +390,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.01,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingBulletRifle,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -404,7 +405,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 1.0,
-        Icon = Punches_Forged,
+        Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
         Tags = base:hasmetal,
@@ -416,7 +417,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.015,
-        Icon = ShotgunAmmo,
+        Icon = AmmoMakingHull,
         WorldStaticModel = ShotGunShells,
         Tags = base:hasmetal,
     }
@@ -427,7 +428,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.03,
-        Icon = SteelRod_Slug,
+        Icon = AmmoMakingShot,
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
@@ -437,7 +438,7 @@ module AmmoMaking
         DisplayName = Geological Sample,
         DisplayCategory = Material,
         ItemType = base:normal,
-        Icon = SpecimanJar_Full1,
+        Icon = AmmoMakingSample,
         Weight = 0.3,
     }
 
@@ -446,7 +447,7 @@ module AmmoMaking
         DisplayName = Field Assay Kit,
         DisplayCategory = Tool,
         ItemType = base:normal,
-        Icon = FirstAid_Camping,
+        Icon = AmmoMakingFieldKit,
         Weight = 0.7,
     }
 
@@ -455,7 +456,7 @@ module AmmoMaking
         DisplayName = Advanced Field Assay Kit,
         DisplayCategory = Tool,
         ItemType = base:normal,
-        Icon = MakeupCase_Professional,
+        Icon = AmmoMakingAdvancedKit,
         Weight = 1.2,
     }
 
@@ -464,7 +465,7 @@ module AmmoMaking
         DisplayName = Laboratory Assay Analyzer,
         DisplayCategory = Tool,
         ItemType = base:normal,
-        Icon = CarBatteryCharger,
+        Icon = AmmoMakingAnalyzer,
         Weight = 12.0,
     }
 

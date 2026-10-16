@@ -1604,9 +1604,11 @@ list is the record of why each item is open.
   - the boot check lists the new vanilla ids as present
     (`Base.MagnifyingGlass`, `Base.Tweezers`, `Base.SheetPaper2`,
     `Base.Calculator`, `Base.ElectronicsScrap`, `Base.ElectricWire`,
-    `Base.Amplifier`, `Base.LightBulb`, `Base.Screws`, `Base.SheetMetal`,
+    `Base.Amplifier`, `Base.RadioReceiver`, `Base.LightBulb`, `Base.Screws`,
+    `Base.SheetMetal`,
     `Base.CarBatteryCharger`, `Base.Screwdriver`), and `Base.Loupe` and
     `Base.Tweezers_Forged`;
   - a loupe or forged tweezers are accepted in place of the magnifying
-    glass and the tweezers, and a broken light bulb or amplifier is not
+    glass and the tweezers, a radio receiver in place of the amplifier, and
+    a broken light bulb or amplifier is not
     offered for the analyzer.

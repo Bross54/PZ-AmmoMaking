@@ -157,12 +157,12 @@ pays per assay.
 |---|---|---|
 | Field Assay Kit (20 assays) | 0 | a magnifying glass or a loupe, tweezers (bought or forged), 5 sheets of paper |
 | Advanced Field Assay Kit (10 assays) | 1 | the same, a calculator and 2 electronics scrap |
-| Laboratory Assay Analyzer | 2 | 4 sheet metal, a car battery charger, 8 electronics scrap, 3 electric wire, an amplifier, a light bulb, 6 screws; a screwdriver is kept |
+| Laboratory Assay Analyzer | 2 | 4 sheet metal, a car battery charger, 10 electronics scrap, 3 electric wire, an amplifier or a radio receiver, a light bulb, 6 screws; a screwdriver is kept |
 
-The kit parts are ordinary household and office loot. The analyzer's
-amplifier is the scarce part: electricians' and engineers' tool stores,
-or a speaker taken apart with a screwdriver (a vanilla recipe). The
-amplifier and the bulb must not be broken.
+The kit parts are ordinary household and office loot. An amplifier
+alone would be the scarce part (electricians' and engineers' tool
+stores, or a speaker taken apart with a screwdriver), so a radio
+receiver does instead. The amplifier and the bulb must not be broken.
 
 These recipes are new and have not been crafted in the game yet; the
 amounts are a first guess and easy to change (`AC_Materials.EQUIPMENT_RECIPES`).
@@ -692,7 +692,8 @@ The code is complete as far as it can be without the game
 (`docs/AMMUNITION_ROADMAP.md`). What remains, in order:
 
 1. **In-game verification**: `docs/INGAME_VALIDATION.md`, one session.
-2. **Final art**: `docs/ART_HANDOFF.md`; every visual is a placeholder.
+2. **Final art**: `docs/ART_HANDOFF.md`. The inventory icons are the
+   mod's own; tile sprites and world models are still placeholders.
 3. **Balancing**, from play: loot weights, recipe costs, the press's time
    advantage, the spent-case rate. All are central tunables.
 4. **Runtime bug fixing** from 1.

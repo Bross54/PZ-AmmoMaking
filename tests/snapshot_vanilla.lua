@@ -155,7 +155,7 @@ local RAW_INPUTS = {
     "Base.BrassIngot", "Base.CopperIngot", "Base.CopperOre",
     -- What the assay kits and the analyzer are made from.
     "Base.MagnifyingGlass", "Base.Loupe", "Base.Tweezers", "Base.Tweezers_Forged", "Base.SheetPaper2",
-    "Base.Calculator", "Base.ElectronicsScrap", "Base.ElectricWire", "Base.Amplifier", "Base.LightBulb",
+    "Base.Calculator", "Base.ElectronicsScrap", "Base.ElectricWire", "Base.Amplifier", "Base.RadioReceiver", "Base.LightBulb",
     "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger", "Base.Speaker",
 }
 

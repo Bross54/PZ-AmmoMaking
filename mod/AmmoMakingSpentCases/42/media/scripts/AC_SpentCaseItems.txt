@@ -28,7 +28,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingSpentCasePistol,
         WorldStaticModel = 9mmRounds,
         Tags = base:hasmetal,
     }
@@ -39,7 +39,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingSpentCaseMagnum,
         WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
@@ -50,7 +50,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingSpentCasePistol,
         WorldStaticModel = 9mmRounds,
         Tags = base:hasmetal,
     }
@@ -61,7 +61,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.005,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingSpentCaseMagnum,
         WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
@@ -72,7 +72,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.01,
-        Icon = PistolAmmo,
+        Icon = AmmoMakingSpentCaseMagnum,
         WorldStaticModel = 9mmRounds,
         Tags = base:hasmetal,
     }
@@ -83,7 +83,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.008,
-        Icon = RifleAmmo308loose,
+        Icon = AmmoMakingSpentCaseRifle,
         WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
@@ -94,7 +94,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.012,
-        Icon = RifleAmmo308loose,
+        Icon = AmmoMakingSpentCaseRifle,
         WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
@@ -105,7 +105,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.012,
-        Icon = RifleAmmo308loose,
+        Icon = AmmoMakingSpentCaseRifle,
         WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
@@ -116,7 +116,7 @@ module AmmoMaking
         DisplayCategory = Ammo,
         ItemType = base:normal,
         Weight = 0.015,
-        Icon = ShotgunAmmo,
+        Icon = AmmoMakingSpentHull,
         WorldStaticModel = ShotGunShells,
         Tags = base:hasmetal,
     }
