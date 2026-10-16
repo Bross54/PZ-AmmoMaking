@@ -14,9 +14,15 @@
 -- A fired round can leave its case behind. Which item is
 -- decided by the calibre model (calibre.spentCase); this
 -- file names no calibre. A spent case is NOT a case: it
--- cannot be loaded again. Its only use is to be scrapped,
--- at a worse rate than unused brass (AC_Recycling, source
--- "spent"), for no XP.
+-- cannot be loaded as it is. Two things can be done with
+-- it, both for no XP:
+--
+--   scrap it    at a worse rate than unused brass
+--               (AC_Recycling, source "spent")
+--   resize it   at the calibre's die set, two spent cases
+--               for one usable case: the other cracks and
+--               is lost (RESIZE below,
+--               docs/SPENT_CASE_RESEARCH.md 8)
 --
 -- THE ECONOMY (docs/SPENT_CASE_RESEARCH.md, 4.2)
 --
@@ -78,6 +84,7 @@
 
 require "AC_Features"
 require "AC_Calibres"
+require "AC_Recycling"
 require "AC_Compat"
 require "AC_Visuals"
 
@@ -294,6 +301,289 @@ function AC_SpentCases.buildItems(
 
 
     return items
+end
+
+
+------------------------------------------------
+-- RESIZING (tunable; docs/SPENT_CASE_RESEARCH.md 8)
+------------------------------------------------
+--
+-- A spent case is decapped, resized and trimmed at its
+-- calibre's die set back into the calibre's own case,
+-- the same item the forming recipe makes. One recipe per
+-- calibre, in the add-on's recipe script (generated);
+-- the add-on ships no Lua, so the recipes are described
+-- here and their OnCreate callbacks are AC_Materials's.
+--
+-- spentPerCase   spent cases in for one case out. 2: one
+--                of every two cracks at the neck and is
+--                lost. Not a roll and no per-item count:
+--                a round loaded into a gun is a count
+--                (section 1 of the research), so a
+--                "times reloaded" on the case could not
+--                survive the shot, and a deterministic
+--                share needs no engine call to destroy a
+--                crafted item. Two is also the most the
+--                economy allows (validate):
+--
+--                  resized, then scrapped as a clean case
+--                  (a half back) must not beat scrapping
+--                  the spent cases (a quarter back):
+--                  1 / spentPerCase * 0.5 <= 0.25
+--
+--                  at the sandbox maximum (every case
+--                  found) a stock of new cases may not
+--                  make more than twice its own number of
+--                  rounds, ever: half of every case loaded
+--                  is newly formed from brass, and brass
+--                  is the mine
+--
+-- levelsAboveForming
+--                the resizing recipe unlocks this many
+--                levels after the calibre's forming
+--                recipe, never after its round
+-- timePercent    of the forming recipe's time; never less
+--                than 100: resizing saves brass, not
+--                bench time
+-- xp             always 0 (validate): a resized case is
+--                brass that was already paid for
+--
+-- The resized case gets a casing quality like a formed
+-- one, lowered by AC_CaseQuality.CONFIG.resizedBonus
+-- (effect "resizedCaseQuality").
+------------------------------------------------
+
+AC_SpentCases.RESIZE = {
+
+    spentPerCase = 2,
+
+    levelsAboveForming = 1,
+
+    timePercent = 100,
+
+    xp = 0,
+
+    -- The share of every case loaded that must still be
+    -- formed new, at the sandbox maximum (validate).
+    minimumNewShare = 0.5,
+
+    idPrefix = "AmmoMaking_ResizeSpentCase",
+
+    callbackPrefix = "onResizeSpentCase",
+
+    -- What a resizing recipe is called: its forming
+    -- recipe's name with formPrefix replaced by
+    -- namePrefix ("Form <calibre> Case" -> "Resize Spent
+    -- <calibre> Case"). Names are generated into the add-on's
+    -- Recipes.json.
+    formPrefix = "Form ",
+
+    namePrefix = "Resize Spent ",
+
+    -- The forming step of the calibre model.
+    formStep = "case",
+}
+
+
+-- The calibre's forming recipe, from the calibre model.
+function AC_SpentCases.getFormingRecipe(
+    calibre
+)
+
+    for _,
+        recipe
+    in ipairs(
+        AC_Calibres.buildCalibreRecipes(calibre)
+    )
+    do
+
+        if recipe.step == AC_SpentCases.RESIZE.formStep then
+            return recipe
+        end
+    end
+
+
+    return nil
+end
+
+
+-- The Ammo Making level the resizing recipe asks for: the
+-- forming level and levelsAboveForming, capped at the
+-- level of the round.
+function AC_SpentCases.getResizeLevel(
+    calibre
+)
+
+    local form =
+        AC_SpentCases.getFormingRecipe(calibre)
+
+
+    local level =
+        (form and form.requiredLevel or 0)
+        + AC_SpentCases.RESIZE.levelsAboveForming
+
+
+    return
+        math.min(
+            level,
+            calibre.levels.assemble
+        )
+end
+
+
+-- The resizing recipe of one calibre: the forming recipe's
+-- bench, timed action, category, kept tools (the die set
+-- and the hammer) and output, with spent cases in place
+-- of case cups.
+function AC_SpentCases.buildResizeRecipe(
+    calibre
+)
+
+    local resize =
+        AC_SpentCases.RESIZE
+
+
+    local form =
+        AC_SpentCases.getFormingRecipe(calibre)
+
+
+    if not form then
+        return nil
+    end
+
+
+    local inputs = {
+        { count = resize.spentPerCase, items = { calibre.spentCase } },
+    }
+
+
+    for _,
+        input
+    in ipairs(
+        form.inputs
+    )
+    do
+
+        if input.keep then
+
+            table.insert(
+                inputs,
+                input
+            )
+        end
+    end
+
+
+    return {
+        id = resize.idPrefix .. calibre.suffix,
+
+        calibre = calibre.id,
+
+        step = "resize",
+
+        resize = true,
+
+        formRecipe = form.id,
+
+        time = math.floor(form.time * resize.timePercent / 100),
+
+        timedAction = form.timedAction,
+
+        benchTag = form.benchTag,
+
+        category = form.category,
+
+        callback = resize.callbackPrefix .. calibre.suffix,
+
+        xp = resize.xp,
+
+        requiredLevel = AC_SpentCases.getResizeLevel(calibre),
+
+        effect = "resizedCaseQuality",
+
+        -- Brass goes out with the cracked case: the
+        -- conservation check insists on it.
+        loss = true,
+
+        inputs = inputs,
+
+        outputs = {
+            { count = 1, item = calibre.case },
+        },
+    }
+end
+
+
+-- Every calibre's resizing recipe, in calibre order. Built
+-- whether or not the add-on is there; AC_Materials adds
+-- them to its list only when it is (hasContent).
+function AC_SpentCases.buildResizeRecipes()
+
+    local recipes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local recipe =
+            AC_SpentCases.buildResizeRecipe(calibre)
+
+
+        if recipe then
+
+            table.insert(
+                recipes,
+                recipe
+            )
+        end
+    end
+
+
+    return recipes
+end
+
+
+-- What a resizing recipe is called, from the name of its
+-- forming recipe (formName).
+function AC_SpentCases.getResizeName(
+    formName
+)
+
+    local resize =
+        AC_SpentCases.RESIZE
+
+
+    formName =
+        tostring(formName or "")
+
+
+    if string.sub(formName, 1, #resize.formPrefix) == resize.formPrefix then
+
+        return
+            resize.namePrefix
+            .. string.sub(formName, #resize.formPrefix + 1)
+    end
+
+
+    return resize.namePrefix .. formName
+end
+
+
+-- Cases that come back from fired rounds, per round fired,
+-- when percent of a hundred are found: the reuse share of
+-- one cycle. 1 / (1 - share) rounds are made from one new
+-- case at most, over every cycle.
+function AC_SpentCases.getReuseShare(
+    percent
+)
+
+    return
+        (tonumber(percent) or 0) / 100
+        / AC_SpentCases.RESIZE.spentPerCase
 end
 
 
@@ -899,6 +1189,156 @@ end
 -- VALIDATION (pure)
 ------------------------------------------------
 
+-- The resizing rules, as problems ("spent cases: ...").
+-- Resizing may not undercut scrapping, the mine or the
+-- forming recipe:
+--
+--   loop    a case resized and then scrapped clean
+--           returns no more brass than scrapping the
+--           spent cases it was made from
+--   mine    at the sandbox maximum (every fired case
+--           found) at least minimumNewShare of every
+--           case loaded is newly formed
+--   XP      none
+--   time    never less than forming
+--   level   never before forming, never after the round
+--   quality a resized case rolls lower than a formed one
+function AC_SpentCases.validateResize()
+
+    local resize =
+        AC_SpentCases.RESIZE
+
+
+    local problems = {}
+
+
+    local function problem(
+        text
+    )
+
+        table.insert(
+            problems,
+            "spent cases: resizing " .. text
+        )
+    end
+
+
+    local perCase =
+        resize.spentPerCase
+
+
+    if type(perCase) ~= "number"
+        or perCase ~= math.floor(perCase)
+        or perCase < 1
+    then
+
+        problem("needs a whole number of spent cases per case")
+
+
+        return problems
+    end
+
+
+    local clean =
+        AC_Recycling.getRecovery(
+            AC_Recycling.getSources()[1]
+        )
+
+
+    local spent =
+        AC_Recycling.getRecovery(
+            AC_Recycling.getSpentSource()
+        )
+
+
+    if clean / perCase > spent then
+
+        problem(
+            "then scrapping returns more brass than scrapping the spent cases ("
+            .. clean / perCase
+            .. " against "
+            .. spent
+            .. ")"
+        )
+    end
+
+
+    if 1 - AC_SpentCases.getReuseShare(100) < resize.minimumNewShare then
+
+        problem(
+            "leaves less than "
+            .. tostring(resize.minimumNewShare)
+            .. " of the cases to be formed new when every case is found"
+        )
+    end
+
+
+    if resize.xp ~= 0 then
+        problem("must award no XP, not " .. tostring(resize.xp))
+    end
+
+
+    if type(resize.timePercent) ~= "number"
+        or resize.timePercent ~= math.floor(resize.timePercent)
+        or resize.timePercent < 100
+    then
+        problem("may not be faster than forming (timePercent of at least 100)")
+    end
+
+
+    if type(resize.levelsAboveForming) ~= "number"
+        or resize.levelsAboveForming ~= math.floor(resize.levelsAboveForming)
+        or resize.levelsAboveForming < 0
+    then
+        problem("may not unlock before forming (levelsAboveForming of at least 0)")
+    end
+
+
+    local bonus =
+        AC_CaseQuality
+        and AC_CaseQuality.CONFIG
+        and AC_CaseQuality.CONFIG.resizedBonus
+
+
+    if type(bonus) ~= "number"
+        or bonus >= 0
+    then
+        problem("must give a lower casing quality than forming (resizedBonus below 0)")
+    end
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local form =
+            AC_SpentCases.getFormingRecipe(calibre)
+
+
+        local recipe =
+            AC_SpentCases.buildResizeRecipe(calibre)
+
+
+        if not form
+            or not recipe
+        then
+
+            problem("has no forming recipe to follow for " .. tostring(calibre.id))
+
+        elseif recipe.requiredLevel < form.requiredLevel then
+
+            problem("of " .. tostring(calibre.id) .. " unlocks before forming")
+        end
+    end
+
+
+    return problems
+end
+
+
 function AC_SpentCases.validate()
 
     local config =
@@ -943,6 +1383,20 @@ function AC_SpentCases.validate()
         table.insert(
             problems,
             "spent cases: maximumPerEvent must be at least 1"
+        )
+    end
+
+
+    for _,
+        problem
+    in ipairs(
+        AC_SpentCases.validateResize()
+    )
+    do
+
+        table.insert(
+            problems,
+            problem
         )
     end
 

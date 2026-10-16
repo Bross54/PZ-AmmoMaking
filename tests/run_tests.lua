@@ -7447,13 +7447,30 @@ do
     local function near(a, b) return math.abs(a - b) < 1e-9 end
     local byId = {}
     for _, policy in ipairs(BALANCE.SPENT_POLICIES) do byId[policy.id] = policy end
-    eq(#BALANCE.SPENT_POLICIES, 6, "five policies are compared with the one the add-on implements")
-    local implemented = BALANCE.SPENT_POLICIES[6]
-    eq(implemented.id, "F", "the implemented policy is the last row")
+    eq(#BALANCE.SPENT_POLICIES, 7, "five policies are compared with the add-on before and after resizing")
+    local implemented = BALANCE.SPENT_POLICIES[7]
+    eq(implemented.id, "G", "the implemented policy is the last row")
     eq(implemented.factory, AC_SpentCases.CONFIG.recoveryPercent / 100, "its share of cases found is the mod's")
     eq(implemented.handloaded, implemented.factory, "the same for the player's own rounds: where a round came from is not known")
     eq(implemented.scrap, AC_Recycling.getRecovery(AC_Recycling.getSpentSource()), "its scrap recovery is the spent source's")
-    eq(implemented.resize + implemented.factoryResize, 0, "and no spent case is ever loaded again")
+    eq(implemented.resize, 1 / AC_SpentCases.RESIZE.spentPerCase, "it resizes at the add-on's rate")
+    eq(implemented.factoryResize, implemented.resize, "factory and handloaded brass alike: where a case came from is not known")
+    eq(byId.F.resize + byId.F.factoryResize, 0, "F, the add-on before resizing, loaded no spent case again")
+    -- G sits below D, the policy the research turned down as competing
+    -- with the mine, for both looted and own rounds.
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        for _, origin in ipairs({ "factory", "handloaded" }) do
+            local g, d = BALANCE.spentCases(implemented, calibre, 100, origin), BALANCE.spentCases(byId.D, calibre, 100, origin)
+            check(g.reloadable < d.reloadable, "G gives fewer reloadable cases than D (" .. calibre.id .. ", " .. origin .. ")")
+            check(g.brassNeeded > d.brassNeeded, "and leaves more brass to be mined (" .. calibre.id .. ", " .. origin .. ")")
+        end
+    end
+    -- The figures the research quotes for G.
+    local nine9, rifle308 = AC_Calibres.get("9mm"), AC_Calibres.get(".308")
+    check(near(BALANCE.spentCases(implemented, nine9, 100, "factory").reloadIngots, 1.25), "G: a hundred looted 9mm are 1.25 ingots' worth of cases")
+    check(near(BALANCE.spentCases(implemented, rifle308, 100, "factory").reloadIngots, 3.75), "G: a hundred looted .308 are 3.75")
+    check(near(BALANCE.spentCases(implemented, nine9, 100, "handloaded").brassNeeded, 4.75), "G: the next hundred 9mm take 4.75 ingots of brass instead of 6")
+    check(near(BALANCE.spentCases(implemented, rifle308, 100, "handloaded").brassNeeded, 13.25), "G: the next hundred .308 take 13.25 instead of 17")
     local clean = AC_Recycling.getRecovery()
     for _, policy in ipairs(BALANCE.SPENT_POLICIES) do
         local what = "policy " .. policy.id

@@ -70,9 +70,10 @@ return function(T)
         eq(S.getSpentCaseForRound("Base.Nails"), nil, "something that is not a round leaves nothing")
         eq(#S.getItems(), #AC_Calibres.LIST, "one spent item per calibre")
 
-        -- No recipe of the mod takes a spent case except the spent
-        -- scrapping recipes: it cannot be formed, primed or assembled.
-        local spentRecipes = ADDONS.spentRecipes()
+        -- No recipe of the main mod or the press takes a spent case: only
+        -- the add-on's own scrapping and resizing recipes do. A spent case
+        -- cannot be primed or assembled as it is.
+        local spentRecipes = ADDONS.spentScrapRecipes()
         for _, recipe in ipairs(AC_Materials.RECIPES) do
             for _, input in ipairs(recipe.inputs) do
                 for _, id in ipairs(input.items or {}) do
@@ -137,7 +138,7 @@ return function(T)
         header, body = T.RENDER.splitHeader(readFile(ROOT .. "/" .. ADDONS.SPENT_SCRIPT))
         check(string.find(header, "GENERATED", 1, true) ~= nil, "the recipe script says it is generated")
         eq(body, ADDONS.spentScriptBody(T.RENDER), "AC_SpentCaseRecipes.txt equals the rendered model (run tests/write_recipes.lua)")
-        eq(readFile(ROOT .. "/" .. ADDONS.SPENT_NAMES), ADDONS.spentNames(), "its Recipes.json equals the rendered names")
+        eq(readFile(ROOT .. "/" .. ADDONS.SPENT_NAMES), ADDONS.spentNames(ADDONS.readNames(readFile(T.TRANSLATE .. "Recipes.json"))), "its Recipes.json equals the rendered names")
         local source = AC_Recycling.getSpentSource()
         local clean = AC_Recycling.getSources()[1]
         eq(AC_Recycling.getRecovery(source), 0.25, "spent brass returns a quarter")
@@ -223,7 +224,7 @@ return function(T)
             eq(AC_Features.isEnabled("spentCases"), false, where .. ": the feature is off")
             eq(AC_Features.hasContent("spentCases"), true, where .. ": its content is in the game")
             local script = T.parseScript(ROOT .. "/" .. ADDONS.SPENT_SCRIPT)
-            check(#script.blocks == 3, where .. ": the add-on's three recipes are loaded by the engine regardless")
+            check(#script.blocks == #ADDONS.spentRecipes() and #script.blocks == 3 + #AC_Calibres.LIST, where .. ": the add-on's recipes (three scrapping, one resizing per calibre) are loaded by the engine regardless")
             for _, block in ipairs(script.blocks) do
                 local callback = string.match(block.fields.OnCreate or "", "AC_Materials%.([%w_]+)")
                 check(callback ~= nil and type(AC_Materials[callback]) == "function", where .. ": " .. block.name .. " finds its OnCreate callback " .. tostring(callback))
@@ -253,6 +254,9 @@ return function(T)
         T.reloadMod()
         eq(AC_Features.hasContent("spentCases"), false, "without the add-on: no content")
         eq(AC_Materials.onScrapSpentBrass5, nil, "without the add-on: no spent-scrapping callback")
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            eq(AC_Materials[AC_SpentCases.RESIZE.callbackPrefix .. calibre.suffix], nil, "without the add-on: no resizing callback for " .. calibre.id)
+        end
         finish()
     end
 
@@ -668,6 +672,195 @@ return function(T)
         finish()
     end
 
+    section("Spent cases: resizing makes one usable case of two spent ones, for no XP, below the forming quality, and feeds no loop")
+    do
+        start(true)
+        local S, R = AC_SpentCases, AC_SpentCases.RESIZE
+        local Q = AC_CaseQuality.CONFIG
+        eq(#S.validateResize(), 0, "the resizing rules hold: " .. table.concat(S.validateResize(), "; "))
+        eq(#S.validate(), 0, "and the whole spent-case description with them")
+
+        -- The shipped numbers, which the research document argues for.
+        eq(R.spentPerCase, 2, "two spent cases for one usable case")
+        eq(R.xp, 0, "no XP")
+        eq(R.levelsAboveForming, 1, "one level after forming")
+        eq(R.timePercent, 100, "the forming recipe's time")
+        eq(R.minimumNewShare, 0.5, "half of every case loaded stays new at the sandbox maximum")
+        check(Q.resizedBonus < 0, "a resized case rolls lower than a formed one (" .. Q.resizedBonus .. ")")
+
+        -- One resizing recipe per calibre, in the list, with its callback.
+        local resized = {}
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.resize then resized[recipe.calibre] = recipe end
+        end
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            local what = calibre.id
+            local recipe = resized[calibre.id]
+            local form = S.getFormingRecipe(calibre)
+            check(recipe ~= nil and form ~= nil, what .. ": a resizing recipe and the forming recipe it follows")
+            if recipe and form then
+                eq(recipe.formRecipe, form.id, what .. ": it names its forming recipe")
+                eq(form.outputs[1].item, calibre.case, what .. ": (which makes the calibre's case)")
+                eq(type(AC_Materials[recipe.callback]), "function", what .. ": its OnCreate callback exists")
+                eq(AC_Materials.getRecipeXP(recipe), 0, what .. ": resizing awards no XP")
+                check(recipe.requiredLevel <= calibre.levels.assemble, what .. ": never after the round itself")
+                eq(recipe.requiredLevel, math.min(form.requiredLevel + 1, calibre.levels.assemble), what .. ": one level after forming, at level " .. recipe.requiredLevel)
+                check(recipe.requiredLevel > form.requiredLevel, what .. ": strictly after forming")
+                check(recipe.time >= form.time, what .. ": it takes no less time than forming (" .. recipe.time .. " of " .. form.time .. ")")
+                eq(recipe.timedAction, form.timedAction, what .. ": at the forming recipe's bench work")
+                eq(recipe.benchTag, form.benchTag, what .. ": on the forming recipe's bench")
+                eq(recipe.effect, "resizedCaseQuality", what .. ": the case gets a resized casing quality")
+                -- Inputs: the spent cases, then exactly the forming
+                -- recipe's kept tools (the die set and the hammer).
+                eq(#recipe.outputs, 1, what .. ": one output")
+                eq(recipe.outputs[1].item, calibre.case, what .. ": the calibre's own usable case")
+                eq(recipe.outputs[1].count, 1, what .. ": one of it")
+                local consumed, kept = {}, {}
+                for _, input in ipairs(recipe.inputs) do
+                    if input.keep then
+                        table.insert(kept, input)
+                    else
+                        table.insert(consumed, input)
+                    end
+                end
+                eq(#consumed, 1, what .. ": one consumed line")
+                eq(consumed[1] and consumed[1].count, R.spentPerCase, what .. ": two spent cases")
+                eq(consumed[1] and table.concat(consumed[1].items or {}, ","), calibre.spentCase, what .. ": of its own calibre, nothing else")
+                local formKept = {}
+                for _, input in ipairs(form.inputs) do
+                    if input.keep then table.insert(formKept, input) end
+                end
+                eq(#kept, #formKept, what .. ": the forming recipe's kept tools")
+                local keepsDieSet = false
+                for index, input in ipairs(kept) do
+                    local function line(entry)
+                        entry = entry or {}
+                        return tostring(entry.count) .. "|" .. table.concat(entry.items or {}, ",") .. "|" .. table.concat(entry.tags or {}, ",") .. "|" .. table.concat(entry.flags or {}, ",") .. "|" .. tostring(entry.keep)
+                    end
+                    eq(line(input), line(formKept[index]), what .. ": kept line " .. index .. " is the forming recipe's")
+                    if input.items and input.items[1] == calibre.dieSet then keepsDieSet = true end
+                end
+                check(keepsDieSet, what .. ": the calibre's die set is needed, and kept")
+                -- Brass: half goes with the cracked case.
+                local ok, reason = AC_Materials.checkConservation(recipe)
+                check(ok, what .. ": conserves and loses brass: " .. tostring(reason))
+                local brassIn, brassOut = AC_Materials.getRecipeUnits(recipe)
+                eq(brassIn.brass, R.spentPerCase * brassOut.brass, what .. ": the brass of two cases in, of one out")
+                -- No laundering through the clean scrapping recipe.
+                local clean, spent = AC_Recycling.getRecovery(AC_Recycling.getSources()[1]), AC_Recycling.getRecovery(AC_Recycling.getSpentSource())
+                check(brassOut.brass * clean <= brassIn.brass * spent, what .. ": resized and then scrapped returns no more than scrapping the spent cases (" .. brassOut.brass * clean .. " against " .. brassIn.brass * spent .. ")")
+                -- The callback: no XP, and the quality one band lower.
+                local player = MOCK.newPlayer({ perkLevel = 6 })
+                local made, formed = MOCK.newItem(calibre.case), MOCK.newItem(calibre.case)
+                local data = {
+                    getAllCreatedItems = function() return MOCK.arrayList({ made }) end,
+                    getAllConsumedItems = function() return MOCK.arrayList({}) end,
+                }
+                MOCK.capturePrint(true)
+                local granted = AC_Materials[recipe.callback](data, player)
+                AC_CaseQuality.EFFECTS.caseQuality({ getAllCreatedItems = function() return MOCK.arrayList({ formed }) end }, player)
+                MOCK.capturePrint(false)
+                eq(granted, 0, what .. ": the callback grants nothing")
+                eq(#player.xpLog, 0, what .. ": and never touches the XP")
+                check(AC_CaseQuality.get(made) ~= nil, what .. ": the resized case has a casing quality")
+                eq(AC_CaseQuality.get(made), (AC_CaseQuality.get(formed) or 0) + Q.resizedBonus, what .. ": lower by " .. -Q.resizedBonus .. " than a case formed at the same level and roll")
+            end
+        end
+        -- Never above a formed case, at any level and roll.
+        for level = 0, 10 do
+            for _, random01 in ipairs({ 0, 0.25, 0.5, 0.99 }) do
+                check(AC_CaseQuality.roll(level, random01, Q.resizedBonus) <= AC_CaseQuality.roll(level, random01, 0), "level " .. level .. ", roll " .. random01 .. ": a resized case is never better than a formed one")
+            end
+        end
+
+        -- The add-on's script and names hold them, with names that say so.
+        local script = T.parseScript(ROOT .. "/" .. ADDONS.SPENT_SCRIPT)
+        local blocks = {}
+        for _, block in ipairs(script.blocks) do blocks[block.name] = block end
+        local names = ADDONS.readNames(readFile(ROOT .. "/" .. ADDONS.SPENT_NAMES))
+        local mainNames = ADDONS.readNames(readFile(T.TRANSLATE .. "Recipes.json"))
+        local taken = {}
+        for _, value in pairs(mainNames) do taken[value] = true end
+        for _, recipe in pairs(resized) do
+            local id = recipe.id
+            check(blocks[id] ~= nil, id .. " is in the add-on's recipe script")
+            eq(blocks[id] and blocks[id].fields.OnCreate, "AC_Materials." .. recipe.callback, id .. ": its OnCreate is the main mod's callback")
+            check(mainNames[id] == nil, id .. " is not a recipe of the main mod")
+            eq(names[id], S.getResizeName(mainNames[recipe.formRecipe]), id .. " is named after its forming recipe (" .. tostring(names[id]) .. ")")
+            check(names[id] ~= nil and string.sub(names[id], 1, #R.namePrefix) == R.namePrefix, id .. " is called Resize Spent ...")
+            check(not taken[names[id]], id .. " has a name no main recipe has")
+        end
+        eq(S.getResizeName("Form X Case"), "Resize Spent X Case", "a forming name becomes a resizing name")
+        eq(S.getResizeName("Odd"), "Resize Spent Odd", "and any other name is prefixed")
+
+        -- The economy, cycle after cycle, at the BEST case for the player
+        -- (every fired case found, the sandbox maximum): a stock of new
+        -- cases never makes more than twice its number of rounds, so half
+        -- of every case loaded is formed from new brass. At the default
+        -- (half found) three quarters are.
+        for _, setting in ipairs({ { 100, 2 }, { 50, 4 / 3 }, { 0, 1 } }) do
+            local percent, bound = setting[1], setting[2]
+            local share = S.getReuseShare(percent)
+            check(math.abs(1 / (1 - share) - bound) < 1e-9, percent .. " % found: at most " .. bound .. " rounds per new case")
+            local first, cases, rounds = 4000, 4000, 0
+            local cycles = 0
+            while cases > 0 and cycles < 60 do
+                rounds = rounds + cases
+                local found = math.floor(cases * percent / 100)
+                cases = math.floor(found / R.spentPerCase)
+                cycles = cycles + 1
+            end
+            eq(cases, 0, percent .. " % found: the stock runs out")
+            check(rounds <= first * bound + 1e-9, percent .. " % found: " .. first .. " new cases make " .. rounds .. " rounds, never more than " .. first * bound)
+            check(first / rounds >= R.minimumNewShare - 1e-9, percent .. " % found: at least half of what is loaded was formed new")
+        end
+        -- Looted factory rounds: at the shipped settings a hundred fired
+        -- come back as a quarter of a hundred cases, and never a primer.
+        eq(100 * S.getReuseShare(S.CONFIG.recoveryPercent), 25, "a hundred looted rounds fired come back as 25 usable cases")
+
+        -- XP: a case's brass that goes round the loop pays its forming XP
+        -- once; every later round only its assembly, which costs a new
+        -- primer, projectile and charge each time. Resizing is not trained.
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.resize then eq(recipe.xp, 0, recipe.id .. ": 0 XP") end
+        end
+
+        -- What validateResize refuses.
+        local function refused(change, needle, what)
+            local saved = {}
+            for key, value in pairs(R) do saved[key] = value end
+            local savedBonus = Q.resizedBonus
+            change()
+            local text = table.concat(S.validateResize(), "; ")
+            for key, value in pairs(saved) do R[key] = value end
+            Q.resizedBonus = savedBonus
+            check(string.find(text, needle, 1, true) ~= nil, what .. " is refused (" .. text .. ")")
+        end
+        refused(function() R.spentPerCase = 1 end, "more brass than scrapping the spent cases", "one usable case per spent case (resize, then scrap clean)")
+        refused(function() R.spentPerCase = 1 end, "formed new", "one usable case per spent case (the mine)")
+        refused(function() R.spentPerCase = 1.5 end, "whole number", "a fractional rate")
+        refused(function() R.minimumNewShare = 0.75 end, "formed new", "a rate that leaves less than the required share new")
+        refused(function() R.xp = 1 end, "no XP", "XP for resizing")
+        refused(function() R.timePercent = 60 end, "faster than forming", "resizing faster than forming")
+        refused(function() R.levelsAboveForming = -1 end, "before forming", "resizing before forming")
+        refused(function() Q.resizedBonus = 0 end, "lower casing quality", "a resized case as good as a new one")
+        eq(#S.validateResize(), 0, "(restored)")
+        -- The game-start check sees the same problems.
+        R.xp = 2
+        check(string.find(table.concat(S.validate(), "; "), "resizing must award no XP", 1, true) ~= nil, "validate() reports a resizing problem too")
+        R.xp = 0
+
+        -- Without the add-on: no resizing recipe and no callback.
+        finish()
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            check(not recipe.resize, "off: " .. recipe.id .. " is not a resizing recipe")
+        end
+        for key in pairs(AC_Materials) do
+            check(type(key) ~= "string" or string.find(key, AC_SpentCases.RESIZE.callbackPrefix, 1, true) == nil, "off: no resizing callback is defined (" .. tostring(key) .. ")")
+        end
+        eq(#AC_SpentCases.buildResizeRecipes(), #AC_Calibres.LIST, "off: the recipes are still described, for the generator")
+    end
+
     section("Spent cases: the brass economy stays lossy, and factory ammunition is no brass mine")
     do
         start(true)
@@ -768,6 +961,16 @@ return function(T)
         for _, fullType in ipairs(S.getItems()) do
             eq(debugPlayer.inventory:count(fullType), 10, "the kit holds ten " .. fullType)
             mirror[fullType] = 10
+        end
+        for _, calibre in ipairs(AC_Calibres.LIST) do
+            eq(debugPlayer.inventory:count(calibre.dieSet), 1, "the kit holds the die set " .. calibre.dieSet)
+            mirror[calibre.dieSet] = 1
+        end
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            if recipe.resize then
+                check(T.mirrorCraft(mirror, recipe), "the kit is enough for " .. recipe.id)
+                eq(mirror[recipe.outputs[1].item], 1, "and it makes one usable case: " .. recipe.id)
+            end
         end
         for _, recipe in ipairs(AC_Materials.RECIPES) do
             if recipe.recyclingSource == "spent" then

@@ -40,6 +40,7 @@ require "AC_Features"
 require "AC_Calibres"
 require "AC_Casting"
 require "AC_Recycling"
+require "AC_SpentCases"
 
 AC_Materials = AC_Materials or {}
 
@@ -703,6 +704,29 @@ do
         AC_Materials.RECIPES,
         recipe
     )
+end
+
+
+-- Spent cases resized at the die set, two for one, no XP
+-- (AC_SpentCases.RESIZE). Their scripts are in the
+-- spent-cases add-on, so they are listed whenever its
+-- content is in the game (hasContent, not isEnabled: the
+-- engine loads the add-on's recipes even where the
+-- feature stands down, and their callbacks must exist).
+if AC_Features.hasContent("spentCases") then
+
+    for _,
+        recipe
+    in ipairs(
+        AC_SpentCases.buildResizeRecipes()
+    )
+    do
+
+        table.insert(
+            AC_Materials.RECIPES,
+            recipe
+        )
+    end
 end
 
 

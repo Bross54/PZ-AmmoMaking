@@ -2513,8 +2513,9 @@ local function spawnPressBuildKit(
 end
 
 
--- Ten spent cases of every calibre, to try the spent
--- scrapping recipes without firing a shot.
+-- Ten spent cases of every calibre and every calibre's
+-- die set, to try the spent scrapping and resizing
+-- recipes without firing a shot.
 local function buildSpentCasesKit()
 
     local kit = {
@@ -2532,6 +2533,20 @@ local function buildSpentCasesKit()
         table.insert(
             kit,
             { fullType, 10 }
+        )
+    end
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        table.insert(
+            kit,
+            { calibre.dieSet, 1 }
         )
     end
 

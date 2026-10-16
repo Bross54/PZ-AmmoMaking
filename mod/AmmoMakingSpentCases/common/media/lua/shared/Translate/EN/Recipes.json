@@ -1,5 +1,14 @@
 {
     "AmmoMaking_ScrapSpentBrass5": "Scrap Spent Small Cases",
     "AmmoMaking_ScrapSpentBrass10": "Scrap Spent Medium Cases",
-    "AmmoMaking_ScrapSpentBrass15": "Scrap Spent Large Cases and Hulls"
+    "AmmoMaking_ScrapSpentBrass15": "Scrap Spent Large Cases and Hulls",
+    "AmmoMaking_ResizeSpentCase9mm": "Resize Spent 9mm Case",
+    "AmmoMaking_ResizeSpentCase38Special": "Resize Spent .38 Special Case",
+    "AmmoMaking_ResizeSpentCase45ACP": "Resize Spent .45 ACP Case",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Resize Spent .357 Magnum Case",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Resize Spent .44 Magnum Case",
+    "AmmoMaking_ResizeSpentCase556NATO": "Resize Spent 5.56 Case",
+    "AmmoMaking_ResizeSpentCase3030Win": "Resize Spent .30-30 Case",
+    "AmmoMaking_ResizeSpentCase308Win": "Resize Spent .308 Case",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Resize Spent 12 Gauge Brass Hull"
 }

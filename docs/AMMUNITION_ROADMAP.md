@@ -56,7 +56,7 @@ Numbers: the main mod has 55 items, 74 recipes (67 manufacturing, 16 of
 them for lead; 3 for the geology equipment, 3 scrapping, 1 recast) and 55
 loot entries (22 die sets, 9 components, 20 skill books, 4 bullet moulds)
 in 10 vanilla lists. The press add-on has 27 recipes;
-the spent-cases add-on 9 items and 3 recipes.
+the spent-cases add-on 9 items and 12 recipes (3 scrapping, 9 resizing).
 
 ## 2. What the research settled
 
@@ -78,8 +78,12 @@ Kept here in one line each; the evidence is in the documents named above.
   deterministic proportion, and any effect has to be linear in quality or
   read the load's mean, or mixing and unmixing would launder bad rounds.
 - **Spent cases.** Any policy that turns fired factory rounds into
-  *reloadable* brass competes with the mine. The policy built gives scrap
-  only, at a quarter.
+  *reloadable* brass competes with the mine, so the rate is bounded by it:
+  scrap at a quarter, or resize two spent cases into one usable case (no
+  XP, one level after forming, a lower casing quality). At two for one a
+  resized case scrapped returns exactly what the spent cases would, and
+  even with every case found half of all cases loaded are newly formed
+  (`SPENT_CASE_RESEARCH.md` 8).
 - **Press.** Time is its only advantage: 60 % of the hand time at the level
   a recipe unlocks, at most 68 % at level 10. A portable press was weighed
   and rejected.
@@ -127,7 +131,7 @@ Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 | What the kits and the analyzer cost | `AC_Materials.EQUIPMENT_RECIPES` |
 | Recipe levels, times, XP per calibre | `AC_Calibres.lua` |
 | The press's time advantage and build cost | `AC_Calibres.PRESS` |
-| Spent cases found per hundred shots; scrap return | sandbox option; `AC_Recycling.SPENT` |
+| Spent cases found per hundred shots; scrap return; resizing rate, level and quality | sandbox option; `AC_Recycling.SPENT`; `AC_SpentCases.RESIZE` (the rate is capped by `validateResize`) |
 | Recycling yield (half) | `AC_Recycling.lua` |
 | The largest extra jam chance, once effects are unlocked | `AC_QualityEffects.CONFIG` |
 
@@ -146,8 +150,8 @@ Nothing here is needed for a first release.
 
 - Multiplayer authority (server-side sampling, assays, analyzer, mining):
   designed in `MULTIPLAYER_DESIGN.md`.
-- Reloading fired brass (resizing a spent case into a usable one): needs
-  a decision on its cost against the mine (`SPENT_CASE_RESEARCH.md` 4).
+- ~~Reloading fired brass~~: **built** in the spent-cases add-on, two
+  spent cases into one usable case (`SPENT_CASE_RESEARCH.md` 8).
 - Copper recycling: low value, see `LOOT_AND_RECYCLING.md` 2.5.
 - More calibres: every vanilla round with a firearm is covered. A new one
   is a `define{}` entry and three items.

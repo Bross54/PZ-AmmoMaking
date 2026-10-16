@@ -230,7 +230,7 @@ MUTANTS = [
     (SHARED + "AC_SpentCases.lua", "        local result = original(self, ...)\n", "        local result = nil\n", "the wrapper never calls vanilla's function"),
     (SHARED + "AC_SpentCases.lua", "    if weapon:isManuallyRemoveSpentRounds() then\n        return 0\n    end\n", "", "a hand-emptied gun with a chamber hands out one case more than it fired"),
     (SHARED + "AC_Features.lua", "    if definition.mod\n        and definition.stability ~= AC_Features.STABLE\n    then\n        return AC_Features.isModActive(definition.mod)\n    end\n", "", "an add-on's recipes lose their callbacks where its feature stands down"),
-    (SHARED + "AC_Materials.lua", "if AC_Features.hasContent(\"spentCases\") then", "if AC_Features.isEnabled(\"spentCases\") then", "spent cases have no material units on a server that loads their recipes"),
+    (SHARED + "AC_Materials.lua", "if AC_Features.hasContent(\"spentCases\") then\n\n    for itemType,", "if AC_Features.isEnabled(\"spentCases\") then\n\n    for itemType,", "spent cases have no material units on a server that loads their recipes"),
     (SHARED + "AC_Recycling.lua", "    if AC_Features.hasContent(\"spentCases\") then", "    if AC_Features.isEnabled(\"spentCases\") then", "the spent-scrapping recipes are loaded without their callbacks beside a conflicting mod"),
     (SHARED + "AC_SpentCases.lua", "    if AC_SpentCases.installed then\n        return AC_SpentCases.installed\n    end\n", "", "the hooks are installed again on every call"),
     (SHARED + "AC_SpentCases.lua", "    if not AC_Features.isEnabled(\"spentCases\") then\n        return nil\n    end\n", "", "the hooks are installed whatever the feature says"),
@@ -244,6 +244,20 @@ MUTANTS = [
     ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt", "            item 1 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "            item 2 Base.BrassScrap,\n        }\n    }\n\n    craftRecipe AmmoMaking_ScrapSpentBrass10", "the spent scrapping script hands back twice what the model says"),
 
     (SHARED + "AC_SpentCases.lua", "        and chosen >= 0\n        and chosen <= 100\n", "        and chosen >= 0\n", "a sandbox value above 100 % is taken as a setting"),
+
+    # ---- resizing fired brass (spent-cases add-on)
+    (SHARED + "AC_SpentCases.lua", "    spentPerCase = 2,", "    spentPerCase = 1,", "one usable case per spent case: resizing launders spent brass and undercuts the mine"),
+    (SHARED + "AC_SpentCases.lua", "    timePercent = 100,\n\n    xp = 0,", "    timePercent = 100,\n\n    xp = 1,", "resizing grants XP"),
+    (SHARED + "AC_SpentCases.lua", "    levelsAboveForming = 1,", "    levelsAboveForming = 0,", "resizing unlocks with forming"),
+    (SHARED + "AC_SpentCases.lua", "    timePercent = 100,\n\n    xp = 0,", "    timePercent = 50,\n\n    xp = 0,", "resizing is faster than forming"),
+    (SHARED + "AC_SpentCases.lua", "    if clean / perCase > spent then", "    if false then", "a rate that launders spent brass through clean scrap passes validation"),
+    (SHARED + "AC_SpentCases.lua", "        effect = \"resizedCaseQuality\",", "        effect = \"caseQuality\",", "a resized case rolls the quality of a new one"),
+    (SHARED + "AC_SpentCases.lua", "        if input.keep then\n\n            table.insert(\n                inputs,", "        if false then\n\n            table.insert(\n                inputs,", "resizing needs no die set"),
+    (SHARED + "AC_SpentCases.lua", "            { count = 1, item = calibre.case },", "            { count = 2, item = calibre.case },", "resizing makes two cases"),
+    (SHARED + "AC_Materials.lua", "if AC_Features.hasContent(\"spentCases\") then\n\n    for _,", "if AC_Features.isEnabled(\"spentCases\") then\n\n    for _,", "the resizing recipes have no callbacks where the feature stands down but the add-on loads them"),
+    (SHARED + "AC_CaseQuality.lua", "    resizedBonus = -10,", "    resizedBonus = 0,", "a resized case is as good as a new one"),
+    (SHARED + "AC_CaseQuality.lua", "                    AC_CaseQuality.CONFIG.resizedBonus\n", "                    0\n", "the resized-case effect forgets its malus"),
+    ("mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt", "            item 2 [AmmoMaking.SpentCase9mm],", "            item 1 [AmmoMaking.SpentCase9mm],", "the shipped script resizes one spent case into one case"),
 
     # ---- quality tracking in magazines and firearms
     (SHARED + "AC_QualityCarrier.lua", "    local keep =\n        type(record) == \"table\"\n        and (tonumber(record.handloaded) or 0) > 0\n", "    local keep =\n        type(record) == \"table\"\n", "every gun that is touched gets a record, factory rounds or not"),

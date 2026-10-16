@@ -50,7 +50,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [h2]What it does not do[/h2]
 [list]
 [*]A handloaded round fires exactly like a factory round. Case quality is recorded and shown; it has no effect on shooting.
-[*]Fired brass cannot be reloaded.
+[*]Fired brass is only reloadable with the experimental Spent Cases add-on below.
 [*]The inventory icons are the mod's own; world models and the press's tile art are placeholders for now.
 [/list]
 
@@ -58,7 +58,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 Three systems are written and have [b]not been verified in game[/b]. Leave them off for a normal game; switch them on only to test them, on a save you can afford to lose.
 [list]
 [*][b]Reloading Press[/b] (separate mod in this item: Ammo Making: Reloading Press). A placed station that does the case, bullet and assembly steps faster, with the same die sets and material. Placeholder art.
-[*][b]Spent Cases[/b] (separate mod: Ammo Making: Spent Cases). Fired rounds leave spent brass, half of it found (a sandbox option). It can only be scrapped, at a loss. Single player. Do not combine with another mod that leaves casings.
+[*][b]Spent Cases[/b] (separate mod: Ammo Making: Spent Cases). Fired rounds leave spent brass, half of it found (a sandbox option). It is scrapped at a loss, or resized at the calibre's die set: two spent cases make one usable case, of a lower quality, for no XP. Single player. Do not combine with another mod that leaves casings.
 [*][b]Quality tracking[/b] (sandbox option, page Ammo Making). The case quality of handloaded rounds is kept through magazines and firearms and can be inspected there. Single player. Still no effect on shooting.
 [/list]
 

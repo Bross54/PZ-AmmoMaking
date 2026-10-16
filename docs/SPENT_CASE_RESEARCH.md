@@ -1,13 +1,15 @@
 # Spent cases: research, design and implementation
 
 Status: **IMPLEMENTED AS AN EXPERIMENTAL ADD-ON, NOT YET SEEN IN GAME.**
-The add-on mod `AmmoMakingSpentCases` carries nine spent-case items and
-their scrapping recipes; `AC_SpentCases.lua` in the main mod is the logic.
-Nothing of it exists in a game without the add-on (feature `spentCases`,
-`AC_Features.lua`), in multiplayer, or beside another mod that leaves
-casings. Sections 1 to 3 are the research the implementation rests on;
-section 4 is the economy and the policy that was chosen (4.2); section 7
-is what was built.
+The add-on mod `AmmoMakingSpentCases` carries nine spent-case items, their
+scrapping recipes and one resizing recipe per calibre; `AC_SpentCases.lua`
+in the main mod is the logic. Nothing of it exists in a game without the
+add-on (feature `spentCases`, `AC_Features.lua`); in multiplayer or beside
+another mod that leaves casings no case is left, though the add-on's
+recipes still load. Sections 1 to 3 are the research the implementation
+rests on; section 4 is the economy and the policy that was chosen (4.2);
+section 7 is what was built; section 8 is resizing fired brass, decided
+and built on the fourth pass.
 
 Facts were read on 2026-10-02 from the installed game and are marked
 **FILE** (a vanilla Lua or script file, path under `media/`), **JAR**
@@ -232,9 +234,9 @@ Designed, not defined in any script:
 |---|---|
 | Item | one per calibre, `AmmoMaking.SpentCase<suffix>` (and `SpentHull12Gauge`), listed in the calibre model as `calibre.spentCase` so no other file names a calibre |
 | Brass content | the case's own (`cupUnits * cupsPerCase`); the fired primer cup is discarded, so a spent case holds no more brass than went into the case |
-| Back into use | a resizing recipe at the calibre's die set: several spent cases in, fewer cases out (split necks), no XP or the forming XP only; the loss keeps reloading from being free |
+| Back into use | a resizing recipe at the calibre's die set: several spent cases in, fewer cases out (split necks), no XP or the forming XP only; the loss keeps reloading from being free. **Built** (section 8): two in, one out, no XP |
 | Recycling | joins the scrapping recipe of its brass size in `AC_Recycling`, which already groups by content |
-| Quality | a resized case gets a fresh quality roll, a little lower: there is nothing to carry over, because the round in the gun was a count |
+| Quality | a resized case gets a fresh quality roll, a little lower: there is nothing to carry over, because the round in the gun was a count. **Built** (section 8): one label band lower |
 
 ## 4. Why it was first left unimplemented, and what changed
 
@@ -292,7 +294,8 @@ Looted factory ammunition as a source of brass, per hundred rounds fired:
 | **C**: only handloaded rounds leave a case | 0, 0, 0 | 0, 0, 0 | 0, 0, 0 |
 | **D**: every round leaves a case; half are lost, the rest are dirty | 50, 0.6, 1.9 | 50, 1.9, 5.6 | 50, 1.9, 5.6 |
 | **E**: no spent cases | 0, 0, 0 | 0, 0, 0 | 0, 0, 0 |
-| **F**: **implemented (add-on)**: every round leaves a case, half are found, scrap only at a quarter | 50, 0.6, 0 | 50, 1.9, 0 | 50, 1.9, 0 |
+| **F**: the add-on before resizing: every round leaves a case, half are found, scrap only at a quarter | 50, 0.6, 0 | 50, 1.9, 0 | 50, 1.9, 0 |
+| **G**: **implemented (add-on)**: every round leaves a case, half are found; scrap at a quarter, or resize two into one | 50, 0.6, 1.3 | 50, 1.9, 3.8 | 50, 1.9, 3.8 |
 
 The player's own rounds, fired and reloaded: what the next hundred cost:
 
@@ -304,6 +307,7 @@ The player's own rounds, fired and reloaded: what the next hundred cost:
 | **D** | 37.5, 4.1 (6), 9.1 (11) | 37.5, 11.4 (17), 21.4 (27) | 37.5, 11.4 (17), 21.4 (27) |
 | **E** | 0, 6 (6), 11 (11) | 0, 17 (17), 27 (27) | 0, 17 (17), 27 (27) |
 | **F** | 0, 6 (6), 11 (11) | 0, 17 (17), 27 (27) | 0, 17 (17), 27 (27) |
+| **G** | 25, 4.8 (6), 9.8 (11) | 25, 13.3 (17), 23.3 (27) | 25, 13.3 (17), 23.3 (27) |
 
 <!-- END SPENT CASE POLICY TABLE -->
 
@@ -326,7 +330,12 @@ Reading it:
 - **D** is A at about three eighths strength for looted rounds (half are
   found, three in four of those resize), and a weaker loop for the
   player's own.
-- **E** is today.
+- **E** is the main mod alone.
+- **F** is the add-on of the third pass (4.2): scrap only.
+- **G** is the add-on with resizing (section 8): D at two thirds of its
+  strength, a quarter of every fired round back as a usable case. A
+  hundred looted .308 are 3.75 ingots' worth of cases, under a quarter of
+  the 17 ingots a hundred new .308 take, and none of the primer brass.
 
 **C needs to know which rounds are handloaded, and vanilla does not keep
 that**: a loaded round is a count (`AMMO_QUALITY_RUNTIME_DESIGN.md` 1).
@@ -390,10 +399,10 @@ cases the rounds that can ever be made are bounded by 1 / (1 - 0.25) even
 if every case were found, and the suite walks that cycle to exhaustion for
 every calibre.
 
-A resizing recipe (spent case back to a loadable case) is deliberately
-absent. It would need to know handloads from factory rounds to stay
-honest, which is the quality tally's job; it is listed as an optional
-future feature.
+A resizing recipe (spent case back to a loadable case) was left out of
+the third pass, on the argument that it would need to know handloads from
+factory rounds to stay honest. Section 8 shows a rate at which it does not
+need to: resizing was built on the fourth pass, two spent cases for one.
 
 ## 5. The order that was proposed (done except point 4's in-game check)
 
@@ -418,6 +427,11 @@ future feature.
   player (it decides where a wrapped `ejectSpentRounds` would be called).
 - That a revolver's `getSpentRoundCount()` still holds N at the start of
   `ejectSpentRounds()`.
+- Resizing (section 8): that the add-on's resizing recipes appear in the
+  crafting window with the Ammo Making level attached, take two spent
+  cases and keep the die set and hammer, hand back one usable case that
+  assembles like a formed one, award no XP, and that the case carries a
+  casing quality below a formed case's.
 
 ## 7. What is implemented
 
@@ -489,3 +503,113 @@ Known limits, left as they are:
 - A modded gun with `RackAfterShoot` and no chamber leaves none.
 - The listener order holds only while no other mod re-registers vanilla's
   `onShoot` after game start.
+
+## 8. Resizing fired brass (built, fourth pass)
+
+The roadmap left this open "pending a decision on its cost against the
+mine" (section 4, recommendation 3: any policy that turns factory
+ammunition into reloadable brass competes with it). This section is that
+decision, with the numbers it rests on. Everything is offline: recipe
+data, the brass ledger and the calculation of section 4.1 (row **G**).
+
+### 8.1 What was built
+
+| | Value | Where |
+|---|---|---|
+| Recipe | `AmmoMaking_ResizeSpentCase<calibre>`, one per calibre, in the add-on's `AC_SpentCaseRecipes.txt` (generated); name *Resize Spent ... Case* | `AC_SpentCases.buildResizeRecipe` |
+| Inputs | **two** spent cases of the calibre; the calibre's **die set** and a hammer, kept | `RESIZE.spentPerCase`; the forming recipe's kept lines |
+| Output | **one** of the calibre's own cases, the item the forming recipe makes: it assembles like any other | the forming recipe's output |
+| Bench, action, time | those of the calibre's forming recipe (on a surface, `MakingHammer_Surface`, 80 for pistols and the shell, 160 for rifles) | `RESIZE.timePercent` = 100 |
+| Level | the forming recipe's level **plus one**, never above the round's: 2 for the 9mm and .38, 3 for the .45, .357 and 12 gauge, 4 for the .44 and the rifles | `RESIZE.levelsAboveForming` |
+| XP | **none** | `RESIZE.xp`, refused by `validateResize` if not 0 |
+| Casing quality | rolled as for a formed case, **10 lower** (one label band) | `AC_CaseQuality.CONFIG.resizedBonus`, effect `resizedCaseQuality` |
+| Without the add-on | no recipe, no callback, nothing named | `AC_Materials` adds them on `hasContent("spentCases")` |
+
+Factory and handloaded brass alike: a spent case does not know where its
+round came from (4.2), and no rule may depend on it. The add-on ships no
+Lua; the recipe is described in `AC_SpentCases.lua` (no calibre named)
+from the calibre model, and the per-calibre values (die set, case, level,
+time) are the calibre model's own.
+
+### 8.2 Why two for one
+
+Three limits, each with its number. Two spent cases per case is the
+loosest rate that passes all three (`AC_SpentCases.validateResize`; the
+suite refuses the others).
+
+| Limit | Rule | At two for one |
+|---|---|---|
+| **No scrap loop** | a resized case scrapped as a clean case (`AC_Recycling`, a half back) may not return more brass than scrapping the spent cases (a quarter): 1 / n × 0.5 ≤ 0.25 | 0.25 = 0.25: resizing first gains nothing and costs the bench time. Two from three (0.33) or one for one (0.5) would launder spent brass into clean scrap |
+| **The mine stays necessary** | at the sandbox maximum (every fired case found) at least half of every case loaded must be newly formed; a stock of N new cases makes at most 1 / (1 − r) × N rounds, r = found × 1 / n | r = 0.5 at 100 found: at most 2 N rounds, half the cases new; r = 0.25 at the default 50: at most 1.33 N, three quarters new. Every primer is still new brass, every projectile new copper or lead |
+| **Below the policy that was turned down** | fewer reloadable cases than D (three from four, half found), for looted and own rounds, every calibre | 25 cases back per 100 fired against D's 37.5 (tested) |
+
+Looted factory ammunition, a hundred rounds fired, at the defaults: 50
+spent cases found, 25 usable cases. In brass that is 1.25 ingots for the
+9mm and 3.75 for the .308 or the shell, against the 6 and 17 ingots a
+hundred new rounds take: a quarter of the cases, none of the primers. Row
+A, which section 4.1 rejects as "a brass mine", would be 5 and 15.
+
+The player's own rounds: the next hundred 9mm take 4.75 ingots of brass
+instead of 6, the next hundred .308 13.25 instead of 17 (row G of the
+second table). Brass lasts a little longer; it is still mined.
+
+### 8.3 Why not a count of reloads on the case
+
+The brief for this pass suggested a case that can be resized a limited
+number of times, carried as a count in the item's ModData. It cannot be
+carried:
+
+- **The count would not survive the shot.** Loading removes the round
+  item and adds one to a count: FILE
+  `lua/shared/TimedActions/ISLoadBulletsInMagazine.lua:128-129`
+  (`RemoveOneOf`, then `setCurrentAmmoCount(+1)`) and
+  `ISReloadWeaponAction.lua:241-242` (`Remove(bullet)`, then the gun's
+  count `+1`). Section 1.3: the spent case that leaves the gun is a new
+  item made by `AC_SpentCases.leave`; nothing links it to the case that
+  was loaded. The quality tally carries a sum of qualities, not of
+  reloads, and is a separate experimental feature.
+- **Crafting makes new items.** The resized case is created by the
+  engine as a recipe output; a count would have to be copied from the
+  consumed spent case in `OnCreate`, then into the round at assembly,
+  then lost at loading as above.
+
+A limited number of reuses is still there, in expectation and without
+per-item state: at a reuse share r per cycle the brass of one new case is
+used 1 / (1 − r) times on average, at most twice at the sandbox maximum.
+
+**Deterministic, not a roll.** The loss is in the recipe (two in, one
+out) rather than a chance per craft that a case cracks into scrap. The
+expectation is the same; a roll would need the mod to destroy an item the
+engine has just created from `OnCreate`, a path no vanilla recipe uses
+and nothing here could verify offline. And a cracked case that came back
+as scrap would break the scrap-loop limit above (resize, then scrap both
+the case and the crack, returns more than a quarter), so the cracked
+case's brass is simply lost.
+
+### 8.4 XP and material
+
+- Resizing awards 0 XP: the brass was paid for, and forming (1 to 3 XP a
+  case) stays the only way to train the case step.
+- A round assembled on a resized case earns its assembly XP, paid with a
+  new primer, projectile and charge each time, exactly as on a formed
+  case. The loop fire, resize, assemble therefore costs those components
+  every turn and half the case brass; it creates neither XP nor material.
+- Conservation (`AC_Materials.checkConservation`, `loss = true`): brass
+  in is twice brass out for every calibre.
+- The case quality is rolled lower and is never above a formed case's at
+  any level or roll (tested). The quality effects stay locked.
+
+### 8.5 Not built
+
+- No press version: the press add-on is a separate mod and the press's
+  only advantage is time; resizing is left to the hand.
+- No sandbox option for the rate: the rate is fixed by the scrap-loop
+  limit, not by taste (like the recycling yield,
+  `BALANCE_OPTIONS.md` 1.1). The spent-case rate option still scales
+  how many cases are found, and with it how much resizing there is.
+
+### 8.6 REQUIRES FUTURE IN-GAME VERIFICATION
+
+Listed in section 6 and `INGAME_VALIDATION.md` 19: the recipes appear
+and craft with the level attached; two spent cases go in and the die set
+and hammer are kept; the case assembles; no XP; a lower casing quality.

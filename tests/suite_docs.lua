@@ -152,7 +152,7 @@ return function(T)
         for text in string.gmatch(flat, "%*(%u[^%*]-)%*") do
             if string.find(text, "^Smelt ") or string.find(text, "^Cast ") or string.find(text, "^Forge ") or string.find(text, "^Form ")
                 or string.find(text, "^Swage ") or string.find(text, "^Assemble ") or string.find(text, "^Make ") or string.find(text, "^Punch ")
-                or string.find(text, "^Scrap ") or string.find(text, "^Build ")
+                or string.find(text, "^Scrap ") or string.find(text, "^Build ") or string.find(text, "^Resize ")
             then
                 recipes = recipes + 1
                 local stem = string.gsub(text, " %.%.%.$", "")

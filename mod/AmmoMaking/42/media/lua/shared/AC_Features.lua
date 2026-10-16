@@ -102,7 +102,7 @@ AC_Features.DEFINITIONS = {
         -- once would leave two cases per round.
         conflicts = { "HBVCEFb42" },
 
-        what = "fired rounds leave spent brass that can only be scrapped, at a loss",
+        what = "fired rounds leave spent brass, which is scrapped at a quarter or resized at the die set two for one, for no XP",
     },
 
     {

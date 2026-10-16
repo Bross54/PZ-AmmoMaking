@@ -688,7 +688,9 @@ function AC_Calibres.define(
     -- What a fired round leaves behind: the case's own
     -- item name with "Spent" in front. The item exists
     -- only in the spent-cases add-on (AC_SpentCases); it
-    -- is not a case and cannot be loaded again.
+    -- is not a case and cannot be loaded as it is: it is
+    -- scrapped, or resized two for one back into this
+    -- calibre's case (AC_SpentCases.RESIZE).
     calibre.spentCase =
         calibre.spentCase
         or (

@@ -496,7 +496,7 @@ The first metallurgy stage (ore to brass on the vanilla furnaces) is implemented
 The component chain above is the foundation. Still planned:
 
 - the reloading press station (designed in `docs/RELOADING_PRESS_DESIGN.md`; its recipes are prepared and 40 % faster than by hand, the world object needs a tile sheet of its own and an in-game pass)
-- spent cases: researched, not built, and waiting for a decision on what fired factory rounds should leave behind (`docs/SPENT_CASE_RESEARCH.md`)
+- spent cases: built as an experimental add-on; fired brass is scrapped or resized two for one at the die set (`docs/SPENT_CASE_RESEARCH.md`)
 - a way for round quality to reach the shot: designed, not built (`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`)
 - bullet and primer quality, powder load, and their effect on reliability
 
@@ -552,7 +552,7 @@ Possible systems include:
 - casing degradation
 - reload count
 - damaged cases
-- resizing
+- resizing (built in the experimental *Spent Cases* add-on: two spent cases into one usable case at the calibre's die set, no XP)
 - cleaning
 - reusing suitable components
 
@@ -628,7 +628,7 @@ them.
 | System | Switch | What it does |
 |---|---|---|
 | **Reloading Press** | the add-on mod *Ammo Making: Reloading Press (experimental)* | a placed station; the case, projectile and assembly steps of all nine calibres, same die sets and material, less time. Placeholder sprites |
-| **Spent cases** | the add-on mod *Ammo Making: Spent Cases (experimental)*; sandbox option for how many are found | fired rounds leave spent brass that can only be scrapped, at a quarter of its brass and no XP. Single player. Stands down beside Hot Brass |
+| **Spent cases** | the add-on mod *Ammo Making: Spent Cases (experimental)*; sandbox option for how many are found | fired rounds leave spent brass. It scraps at a quarter of its brass, or is resized at the calibre's die set, two spent cases into one usable case with a lower casing quality, one level after forming. No XP either way. Single player. Stands down beside Hot Brass |
 | **Quality tracking** | sandbox option *Track ammunition quality in magazines and firearms* | the casing quality of handloaded rounds survives loading and unloading, and can be inspected on a magazine or firearm. Single player. No effect on firing |
 | **Quality effects at the shot** | none: locked off in this version | a small extra jam chance for poor handloads, through vanilla's own jam state. Written; waits for the tracking to be seen working |
 
@@ -646,7 +646,7 @@ main mod has no tile sheet or entity of its own.
 - **Round quality is stored and shown, and changes nothing at the shot.** Vanilla turns loaded rounds into a count; the experimental quality tracking carries the casing quality across that as a tally (off by default). A box of ammunition keeps no record at all.
 - **Die-set loot and brass recycling have not been run in game yet.** The loot weights are deliberately small and untuned; toy caps and fertilizer are plain vanilla loot (toy caps exist in one Wild West location, so match heads are the practical priming charge). See `docs/LOOT_AND_RECYCLING.md`.
 - **The reloading press is an experimental add-on with placeholder art.** No vanilla sprite can be borrowed safely (a sprite claimed twice stops every world from loading), so the station has a tile sheet of its own. Whether the game loads and draws it can only be checked in the game.
-- **Spent cases are an experimental add-on, and cannot be reloaded.** They are scrap brass at a loss; reloading fired brass is not built (`docs/SPENT_CASE_RESEARCH.md`).
+- **Spent cases are an experimental add-on.** They scrap at a loss, or resize two into one usable case; half the brass is lost either way, so the mine stays the source of brass (`docs/SPENT_CASE_RESEARCH.md` 8). Not yet seen in game.
 - **Multiplayer is not supported.** Every action that changes the world or an item outside a recipe (sampling, assays, the analyzer, mining) is refused on a client; nothing is synchronised. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
 - **Ammo quality does not affect firearms.** The effect code exists and is locked off.
 - **All visuals are placeholders**: vanilla icons and models, a vanilla tile for the analyzer, programmer art for the press (`docs/PLACEHOLDER_ASSETS.md`, `docs/ART_HANDOFF.md`).
@@ -700,6 +700,7 @@ Behind switches (experimental, off by default):
 ```text
 reloading press: the same steps at a placed station, faster
 fired rounds → spent cases → brass scrap (a quarter of the brass)
+                           → resized at the die set, two into one usable case
 casing quality carried through magazines and firearms, and inspected there
 ```
 
@@ -717,8 +718,8 @@ The code is complete as far as it can be without the game
 
 ## Optional, not planned
 
-Multiplayer authority (designed in `docs/MULTIPLAYER_DESIGN.md`), reloading
-of fired brass, lead and cast bullets, shell variants, further calibres,
+Multiplayer authority (designed in `docs/MULTIPLAYER_DESIGN.md`), shell
+variants, further calibres,
 a mining machine, directional analyzer sprites.
 
 ---
@@ -855,7 +856,7 @@ PZ-AmmoMaking
 │
 └── mod
     ├── AmmoMakingPress                   experimental add-on: entity, skin, 27 recipes, tile sheet; no Lua
-    ├── AmmoMakingSpentCases              experimental add-on: 9 items, 3 recipes, a sandbox option; no Lua
+    ├── AmmoMakingSpentCases              experimental add-on: 9 items, 12 recipes, a sandbox option; no Lua
     └── AmmoMaking
         ├── common
         │   └── media

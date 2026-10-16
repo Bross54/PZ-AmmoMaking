@@ -10,7 +10,7 @@
 --     common/.../Translate/EN/Recipes.json         their names
 --   Spent Cases       mod/AmmoMakingSpentCases
 --     42/media/scripts/AC_SpentCaseItems.txt       one spent case per calibre
---     42/media/scripts/AC_SpentCaseRecipes.txt     their scrapping recipes
+--     42/media/scripts/AC_SpentCaseRecipes.txt     their scrapping and resizing recipes
 --     common/.../Translate/EN/ItemName.json, Recipes.json
 --
 --   tests/write_recipes.lua  writes them
@@ -149,7 +149,8 @@ function A.spentItemNames(mainItems)
     return A.renderNames(list)
 end
 
-function A.spentRecipes()
+-- The scrapping recipes of the spent source.
+function A.spentScrapRecipes()
     local recipes = {}
     for _, recipe in ipairs(AC_Recycling.buildRecipes({ AC_Recycling.getSpentSource() })) do
         -- buildRecipes() ends with the recast, which the main mod ships.
@@ -158,14 +159,30 @@ function A.spentRecipes()
     return recipes
 end
 
+-- Everything the add-on's recipe script holds: the scrapping recipes, then
+-- one resizing recipe per calibre.
+function A.spentRecipes()
+    local recipes = A.spentScrapRecipes()
+    for _, recipe in ipairs(AC_SpentCases.buildResizeRecipes()) do table.insert(recipes, recipe) end
+    return recipes
+end
+
 function A.spentScriptBody(RENDER)
     return RENDER.renderModule(A.spentRecipes())
 end
 
-function A.spentNames()
+-- handNames: the main mod's recipe names (id -> name); a resizing recipe is
+-- named after its forming recipe.
+function A.spentNames(handNames)
     local list = {}
     for _, recipe in ipairs(A.spentRecipes()) do
-        table.insert(list, { recipe.id, AC_Recycling.getSpentRecipeName(recipe) })
+        if recipe.resize then
+            local form = handNames[recipe.formRecipe]
+            assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
+            table.insert(list, { recipe.id, AC_SpentCases.getResizeName(form) })
+        else
+            table.insert(list, { recipe.id, AC_Recycling.getSpentRecipeName(recipe) })
+        end
     end
     return A.renderNames(list)
 end
@@ -305,7 +322,8 @@ function A.writeAll(root, RENDER, which)
         writeScript(root .. "/" .. A.SPENT_ITEMS, A.spentItemsBody(mainItems), RENDER)
         writeScript(root .. "/" .. A.SPENT_SCRIPT, A.spentScriptBody(RENDER), RENDER)
         write(root .. "/" .. A.SPENT_ITEM_NAMES, A.spentItemNames(mainItems))
-        write(root .. "/" .. A.SPENT_NAMES, A.spentNames())
+        local handNames = A.readNames(assert(read(root .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
+        write(root .. "/" .. A.SPENT_NAMES, A.spentNames(handNames))
         for _, path in ipairs({ A.SPENT_ITEMS, A.SPENT_SCRIPT, A.SPENT_ITEM_NAMES, A.SPENT_NAMES }) do
             table.insert(written, path)
         end

@@ -10,8 +10,9 @@
    edit the body.
 
    One item per calibre of the calibre model. A spent case is NOT a case:
-   no recipe loads it again. It can only be scrapped
-   (AC_SpentCaseRecipes.txt), at a quarter of its brass, for no XP.
+   no recipe loads it as it is. It is scrapped, at a quarter of its brass,
+   or resized at the calibre's die set, two spent cases into one usable
+   case (both in AC_SpentCaseRecipes.txt, both for no XP).
 
    PLACEHOLDER_VISUAL: every field but the name is copied from the
    calibre's own unused case in the main mod's AC_Items.txt, so a spent

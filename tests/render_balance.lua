@@ -372,10 +372,10 @@ end
 
 ------------------------------------------------
 -- docs/SPENT_CASE_RESEARCH.md: what each spent-case policy would do to the
--- brass economy. ANALYSIS ONLY: no spent-case item, recipe or hook exists.
--- The policies and their numbers are the parameters of this calculation,
--- not data of the mod; they are here so that the decision can be made on
--- figures that follow the calibre model when it changes.
+-- brass economy. Rows A to E are an analysis: their numbers are the
+-- parameters of this calculation, not data of the mod, kept so that the
+-- decision can be read on figures that follow the calibre model when it
+-- changes. Rows F and G are computed from the add-on's own values.
 --
 --   factory, handloaded  share of fired rounds of that origin that leave a
 --                        spent case the player ends up holding
@@ -393,18 +393,30 @@ B.SPENT_POLICIES = {
     { id = "E", label = "no spent cases", factory = 0, handloaded = 0, scrap = 0, resize = 0, factoryResize = 0 },
 }
 
--- F is not a what-if: it is what the Spent Cases add-on does, from the
--- mod's own numbers (AC_SpentCases.CONFIG, AC_Recycling.SPENT). Every round
--- leaves a case, half are found, a spent case can only be scrapped, and a
--- quarter of its brass comes back.
+-- F and G are not what-ifs: they are what the Spent Cases add-on did and
+-- does, from the mod's own numbers (AC_SpentCases.CONFIG, AC_Recycling.SPENT,
+-- AC_SpentCases.RESIZE). Every round leaves a case, half are found, and a
+-- quarter of a spent case's brass comes back as scrap. F is the add-on of
+-- the third pass, which could only scrap; G is the add-on with resizing,
+-- two spent cases into one usable case.
 table.insert(B.SPENT_POLICIES, {
     id = "F",
-    label = "**implemented (add-on)**: every round leaves a case, half are found, scrap only at a quarter",
+    label = "the add-on before resizing: every round leaves a case, half are found, scrap only at a quarter",
     factory = AC_SpentCases.CONFIG.recoveryPercent / 100,
     handloaded = AC_SpentCases.CONFIG.recoveryPercent / 100,
     scrap = AC_Recycling.getRecovery(AC_Recycling.getSpentSource()),
     resize = 0,
     factoryResize = 0,
+})
+
+table.insert(B.SPENT_POLICIES, {
+    id = "G",
+    label = "**implemented (add-on)**: every round leaves a case, half are found; scrap at a quarter, or resize two into one",
+    factory = AC_SpentCases.CONFIG.recoveryPercent / 100,
+    handloaded = AC_SpentCases.CONFIG.recoveryPercent / 100,
+    scrap = AC_Recycling.getRecovery(AC_Recycling.getSpentSource()),
+    resize = 1 / AC_SpentCases.RESIZE.spentPerCase,
+    factoryResize = 1 / AC_SpentCases.RESIZE.spentPerCase,
 })
 
 B.SPENT_CALIBRES = { "9mm", ".308", "12 Gauge" }

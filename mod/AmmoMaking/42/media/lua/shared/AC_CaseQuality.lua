@@ -10,9 +10,11 @@
 -- (AmmoQuality.labelFor). It is rolled once, when the case
 -- is formed, from the maker's Ammo Making level, a random
 -- spread and a tool bonus that is 0 for the hand die set.
--- The bonus is a hook only: the press as designed gives
--- no quality bonus (its one advantage is time), so
--- nothing passes anything but 0.
+-- The press as designed gives no quality bonus (its one
+-- advantage is time). The one bonus that is not 0 is a
+-- malus: a case resized from a spent one (spent-cases
+-- add-on, AC_SpentCases.RESIZE) rolls resizedBonus lower
+-- than a case formed new at the same level.
 --
 -- Quality never changes what a recipe consumes or produces.
 --
@@ -65,6 +67,13 @@ AC_CaseQuality.CONFIG = {
     maxQuality = 100,
 
     maxLevel = 10,
+
+    -- Added to the roll of a case resized from a spent
+    -- one: worked brass that has been fired is harder
+    -- and thinner at the neck. One label band (10)
+    -- below a new case. Must stay below 0
+    -- (AC_SpentCases.validateResize).
+    resizedBonus = -10,
 
     -- ModData keys on a case.
     flagKey = "AmmoMakingCase",
@@ -577,6 +586,22 @@ AC_CaseQuality.EFFECTS = {
                     craftRecipeData,
                     character,
                     0
+                )
+        end,
+
+    -- A case resized from a spent one (the spent-cases
+    -- add-on's resizing recipes).
+    resizedCaseQuality =
+        function(
+            craftRecipeData,
+            character
+        )
+
+            return
+                AC_CaseQuality.onCasesFormed(
+                    craftRecipeData,
+                    character,
+                    AC_CaseQuality.CONFIG.resizedBonus
                 )
         end,
 

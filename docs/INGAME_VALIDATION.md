@@ -456,7 +456,13 @@ Steps
    rifle, racking each time. Fire a double-barrel and open it.
 4. **Ammunition > Spawn Spent Cases Kit**; craft the three *Scrap Spent
    ...* recipes.
-5. Set the option to 0 and to 100 in two short tries.
+5. With Ammo Making at level 1, open the crafting window on a surface and
+   look for *Resize Spent 9mm Case*; raise Ammo Making to 2 and craft it
+   four times, then craft *Resize Spent .308 Case* at level 4. Inspect the
+   resized cases, and form four new 9mm cases at the same level to
+   compare. Assemble a
+   9mm round on the resized case.
+6. Set the option to 0 and to 100 in two short tries.
 
 Expected
 - `feature Spent Cases: ON (on)`; console
@@ -466,8 +472,15 @@ Expected
   at the shot for self-loaders, at the rack for pump, bolt and lever
   guns, at the reload for revolvers and break-actions. Never more cases
   than shots.
-- Spent cases cannot be reloaded; they only scrap, at a lower return than
-  unused brass, with no XP.
+- Spent cases cannot be loaded as they are; they scrap at a lower return
+  than unused brass, with no XP.
+- *Resize Spent 9mm Case* needs Ammo Making 2 (the crafting window names
+  the level), takes two spent 9mm cases, keeps the die set and the
+  hammer, and makes one **Empty 9mm Case**. No Ammo Making XP. The
+  resized case shows a casing quality; over a few of each, resized cases
+  come out about 10 (one band) below cases formed at the same level (the
+  roll spreads 15 either way). The round assembled on it is an ordinary
+  9mm round.
 - Firing, racking, reloading and jamming feel exactly as without the
   add-on.
 - With Hot Brass enabled as well: `feature Spent Cases: off (conflict

@@ -35,9 +35,18 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
   (experimental)`): every round fired may leave a spent case of its
   calibre, half of them found (a sandbox option, 0 to 100). Self-loaders
   drop it at the shot, pump, bolt and lever guns at the rack, revolvers
-  and break-actions at the reload. A spent case cannot be reloaded: it
-  scraps to brass at a quarter of its brass, with no XP. Single player.
-  Stands down beside Hot Brass.
+  and break-actions at the reload. A spent case scraps to brass at a
+  quarter of its brass, with no XP. Single player. Stands down beside Hot
+  Brass.
+- **Resizing fired brass** (in the Spent Cases add-on): *Resize Spent
+  ... Case*, one recipe per calibre, takes two spent cases and keeps the
+  calibre's die set and a hammer, and makes one usable case of the
+  calibre. No XP, the forming recipe's time, one level after forming, and
+  a casing quality one band below a formed case's. Two for one is the
+  most the economy allows: a resized case scrapped returns no more than
+  the spent cases would, and even with every case found half of all cases
+  loaded are newly formed (`docs/SPENT_CASE_RESEARCH.md` 8). The spent
+  cases debug kit now holds every die set.
 - **Ammunition quality in magazines and firearms** (sandbox option, off):
   the casing quality of handloaded rounds follows them through loading,
   inserting, ejecting, racking, firing and unloading, as a count and a
