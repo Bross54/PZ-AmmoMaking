@@ -2705,15 +2705,31 @@ do
         StaticModel = true, WorldStaticModel = true, Tags = true, RequiresEquippedBothHands = true,
     }
     local knownTags = { ["base:hasmetal"] = true, ["base:heavyitem"] = true, ["base:ingot"] = true }
+    -- The skill books are literature, with the fields of vanilla's
+    -- Base.BookReloading1 to 5 (items/literature.txt) and no tag.
+    local bookFields = {
+        DisplayName = true, DisplayCategory = true, ItemType = true, Weight = true, Icon = true,
+        LvlSkillTrained = true, NumLevelsTrained = true, NumberOfPages = true, SkillTrained = true,
+        StaticModel = true, WorldStaticModel = true,
+    }
+    local books = {}
+    for _, id in ipairs(AC_SkillBooks.getItems()) do books[string.match(id, "%.(.+)$")] = true end
     for _, block in ipairs(itemScript.blocks) do
+        local book = books[block.name] == true
         for _, key in ipairs(block.fieldOrder) do
-            check(knownFields[key], block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
+            if book then
+                check(bookFields[key], block.name .. " uses only fields vanilla skill books use (" .. key .. ")")
+            else
+                check(knownFields[key], block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
+            end
         end
         for _, tag in ipairs(split(block.fields.Tags or "", ";")) do
             check(knownTags[tag], block.name .. " uses only vanilla tags (" .. tag .. ")")
         end
-        eq(block.fields.ItemType, "base:normal", block.name .. " item type")
+        eq(block.fields.ItemType, book and "base:literature" or "base:normal", block.name .. " item type")
         check(block.fields.DisplayName ~= nil, block.name .. " has a display name")
+        -- A script value ends at a comma: a name with one would be cut.
+        check(not string.find(block.fields.DisplayName or "", ",", 1, true), block.name .. ": its display name has no comma")
     end
 
     -- Values recorded from Base.CopperOre / CopperScrap / CopperIngot.
@@ -4321,6 +4337,9 @@ do
         -- Once per world load, once the save's sandbox options are in Lua
         -- (the loot multipliers, tests/suite_balance.lua).
         OnLoadedMapZones = true,
+        -- Once, when a dedicated server has loaded its Lua (the skill
+        -- book entry, AC_SkillBooks).
+        OnServerStarted = true,
     }
     local registrations = 0
     local heavy = {
@@ -8897,6 +8916,7 @@ do
     AC_Materials.applySkillRequirements()
     AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
     AC_Loot.lastComponentSummary = AC_Loot.registerComponents(mockProceduralLists(), mockDistribution())
+    AC_Loot.lastBookSummary = AC_Loot.registerBooks(mockProceduralLists(), mockDistribution())
     MOCK.players = { MOCK.newPlayer({ square = MOCK.newSquare(1, 1, 0, GRASS) }) }
     local clean = boxRun(function() end, function() end)
     check(MOCK.printLogContains("[AmmoMaking] OK: vanilla ammo boxes (9 rounds, boxed by vanilla's own recipe)"), "the boxes are probed at game start")
@@ -8926,6 +8946,7 @@ do
     -- As after a world load: the loot registration has run.
     AC_Loot.lastSummary = AC_Loot.register(mockProceduralLists(), mockDistribution())
     AC_Loot.lastComponentSummary = AC_Loot.registerComponents(mockProceduralLists(), mockDistribution())
+    AC_Loot.lastBookSummary = AC_Loot.registerBooks(mockProceduralLists(), mockDistribution())
 
     MOCK.clearPrintLog()
     MOCK.capturePrint(true)
@@ -9734,8 +9755,16 @@ do
     local OTHERWISE = {}
     for _, id in ipairs(AC_Calibres.WAD.items) do OTHERWISE[id] = "rags, ripped from clothing" end
     local unchecked = {}
+    -- The skill books are found, never made: every volume is loot in a list
+    -- a container names (AC_Loot.BOOKS).
+    local bookLoot = {}
+    for _, entry in ipairs(AC_Loot.buildBookEntries()) do
+        local facts = VANILLA.loot.lists[entry.list]
+        if facts and facts.references > 0 and facts.entries > 0 then bookLoot[entry.item] = true end
+    end
     local function reachable(recipes, scavenged)
         local have = { [G.ITEMS.Sample] = true }
+        for id in pairs(bookLoot) do have[id] = true end
         local function has(id)
             if have[id] then return true end
             if string.sub(id, 1, 5) ~= "Base." then return false end
@@ -9966,6 +9995,7 @@ do
     end
     local looted = {}
     for _, entry in ipairs(AC_Loot.buildEntries()) do looted[entry.item] = entry.list end
+    for _, entry in ipairs(AC_Loot.buildBookEntries()) do looted[entry.item] = entry.list end
     -- Items the geology code makes or handles itself, by the ids it names.
     local handled = {}
     for _, module in ipairs({ AC_Geology, AC_GeologySampling, AC_LaboratoryAnalyzer, AC_Mining }) do
@@ -9974,6 +10004,8 @@ do
         end
     end
     for _, metal in ipairs(AC_Deposits.METALS) do handled[AC_Mining.getOreItemType(metal)] = true end
+    -- The skill books are read through vanilla's table, which AC_SkillBooks fills.
+    for _, id in ipairs(AC_SkillBooks.getItems()) do handled[id] = true end
 
     local noSource, unused, noWorldModel = {}, {}, {}
     for id, item in pairs(declaredItems) do
@@ -10006,7 +10038,7 @@ do
         if not (consumed[id] or produced[id] or handled[id] or prototype) then table.insert(unused, id) end
         if not (produced[id] or looted[id]) then table.insert(noSource, id) end
     end
-    eq(count, 41, "forty-one items")
+    eq(count, 46, "forty-six items")
     -- The five items of the geology stage name no world model; every item
     -- of the later stages does. (What the game draws for an item without
     -- one is engine behaviour; the sample and the dropped analyzer were
@@ -10036,6 +10068,10 @@ do
     for _, calibre in ipairs(AC_Calibres.LIST) do
         check(produced[calibre.dieSet] ~= nil and looted[calibre.dieSet] ~= nil, calibre.id .. ": its die set can be forged and found")
         check(looted[calibre.case] == nil and looted[calibre.bullet] == nil, calibre.id .. ": its case and projectile are never loot")
+    end
+    -- A skill book is found, never made.
+    for _, id in ipairs(AC_SkillBooks.getItems()) do
+        check(looted[id] ~= nil and produced[id] == nil, id .. " is found, never made")
     end
     -- Nothing the snapshot records as missing.
     for group, names in pairs(art) do
@@ -10139,7 +10175,7 @@ do
         makeSample = makeSample, equipShovel = equipShovel, placeAnalyzerObject = placeAnalyzerObject, poweredLabSquare = poweredLabSquare,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "docs" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "skillbooks", "docs" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

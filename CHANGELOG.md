@@ -53,6 +53,15 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
 - **Component loot**: gunpowder, primers, brass scrap and small brass
   sheets, a little, in gun stores, hunting stores and metalwork crates.
   Never cases, bullets, rounds or die sets beyond what 0.8.0 added.
+- **Skill books**: five volumes, *Ammo Making I* to *V*, with the game's
+  own levels (two each), pages and the multipliers it gives its Aiming and
+  Reloading books (1.5 to 8). Entered in vanilla's reading table from a
+  server file and again at game and server start; found, never made, in
+  a gun store's shelves and, rarely, bookstores, libraries and a
+  survivalist's things, scaled by the game's own skill book loot setting.
+  Own icons; the Reloading books' model. No recipe magazines: a learned
+  recipe still needs its level, and an auto-learn line cannot name a
+  skill registered from Lua (`docs/AMMUNITION_DESIGN.md` 9.2).
 - **Balance options for server owners** (sandbox page *Ammo Making*):
   ore per deposit tile (x0.5 to x3), die sets as loot (x0 to x2),
   reloading stock as loot (x0 to x2) and an Ammo Making XP multiplier

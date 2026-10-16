@@ -39,9 +39,13 @@ Console
 - One `... loaded` line per module (`Calibre definitions loaded (9)`,
   `Compatibility check loaded`, `Spent cases loaded`,
   `Quality tracking loaded`, `Debug tools loaded`, ...).
-- `[AmmoMaking] Die set loot: 22 entries added, ...` and
-  `[AmmoMaking] Component loot: ... entries added, ...` with
-  `lists missing: none` (or an empty list after the colon).
+- `[AmmoMaking] Die set loot: 22 entries added, ...`,
+  `[AmmoMaking] Component loot: ... entries added, ...` and
+  `[AmmoMaking] Skill book loot: 20 entries added, ...` with
+  `lists missing: 0`.
+- `[AmmoMaking] Skill books: Ammo Making entered in vanilla's reading table (server Lua)`
+  once per world load. If it says `(game start)` instead, the server file
+  ran before vanilla's table existed: note it, the books still work.
 - No line with `WARNING` and no Lua stack trace.
 - **Not** present: `Spent cases installed`, `Quality tracking installed`.
 
@@ -63,6 +67,9 @@ Expected / Console
   `feature Ammunition Quality Firing Effects: off (locked)`.
 - One line per calibre class (`.../... complete`).
 - `OK: die set loot (...)` and `OK: component loot (...)`.
+- `OK: skill books entered in vanilla's reading table (server Lua)` and
+  `OK: skill book loot (20 entries)`; the five book items
+  (`OK: AmmoMaking.BookAmmoMaking1` ...) among the item lines.
 
 Any `WARNING` or `UNVERIFIED` line is a finding: copy it whole.
 
@@ -323,7 +330,12 @@ Steps
 1. With the vanilla debug loot tool (or by visiting): a gun store's
    magazine and ammunition display, a hunting store's lockers, a metalwork
    or blacksmith crate.
-2. Balance options (`docs/BALANCE_OPTIONS.md`): look at the sandbox page
+2. Skill books (`docs/AMMUNITION_DESIGN.md` 9.2): a gun store's shelves,
+   a bookstore, a library. Then, with Ammo Making at level 0, take the five
+   volumes from the vanilla debug item list (search `BookAmmoMaking`) and
+   right click each one. Read *Ammo Making I* to the end; then mine one ore
+   (section 8) and note the XP line.
+3. Balance options (`docs/BALANCE_OPTIONS.md`): look at the sandbox page
    *Ammo Making* of a new world. Then start a second new world with *Die
    sets found as loot* 2, *Reloading stock found as loot* 0, *Ore per
    deposit tile* 3, *Ammo Making XP multiplier* 3 and the game's global XP
@@ -335,6 +347,16 @@ Expected
   brass scrap or a small brass sheet in metalwork crates. Rare: several
   containers may be needed.
 - No cases, bullets or finished handloads anywhere.
+- An Ammo Making book now and then, most often on a gun store's shelves;
+  rarely in a bookstore, a library or a survivalist's crate. Its icon is a
+  hardback with a cartridge on the cover and one to five bands on the spine.
+- At level 0: volume I can be read; II to V say the book is too
+  complicated (vanilla's own text). The reading window (vanilla's
+  literature list) shows the five under skill books. No error box when
+  any of them is right clicked.
+- After volume I is read: the skill panel shows an XP multiplier for
+  Ammo Making (x1.5), and the mining XP line shows 1.5 times the amount in
+  the total (`total a -> b`). At level 2 and above volume I is too simple.
 - The page shows the four balance options with their labels and tooltips,
   each at 1.
 - Second world: no component loot of the mod at all, die sets noticeably
@@ -344,7 +366,7 @@ Expected
 - Containers already filled before an option is changed keep what they
   hold (only if the options can be changed for a running save).
 
-Console (section 1): the two loot lines. Second world only:
+Console (section 1): the three loot lines. Second world only:
 `Balance options of this save: ...` and
 `Loot multipliers: die sets x2, components x0; ... loot tables read again: true`.
 

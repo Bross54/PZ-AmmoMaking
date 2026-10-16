@@ -22,6 +22,7 @@ return {
         categories = {
             Ammo = true,
             Material = true,
+            SkillBook = true,
             Tool = true,
         },
         icons = {
@@ -31,6 +32,8 @@ return {
             ["38SpecialBullets"] = true,
             ["9mmRounds"] = true,
             AluminumScrap = true,
+            Book13 = true,
+            Book13_Ground = true,
             BrassScrap = true,
             CapGunCap = true,
             IronOre = true,
@@ -48,6 +51,7 @@ return {
             ["base:ingot"] = true,
         },
         types = {
+            ["base:literature"] = true,
             ["base:normal"] = true,
         },
     },
@@ -567,6 +571,7 @@ return {
         OnInitGlobalModData = true,
         OnLoadedMapZones = true,
         OnPreDistributionMerge = true,
+        OnServerStarted = true,
         OnWeaponSwingHitPoint = true,
     },
     firearms = {
@@ -757,6 +762,7 @@ return {
         Perks = "class zombie.characters.skills.PerkFactory$Perks",
         ProceduralDistributions = "lua",
         SandboxVars = "lua",
+        SkillBook = "lua",
         UIFont = "class zombie.ui.UIFont",
         ZombRand = "java",
         ZombRandFloat = "java",

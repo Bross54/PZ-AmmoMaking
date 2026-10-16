@@ -38,6 +38,7 @@ require "AC_Visuals"
 require "AC_Calibres"
 require "AC_Loot"
 require "AC_Recycling"
+require "AC_SkillBooks"
 
 AC_Compat = AC_Compat or {}
 
@@ -186,6 +187,21 @@ for _,
     itemType
 in ipairs(
     { "Base.MortarPestle", "Base.Hammer" }
+)
+do
+
+    table.insert(
+        AC_Compat.REQUIRED_ITEMS,
+        itemType
+    )
+end
+
+
+-- The skill book volumes, from their own table.
+for _,
+    itemType
+in ipairs(
+    AC_SkillBooks.getItems()
 )
 do
 
@@ -2117,6 +2133,175 @@ end
 
 
 ------------------------------------------------
+-- Skill books (AC_SkillBooks): the volume table, the
+-- entry in vanilla's SkillBook table that reading
+-- needs, and their loot (AC_Loot.BOOKS).
+--
+-- A missing entry is a WARNING: vanilla's inventory
+-- menu indexes SkillBook[...].perk without a nil check,
+-- so a book could not be read and its menu would raise
+-- an error. The volume items themselves are probed with
+-- the other required items.
+------------------------------------------------
+
+local function checkSkillBooks(
+    results
+)
+
+    if type(AC_SkillBooks) ~= "table" then
+
+        addResult(
+            results,
+            "WARNING",
+            "skill books",
+            "AC_SkillBooks is not loaded"
+        )
+
+
+        return
+    end
+
+
+    for _,
+        problem
+    in ipairs(
+        safe(AC_SkillBooks.validate) or { "the volume table could not be checked" }
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "AC_SkillBooks.VOLUMES"
+        )
+    end
+
+
+    if type(SkillBook) ~= "table" then
+
+        addResult(
+            results,
+            "WARNING",
+            "vanilla's SkillBook table does not exist",
+            "no skill book of any skill can be read; media/lua/server/XpSystem/XPSystem_SkillBook.lua"
+        )
+
+    elseif safe(AC_SkillBooks.isRegistered) == true then
+
+        addResult(
+            results,
+            "OK",
+            "skill books entered in vanilla's reading table (" .. tostring(AC_SkillBooks.lastWhen) .. ")"
+        )
+
+    else
+
+        addResult(
+            results,
+            "WARNING",
+            "skill books are not in vanilla's reading table",
+            "last attempt: " .. tostring(AC_SkillBooks.lastStatus) .. "; reading an Ammo Making book will fail"
+        )
+    end
+
+
+    if type(AC_Loot) ~= "table" then
+        return
+    end
+
+
+    local bookProblems =
+        safe(AC_Loot.validateBooks) or { "the skill book loot table could not be checked" }
+
+
+    for _,
+        problem
+    in ipairs(
+        bookProblems
+    )
+    do
+
+        addResult(
+            results,
+            "WARNING",
+            problem,
+            "no skill book is added to any loot list"
+        )
+    end
+
+
+    if #bookProblems > 0 then
+        return
+    end
+
+
+    local books =
+        AC_Loot.lastBookSummary
+
+
+    if type(books) ~= "table"
+        or books.unavailable
+    then
+
+        addResult(
+            results,
+            "WARNING",
+            "skill book loot was not registered",
+            "the loot tables were not there when they were merged; no Ammo Making book will be found"
+        )
+
+
+        return
+    end
+
+
+    local clean = true
+
+
+    for _,
+        bucket
+    in ipairs(
+        {
+            { "missing", "does not exist on this build" },
+            { "empty", "has been emptied by vanilla" },
+            { "unreferenced", "is used by no container" },
+        }
+    )
+    do
+
+        for _,
+            name
+        in ipairs(
+            books[bucket[1]] or {}
+        )
+        do
+
+            clean = false
+
+
+            addResult(
+                results,
+                "WARNING",
+                "skill book loot list " .. tostring(name) .. " " .. bucket[2],
+                "the books will not be found there"
+            )
+        end
+    end
+
+
+    if clean then
+
+        addResult(
+            results,
+            "OK",
+            "skill book loot (" .. (books.added + books.present) .. " entries)"
+        )
+    end
+end
+
+
+------------------------------------------------
 -- RUN
 ------------------------------------------------
 --
@@ -2545,6 +2730,8 @@ function AC_Compat.run(
     checkRecycling(results)
 
     checkLoot(results)
+
+    checkSkillBooks(results)
 
     checkFeatures(results)
 

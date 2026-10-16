@@ -91,6 +91,21 @@ The skill is intended to affect:
 
 The skill is integrated into the Build 42 perk system.
 
+### Skill books
+
+Five volumes, read like the game's own skill books: *Ammo Making I* to
+*V* train levels 1-2, 3-4, 5-6, 7-8 and 9-10, and while one is read the
+Ammo Making XP earned in its levels is multiplied by 1.5, 2.5, 4, 6 and 8
+(the multipliers the game gives its Aiming and Reloading books). Reading
+gives no XP by itself and opens no recipe early: the books shorten the
+climb, the ore still has to be mined.
+
+They are found, never made: on a gun store's shelves most often, now and
+then in a bookstore, a library or among a survivalist's things. The
+sandbox's own *Skill Books* loot setting scales them like every other
+skill book. There are no recipe magazines: an Ammo Making recipe cannot be
+taught by one (see `docs/AMMUNITION_DESIGN.md` 9.2).
+
 ---
 
 ## Procedural Geology
@@ -592,6 +607,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Brass recycling**: unwanted brass components to vanilla brass scrap at half the brass and no XP, and scrap back to ingots (**not yet run in game**)
 - **Save-data safety**: every stored value is read back within its range; a damaged or hand-edited save cannot give a kit extra uses, stall the analyzer or put a broken number on screen. The depletion store carries a layout version, and a save written by a later version of the mod is read without being reset
 - **Component loot**: a little gunpowder, primers, brass scrap and small brass sheet in gun stores, hunting stores and metalwork crates; never cases, bullets or rounds (**not yet run in game**)
+- **Skill books**: five Ammo Making volumes with the game's own levels, pages and firearm-skill multipliers, entered in the game's reading table, found in gun stores, bookstores, libraries and survivalists' things (**not yet run in game**)
 - **Feature switches**: every optional system is stable, experimental or disabled in `AC_Features.lua`; one that is off adds no recipe, no menu entry and no hook, and the game-start check says which are on and why
 - **Multiplayer guards**: sampling, assays, the analyzer and mining are refused on a multiplayer client and say so
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
@@ -702,7 +718,7 @@ The code is complete as far as it can be without the game
 
 Multiplayer authority (designed in `docs/MULTIPLAYER_DESIGN.md`), reloading
 of fired brass, lead and cast bullets, shell variants, further calibres,
-skill books, a mining machine, directional analyzer sprites.
+a mining machine, directional analyzer sprites.
 
 ---
 
@@ -872,6 +888,7 @@ PZ-AmmoMaking
                     │   └── AC_PickUpAnalyzerAction.lua
                     │
                     ├── server
+                    │   ├── AC_SkillBookRegistration.lua
                     │   └── BuildingObjects
                     │       └── AC_LaboratoryAnalyzerObject.lua
                     │
@@ -896,6 +913,7 @@ PZ-AmmoMaking
                         ├── AC_QualityTally.lua
                         ├── AC_Recycling.lua
                         ├── AC_SaveData.lua
+                        ├── AC_SkillBooks.lua
                         ├── AC_SpentCases.lua
                         ├── AC_Text.lua
                         ├── AC_Visuals.lua

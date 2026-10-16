@@ -23,6 +23,8 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Area | State | Switch | Where |
 |---|---|---|---|
 | Ammo Making skill, levels 0 to 10 | IMPLEMENTED | | `AMMUNITION_DESIGN.md` 9.0 |
+| Skill books (five volumes, vanilla's reading) | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla book model) | | `AMMUNITION_DESIGN.md` 9.2, `LOOT_AND_RECYCLING.md` 1.4 |
+| Recipe magazines | not built: the engine cannot teach an Ammo Making recipe | | `AMMUNITION_DESIGN.md` 9.2 |
 | Geology, sampling, field and advanced assay | IMPLEMENTED | | `DEVELOPMENT.md` |
 | Laboratory analyzer (placed, powered) | IMPLEMENTED; VISUAL PLACEHOLDER (a vanilla tile) | | `DEVELOPMENT.md` |
 | Assay kits and analyzer obtainable | IMPLEMENTED (three recipes from vanilla items) | | `DEVELOPMENT.md`, *Item and recipe audit* |
@@ -48,9 +50,9 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Game-update check | IMPLEMENTED | | `tools/pz_compat.py` |
 | Release packaging | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
 
-Numbers: the main mod has 41 items, 58 recipes (51 manufacturing, 3 for
-the geology equipment, 3 scrapping, 1 recast) and 31 loot entries (22 die
-sets, 9 components) in 6 vanilla lists. The press add-on has 27 recipes;
+Numbers: the main mod has 46 items, 58 recipes (51 manufacturing, 3 for
+the geology equipment, 3 scrapping, 1 recast) and 51 loot entries (22 die
+sets, 9 components, 20 skill books) in 10 vanilla lists. The press add-on has 27 recipes;
 the spent-cases add-on 9 items and 3 recipes.
 
 ## 2. What the research settled
@@ -118,6 +120,7 @@ Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 |---|---|
 | Ore per tile by grade | `AC_Deposits.CONFIG.reserveByGrade`; sandbox multiplier |
 | Loot weights (die sets, components) | `AC_Loot.lua`; sandbox multipliers |
+| Skill book loot; the books' multipliers | `AC_Loot.BOOKS`, the game's own skill book loot setting; `AC_SkillBooks.VOLUMES` |
 | What the kits and the analyzer cost | `AC_Materials.EQUIPMENT_RECIPES` |
 | Recipe levels, times, XP per calibre | `AC_Calibres.lua` |
 | The press's time advantage and build cost | `AC_Calibres.PRESS` |
@@ -149,6 +152,8 @@ Nothing here is needed for a first release.
 - Primer and powder chemistry beyond the present stand-ins.
 - Better presses as further bench tags; batch recipes.
 - Component depth (match-grade cases, case trimming, tooling wear).
-- Skill books.
+- Recipe magazines: would need the recipes rewritten from Lua, which
+  `REFERENCE_IMPLEMENTATIONS.md` 7 already declines (`AMMUNITION_DESIGN.md`
+  9.2).
 
 After every game update: `python tools/pz_compat.py --install "<game>"`.

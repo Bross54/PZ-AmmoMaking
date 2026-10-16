@@ -379,6 +379,9 @@ MOCK.knownScriptItems = {
     ["AmmoMaking.FieldAssayKit"] = true,
     ["AmmoMaking.AdvancedFieldAssayKit"] = true,
     ["AmmoMaking.LaboratoryAssayAnalyzer"] = true,
+    -- The skill book volumes (AC_Items.txt).
+    ["AmmoMaking.BookAmmoMaking1"] = true, ["AmmoMaking.BookAmmoMaking2"] = true, ["AmmoMaking.BookAmmoMaking3"] = true,
+    ["AmmoMaking.BookAmmoMaking4"] = true, ["AmmoMaking.BookAmmoMaking5"] = true,
     -- What the kits and the analyzer are made from (ids confirmed in the
     -- installed 42.20.4 scripts; tests/engine_snapshot.lua records them).
     ["Base.MagnifyingGlass"] = true, ["Base.Tweezers"] = true, ["Base.SheetPaper2"] = true,
@@ -999,6 +1002,18 @@ ISWorldObjectContextMenu = {
     addToolTip = function() return {} end,
 }
 
+-- Vanilla's reading table, a Lua table a vanilla SERVER file creates
+-- (media/lua/server/XpSystem/XPSystem_SkillBook.lua, "SkillBook = {};").
+-- One vanilla entry stands in for the rest; the perk is a name here, a
+-- Perk object in the game. MOCK.resetSkillBook() is what loading that file
+-- again does.
+function MOCK.resetSkillBook()
+    SkillBook = {
+        Reloading = { perk = "Perks.Reloading", maxMultiplier1 = 1.5, maxMultiplier2 = 2.5, maxMultiplier3 = 4, maxMultiplier4 = 6, maxMultiplier5 = 8 },
+    }
+end
+MOCK.resetSkillBook()
+
 ISTimedActionQueue = { queue = {} }
 function ISTimedActionQueue.add(action)
     table.insert(ISTimedActionQueue.queue, action)
@@ -1158,13 +1173,14 @@ MOCK.MOD_FILES = {
     "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Balance",
     "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
-    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SkillBooks", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
     "shared/AC_WorldData",
     "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
     "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
     "client/AC_MineOreAction", "client/AC_MiningContextMenu",
     "client/AC_PickUpAnalyzerAction",
     "server/BuildingObjects/AC_LaboratoryAnalyzerObject",
+    "server/AC_SkillBookRegistration",
 }
 
 -- Loads every mod file: shared, then client, then server, each

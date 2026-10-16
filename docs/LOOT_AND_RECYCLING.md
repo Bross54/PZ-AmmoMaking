@@ -194,6 +194,39 @@ match heads are the working source of priming compound. And brass exists in
 the world almost only as what the player smelts, which is what makes
 recycling it worth having.
 
+### 1.4 Skill books
+
+The five Ammo Making volumes (`AMMUNITION_DESIGN.md` 9.2) are found, never
+made, in `AC_Loot.BOOKS`. A volume's weight is vanilla's own ladder for a
+skill's five volumes (the Reloading books in `BookstoreBooks`: 1, 0.8, 0.6,
+0.4, 0.2) times the list's scale:
+
+| List | Scale | Volumes I to V | Who fills from it (Distributions.lua, 42.20.4) | Vanilla's Reloading I to V there |
+|---|---|---|---|---|
+| `GunStoreLiterature` | 2 | 2, 1.6, 1.2, 0.8, 0.4 | a gun store's shelves: at least one, at most two (`min = 1, max = 2`) beside cases, body armour and ammunition | 10, 8, 6, 4, 2 |
+| `BookstoreBooks` | 0.5 | 0.5 to 0.1 | every shelf of a bookstore (its only list); a pawn shop's shelves (forced) and other containers | 1, 0.8, 0.6, 0.4, 0.2 |
+| `LibraryBooks` | 0.5 | 0.5 to 0.1 | a library's shelves, one of some thirty lists (`min = 1`) | none |
+| `SurvivalGear` | 0.5 | 0.5 to 0.1 | a survivalist's things: one container at most per attic, closet, hall, living room, garage or storage unit | 2 to 0.01 |
+
+Judged per room, as the die sets are (§1.1): a gun store of eight shelves
+holds about 0.45 Ammo Making books on average, the likeliest place; a
+bookstore or a pawn shop of twelve shelves, filled from one list, about
+0.72; every other room of twelve containers less. A test fails if any room
+of twelve containers that can be filled from a book list is expected to
+hold more than one book.
+
+Neither of the mod's loot multipliers applies. A book is
+`DisplayCategory = SkillBook`, so the engine files it under the
+"SkillBook" loot type and the sandbox's own skill book setting scales it
+with vanilla's books (`ItemPickerJava.getLootType`, `skillBookLootModifier`;
+JAR). A second multiplier would count that setting twice.
+
+Limits `AC_Loot.validateBooks()` enforces: a volume at most 1 before the
+scale and never commoner than the one before it, a scale at most 2, no
+entry above 2, no list with more than 6 of book weight in all, no list
+named twice, no component in the table. A table it refuses registers
+nothing.
+
 ## 2. Brass recycling
 
 Brass components the player no longer wants (case cups, small sheets, the
@@ -482,3 +515,7 @@ section 1.2):
 - Containers generated before the mod was added keep what they have: only
   unexplored ones can hold a die set (INFERRED from loot being rolled when a
   container is first filled).
+- That the skill books appear in the four lists of 1.4 (log line
+  `[AmmoMaking] Skill book loot: 20 entries added, ...`, check line
+  `OK: skill book loot (20 entries)`), and that the sandbox's skill book
+  loot setting scales them.

@@ -553,6 +553,52 @@ def icon_analyzer():
     return outline(image)
 
 
+# ---------------------------------------------------------------- skill books
+
+NAVY = [(150, 170, 206), (98, 120, 166), (64, 84, 128), (42, 56, 92), (28, 36, 62)]
+OXBLOOD = [(214, 132, 120), (170, 82, 72), (128, 50, 46), (92, 32, 32), (60, 22, 22)]
+
+# One cover per volume, I to V: olive, navy, brown, oxblood, steel.
+BOOK_COVERS = [OLIVE, NAVY, WOOD, OXBLOOD, STEEL]
+
+
+def icon_book(volume):
+    """A closed hardback standing a little turned: spine on the left, the page
+    block showing at the right and the foot, a cartridge stamped on the cover
+    and one brass band on the spine per volume."""
+    cover = BOOK_COVERS[volume - 1]
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    # The page block behind the cover.
+    draw.polygon([(10, 5), (26, 4), (27, 27), (11, 29)], fill=rgba(CREAM[1]))
+    for y in (8, 12, 16, 20, 24):
+        draw.line([(25, y), (26, y)], fill=rgba(CREAM[3]))
+    draw.line([(12, 28), (26, 26)], fill=rgba(CREAM[3]))
+    # The cover and the spine.
+    draw.polygon([(8, 3), (24, 2), (25, 25), (9, 27)], fill=rgba(cover[2]))
+    draw.polygon([(4, 5), (8, 3), (9, 27), (5, 28)], fill=rgba(cover[3]))
+    draw.line([(9, 4), (23, 3)], fill=rgba(cover[1]))
+    draw.line([(9, 4), (10, 25)], fill=rgba(cover[1]))
+    draw.line([(10, 26), (24, 24)], fill=rgba(cover[4]))
+    draw.line([(5, 6), (5, 27)], fill=rgba(cover[2]))
+    # A title plate.
+    draw.polygon([(12, 6), (21, 5), (21, 8), (12, 9)], fill=rgba(CREAM[0]))
+    draw.line([(13, 7), (19, 6)], fill=rgba(CREAM[3]))
+    # The stamped cartridge: brass case, copper bullet.
+    draw.rectangle([15, 15, 18, 22], fill=rgba(BRASS[1]))
+    draw.line([(15, 15), (15, 22)], fill=rgba(BRASS[0]))
+    draw.line([(18, 15), (18, 22)], fill=rgba(BRASS[3]))
+    draw.line([(14, 22), (19, 22)], fill=rgba(BRASS[2]))
+    draw.polygon([(15, 14), (16, 11), (17, 11), (18, 14)], fill=rgba(COPPER[1]))
+    draw.point((16, 12), fill=rgba(COPPER[0]))
+    # The volume bands on the spine.
+    for band in range(volume):
+        y = 9 + band * 3
+        draw.line([(5, y + 1), (7, y)], fill=rgba(BRASS[1]))
+        draw.point((6, y + 1), fill=rgba(BRASS[0]))
+    return outline(image)
+
+
 # ---------------------------------------------------------------- the press
 
 def icon_press():
@@ -626,6 +672,11 @@ ICONS = [
     ("AmmoMakingFieldKit", MAIN, "Item_", icon_field_kit),
     ("AmmoMakingAdvancedKit", MAIN, "Item_", icon_advanced_kit),
     ("AmmoMakingAnalyzer", MAIN, "Item_", icon_analyzer),
+    ("AmmoMakingBook1", MAIN, "Item_", lambda: icon_book(1)),
+    ("AmmoMakingBook2", MAIN, "Item_", lambda: icon_book(2)),
+    ("AmmoMakingBook3", MAIN, "Item_", lambda: icon_book(3)),
+    ("AmmoMakingBook4", MAIN, "Item_", lambda: icon_book(4)),
+    ("AmmoMakingBook5", MAIN, "Item_", lambda: icon_book(5)),
     ("AmmoMakingSpentCasePistol", SPENT, "Item_", lambda: icon_case_pistol(True)),
     ("AmmoMakingSpentCaseMagnum", SPENT, "Item_", lambda: icon_case_magnum(True)),
     ("AmmoMakingSpentCaseRifle", SPENT, "Item_", lambda: icon_case_rifle(True)),

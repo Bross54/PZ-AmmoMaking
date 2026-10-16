@@ -114,12 +114,17 @@ local DETAILED = {
     "PoliceStorageAmmunition", "MetalWorkerTools", "ToolFactoryTools",
     -- The lists the component loot goes into, beside those above.
     "CrateMetalwork", "CrateBlacksmithing",
+    -- The lists the skill books go into, beside GunStoreLiterature.
+    "BookstoreBooks", "LibraryBooks", "SurvivalGear",
 }
 -- Lists whose users are recorded in full: for each container that names
 -- the list, every list that container can be filled from. The engine fills
 -- a container from ONE of them (ItemPickerJava.rollProceduralItemInternal),
 -- so how often a list is used depends on its neighbours, not on itself.
-local WITH_USERS = { "GunStoreAccessories", "GunStoreMagsAmmo", "GarageFirearms", "Hunter", "HuntingLockers" }
+local WITH_USERS = {
+    "GunStoreAccessories", "GunStoreMagsAmmo", "GarageFirearms", "Hunter", "HuntingLockers",
+    "GunStoreLiterature", "BookstoreBooks", "LibraryBooks", "SurvivalGear",
+}
 
 -- { container = "room.container", lists = { { name, min, max, weight, forced }, ... } }
 local function usersOf(listName)
@@ -158,6 +163,47 @@ local RAW_INPUTS = {
     "Base.Calculator", "Base.ElectronicsScrap", "Base.ElectricWire", "Base.Amplifier", "Base.RadioReceiver", "Base.LightBulb",
     "Base.Screws", "Base.SheetMetal", "Base.CarBatteryCharger", "Base.Speaker",
 }
+
+------------------------------------------------
+-- SKILL BOOKS
+------------------------------------------------
+--
+-- What a skill book of vanilla's is: the script fields of the Reloading
+-- and Carpentry volumes, the multipliers of vanilla's reading table
+-- (media/lua/server/XpSystem/XPSystem_SkillBook.lua, run here with the
+-- perk names standing in for the Perk objects), and whether the reader
+-- still looks a book's skill up in that table by its SkillTrained string.
+
+local literature = readFile(SCRIPTS .. "items/literature.txt")
+local function bookFields(name)
+    local body = assert(string.match(literature, "\n%s*item%s+" .. name .. "%s*(%b{})"), "no item " .. name)
+    local fields = {}
+    for line in string.gmatch(body, "[^\n]+") do
+        local key, value = string.match(line, "^%s*([%w_]+)%s*=%s*(.-)%s*,%s*$")
+        if key then fields[key] = value end
+    end
+    return fields
+end
+local bookSkills = { "Reloading", "Carpentry" }
+local bookVolumes = {}
+for _, skill in ipairs(bookSkills) do
+    bookVolumes[skill] = {}
+    for volume = 1, 5 do
+        local f = bookFields("Book" .. skill .. volume)
+        table.insert(bookVolumes[skill], {
+            category = f.DisplayCategory, itemType = f.ItemType, weight = tonumber(f.Weight),
+            level = tonumber(f.LvlSkillTrained), levels = tonumber(f.NumLevelsTrained),
+            pages = tonumber(f.NumberOfPages), skillTrained = f.SkillTrained,
+        })
+    end
+end
+local LUA_DIR = INSTALL .. "/media/lua/"
+Perks = setmetatable({}, { __index = function(_, name) return "Perks." .. name end })
+local skillBookSource = readFile(LUA_DIR .. "server/XpSystem/XPSystem_SkillBook.lua")
+SkillBook = nil
+dofile(LUA_DIR .. "server/XpSystem/XPSystem_SkillBook.lua")
+local readerSource = readFile(LUA_DIR .. "shared/TimedActions/ISReadABook.lua")
+local menuSource = readFile(LUA_DIR .. "client/ISUI/ISInventoryPaneContextMenu.lua")
 
 ------------------------------------------------
 -- AMMUNITION RECIPES
@@ -305,6 +351,35 @@ for _, itemType in ipairs(RAW_INPUTS) do
     emit("            [" .. quote(itemType) .. "] = { " .. table.concat(parts, ", ") .. " },")
 end
 emit("        },")
+emit("    },")
+emit("    books = {")
+emit("        -- items/literature.txt: the five volumes of these skills.")
+emit("        volumes = {")
+for _, skill in ipairs(bookSkills) do
+    emit("            " .. skill .. " = {")
+    for _, v in ipairs(bookVolumes[skill]) do
+        emit(string.format("                { category = %s, itemType = %s, weight = %s, level = %d, levels = %d, pages = %d, skillTrained = %s },",
+            quote(v.category), quote(v.itemType), number(v.weight), v.level, v.levels, v.pages, quote(v.skillTrained)))
+    end
+    emit("            },")
+end
+emit("        },")
+emit("        -- server/XpSystem/XPSystem_SkillBook.lua: maxMultiplier1 to 5 per entry.")
+emit("        multipliers = {")
+for _, skill in ipairs(sortedKeys(SkillBook)) do
+    local entry = SkillBook[skill]
+    emit(string.format("            %s = { %s, %s, %s, %s, %s },", skill,
+        number(entry.maxMultiplier1), number(entry.maxMultiplier2), number(entry.maxMultiplier3), number(entry.maxMultiplier4), number(entry.maxMultiplier5)))
+end
+emit("        },")
+emit("        -- The table is created anew by that server file.")
+emit("        tableCreatedInServerFile = " .. tostring(string.find(skillBookSource, "SkillBook = {};", 1, true) == 1) .. ",")
+emit("        -- ISReadABook looks the skill up by the SkillTrained string, and knows")
+emit("        -- the volumes by their first level 1, 3, 5, 7 and 9.")
+emit("        readerKeysBySkillTrained = " .. tostring(string.find(readerSource, "SkillBook[item:getSkillTrained()].maxMultiplier1", 1, true) ~= nil) .. ",")
+emit("        readerVolumeLevels = " .. tostring(string.find(readerSource, "item:getLvlSkillTrained() == 9 then", 1, true) ~= nil) .. ",")
+emit("        -- The inventory menu indexes the entry without a nil check.")
+emit("        menuIndexesWithoutCheck = " .. tostring(string.find(menuSource, "SkillBook[k:getSkillTrained()].perk", 1, true) ~= nil) .. ",")
 emit("    },")
 emit("    ammo = {")
 emit("        -- Items tagged base:ammo: what GatherGunpowder takes apart.")

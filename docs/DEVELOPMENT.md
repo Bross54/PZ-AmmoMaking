@@ -72,6 +72,8 @@ never move an item into that list.
 | `scripts/AC_Items.txt` | script | Mod items (module `AmmoMaking`) |
 | `shared/AC_Compat.lua` | shared | Startup compatibility self-check |
 | `shared/AC_AmmoMakingSkill.lua` | shared | Perk registration, XP helpers; `awardXP()` logs every mining and laboratory grant |
+| `shared/AC_SkillBooks.lua` | shared | The five skill book volumes (`VOLUMES`: item, first level, pages, multiplier, all vanilla's), `validate`, and the entry `SkillBook.AmmoMaking` in vanilla's reading table (`buildEntry`, `register`, `isRegistered`), added again at `OnGameStart` and `OnServerStarted` (`docs/AMMUNITION_DESIGN.md` 9.2) |
+| `server/AC_SkillBookRegistration.lua` | server | Adds that entry at load: the engine loads vanilla's server files, which create the table, before any mod's |
 | `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype (test cartridge only), and `AmmoInspection.inspectComponent`: the read-only inspection of real cases and loose handloaded rounds |
 | `client/AC_GeologySamplingContextMenu.lua` | client | Dig / assay / laboratory menus (place, start, cancel, collect, pick up) |
 | `client/AC_DigGeologicalSampleAction.lua` | client | Shovel timed action |
@@ -1350,7 +1352,7 @@ how every such line works, and is still **REQUIRES IN-GAME VERIFICATION**.
 
 ### Items
 
-41 items, no duplicate id. **Automated since 2026-10-02** (section *Item
+46 items, no duplicate id. **Automated since 2026-10-02** (section *Item
 audit* of the suite, against `tests/engine_snapshot.lua`, which
 `tools/pz_compat.py` writes from the installed scripts); before that a
 one-off script compared each with the installed game:
@@ -1358,7 +1360,8 @@ one-off script compared each with the installed game:
 - every `Icon` is one a vanilla item uses, every `StaticModel` and
   `WorldStaticModel` a vanilla model, every tag (`base:hasmetal`,
   `base:heavyitem`, `base:ingot`) and `DisplayCategory` (`Ammo`, `Material`,
-  `Tool`) vanilla's; every item is `ItemType = base:normal` with a positive
+  `Tool`, and `SkillBook` for the five books) vanilla's; every item is
+  `ItemType = base:normal` (the books `base:literature`) with a positive
   weight and a name in `ItemName.json` equal to its `DisplayName`;
 - 39 are in recipes (the two kits and the analyzer as outputs, since the
   third pass); those three and the sample are handled by the geology code;
@@ -1367,8 +1370,10 @@ one-off script compared each with the installed game:
 - every item is probed at game start except the prototype cartridge;
 - every item has a source in normal play (a recipe, loot, digging or
   mining) except one, the test cartridge;
-- the five items of the geology stage name no `WorldStaticModel`; the 36
-  of the later stages all do.
+- the five items of the geology stage name no `WorldStaticModel`; the 41
+  of the later stages all do;
+- the five skill books are found, never made, and are used by vanilla's
+  reading code through the entry `AC_SkillBooks` makes.
 
 Known and intended:
 

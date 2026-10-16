@@ -36,7 +36,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 
 [h2]What it adds[/h2]
 [list]
-[*][b]Ammo Making skill[/b] with 10 levels. Levels unlock calibres and shorten the work.
+[*][b]Ammo Making skill[/b] with 10 levels. Levels unlock calibres and shorten the work. Five [b]skill books[/b], read like the game's own, are found in gun stores and, rarely, bookstores and libraries.
 [*][b]Geology.[/b] Every save has its own hidden copper and zinc. Dig a geological sample with a shovel, then assay it: a field kit gives a rough grade, an advanced kit a range, the powered laboratory analyzer a precise figure a day later. All three are made at any surface from vanilla items; none is loot.
 [*][b]Mining.[/b] Inside an assayed area, a pickaxe takes ore from the ground. Deposits are finite and stay depleted.
 [*][b]Metallurgy[/b] on the vanilla furnaces and forge: zinc and copper ingots, brass (7 copper + 3 zinc), small brass sheets, case cups.
@@ -51,7 +51,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [list]
 [*]A handloaded round fires exactly like a factory round. Case quality is recorded and shown; it has no effect on shooting.
 [*]Fired brass cannot be reloaded.
-[*]All icons and models are borrowed from vanilla items for now.
+[*]The inventory icons are the mod's own; world models and the press's tile art are placeholders for now.
 [/list]
 
 [h2]Experimental, off by default[/h2]

@@ -62,10 +62,21 @@
 -- dedicated server; and that containers filled before
 -- (in an older session of the save) keep what they hold:
 -- only containers filled from now on see the new weights.
+--
+-- SKILL BOOKS (BOOKS, below) take neither multiplier.
+-- A book is DisplayCategory = SkillBook, so the engine
+-- files it under the "SkillBook" loot type and the
+-- sandbox's own skill book setting scales it, as it
+-- scales vanilla's (ItemPickerJava.getLootType,
+-- skillBookLootModifier, SandboxOptions "SkillBookLoot";
+-- JAR, 42.20.4). A second, mod-side multiplier would
+-- count the same setting twice.
 
 require "AC_Calibres"
 
 require "AC_Balance"
+
+require "AC_SkillBooks"
 
 AC_Loot = AC_Loot or {}
 
@@ -120,6 +131,14 @@ AC_Loot.CONFIG = {
     maxComponentWeight = 2.0,
 
     maxComponentListWeight = 6.0,
+
+    -- BOOKS: no single volume may weigh more than this in
+    -- a list, and all volumes of one list together not
+    -- more than that. Vanilla's own Reloading volumes
+    -- weigh 10 to 2 in a gun store's literature.
+    maxBookWeight = 2.0,
+
+    maxBookListWeight = 6.0,
 }
 
 
@@ -429,6 +448,257 @@ function AC_Loot.validateComponents(
 
         if total > config.maxComponentListWeight then
             problem("components weigh " .. total .. " in " .. list .. ", above " .. config.maxComponentListWeight)
+        end
+    end
+
+
+    return problems
+end
+
+
+------------------------------------------------
+-- BOOKS (tunable)
+------------------------------------------------
+--
+-- The Ammo Making skill books (AC_SkillBooks) where
+-- vanilla puts its own Reloading books, and a reader of
+-- them would shelve them. An entry's weight is
+--
+--   volumeWeight[volume] * scale of the list
+--
+-- volumeWeight is vanilla's own ladder for a skill's
+-- five volumes (Base.BookReloading1 to 5 in
+-- BookstoreBooks: 1, 0.8, 0.6, 0.4, 0.2), so the later
+-- volumes are the rarer ones.
+--
+--   list   a live ProceduralDistributions.list
+--   scale  multiplies the ladder; at most 2
+--   where  which containers vanilla fills from the list
+--          (Distributions.lua, 42.20.4), for the
+--          documentation
+--
+-- The gun store is the place: GunStoreLiterature fills
+-- one or two of its shelves (min 1, max 2) and holds
+-- vanilla's Reloading books at ten times this ladder. A
+-- bookstore fills every shelf from BookstoreBooks, so
+-- its scale is the smallest that still makes a find
+-- possible; a room of twelve such shelves stays under
+-- one book (tests, docs/LOOT_AND_RECYCLING.md 1.4).
+------------------------------------------------
+
+AC_Loot.BOOKS = {
+
+    volumeWeight = { 1.0, 0.8, 0.6, 0.4, 0.2 },
+
+    lists = {
+
+        { list = "GunStoreLiterature", scale = 2, where = "one or two shelves of a gun store" },
+
+        { list = "BookstoreBooks", scale = 0.5, where = "every shelf of a bookstore; a pawn shop's shelves" },
+
+        { list = "LibraryBooks", scale = 0.5, where = "the general shelves of a library" },
+
+        { list = "SurvivalGear", scale = 0.5, where = "a survivalist's things in an attic, closet, hall, living room, garage or storage unit" },
+    },
+}
+
+
+-- The flat list of book entries:
+-- { list, item, weight, book = true }, list by list, in
+-- volume order.
+function AC_Loot.buildBookEntries(
+    books,
+    volumes
+)
+
+    books =
+        books or AC_Loot.BOOKS
+
+    volumes =
+        volumes or AC_SkillBooks.VOLUMES
+
+
+    local entries = {}
+
+
+    for _,
+        target
+    in ipairs(
+        books.lists or {}
+    )
+    do
+
+        for index,
+            volume
+        in ipairs(
+            volumes
+        )
+        do
+
+            local weight =
+                (books.volumeWeight or {})[index]
+
+
+            if type(target.list) == "string"
+                and type(target.scale) == "number"
+                and type(weight) == "number"
+                and type(volume.item) == "string"
+            then
+
+                table.insert(
+                    entries,
+                    {
+                        list = target.list,
+
+                        item = volume.item,
+
+                        weight = weight * target.scale,
+
+                        book = true,
+                    }
+                )
+            end
+        end
+    end
+
+
+    return entries
+end
+
+
+-- Problems of the book table, in the form of validate():
+-- empty when it is sound.
+function AC_Loot.validateBooks(
+    books,
+    volumes
+)
+
+    books =
+        books or AC_Loot.BOOKS
+
+    volumes =
+        volumes or AC_SkillBooks.VOLUMES
+
+
+    local config =
+        AC_Loot.CONFIG
+
+
+    local problems = {}
+
+
+    local function problem(
+        text
+    )
+
+        table.insert(
+            problems,
+            "loot: " .. text
+        )
+    end
+
+
+    local ladder =
+        books.volumeWeight or {}
+
+
+    if #ladder ~= #volumes then
+        problem("the book ladder has " .. #ladder .. " weights for " .. #volumes .. " volumes")
+    end
+
+
+    for index,
+        weight
+    in ipairs(
+        ladder
+    )
+    do
+
+        if type(weight) ~= "number"
+            or weight <= 0
+            or weight > 1
+        then
+            problem("book volume " .. index .. " must weigh more than 0 and at most 1 before the list's scale")
+        elseif index > 1
+            and type(ladder[index - 1]) == "number"
+            and weight > ladder[index - 1]
+        then
+            problem("book volume " .. index .. " may not be commoner than the one before")
+        end
+    end
+
+
+    local seen = {}
+
+
+    for _,
+        target
+    in ipairs(
+        books.lists or {}
+    )
+    do
+
+        local name =
+            tostring(target.list)
+
+
+        if type(target.list) ~= "string"
+            or target.list == ""
+        then
+            problem("a book list has no name")
+        elseif seen[target.list] then
+            problem("book list " .. name .. " is named twice")
+        end
+
+
+        seen[name] = true
+
+
+        if type(target.scale) ~= "number"
+            or target.scale <= 0
+            or target.scale > 2
+        then
+            problem("book list " .. name .. " must have a scale above 0 and at most 2")
+        end
+    end
+
+
+    local listWeight = {}
+
+
+    for _,
+        entry
+    in ipairs(
+        AC_Loot.buildBookEntries(books, volumes)
+    )
+    do
+
+        if entry.weight > config.maxBookWeight then
+            problem(entry.item .. " weighs " .. entry.weight .. " in " .. entry.list .. ", above " .. config.maxBookWeight)
+        end
+
+
+        -- A book is what the mod adds to skill, never to
+        -- the chain: it must not be a calibre's product.
+        if AC_Calibres.identify(entry.item) ~= nil then
+            problem(entry.item .. " is a component, not a book")
+        end
+
+
+        listWeight[entry.list] =
+            (listWeight[entry.list] or 0) + entry.weight
+    end
+
+
+    for list,
+        total
+    in pairs(
+        listWeight
+    )
+    do
+
+        if total > config.maxBookListWeight then
+            problem("books weigh " .. total .. " in " .. list .. ", above " .. config.maxBookListWeight)
         end
     end
 
@@ -927,6 +1197,18 @@ function AC_Loot.own(
     end
 
 
+    -- A book has no option: the engine's own skill book
+    -- setting scales it (see the header).
+    local option = "dieSetLoot"
+
+
+    if entry.component then
+        option = "componentLoot"
+    elseif entry.book then
+        option = nil
+    end
+
+
     local owned = {
 
         list = entry.list,
@@ -935,7 +1217,7 @@ function AC_Loot.own(
 
         weight = entry.weight,
 
-        option = entry.component and "componentLoot" or "dieSetLoot",
+        option = option,
     }
 
 
@@ -949,10 +1231,16 @@ function AC_Loot.own(
 end
 
 
--- The weight an owned entry should have now.
+-- The weight an owned entry should have now. An entry
+-- without an option (a book) keeps its table weight.
 function AC_Loot.scaledWeight(
     owned
 )
+
+    if owned.option == nil then
+        return owned.weight
+    end
+
 
     return
         owned.weight
@@ -1363,7 +1651,52 @@ function AC_Loot.registerComponents(
 end
 
 
--- Every list either table goes into, each once.
+-- The skill books of BOOKS. Switched off with the die
+-- sets (CONFIG.enabled), and by a book table that does
+-- not validate.
+function AC_Loot.registerBooks(
+    procedural,
+    distribution,
+    referenced
+)
+
+    if not AC_Loot.CONFIG.enabled
+        or #AC_Loot.validateBooks() > 0
+    then
+        return emptySummary()
+    end
+
+
+    local names = {}
+
+
+    for _,
+        target
+    in ipairs(
+        AC_Loot.BOOKS.lists
+    )
+    do
+
+        table.insert(
+            names,
+            target.list
+        )
+    end
+
+
+    return
+        registerEntries(
+            AC_Loot.buildBookEntries(),
+            names,
+            procedural,
+            distribution,
+            referenced
+        )
+end
+
+
+-- Every list any of the three tables goes into, each
+-- once.
 function AC_Loot.getListNames()
 
     local names = {}
@@ -1407,6 +1740,16 @@ function AC_Loot.getListNames()
     )
     do
         add(component.list)
+    end
+
+
+    for _,
+        target
+    in ipairs(
+        AC_Loot.BOOKS.lists
+    )
+    do
+        add(target.list)
     end
 
 
@@ -1486,6 +1829,58 @@ local function registerComponentsLogged(
 end
 
 
+local function registerBooksLogged(
+    referenced
+)
+
+    local ok,
+          summary =
+        pcall(
+            AC_Loot.registerBooks,
+            nil,
+            nil,
+            referenced
+        )
+
+
+    if not ok then
+
+        print(
+            "[AmmoMaking] WARNING: skill book loot not registered: "
+            .. tostring(summary)
+        )
+
+
+        return
+    end
+
+
+    AC_Loot.lastBookSummary = summary
+
+
+    if summary.added > 0
+        or summary.unavailable
+        or #summary.missing > 0
+        or #summary.empty > 0
+        or #summary.unreferenced > 0
+    then
+
+        print(
+            "[AmmoMaking] Skill book loot: "
+            .. summary.added
+            .. " entries added, "
+            .. summary.present
+            .. " already present; lists missing: "
+            .. #summary.missing
+            .. ", empty: "
+            .. #summary.empty
+            .. ", used by no container: "
+            .. #summary.unreferenced
+        )
+    end
+end
+
+
 local function registerLogged()
 
     local walked,
@@ -1499,6 +1894,9 @@ local function registerLogged()
 
 
     registerComponentsLogged(referenced)
+
+
+    registerBooksLogged(referenced)
 
 
     local ok,

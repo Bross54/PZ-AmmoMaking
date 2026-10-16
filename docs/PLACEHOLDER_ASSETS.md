@@ -89,6 +89,11 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Field Assay Kit (`AmmoMaking.FieldAssayKit`) | `AmmoMakingFieldKit`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `FieldAssayKit`: `Icon`, `WorldStaticModel` | none; a world model is optional |
 | Advanced Field Assay Kit (`AmmoMaking.AdvancedFieldAssayKit`) | `AmmoMakingAdvancedKit`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `AdvancedFieldAssayKit`: `Icon`, `WorldStaticModel` | none; a world model is optional |
 | Laboratory Assay Analyzer (`AmmoMaking.LaboratoryAssayAnalyzer`) | `AmmoMakingAnalyzer`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `LaboratoryAssayAnalyzer`: `Icon`, `WorldStaticModel` | none; a world model is optional |
+| Ammo Making I: Handloading from the Ground Up (`AmmoMaking.BookAmmoMaking1`) | `AmmoMakingBook1`, the mod's own | `Book13_Ground`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BookAmmoMaking1`: `Icon`, `WorldStaticModel` | a world model |
+| Ammo Making II: Cases and Primers (`AmmoMaking.BookAmmoMaking2`) | `AmmoMakingBook2`, the mod's own | `Book13_Ground`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BookAmmoMaking2`: `Icon`, `WorldStaticModel` | a world model |
+| Ammo Making III: Powder Charges and Pressure (`AmmoMaking.BookAmmoMaking3`) | `AmmoMakingBook3`, the mod's own | `Book13_Ground`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BookAmmoMaking3`: `Icon`, `WorldStaticModel` | a world model |
+| Ammo Making IV: The Bench and the Gauge (`AmmoMaking.BookAmmoMaking4`) | `AmmoMakingBook4`, the mod's own | `Book13_Ground`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BookAmmoMaking4`: `Icon`, `WorldStaticModel` | a world model |
+| Ammo Making V: The Complete Handloader's Reference (`AmmoMaking.BookAmmoMaking5`) | `AmmoMakingBook5`, the mod's own | `Book13_Ground`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BookAmmoMaking5`: `Icon`, `WorldStaticModel` | a world model |
 | Test 9mm Cartridge (`AmmoMaking.TestCartridge`) | `RifleAmmo308loose`, vanilla | none (the engine's default for an item without one) | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `TestCartridge`: `Icon`, `WorldStaticModel` | a 32 x 32 icon; a world model is optional |
 
 ### Items of the spent-cases add-on (generated: each copies its unused case)
@@ -105,7 +110,7 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Spent .308 Case (`AmmoMaking.SpentCase308Win`) | `AmmoMakingSpentCaseRifle`, the mod's own | `RifleAmmo`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentCase308Win`: `Icon`, `WorldStaticModel` | a world model |
 | Spent 12 Gauge Brass Hull (`AmmoMaking.SpentHull12Gauge`) | `AmmoMakingSpentHull`, the mod's own | `ShotGunShells`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentHull12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 
-4 visuals named in Lua, 41 items of the main mod, 9 of the spent-cases add-on: 54 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
+4 visuals named in Lua, 46 items of the main mod, 9 of the spent-cases add-on: 59 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
 
 <!-- END PLACEHOLDER ASSET TABLE -->
 

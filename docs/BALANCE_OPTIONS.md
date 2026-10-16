@@ -43,6 +43,8 @@ counts (`docs/SPENT_CASE_RESEARCH.md`).
 | Press time advantage | It is the press add-on's recipe `time`, also script data. |
 | Die-set rarity per tier, per list | One multiplier over the table keeps the tiers' order and the per-list design; the table stays in `AC_Loot.CONFIG`. |
 | XP per recipe | Scaling all of it is what the XP multiplier does; changing one recipe's share would change the progression the tests pin. |
+| Skill book loot | The books are `DisplayCategory = SkillBook`, so the game's own skill book loot setting already scales them with every vanilla book (`docs/LOOT_AND_RECYCLING.md` 1.4). A mod multiplier on top would count the same setting twice. |
+| Skill book XP multipliers | They are vanilla's own (1.5 to 8, the Aiming and Reloading books'); a book's multiplier and this XP multiplier both apply, as for any vanilla skill (`docs/AMMUNITION_DESIGN.md` 9.2). |
 
 ## 2. Ore per deposit tile
 

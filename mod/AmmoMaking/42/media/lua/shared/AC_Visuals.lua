@@ -192,6 +192,16 @@ AC_Visuals.ICONS = {
 
     { name = "AmmoMakingAnalyzer", mod = "AmmoMaking", prefix = "Item_", size = 32 },
 
+    { name = "AmmoMakingBook1", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingBook2", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingBook3", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingBook4", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingBook5", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
     { name = "AmmoMakingSpentCasePistol", mod = "AmmoMakingSpentCases", prefix = "Item_", size = 32 },
 
     { name = "AmmoMakingSpentCaseMagnum", mod = "AmmoMakingSpentCases", prefix = "Item_", size = 32 },

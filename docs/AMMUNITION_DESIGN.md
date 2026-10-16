@@ -595,6 +595,91 @@ lists `Base.GunPowder` among some hundred items) is a jar now and then: ten
 pistol rounds or two .308, not a supply. No value was changed in this
 review.
 
+### 9.2 Skill books, and why there are no recipe magazines
+
+Five volumes, `AmmoMaking.BookAmmoMaking1` to `5` (`AC_Items.txt`,
+`AC_SkillBooks.lua`), found and never made (`LOOT_AND_RECYCLING.md` 1.4).
+
+**How vanilla's skill books work** (42.20.4, read in the installed files
+and the jar; `tests/vanilla_snapshot.lua` records the facts and the suite
+compares the mod with them after every game update):
+
+| What | Where | Evidence |
+|---|---|---|
+| A book names its skill with a free string, `SkillTrained = Reloading`; the engine stores it untouched and resolves no perk while parsing | `Item.DoParam` (`skillTrained` is a `String` field), `Literature.setSkillTrained` | JAR |
+| Five volumes per skill, `LvlSkillTrained` 1, 3, 5, 7, 9, `NumLevelsTrained = 2`, `NumberOfPages` 220, 260, 300, 340, 380, weight 1.0, `DisplayCategory = SkillBook`, `ItemType = base:literature` | `items/literature.txt` (`BookReloading1`..`5`, every other skill alike) | FILE |
+| The reading code is Lua and looks the string up in a Lua table, `SkillBook[item:getSkillTrained()]`, holding `.perk` and `.maxMultiplier1`..`5`; `ISReadABook:new` picks the multiplier by the volume's first level (1, 3, 5, 7, 9) | `server/XpSystem/XPSystem_SkillBook.lua`, `shared/TimedActions/ISReadABook.lua`, `client/ISUI/ISLiteratureUI.lua`, `ISInventoryPane.lua` | FILE |
+| The table is created by a server file (`SkillBook = {};`), loaded after shared Lua and after `OnGameBoot` on a client, anew for every world | `GameLoadingState.enter` → `LuaManager.LoadDirBase("server")`; `GameServer.main` | JAR |
+| Within a folder every vanilla file is loaded before any mod file | `LuaManager.LoadDirBase`: the base list sorted, the mods' lists appended; `RunLuaInternal` never runs a file twice | JAR |
+| Reading sets a multiplier, `addXpMultiplier(character, perk, multiplier, level, maxLevel)`, kept per Perk object; `XP.AddXP(perk, amount)` - the call the mod makes - multiplies by it on its boosted path; reading itself awards no XP | `LuaManager$GlobalObject.addXpMultiplier`, `IsoGameCharacter$XP.AddXP`, `getMultiplier` | JAR |
+| A book is filed under the "SkillBook" loot type, scaled by the sandbox's skill book loot setting | `ItemPickerJava.getLootType`, `skillBookLootModifier`, `SandboxOptions` "SkillBookLoot" | JAR |
+| The inventory menu indexes `SkillBook[...].perk` with no nil check | `client/ISUI/ISInventoryPaneContextMenu.lua` | FILE |
+
+So a modded skill can have books, and the perk being registered from Lua
+after the scripts are parsed does not matter: unlike `SkillRequired` on a
+recipe, `SkillTrained` is never resolved by the engine. What it needs is
+the one entry `SkillBook.AmmoMaking = { perk = <the Perk object>,
+maxMultiplier1..5 }`, and it must be there before a book is read and after
+vanilla has (re)created the table. `AC_SkillBooks.register()` adds it from
+`server/AC_SkillBookRegistration.lua` at load (vanilla's server files come
+first) and again at `OnGameStart` and `OnServerStarted`; an entry already
+there is left alone, no table is ever created by the mod, and the
+game-start check reports a missing entry as a WARNING, because without it
+the vanilla menu would raise an error on the book.
+
+**The numbers are vanilla's, the smaller table.** Levels, pages, weight
+and category are the Reloading books'. Vanilla has two multiplier tables:
+3, 5, 8, 12, 16 for the crafting skills and 1.5, 2.5, 4, 6, 8 for Aiming,
+Reloading and Long Blade ("intentionally ... less"). The mod uses the
+second. Ammo Making's levels gate the calibres (§9), and its XP is paid
+for by mined ore, so a multiplier is a cut in ore. Model of the bands
+(`tests/suite_skillbooks.lua`; a volume's multiplier applies between the
+XP totals of its first level minus one and its last level):
+
+| To level 5 (2 775 XP) | XP the character must earn | Share |
+|---|---|---|
+| no book | 2 775 | 100 % |
+| volumes I to III, the mod's table | 945 | 34 % |
+| volumes I to III, the crafting table | 472.5 | 17 % |
+
+On the career of §9 that is level 5 after roughly 25 ore instead of 54:
+about half the mining, not a sixth. A test fails if the books ever cut the
+climb to level 5 below a third. Volumes IV and V train 7 to 10, which open
+no recipe and buy quality and speed (§9.0). No book makes material, opens
+a recipe early or awards XP by itself, so no loop of §9 changes: a book is
+worth only what it multiplies, and every XP it multiplies was paid for by
+consumed material.
+
+**No recipe magazines.** Vanilla's magazines (`LearnedRecipes = ...`,
+`RecipeResource` category) teach recipes that carry `NeedToBeLearn = true`.
+Built for Ammo Making they would be wrong or impossible:
+
+- A learned recipe still needs its level:
+  `CraftRecipeManager.isValidRecipeForCharacter` refuses a recipe whose
+  required skill is missing first, and only then asks, for a
+  `NeedToBeLearn` recipe, whether it is known (`isRecipeKnown`; JAR). A
+  magazine cannot open a recipe "otherwise needing a level"; in vanilla it
+  only teaches early what `AutoLearnAll` / `AutoLearnAny` would teach at a
+  level.
+- Those auto-learn lines name a perk and are resolved while scripts are
+  parsed (`CraftRecipe.Load`: `PerkFactory$Perks.FromString`, "Unknown
+  skill", JAR), before the Ammo Making perk exists, and `CraftRecipe` has
+  no Lua method to add one afterwards (only `addRequiredSkill`). A recipe
+  marked `NeedToBeLearn` would therefore be learnable from the magazine
+  only, and the chain would hang on a loot roll: the reachability test
+  (every item reachable without the debug menu) exists to forbid that.
+- The way round, teaching recipes from Lua at level-up or rewriting the
+  scripts at load, is the approach `REFERENCE_IMPLEMENTATIONS.md` 7
+  declines.
+
+**REQUIRES FUTURE IN-GAME VERIFICATION**: the console line of the
+registration and the check's OK line; that a volume can be read at the
+right level and refused as too complicated or too simple outside it; that
+the reading window lists the books under skill books; that the multiplier
+shows and applies to Ammo Making XP (the halo numbers grow while reading);
+that the custom perk is accepted by `addXpMultiplier` and `getPerkLevel`;
+the same on a dedicated server; how often a book is found.
+
 ## 10. Material conservation
 
 Units: 100 per ingot, 10 per scrap or small sheet, 5 per cup; a component may
@@ -744,3 +829,5 @@ been seen running. To be confirmed in game:
   `mode:destroy` wad line, boxing, the shells bandolier, nine pellets).
 - Placeholder icons: empty cases look like loose rounds; the four primers
   share an icon; the hull looks like a loaded shell.
+- The skill books of §9.2: read at the right levels, the multiplier applied
+  to Ammo Making XP, found as loot.

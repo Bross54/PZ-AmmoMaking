@@ -218,7 +218,8 @@ MUTANTS = [
     ("mod/AmmoMakingPress/42/mod.info", "tiledef=ammomaking_press 6142\n", "", "the press add-on does not declare its tile sheet"),
     ("art/reloading_press/tiles.json", "\"output\": \"../../mod/AmmoMakingPress/42/media\",", "\"output\": \"../../mod/AmmoMaking/42/media\",", "the press tile sheet is built into the main mod"),
     (SHARED + "AC_Visuals.lua", "        value = \"ammomaking_press_01_1\",", "        value = \"ammomaking_press_01_0\",", "the game-start check probes the south sprite twice and never the east one"),
-    (SHARED + "AC_Compat.lua", "    checkLoot(results)\n\n    checkFeatures(results)\n", "    checkLoot(results)\n", "the game-start check never looks at the features"),
+    (SHARED + "AC_Compat.lua", "    checkSkillBooks(results)\n\n    checkFeatures(results)\n", "    checkSkillBooks(results)\n", "the game-start check never looks at the features"),
+    (SHARED + "AC_Compat.lua", "    checkLoot(results)\n\n    checkSkillBooks(results)\n", "    checkLoot(results)\n", "the game-start check never looks at the skill books"),
 
     # ---- spent cases
     (SHARED + "AC_SpentCases.lua", "    recoveryPercent = 50,", "    recoveryPercent = 100,", "every fired case is found"),
@@ -295,9 +296,21 @@ MUTANTS = [
     (SHARED + "AC_Deposits.lua", "    if scaled < 1 then\n        return 1\n    end\n", "", "a workable deposit grade can be scaled to nothing"),
     (SHARED + "AC_Deposits.lua", "            AC_Balance.get(\n                \"depositReserve\"\n            )", "            1", "the ore-per-tile option is ignored"),
     (SHARED + "AC_Loot.lua", "            if index and wanted <= 0 then", "            if index and wanted < 0 then", "a die set at x0 stays in the list with weight 0"),
-    (SHARED + "AC_Loot.lua", "        option = entry.component and \"componentLoot\" or \"dieSetLoot\",", "        option = entry.component and \"dieSetLoot\" or \"componentLoot\",", "die sets follow the component multiplier and the other way round"),
+    (SHARED + "AC_Loot.lua", "    local option = \"dieSetLoot\"\n\n\n    if entry.component then\n        option = \"componentLoot\"", "    local option = \"componentLoot\"\n\n\n    if entry.component then\n        option = \"dieSetLoot\"", "die sets follow the component multiplier and the other way round"),
     (SHARED + "AC_Loot.lua", "    if summary.changed == 0 then\n        return\n    end\n", "", "the loot tables are parsed again at the defaults"),
     (SHARED + "AC_Loot.lua", "                summary.added =\n                    summary.added + 1\n\n\n                AC_Loot.own(\n                    entry\n                )\n", "                summary.added =\n                    summary.added + 1\n", "the multipliers never reach the entries the mod added"),
+
+    # ---- skill books
+    (SHARED + "AC_SkillBooks.lua", "level = 1, pages = 220, multiplier = 1.5 }", "level = 1, pages = 220, multiplier = 3 }", "the first volume takes the crafting skills' multiplier"),
+    (SHARED + "AC_SkillBooks.lua", "AC_SkillBooks.skill = \"AmmoMaking\"", "AC_SkillBooks.skill = \"Ammo Making\"", "the entry's key is not what the books name"),
+    (SHARED + "AC_SkillBooks.lua", "    if type(skillBook) ~= \"table\" then\n        return \"noTable\"\n    end", "    if type(skillBook) ~= \"table\" then\n        SkillBook = {}\n\n        skillBook = SkillBook\n    end", "the mod creates a SkillBook table vanilla would replace"),
+    (SHARED + "AC_SkillBooks.lua", "        if entry[key] ~= value then\n            return false\n        end", "        if false then\n            return false\n        end", "an entry with other multipliers counts as registered"),
+    (SHARED + "AC_SkillBooks.lua", "Events.OnServerStarted.Add(", "Events.OnGameBoot.Add(", "a dedicated server never re-enters the books after its server Lua"),
+    (LUA + "server/AC_SkillBookRegistration.lua", "AC_SkillBooks.registerLogged(\n    \"server Lua\"\n)", "", "the server file does not enter the books"),
+    (SHARED + "AC_Loot.lua", "    elseif entry.book then\n        option = nil\n    end", "    end", "the books follow the die-set loot multiplier"),
+    (SHARED + "AC_Loot.lua", "{ list = \"BookstoreBooks\", scale = 0.5,", "{ list = \"BookstoreBooks\", scale = 2,", "a bookstore's shelves flooded with Ammo Making books"),
+    (SHARED + "AC_Loot.lua", "    volumeWeight = { 1.0, 0.8, 0.6, 0.4, 0.2 },", "    volumeWeight = { 0.2, 0.4, 0.6, 0.8, 1.0 },", "the last volume is the commonest"),
+    (SHARED + "AC_Compat.lua", "    elseif safe(AC_SkillBooks.isRegistered) == true then", "    elseif true then", "the check reports the books readable without the entry"),
 
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),

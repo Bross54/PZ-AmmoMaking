@@ -469,6 +469,90 @@ module AmmoMaking
         Weight = 12.0,
     }
 
+    /* Skill books (docs/AMMUNITION_DESIGN.md, section 9.2). The fields are
+       vanilla's Base.BookReloading1 to 5 (media/scripts/generated/items/
+       literature.txt): literature, SkillBook category (the engine files it
+       under the sandbox's skill book loot), 1.0 weight, a volume per two
+       levels, 220 to 380 pages. SkillTrained is a free string the engine
+       does not resolve; vanilla's Lua looks it up in its SkillBook table,
+       which AC_SkillBooks fills. Icons are the mod's own; the models are
+       the Reloading books', borrowed. */
+
+    item BookAmmoMaking1
+    {
+        DisplayName = Ammo Making I: Handloading from the Ground Up,
+        DisplayCategory = SkillBook,
+        ItemType = base:literature,
+        Weight = 1.0,
+        Icon = AmmoMakingBook1,
+        LvlSkillTrained = 1,
+        NumLevelsTrained = 2,
+        NumberOfPages = 220,
+        SkillTrained = AmmoMaking,
+        StaticModel = Book13,
+        WorldStaticModel = Book13_Ground,
+    }
+
+    item BookAmmoMaking2
+    {
+        DisplayName = Ammo Making II: Cases and Primers,
+        DisplayCategory = SkillBook,
+        ItemType = base:literature,
+        Weight = 1.0,
+        Icon = AmmoMakingBook2,
+        LvlSkillTrained = 3,
+        NumLevelsTrained = 2,
+        NumberOfPages = 260,
+        SkillTrained = AmmoMaking,
+        StaticModel = Book13,
+        WorldStaticModel = Book13_Ground,
+    }
+
+    item BookAmmoMaking3
+    {
+        DisplayName = Ammo Making III: Powder Charges and Pressure,
+        DisplayCategory = SkillBook,
+        ItemType = base:literature,
+        Weight = 1.0,
+        Icon = AmmoMakingBook3,
+        LvlSkillTrained = 5,
+        NumLevelsTrained = 2,
+        NumberOfPages = 300,
+        SkillTrained = AmmoMaking,
+        StaticModel = Book13,
+        WorldStaticModel = Book13_Ground,
+    }
+
+    item BookAmmoMaking4
+    {
+        DisplayName = Ammo Making IV: The Bench and the Gauge,
+        DisplayCategory = SkillBook,
+        ItemType = base:literature,
+        Weight = 1.0,
+        Icon = AmmoMakingBook4,
+        LvlSkillTrained = 7,
+        NumLevelsTrained = 2,
+        NumberOfPages = 340,
+        SkillTrained = AmmoMaking,
+        StaticModel = Book13,
+        WorldStaticModel = Book13_Ground,
+    }
+
+    item BookAmmoMaking5
+    {
+        DisplayName = Ammo Making V: The Complete Handloader's Reference,
+        DisplayCategory = SkillBook,
+        ItemType = base:literature,
+        Weight = 1.0,
+        Icon = AmmoMakingBook5,
+        LvlSkillTrained = 9,
+        NumLevelsTrained = 2,
+        NumberOfPages = 380,
+        SkillTrained = AmmoMaking,
+        StaticModel = Book13,
+        WorldStaticModel = Book13_Ground,
+    }
+
     item TestCartridge
     {
         DisplayName = Test 9mm Cartridge,

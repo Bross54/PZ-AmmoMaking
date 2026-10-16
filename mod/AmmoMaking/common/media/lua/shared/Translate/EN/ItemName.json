@@ -39,5 +39,10 @@
     "AmmoMaking.FieldAssayKit": "Field Assay Kit",
     "AmmoMaking.AdvancedFieldAssayKit": "Advanced Field Assay Kit",
     "AmmoMaking.LaboratoryAssayAnalyzer": "Laboratory Assay Analyzer",
+    "AmmoMaking.BookAmmoMaking1": "Ammo Making I: Handloading from the Ground Up",
+    "AmmoMaking.BookAmmoMaking2": "Ammo Making II: Cases and Primers",
+    "AmmoMaking.BookAmmoMaking3": "Ammo Making III: Powder Charges and Pressure",
+    "AmmoMaking.BookAmmoMaking4": "Ammo Making IV: The Bench and the Gauge",
+    "AmmoMaking.BookAmmoMaking5": "Ammo Making V: The Complete Handloader's Reference",
     "AmmoMaking.TestCartridge": "Test 9mm Cartridge"
 }

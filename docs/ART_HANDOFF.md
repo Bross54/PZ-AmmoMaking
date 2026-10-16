@@ -78,6 +78,11 @@ drop that entry from the script so `--check` does not overwrite it.
 | `Item_AmmoMakingFieldKit` | AmmoMaking | Field Assay Kit |
 | `Item_AmmoMakingAdvancedKit` | AmmoMaking | Advanced Field Assay Kit |
 | `Item_AmmoMakingAnalyzer` | AmmoMaking | Laboratory Assay Analyzer (the item; the placed one is a tile, section 3) |
+| `Item_AmmoMakingBook1` | AmmoMaking | Ammo Making I (olive cover, one brass band on the spine) |
+| `Item_AmmoMakingBook2` | AmmoMaking | Ammo Making II (navy, two bands) |
+| `Item_AmmoMakingBook3` | AmmoMaking | Ammo Making III (brown, three bands) |
+| `Item_AmmoMakingBook4` | AmmoMaking | Ammo Making IV (oxblood, four bands) |
+| `Item_AmmoMakingBook5` | AmmoMaking | Ammo Making V (steel grey, five bands) |
 | `Item_AmmoMakingSpentCasePistol` | AmmoMakingSpentCases | spent 9mm and .45 ACP cases |
 | `Item_AmmoMakingSpentCaseMagnum` | AmmoMakingSpentCases | spent .38 Special, .357 and .44 Magnum cases |
 | `Item_AmmoMakingSpentCaseRifle` | AmmoMakingSpentCases | spent 5.56, .30-30 and .308 cases |
@@ -121,6 +126,7 @@ per class is enough, the item name tells the calibres apart.
 | Zinc ore | a grey-blue ore lump, clearly not iron | vanilla `IronOre` |
 | Zinc scrap, zinc ingot | bluish-white metal; the ingot a plain bar | vanilla `AluminumScrap`, `SilverBar` |
 | Small brass sheet, brass case cup | a small yellow sheet; a shallow drawn cup | vanilla `SmallCopperSheet`, `BrassScrap` |
+| Ammo Making skill books, five volumes | a hardback with a cartridge on the cover; one model, or a cover colour per volume as the icons have | vanilla `Book13`, `Book13_Ground` (the Reloading books') |
 
 The four geology items (sample, two kits, analyzer item) have no world
 model at all; one is welcome, not needed.

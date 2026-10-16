@@ -154,6 +154,7 @@ return function(T)
         AC_Materials.applySkillRequirements()
         L.lastSummary = L.register(T.mockProceduralLists(), distribution)
         L.lastComponentSummary = L.registerComponents(T.mockProceduralLists(), distribution)
+        L.lastBookSummary = L.registerBooks(T.mockProceduralLists(), distribution)
         local function labels()
             MOCK.capturePrint(true)
             local results = AC_Compat.run(false)
@@ -169,5 +170,6 @@ return function(T)
         L.lastComponentSummary = nil
         eq(labels()["component loot was not registered"], "WARNING", "components that never registered are a WARNING")
         L.lastComponentSummary = L.registerComponents(T.mockProceduralLists(), distribution)
+        L.lastBookSummary = L.registerBooks(T.mockProceduralLists(), distribution)
     end
 end
