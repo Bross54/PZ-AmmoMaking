@@ -7,3 +7,43 @@ option AmmoMaking.QualityTracking
     page = AmmoMaking,
     translation = AmmoMaking_QualityTracking,
 }
+
+option AmmoMaking.DepositReserveMultiplier
+{
+    type = double,
+    min = 0.5,
+    max = 3.0,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_DepositReserveMultiplier,
+}
+
+option AmmoMaking.DieSetLootMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 2.0,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_DieSetLootMultiplier,
+}
+
+option AmmoMaking.ComponentLootMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 2.0,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_ComponentLootMultiplier,
+}
+
+option MultiplierConfig.AmmoMaking
+{
+    type = double,
+    min = 0.0,
+    max = 1000.0,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_XPMultiplier,
+}

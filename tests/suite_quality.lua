@@ -119,15 +119,21 @@ return function(T)
         local texts = {}
         for key, value in string.gmatch(readFile(T.TRANSLATE .. "Sandbox.json"), '"([^"]+)"%s*:%s*"([^"]*)"') do texts[key] = value end
         local declared = {}
+        -- The balance multipliers share the file (tests/suite_balance.lua
+        -- checks them); this is about the feature switches.
+        local balance = {}
+        for _, option in ipairs(AC_Balance.OPTIONS) do balance[option.table .. "." .. option.option] = true end
         for name, body in string.gmatch(options, "option%s+([%w_%.]+)%s*(%b{})") do
-            declared[name] = body
-            local page = string.match(body, "page%s*=%s*([%w_]+)")
-            local translation = string.match(body, "translation%s*=%s*([%w_]+)")
-            eq(string.match(body, "type%s*=%s*(%a+)"), "boolean", name .. " is a boolean")
-            eq(string.match(body, "default%s*=%s*(%a+)"), "false", name .. " is off by default")
-            check(texts["Sandbox_" .. tostring(page)] ~= nil, name .. ": its page has a title")
-            check(texts["Sandbox_" .. tostring(translation)] ~= nil, name .. " has a label")
-            check(string.find(texts["Sandbox_" .. tostring(translation) .. "_tooltip"] or "", "EXPERIMENTAL", 1, true) ~= nil, name .. " has a tooltip that says it is experimental")
+            if not balance[name] then
+                declared[name] = body
+                local page = string.match(body, "page%s*=%s*([%w_]+)")
+                local translation = string.match(body, "translation%s*=%s*([%w_]+)")
+                eq(string.match(body, "type%s*=%s*(%a+)"), "boolean", name .. " is a boolean")
+                eq(string.match(body, "default%s*=%s*(%a+)"), "false", name .. " is off by default")
+                check(texts["Sandbox_" .. tostring(page)] ~= nil, name .. ": its page has a title")
+                check(texts["Sandbox_" .. tostring(translation)] ~= nil, name .. " has a label")
+                check(string.find(texts["Sandbox_" .. tostring(translation) .. "_tooltip"] or "", "EXPERIMENTAL", 1, true) ~= nil, name .. " has a tooltip that says it is experimental")
+            end
         end
         for _, definition in ipairs(AC_Features.DEFINITIONS) do
             if definition.sandbox then

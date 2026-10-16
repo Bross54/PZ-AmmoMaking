@@ -323,14 +323,30 @@ Steps
 1. With the vanilla debug loot tool (or by visiting): a gun store's
    magazine and ammunition display, a hunting store's lockers, a metalwork
    or blacksmith crate.
+2. Balance options (`docs/BALANCE_OPTIONS.md`): look at the sandbox page
+   *Ammo Making* of a new world. Then start a second new world with *Die
+   sets found as loot* 2, *Reloading stock found as loot* 0, *Ore per
+   deposit tile* 3, *Ammo Making XP multiplier* 3 and the game's global XP
+   multiplier switched off. Repeat step 1 there, mine one Good tile
+   (section 8) and craft one recipe that gives XP.
 
 Expected
 - Die sets, and now and then a primer box or gunpowder, in gun stores;
   brass scrap or a small brass sheet in metalwork crates. Rare: several
   containers may be needed.
 - No cases, bullets or finished handloads anywhere.
+- The page shows the four balance options with their labels and tooltips,
+  each at 1.
+- Second world: no component loot of the mod at all, die sets noticeably
+  more often; a Good tile gives 6 ore; the XP line of a craft shows three
+  times its amount in the total (`total a -> b`). Vanilla's own loot looks
+  as in the first world.
+- Containers already filled before an option is changed keep what they
+  hold (only if the options can be changed for a running save).
 
-Console (section 1): the two loot lines.
+Console (section 1): the two loot lines. Second world only:
+`Balance options of this save: ...` and
+`Loot multipliers: die sets x2, components x0; ... loot tables read again: true`.
 
 Result: ____
 

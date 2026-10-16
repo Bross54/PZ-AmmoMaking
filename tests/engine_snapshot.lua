@@ -25,21 +25,7 @@ return {
             Tool = true,
         },
         icons = {
-            AluminumScrap = true,
-            BrassScrap = true,
-            CarBatteryCharger = true,
-            FirstAid_Camping = true,
-            Ingot_Silver = true,
-            IronOre = true,
-            MakeupCase_Professional = true,
-            PistolAmmo = true,
-            Punches_Forged = true,
             RifleAmmo308loose = true,
-            Sheet_Copper_Small = true,
-            ShotgunAmmo = true,
-            SnapCap = true,
-            SpecimanJar_Full1 = true,
-            SteelRod_Slug = true,
         },
         models = {
             ["38SpecialBullets"] = true,
@@ -501,7 +487,9 @@ return {
         ItemPickerJava = {
             class = "zombie.inventory.ItemPickerJava",
             exposed = "zombie.inventory.ItemPickerJava",
-            methods = {},
+            methods = {
+                Parse = { "static " },
+            },
         },
         Perk = {
             class = "zombie.characters.skills.PerkFactory$Perk",
@@ -577,6 +565,7 @@ return {
         OnGameBoot = true,
         OnGameStart = true,
         OnInitGlobalModData = true,
+        OnLoadedMapZones = true,
         OnPreDistributionMerge = true,
         OnWeaponSwingHitPoint = true,
     },
@@ -761,6 +750,7 @@ return {
         ISWorldObjectContextMenu = "lua",
         InventoryItemFactory = false,
         IsoThumpable = "class zombie.iso.objects.IsoThumpable",
+        ItemPickerJava = "class zombie.inventory.ItemPickerJava",
         Metabolics = "class zombie.characters.BodyDamage.Metabolics",
         ModData = "class zombie.world.moddata.ModData",
         PerkFactory = "class zombie.characters.skills.PerkFactory",
@@ -1200,6 +1190,7 @@ return {
         ["ISTimedActionQueue.add"] = true,
         ["ISWorldObjectContextMenu.addToolTip"] = true,
         ["IsoThumpable.new"] = { "static IsoCell", "static IsoCell,IsoGridSquare,String,String,boolean,KahluaTable", "static IsoCell,IsoGridSquare,String,boolean", "static IsoCell,IsoGridSquare,String,boolean,KahluaTable" },
+        ["ItemPickerJava.Parse"] = { "static " },
         ["Metabolics.DiggingSpade"] = true,
         ["Metabolics.HeavyDomestic"] = true,
         ["ModData.getOrCreate"] = { "static String" },
@@ -1216,9 +1207,7 @@ return {
     pressDraft = {
         entityNameFree = true,
         handPressTileProperties = { "BlocksPlacement", "CustomName", "Facing", "GroupName", "IsMoveAble", "PickUpWeight", "solidtrans" },
-        iconsInVanillaSkins = {
-            Build_Handpress = true,
-        },
+        iconsInVanillaSkins = {},
         items = {
             ["Base.Nails"] = true,
             ["Base.Plank"] = true,

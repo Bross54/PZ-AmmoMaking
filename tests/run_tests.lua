@@ -4318,6 +4318,9 @@ do
         OnGameStart = true, OnGameBoot = true, OnInitGlobalModData = true,
         -- Once per world load, just before the engine parses the loot tables.
         OnPreDistributionMerge = true,
+        -- Once per world load, once the save's sandbox options are in Lua
+        -- (the loot multipliers, tests/suite_balance.lua).
+        OnLoadedMapZones = true,
     }
     local registrations = 0
     local heavy = {
@@ -8769,14 +8772,19 @@ do
     check(okFire, "the handler does not raise without the loot tables")
     ProceduralDistributions, Distributions = savedProcedural, savedDistributions
 
-    -- Where it is registered: once per world load, nowhere else.
+    -- Where it is registered: once per world load, nowhere else. The
+    -- entries go in at the pre-merge event; the save's multipliers are
+    -- applied once its options are loaded (tests/suite_balance.lua).
     local source = readFile(LUA .. "shared/AC_Loot.lua")
-    local registrations = 0
+    local registrations = {}
     for event in string.gmatch(source, "Events%.([%w_]+)%.Add") do
-        registrations = registrations + 1
-        eq(event, "OnPreDistributionMerge", "the loot handler listens to the pre-merge event")
+        registrations[event] = (registrations[event] or 0) + 1
     end
-    eq(registrations, 1, "one registration")
+    eq(registrations.OnPreDistributionMerge, 1, "the loot handler listens to the pre-merge event, once")
+    eq(registrations.OnLoadedMapZones, 1, "the multipliers listen to the map zones event, once")
+    local events = 0
+    for _ in pairs(registrations) do events = events + 1 end
+    eq(events, 2, "and to nothing else")
     check(string.find(source, "ProceduralDistributions.list[", 1, true) == nil, "no list is indexed at file load")
 end
 
@@ -10131,7 +10139,7 @@ do
         makeSample = makeSample, equipShovel = equipShovel, placeAnalyzerObject = placeAnalyzerObject, poweredLabSquare = poweredLabSquare,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "progression", "multiplayer", "docs" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "docs" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

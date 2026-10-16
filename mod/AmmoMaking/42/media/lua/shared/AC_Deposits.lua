@@ -13,6 +13,14 @@
 -- Storing the extracted count instead of the remaining
 -- count keeps old saves valid if reserve balancing
 -- changes later.
+--
+-- The same is what lets a server owner scale the
+-- reserves with a sandbox option (AC_Balance,
+-- "depositReserve"): a tile
+-- already worked keeps its extracted count, and what is
+-- left follows the new reserve at once.
+
+require "AC_Balance"
 
 AC_Deposits = AC_Deposits or {}
 
@@ -375,6 +383,44 @@ end
 -- INITIAL RESERVE
 ------------------------------------------------
 
+-- A grade's reserve scaled by the save's multiplier,
+-- rounded to whole ore. A grade that is workable at all
+-- stays workable (at least one unit), and an unworkable
+-- one stays at nothing: the option changes how much a
+-- deposit holds, never where deposits are. At 1 the
+-- reserve is the table's, unchanged.
+function AC_Deposits.scaleReserve(
+    reserve,
+    multiplier
+)
+
+    reserve =
+        tonumber(reserve)
+        or 0
+
+
+    if reserve <= 0 then
+        return 0
+    end
+
+
+    local scaled =
+        math.floor(
+            reserve
+            * (tonumber(multiplier) or 1)
+            + 0.5
+        )
+
+
+    if scaled < 1 then
+        return 1
+    end
+
+
+    return scaled
+end
+
+
 function AC_Deposits.getReserveForConcentration(
     concentration
 )
@@ -387,8 +433,13 @@ function AC_Deposits.getReserveForConcentration(
 
 
     return
-        AC_Deposits.CONFIG.reserveByGrade[grade]
-        or 0
+        AC_Deposits.scaleReserve(
+            AC_Deposits.CONFIG.reserveByGrade[grade]
+            or 0,
+            AC_Balance.get(
+                "depositReserve"
+            )
+        )
 end
 
 

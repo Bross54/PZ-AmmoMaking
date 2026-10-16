@@ -43,6 +43,7 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | **Quality tracking through magazines and firearms** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9 |
 | **Quality effects at the shot** | IMPLEMENTED, LOCKED OFF (no switch in this version) | none | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4 |
 | Feature switches, placeholder registry | IMPLEMENTED | | `AC_Features.lua`, `AC_Visuals.lua` |
+| Balance options for server owners (ore per tile, die-set and component loot, Ammo Making XP) | IMPLEMENTED (multipliers, default 1: nothing changes unless set) | sandbox options | `BALANCE_OPTIONS.md` |
 | Debug tree, compatibility check | IMPLEMENTED | `-debug` | `DEVELOPMENT.md` |
 | Game-update check | IMPLEMENTED | | `tools/pz_compat.py` |
 | Release packaging | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
@@ -107,11 +108,16 @@ missing: a `poster=` image and a Workshop `preview.png`.
 
 ### 3.3 Balancing, from play
 
-All central tunables; none needs code.
+All central tunables; none needs code. Four of them a server owner can
+also scale from the sandbox page, without editing Lua (`BALANCE_OPTIONS.md`):
+ore per tile, die-set loot, component loot and Ammo Making XP. Their
+defaults are 1, so the numbers below are what play uses until one is set.
+Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 
 | What | Where |
 |---|---|
-| Loot weights (die sets, components) | `AC_Loot.lua` |
+| Ore per tile by grade | `AC_Deposits.CONFIG.reserveByGrade`; sandbox multiplier |
+| Loot weights (die sets, components) | `AC_Loot.lua`; sandbox multipliers |
 | What the kits and the analyzer cost | `AC_Materials.EQUIPMENT_RECIPES` |
 | Recipe levels, times, XP per calibre | `AC_Calibres.lua` |
 | The press's time advantage and build cost | `AC_Calibres.PRESS` |

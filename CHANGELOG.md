@@ -53,6 +53,14 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
 - **Component loot**: gunpowder, primers, brass scrap and small brass
   sheets, a little, in gun stores, hunting stores and metalwork crates.
   Never cases, bullets, rounds or die sets beyond what 0.8.0 added.
+- **Balance options for server owners** (sandbox page *Ammo Making*):
+  ore per deposit tile (x0.5 to x3), die sets as loot (x0 to x2),
+  reloading stock as loot (x0 to x2) and an Ammo Making XP multiplier
+  that the game applies like its own per-skill ones (used when the global
+  XP multiplier is off). All default to 1: nothing changes unless they are
+  set. The loot multipliers are applied once the save's options are
+  loaded, and only to containers filled from then on. Recycling yield is
+  not an option, on purpose (`docs/BALANCE_OPTIONS.md`).
 - **Multiplayer**: digging a sample, both portable assays and using the
   analyzer are now refused on a multiplayer client and shown as disabled
   options that say why, as mining and analyzer placement already were.

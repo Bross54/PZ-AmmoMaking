@@ -1019,6 +1019,13 @@ function require(name)
     end
 end
 
+-- The engine's loot parser: ItemPickerJava.Parse() reads the Lua loot
+-- tables again (public static, exposed). Offline it only counts the calls.
+MOCK.itemPickerParses = 0
+ItemPickerJava = {
+    Parse = function() MOCK.itemPickerParses = MOCK.itemPickerParses + 1 end,
+}
+
 -- UI panels are not loaded offline; the menus only call open().
 AC_GeologyAssayUI = { opened = 0, open = function() AC_GeologyAssayUI.opened = AC_GeologyAssayUI.opened + 1 end }
 AC_AmmoInspectionUI = { opened = 0, open = function() AC_AmmoInspectionUI.opened = AC_AmmoInspectionUI.opened + 1 end }
@@ -1148,7 +1155,7 @@ end
 -- Mod Lua files the tests load, relative to media/lua/ (UI panels are
 -- mocked instead of loaded).
 MOCK.MOD_FILES = {
-    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality",
+    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Balance",
     "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Compat",
     "shared/AC_Deposits", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
     "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
@@ -1195,6 +1202,7 @@ function MOCK.resetLuaState()
     AC_CaseQuality = nil
     AC_Compat = nil
     AC_Loot = nil
+    AC_Balance = nil
     AC_Recycling = nil
     AC_QualityTally = nil
     AC_QualityCarrier = nil

@@ -38,8 +38,34 @@
 -- runs before the parse on a real world load, and how often
 -- a die set is actually met. The weights are deliberately
 -- small.
+--
+-- SANDBOX MULTIPLIERS (AC_Balance: dieSetLoot,
+-- componentLoot). They cannot be read at the pre-merge
+-- event: IsoWorld.init fires it BEFORE
+-- SandboxOptions.load() hands the save's options to Lua
+-- (JAR, 42.20.4: OnPreDistributionMerge,
+-- OnDistributionMerge, OnPostDistributionMerge, OnInitWorld,
+-- SandboxOptions.load + toLua, ItemPickerJava.Parse,
+-- InitSandboxLootSettings, ... OnLoadedMapZones, ...
+-- WorldStreamer.create, the first cells). So the entries
+-- go in at their table weights as before, and at
+-- OnLoadedMapZones - options loaded, no cell loaded yet -
+-- applyMultipliers() sets each entry the mod added to
+-- its weight times the multiplier (0 takes it out) and,
+-- only when that changed a list, has the engine read the
+-- tables again with ItemPickerJava.Parse() (public static,
+-- exposed; it clears what it parsed before). At the
+-- defaults nothing changes and nothing is parsed again.
+--
+-- REQUIRES FUTURE IN-GAME VERIFICATION: the multipliers
+-- reaching the loot on a real load, single player and
+-- dedicated server; and that containers filled before
+-- (in an older session of the save) keep what they hold:
+-- only containers filled from now on see the new weights.
 
 require "AC_Calibres"
+
+require "AC_Balance"
 
 AC_Loot = AC_Loot or {}
 
@@ -871,6 +897,209 @@ local function hasItem(
 end
 
 
+------------------------------------------------
+-- WHAT THE MOD ADDED
+------------------------------------------------
+--
+-- Every (list, item) pair the mod itself inserted, with
+-- its table weight and which multiplier scales it. Only
+-- these are ever rescaled or taken out: an item that was
+-- already in a list (vanilla's, or another mod's) is
+-- never touched. Lua state, not save data: it lasts as
+-- long as the Lua state, like the entries themselves.
+------------------------------------------------
+
+AC_Loot.owned = AC_Loot.owned or {}
+
+AC_Loot.ownedByKey = AC_Loot.ownedByKey or {}
+
+
+function AC_Loot.own(
+    entry
+)
+
+    local key =
+        entry.list .. "|" .. entry.item
+
+
+    if AC_Loot.ownedByKey[key] then
+        return
+    end
+
+
+    local owned = {
+
+        list = entry.list,
+
+        item = entry.item,
+
+        weight = entry.weight,
+
+        option = entry.component and "componentLoot" or "dieSetLoot",
+    }
+
+
+    AC_Loot.ownedByKey[key] = owned
+
+
+    table.insert(
+        AC_Loot.owned,
+        owned
+    )
+end
+
+
+-- The weight an owned entry should have now.
+function AC_Loot.scaledWeight(
+    owned
+)
+
+    return
+        owned.weight
+        * AC_Balance.get(
+            owned.option
+        )
+end
+
+
+-- Index of the item in a flat { item, weight, ... } list,
+-- or nil.
+local function indexOf(
+    items,
+    itemType
+)
+
+    for index = 1, #items, 2 do
+
+        if items[index] == itemType then
+            return index
+        end
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
+-- MULTIPLIERS
+------------------------------------------------
+--
+-- Brings every owned entry to its scaled weight: set it,
+-- take it out at 0, put it back when it was taken out
+-- and is wanted again (a later world in the same Lua
+-- state). Returns { changed, scaled, removed, restored }.
+-- changed = 0 means the parsed tables are already right.
+------------------------------------------------
+
+function AC_Loot.applyMultipliers(
+    procedural
+)
+
+    local summary = {
+
+        changed = 0,
+
+        scaled = 0,
+
+        removed = 0,
+
+        restored = 0,
+    }
+
+
+    if procedural == nil
+        and type(ProceduralDistributions) == "table"
+    then
+        procedural = ProceduralDistributions.list
+    end
+
+
+    if type(procedural) ~= "table" then
+        return summary
+    end
+
+
+    for _,
+        owned
+    in ipairs(
+        AC_Loot.owned
+    )
+    do
+
+        local list =
+            procedural[owned.list]
+
+
+        if type(list) == "table"
+            and type(list.items) == "table"
+        then
+
+            local wanted =
+                AC_Loot.scaledWeight(
+                    owned
+                )
+
+
+            local index =
+                indexOf(
+                    list.items,
+                    owned.item
+                )
+
+
+            if index and wanted <= 0 then
+
+                table.remove(list.items, index + 1)
+
+                table.remove(list.items, index)
+
+
+                summary.removed =
+                    summary.removed + 1
+
+            elseif index
+                and list.items[index + 1] ~= wanted
+            then
+
+                list.items[index + 1] = wanted
+
+
+                summary.scaled =
+                    summary.scaled + 1
+
+            elseif not index
+                and wanted > 0
+            then
+
+                table.insert(
+                    list.items,
+                    owned.item
+                )
+
+                table.insert(
+                    list.items,
+                    wanted
+                )
+
+
+                summary.restored =
+                    summary.restored + 1
+            end
+        end
+    end
+
+
+    summary.changed =
+        summary.scaled
+        + summary.removed
+        + summary.restored
+
+
+    return summary
+end
+
+
 -- entries: what to insert; names: the lists to look for
 -- among the containers; referenced: which lists a
 -- container names, when the caller has already walked
@@ -1005,6 +1234,11 @@ local function registerEntries(
 
                 summary.added =
                     summary.added + 1
+
+
+                AC_Loot.own(
+                    entry
+                )
             end
         end
     end
@@ -1319,6 +1553,93 @@ end
 -- tables (see the header).
 Events.OnPreDistributionMerge.Add(
     registerLogged
+)
+
+
+-- The save's multipliers, once the save's options are in
+-- Lua and before the first cell is loaded (see the
+-- header). The engine reads the tables again only when
+-- a weight changed.
+local function applyMultipliersLogged()
+
+    local ok,
+          summary =
+        pcall(
+            AC_Loot.applyMultipliers
+        )
+
+
+    if not ok then
+
+        print(
+            "[AmmoMaking] WARNING: loot multipliers not applied: "
+            .. tostring(summary)
+        )
+
+
+        return
+    end
+
+
+    AC_Loot.lastMultiplierSummary = summary
+
+
+    -- The first moment the save's options are certain to
+    -- be in Lua: say which balance options are changed.
+    local changes =
+        AC_Balance.describeChanges()
+
+
+    if changes then
+
+        print(
+            "[AmmoMaking] Balance options of this save: "
+            .. changes
+        )
+    end
+
+
+    if summary.changed == 0 then
+        return
+    end
+
+
+    local parsed = false
+
+
+    if type(ItemPickerJava) == "table"
+        and type(ItemPickerJava.Parse) == "function"
+    then
+
+        parsed =
+            pcall(
+                ItemPickerJava.Parse
+            )
+    end
+
+
+    summary.parsed = parsed
+
+
+    print(
+        "[AmmoMaking] Loot multipliers: die sets x"
+        .. tostring(AC_Balance.get("dieSetLoot"))
+        .. ", components x"
+        .. tostring(AC_Balance.get("componentLoot"))
+        .. "; "
+        .. summary.scaled
+        .. " entries rescaled, "
+        .. summary.removed
+        .. " taken out, "
+        .. summary.restored
+        .. " put back; loot tables read again: "
+        .. tostring(parsed)
+    )
+end
+
+
+Events.OnLoadedMapZones.Add(
+    applyMultipliersLogged
 )
 
 

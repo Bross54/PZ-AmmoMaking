@@ -761,6 +761,33 @@ game.
 
 ---
 
+# Sandbox Options (server owners)
+
+The **Ammo Making** page of the sandbox options holds a few balance
+multipliers, so a server can be tuned without editing Lua. Every one defaults
+to **1**, the mod's own balance; a save that leaves them alone plays exactly
+as before. Values outside the range are clamped to it.
+
+| Option | Range | What it does |
+|---|---|---|
+| Ore per deposit tile | 0.5 to 3 | How many ore units a copper or zinc tile holds. A workable grade always keeps at least one; tiles already worked keep what was taken. |
+| Die sets found as loot | 0 to 2 | How often die sets turn up (gun stores, garage gun lockers, hunters' things). 0 takes them out of loot; they can always be forged. At 2 no room of twelve containers holds more than two on average. |
+| Reloading stock found as loot | 0 to 2 | How often the gunpowder, loose primers, brass scrap and small brass sheets the mod adds turn up. 0 takes them out. |
+| Ammo Making XP multiplier | 0 to 1000 | The skill's own XP multiplier, like the game's per-skill ones: used only when the game's global XP multiplier is switched off (otherwise the global one applies). |
+
+In a server's `servertest_SandboxVars.lua` they are
+`AmmoMaking.DepositReserveMultiplier`, `AmmoMaking.DieSetLootMultiplier`,
+`AmmoMaking.ComponentLootMultiplier` and `MultiplierConfig.AmmoMaking`.
+
+Things to know: the loot multipliers change containers filled from then on,
+not loot already generated; recycling never teaches XP and always loses half
+the brass, at any setting (the yield is not an option, on purpose); and the
+spent-case add-on has its own option for how many fired cases are found.
+None of this has been seen in a game yet (`docs/BALANCE_OPTIONS.md`, section
+5).
+
+---
+
 # Repository Structure
 
 ```text
@@ -777,6 +804,7 @@ PZ-AmmoMaking
 │   ├── AMMUNITION_DESIGN.md              the component chain, balance and economy tables
 │   ├── METALLURGY_DESIGN.md
 │   ├── LOOT_AND_RECYCLING.md
+│   ├── BALANCE_OPTIONS.md                the sandbox multipliers for server owners
 │   ├── RELOADING_PRESS_DESIGN.md
 │   ├── SPENT_CASE_RESEARCH.md
 │   ├── AMMO_QUALITY_RUNTIME_DESIGN.md
@@ -851,6 +879,7 @@ PZ-AmmoMaking
                         ├── AC_AmmoInspection.lua
                         ├── AC_AmmoMakingSkill.lua
                         ├── AC_AmmoQuality.lua
+                        ├── AC_Balance.lua
                         ├── AC_Calibres.lua
                         ├── AC_CaseQuality.lua
                         ├── AC_Compat.lua

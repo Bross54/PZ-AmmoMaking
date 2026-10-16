@@ -44,6 +44,7 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [*][b]Die sets as rare loot[/b] in gun stores, gun lockers and hunting stores. They can always be forged instead. A little gunpowder, a few primers and some brass stock turn up as well; never cases, bullets or finished handloads.
 [*][b]Brass recycling.[/b] Unwanted brass parts become brass scrap at half the brass, and scrap is recast into ingots.
 [*][b]Inspection.[/b] Empty cases and loose handloaded rounds show their calibre and case quality.
+[*][b]Balance options[/b] (sandbox page Ammo Making): ore per deposit tile, how often die sets and reloading stock are found, and an Ammo Making XP multiplier that works like the game's per-skill ones. All at 1 by default.
 [/list]
 
 [h2]What it does not do[/h2]

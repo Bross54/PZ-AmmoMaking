@@ -53,7 +53,8 @@ never move an item into that list.
 | `shared/AC_GeologySampling.lua` | shared | Sample items, shovel checks, field / advanced assays, kit uses, result lines |
 | `shared/AC_LaboratoryAnalyzer.lua` | shared | Laboratory analyzer rules for placed and dropped analyzers: state machine, timing, power, sample storage, cancel, pick-up rule, state repair, finding the analyzer among clicked objects, debug-only completion |
 | `server/BuildingObjects/AC_LaboratoryAnalyzerObject.lua` | server | `ISBuildingObject` placement cursor; `create()` turns the analyzer item into an `IsoThumpable` |
-| `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology, depletion records in global ModData |
+| `shared/AC_Deposits.lua` | shared | Per-tile reserves derived from geology (scaled by the save's `depositReserve` multiplier, `scaleReserve`), depletion records in global ModData |
+| `shared/AC_Balance.lua` | shared | **The balance options of the save** (`docs/BALANCE_OPTIONS.md`): four multipliers, default 1, and the one reader of them. `get(id)` clamps a number into the option's range and turns anything else into the default; `validate()` refuses a default other than 1. `MultiplierConfig.AmmoMaking` is applied by the engine, not here |
 | `shared/AC_Mining.lua` | shared | Pickaxe rules, prospect lookup, `extract()` (the only mutation point of the mining loop) |
 | `shared/AC_Materials.lua` | shared | Every station recipe of the mod: item ids, material units, the Lua mirror of the recipe script (metallurgy and case stock written here, components appended from `AC_Calibres`), conservation check, `OnCreate` callbacks (XP, then a recipe's effect), the Ammo Making requirement attached to the recipe scripts at boot |
 | `shared/AC_Calibres.lua` | shared | **Every balance number of the ammunition stage.** Calibre definitions, class defaults (pistol, rifle, shotgun), primer families, priming-compound sources, powder, wadding, the press (its tag, time advantage and build kit); builds the component recipes, their material units and the item list from that data; validates it |
@@ -64,7 +65,7 @@ never move an item into that list.
 | `shared/AC_QualityCarrier.lua` | shared | Feature `qualityTracking` (sandbox option): the tally record in the ModData of magazines and firearms, kept in step by observing vanilla's counts around seven wrapped reload functions and the shot (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9) |
 | `shared/AC_QualityEffects.lua` | shared | Feature `qualityEffects`, **locked off**: a linear extra jam chance from a load's quality, through vanilla's own jam state. Returns at once while the feature is disabled |
 | `shared/AC_Recycling.lua` | shared | Brass recycling: the sources of brass (`getSources()`: unused brass, and spent cases at a quarter when that feature is on), what is plain brass, the scrapping recipes grouped by brass content, the recast, and `validate()` (it loses brass, it awards nothing, a dirtier source never returns more). Data and arithmetic only |
-| `shared/AC_Loot.lua` | shared | Die sets as rare loot and a little component loot (`COMPONENTS`: gunpowder, primers, brass scrap, small brass sheets): weights, target lists, `buildEntries`, `buildComponentEntries`, the validators, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists in one walk |
+| `shared/AC_Loot.lua` | shared | Die sets as rare loot and a little component loot (`COMPONENTS`: gunpowder, primers, brass scrap, small brass sheets): weights, target lists, `buildEntries`, `buildComponentEntries`, the validators, and the one `OnPreDistributionMerge` handler that appends the entries to vanilla's procedural lists in one walk, and the `OnLoadedMapZones` handler that sets the entries it added (`owned`) to the save's loot multipliers and, only if a weight changed, has the engine read the tables again (`ItemPickerJava.Parse()`) |
 | `shared/AC_QualityTally.lua` | shared | The quality tally of loaded ammunition as pure functions (`repair`, `reconcile`, `split`, `merge`, `consume`, `unload`). Arithmetic only: it stores nothing and wraps nothing. Its one caller is `AC_QualityCarrier` (`AMMO_QUALITY_RUNTIME_DESIGN.md` 7, 8) |
 | `shared/AC_SaveData.lua` | shared | How persisted numbers are read (`number`, `whole`, `isFinite`), layout versions (`versionStatus`, `upgrade`) and the schema of every ModData key (`SCHEMA`, `check`). Stores nothing |
 | `scripts/AC_Recipes.txt` | script | **Generated** (`tests/write_recipes.lua`): 55 `craftRecipe` blocks in module `Base`, ids prefixed `AmmoMaking_`: metallurgy 4, case stock 2, gunpowder 1, primers 8 (four families × two charges), four per calibre × 9, scrapping 3, recast 1 |
@@ -80,7 +81,7 @@ never move an item into that list.
 | `client/AC_GeologyAssayUI.lua`, `client/AC_AmmoInspectionUI.lua` | client | Result panels |
 | `client/AC_GeologyDebug.lua` | client | The "Ammo Making Debug" tree (`-debug` only): Geology, Analyzer, Metallurgy, Ammunition, Stations (only with the press), Diagnostics |
 | `client/AC_AmmoContextMenu.lua` | client | *Inspect Ammunition* on cases and loose handloaded rounds, *Inspect Loaded Ammunition* on magazines and firearms; the test cartridge's inspection and debug presets |
-| `media/sandbox-options.txt` | script | One option: `AmmoMaking.QualityTracking` (boolean, default false) |
+| `media/sandbox-options.txt` | script | The feature switch `AmmoMaking.QualityTracking` (boolean, default false) and the four balance multipliers of `AC_Balance` (double, default 1): `AmmoMaking.DepositReserveMultiplier`, `AmmoMaking.DieSetLootMultiplier`, `AmmoMaking.ComponentLootMultiplier`, `MultiplierConfig.AmmoMaking` |
 | `mod/AmmoMakingPress/` | add-on mod | The reloading press: entity, skin, tile sheet, 27 generated recipes, names. **No Lua**; its logic and probes are in the main mod |
 | `mod/AmmoMakingSpentCases/` | add-on mod | Spent cases: 9 generated items, 3 generated scrapping recipes, names, the sandbox option `AmmoMaking.SpentCaseRecovery`. **No Lua** |
 
@@ -88,7 +89,8 @@ Load order is alphabetical within `shared/`, `client/` and `server/`. Modules
 reference each other from inside functions, so the order does not matter at
 load time, with the exceptions that say so with a `require`: `AC_Materials`
 builds its recipe list from `AC_Calibres` and `AC_Recycling` while it loads,
-`AC_Loot`, `AC_Recycling` and `AC_Compat` read `AC_Calibres`, and
+`AC_Loot`, `AC_Recycling` and `AC_Compat` read `AC_Calibres`, `AC_Loot` and
+`AC_Deposits` read `AC_Balance`, and
 `AC_SaveData` reads the test cartridge's defaults from `AC_AmmoQuality`. The
 test harness honours `require` the same way. The placement cursor lives in `server/BuildingObjects/` like every
 vanilla `ISBuildingObject` subclass.
@@ -104,7 +106,8 @@ the tables are small. Nothing here has been balanced yet.
 | `baseScale`, `detailScale` | `AC_Geology.CONFIG` | 55, 18 | noise layers |
 | `copperThreshold`, `zincThreshold` | `AC_Geology.CONFIG` | 0.50, 0.52 | ore rarity |
 | `surveyRadius` | `AC_Geology.CONFIG` | 1 (3x3) | survey, mining coverage, debug tools |
-| `reserveByGrade` | `AC_Deposits.CONFIG` | None/Trace 0, Poor/Moderate 1, Good 2, Rich 3, Very Rich 4 | initial reserve |
+| `reserveByGrade` | `AC_Deposits.CONFIG` | None/Trace 0, Poor/Moderate 1, Good 2, Rich 3, Very Rich 4 | initial reserve, times the sandbox multiplier (rounded, a workable grade never below 1) |
+| `OPTIONS` | `AC_Balance` | four multipliers, default 1: ore per tile 0.5 to 3, die-set loot 0 to 2, component loot 0 to 2, Ammo Making XP 0 to 1000 (engine-applied) | `AC_Deposits`, `AC_Loot`; the XP one by `IsoGameCharacter$XP.AddXP` (`docs/BALANCE_OPTIONS.md`) |
 | `modDataKey` | `AC_Deposits.CONFIG` | `AmmoMakingDeposits` | save data |
 | `fieldKitUses`, `advancedFieldKitUses` | `AC_GeologySampling.CONFIG` | 20, 10 | kit lifetime |
 | `fieldMeasurementError` | `AC_GeologySampling.CONFIG` | 15 points | field assay |
@@ -1062,6 +1065,15 @@ helpers):
 - **loot**, **progression**, **multiplayer**, **docs**: component loot per
   room, the level table, the client guards, and the handover documents
   against the code.
+- **balance** (the sandbox multipliers, `docs/BALANCE_OPTIONS.md`): the
+  option table pinned, every default 1 and equal to today's numbers, the
+  clamp at and beyond both ends of every range, the sandbox file against
+  the table, no other file reading an option or multiplying XP; reserves at
+  x0.5 / x1.5 / x3 and on a worked tile; the loot weights through both real
+  handlers (no second parse at the defaults, one when a weight changed,
+  entries the mod did not add never touched, taken out at 0 and put back);
+  the per-room table recomputed at the maximum (at most two die sets in a
+  room of twelve); and the XP and brass rules at every allowed extreme.
 
 `tests/firearm_model.lua` is the mod's reading of vanilla's firearm Lua
 (`ISReloadWeaponAction`, `ISRackFirearm`, the magazine actions) as a small
@@ -1462,6 +1474,14 @@ list is the record of why each item is open.
     for (both spellings are accepted);
   - the sandbox page *Ammo Making* and its options appear, and
     `SandboxVars.AmmoMaking.*` reads what was set;
+  - the balance multipliers (`docs/BALANCE_OPTIONS.md` 5): the loot ones
+    reach the loot through `OnLoadedMapZones` and a second
+    `ItemPickerJava.Parse()` without disturbing vanilla's loot, and leave
+    containers already filled as they are; `MultiplierConfig.AmmoMaking`
+    scales Ammo Making XP when the global XP multiplier is off (and, by the
+    bytecode, a save with that toggle off would otherwise fail on the first
+    Ammo Making XP award); the reserve multiplier shows at once on worked
+    tiles;
   - the reloading press: built, placed, drawn, its 27 recipes listed and
     faster, picked up, saved;
   - spent cases: a case on the shooter's tile at the right moment for each

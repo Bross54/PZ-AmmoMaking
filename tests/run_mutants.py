@@ -286,6 +286,19 @@ MUTANTS = [
     (SHARED + "AC_LaboratoryAnalyzer.lua", "function AC_LaboratoryAnalyzer.isAvailable()\n\n    return\n        not isClient()\nend", "function AC_LaboratoryAnalyzer.isAvailable()\n\n    return\n        true\nend", "a multiplayer client uses the analyzer locally"),
     (CLIENT + "AC_GeologySamplingContextMenu.lua", "    if available then\n        return context:addOption(name, ...)\n    end\n", "    if true then\n        return context:addOption(name, ...)\n    end\n", "a multiplayer client is offered live sampling and analyzer options"),
 
+    # ---- balance options of the save (AC_Balance)
+    (SHARED + "AC_Balance.lua", "    if value > option.max then\n        return option.max\n    end\n", "", "a sandbox value above the range is used as it is"),
+    (SHARED + "AC_Balance.lua", "        or value ~= value\n", "", "NaN in a sandbox option is taken as a setting"),
+    (SHARED + "AC_Balance.lua", "        max = 3.0,\n\n        default = 1.0,", "        max = 3.0,\n\n        default = 1.5,", "ore per tile changes a save that never set the option"),
+    (SHARED + "AC_Balance.lua", "        option = \"DieSetLootMultiplier\",\n\n        min = 0.0,\n\n        max = 2.0,", "        option = \"DieSetLootMultiplier\",\n\n        min = 0.0,\n\n        max = 4.0,", "die sets may be made four times as common"),
+    (SHARED + "AC_Balance.lua", "        elseif option.default ~= 1\n            or option.default < option.min", "        elseif option.default < option.min", "the validator accepts a default other than 1"),
+    (SHARED + "AC_Deposits.lua", "    if scaled < 1 then\n        return 1\n    end\n", "", "a workable deposit grade can be scaled to nothing"),
+    (SHARED + "AC_Deposits.lua", "            AC_Balance.get(\n                \"depositReserve\"\n            )", "            1", "the ore-per-tile option is ignored"),
+    (SHARED + "AC_Loot.lua", "            if index and wanted <= 0 then", "            if index and wanted < 0 then", "a die set at x0 stays in the list with weight 0"),
+    (SHARED + "AC_Loot.lua", "        option = entry.component and \"componentLoot\" or \"dieSetLoot\",", "        option = entry.component and \"dieSetLoot\" or \"componentLoot\",", "die sets follow the component multiplier and the other way round"),
+    (SHARED + "AC_Loot.lua", "    if summary.changed == 0 then\n        return\n    end\n", "", "the loot tables are parsed again at the defaults"),
+    (SHARED + "AC_Loot.lua", "                summary.added =\n                    summary.added + 1\n\n\n                AC_Loot.own(\n                    entry\n                )\n", "                summary.added =\n                    summary.added + 1\n", "the multipliers never reach the entries the mod added"),
+
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
 ]

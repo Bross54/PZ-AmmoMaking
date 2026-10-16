@@ -1,5 +1,13 @@
 {
     "Sandbox_AmmoMaking": "Ammo Making",
     "Sandbox_AmmoMaking_QualityTracking": "Track ammunition quality in magazines and firearms (experimental)",
-    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, single player only. The casing quality of handloaded rounds is kept when they are loaded into a magazine or firearm, and given back when they are unloaded. It has no effect on firing. Not yet verified in game."
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, single player only. The casing quality of handloaded rounds is kept when they are loaded into a magazine or firearm, and given back when they are unloaded. It has no effect on firing. Not yet verified in game.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Ore per deposit tile (multiplier)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Scales how many ore units a copper or zinc deposit tile holds. 1 is the mod's balance. Every workable grade keeps at least one unit, and trace ground stays empty. Tiles already worked keep what was taken from them.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Die sets found as loot (multiplier)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Scales how often die sets turn up in gun stores, garage gun lockers and among a hunter's things. 1 is the mod's balance, 0 takes them out of loot (they can still be forged). Containers already filled keep what they hold. The sandbox's tool loot setting scales them too.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Reloading stock found as loot (multiplier)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Scales how often the gunpowder, loose primers, brass scrap and small brass sheets the mod adds to loot turn up. 1 is the mod's balance, 0 takes them out. Containers already filled keep what they hold.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Ammo Making XP multiplier",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "The Ammo Making skill's own XP multiplier, like the game's per-skill multipliers. Like them, it is used only when the global XP multiplier is switched off; otherwise the global one applies. Recycling teaches nothing at any value."
 }
