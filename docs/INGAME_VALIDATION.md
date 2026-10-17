@@ -28,9 +28,14 @@ section 21.
 ## 1. Startup
 
 Steps
-1. Enable only **Ammo Making**. Start a new sandbox world.
+1. In the mod list, select **Ammo Making**, then each add-on, without
+   ticking the add-ons.
+2. Enable only **Ammo Making**. Start a new sandbox world.
 
 Expected
+- The mod list shows each mod's poster (a dark workbench, the title
+  *AMMO MAKING*, the add-ons marked *EXPERIMENTAL*) in the picture square
+  beside its description, and version 0.11.0.
 - The world loads; no error box (the red counter at the bottom right stays
   at 0).
 - The skill panel shows **Ammo Making** at level 0.

@@ -832,16 +832,22 @@ select, with no further edit.
 
 ## 12. Out of scope, deliberately
 
-A reloading press object (designed: `docs/RELOADING_PRESS_DESIGN.md`), shell
-variants (buckshot, birdshot, slugs: not buildable without replacing the
-vanilla shotguns, `SHOTGUN_AMMUNITION_RESEARCH.md` 5.1), paper or plastic hulls, lead ore and
-cast rifle bullets (§6.1), deeper
-primer or powder chemistry, misfires, failures to fire, jams, firearm
-damage, custom ballistics, any use of round quality (a carrier is designed:
-`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`), spent casings (researched:
-`docs/SPENT_CASE_RESEARCH.md`), recycling of anything but plain brass,
-component loot, box recipes (vanilla's suffice), multiplayer authority,
-custom UI. What is waiting on what: `docs/AMMUNITION_ROADMAP.md`.
+Shell variants (buckshot, birdshot, slugs: not buildable without
+replacing the vanilla shotguns, `SHOTGUN_AMMUNITION_RESEARCH.md` 5.1),
+recipe magazines (§9.2), paper or plastic hulls, lead ore and cast rifle
+bullets (§6.1), black powder and primers from raw materials (vanilla has
+no sulfur, saltpetre or priming compound, `VANILLA_AMMUNITION_RESEARCH.md`;
+none is invented), misfires, failures to fire, firearm damage, custom
+ballistics, recycling of anything but plain brass, box recipes (vanilla's
+suffice), custom UI.
+
+Built since this list was first written, each behind its own switch or
+add-on: the reloading press (`RELOADING_PRESS_DESIGN.md`), spent cases and
+their resizing (`SPENT_CASE_RESEARCH.md`), the quality carrier and a
+locked-off jam effect (`AMMO_QUALITY_RUNTIME_DESIGN.md`), component loot
+(`LOOT_AND_RECYCLING.md` 4) and the multiplayer server authority
+(`MULTIPLAYER_DESIGN.md` 6). What is waiting on what:
+`docs/AMMUNITION_ROADMAP.md`.
 
 ## 13. REQUIRES FUTURE IN-GAME VERIFICATION
 

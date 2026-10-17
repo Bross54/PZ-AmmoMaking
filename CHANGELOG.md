@@ -13,7 +13,94 @@ Everything else is checked offline only (data, Lua logic, and the installed
 game's files); what the running game has to confirm is listed in
 `docs/DEVELOPMENT.md`, *REQUIRES IN-GAME VERIFICATION*.
 
-## 0.10.0 (in development) Code complete, behind switches
+## 0.11.0 (in development) Own art, books, lead, resizing, balance options, server authority
+
+What was added after 0.10.0. A game with only *Ammo Making* ticked gains
+skill books, lead and cast bullets, the mod's own icons and posters, and a
+sandbox page whose defaults change nothing; everything else new is in an
+add-on or behind an experimental switch that is off. Nothing in this entry
+has been seen in game; the session that checks it is
+`docs/INGAME_VALIDATION.md`.
+
+- **The mod's own art.** 36 original inventory icons drawn by
+  `art/icons/make_icons.py`: the main mod's items, the spent cases (a
+  tarnished drawing of their own) and the press's 48 x 48 window icon.
+  A poster for each of the three mods (`poster=poster.png` in each
+  `mod.info`, 256 x 256 in `42/`) and the Workshop `preview.png`, drawn by
+  `art/workshop/make_workshop_art.py`. No vanilla or third-party pixel;
+  world models and the press's tile art are still placeholders.
+- **The analyzer takes a radio receiver** as its signal part, as an
+  alternative to an amplifier; ten electronics scrap keep its parts at its
+  12 kg.
+- **Balance options for server owners** (sandbox page *Ammo Making*):
+  ore per deposit tile (x0.5 to x3), die sets as loot (x0 to x2),
+  reloading stock as loot (x0 to x2) and an Ammo Making XP multiplier
+  that the game applies like its own per-skill ones (used when the global
+  XP multiplier is off). All default to 1: nothing changes unless they are
+  set. The loot multipliers are applied once the save's options are
+  loaded, and only to containers filled from then on. Recycling yield is
+  not an option, on purpose (`docs/BALANCE_OPTIONS.md`).
+- **Skill books**: five volumes, *Ammo Making I* to *V*, with the game's
+  own levels (two each), pages and the multipliers it gives its Aiming and
+  Reloading books (1.5 to 8). Entered in vanilla's reading table from a
+  server file and again at game and server start; found, never made, in
+  a gun store's shelves and, rarely, bookstores, libraries and a
+  survivalist's things, scaled by the game's own skill book loot setting.
+  Own icons; the Reloading books' model.
+- **Lead and cast bullets** (`docs/METALLURGY_DESIGN.md` 12): lead is
+  melted at any furnace from vanilla's Lead Pipe (two lead scrap) and Jig
+  Lures (one from five), with no XP; a pistol bullet mould and a buckshot
+  mould are forged from iron bar quarters or found beside the die sets;
+  cast bullets and lead shot for the five pistol calibres and the shell
+  are cast at a Primitive Furnace and assembled into the same vanilla
+  rounds, at the copper recipes' levels, XP and times. Rifles keep
+  copper. Lead replaces only the bullet's copper; the brass, and so the
+  zinc, still comes from the mine. 16 recipes, 9 items; no lead ore
+  (geology is unchanged).
+- **Resizing fired brass** (in the Spent Cases add-on): *Resize Spent
+  ... Case*, one recipe per calibre, takes two spent cases and keeps the
+  calibre's die set and a hammer, and makes one usable case of the
+  calibre. No XP, the forming recipe's time, one level after forming, and
+  a casing quality one band below a formed case's. Two for one is the
+  most the economy allows: a resized case scrapped returns no more than
+  the spent cases would, and even with every case found half of all cases
+  loaded are newly formed (`docs/SPENT_CASE_RESEARCH.md` 8). The spent
+  cases debug kit now holds every die set.
+- **Multiplayer server authority** (sandbox option, off, experimental,
+  never run on a server; `docs/MULTIPLAYER_DESIGN.md` 6): with it on, a
+  multiplayer client asks and the server checks and performs digging,
+  both assays, the analyzer (place, start, cancel, collect, pick up) and
+  mining. The three timed actions use Build 42's own mechanism (a
+  `complete()` the engine runs on the server; the files moved from
+  `client/` to `shared/`); the menu clicks are client commands. The server
+  checks distance (2 tiles), the tool in hand, that every item named is
+  the requester's own, whole coordinates on a loaded square, the metal,
+  and one request of each kind per player and second; items, item fields,
+  XP (`addXp`), the analyzer's ModData and the depletion store are sent
+  back with vanilla's calls. Two players cannot both take the last ore or
+  collect one sample. **Single player is unchanged**: a test replays a
+  whole session against the files as they were seen working in game
+  (`tests/sp_reference/`) and compares every message, item, XP grant and
+  console line. Spent cases and quality tracking stay single player.
+- **Game-update check**: the snapshot also records each firearm's pellets
+  per shot; the drift tool's self-test checks the one icon still borrowed.
+- **Release**: the builder checks each mod's poster (named, shipped, 256 x
+  256) and the Workshop preview, and writes a Workshop item folder
+  (`release/Workshop/AmmoMaking/`: `preview.png` beside `Contents/mods/`).
+- **Researched, not built** (the evidence is in the documents named):
+  - *Recipe magazines*: a learned recipe still needs its level, and an
+    auto-learn line cannot name a skill registered from Lua
+    (`docs/AMMUNITION_DESIGN.md` 9.2).
+  - *12 gauge shell variants* (buckshot, birdshot, slug): vanilla has one
+    12 gauge item, each shotgun names one ammo type, a loaded shell is only
+    a count and the pellets, spread and damage are the gun's. A variant
+    would mean replacing the vanilla shotguns
+    (`docs/SHOTGUN_AMMUNITION_RESEARCH.md` 5.1); a test pins the evidence.
+- **Out of scope**: black powder and primers from raw materials (sulfur,
+  saltpetre, priming compound). Vanilla has no such items; gunpowder stays
+  charcoal and fertilizer, primers stay toy caps or match heads.
+
+## 0.10.0 (2026-10-03) Code complete, behind switches
 
 Everything that could be written without the game is written. What is new
 at the shot or in the world is **off by default**; a game with only *Ammo
@@ -35,18 +122,9 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
   (experimental)`): every round fired may leave a spent case of its
   calibre, half of them found (a sandbox option, 0 to 100). Self-loaders
   drop it at the shot, pump, bolt and lever guns at the rack, revolvers
-  and break-actions at the reload. A spent case scraps to brass at a
-  quarter of its brass, with no XP. Single player. Stands down beside Hot
-  Brass.
-- **Resizing fired brass** (in the Spent Cases add-on): *Resize Spent
-  ... Case*, one recipe per calibre, takes two spent cases and keeps the
-  calibre's die set and a hammer, and makes one usable case of the
-  calibre. No XP, the forming recipe's time, one level after forming, and
-  a casing quality one band below a formed case's. Two for one is the
-  most the economy allows: a resized case scrapped returns no more than
-  the spent cases would, and even with every case found half of all cases
-  loaded are newly formed (`docs/SPENT_CASE_RESEARCH.md` 8). The spent
-  cases debug kit now holds every die set.
+  and break-actions at the reload. A spent case cannot be reloaded: it
+  scraps to brass at a quarter of its brass, with no XP. Single player.
+  Stands down beside Hot Brass.
 - **Ammunition quality in magazines and firearms** (sandbox option, off):
   the casing quality of handloaded rounds follows them through loading,
   inserting, ejecting, racking, firing and unloading, as a count and a
@@ -62,52 +140,10 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
 - **Component loot**: gunpowder, primers, brass scrap and small brass
   sheets, a little, in gun stores, hunting stores and metalwork crates.
   Never cases, bullets, rounds or die sets beyond what 0.8.0 added.
-- **Skill books**: five volumes, *Ammo Making I* to *V*, with the game's
-  own levels (two each), pages and the multipliers it gives its Aiming and
-  Reloading books (1.5 to 8). Entered in vanilla's reading table from a
-  server file and again at game and server start; found, never made, in
-  a gun store's shelves and, rarely, bookstores, libraries and a
-  survivalist's things, scaled by the game's own skill book loot setting.
-  Own icons; the Reloading books' model. No recipe magazines: a learned
-  recipe still needs its level, and an auto-learn line cannot name a
-  skill registered from Lua (`docs/AMMUNITION_DESIGN.md` 9.2).
-- **Lead and cast bullets** (`docs/METALLURGY_DESIGN.md` 12): lead is
-  melted at any furnace from vanilla's Lead Pipe (two lead scrap) and Jig
-  Lures (one from five), with no XP; a pistol bullet mould and a buckshot
-  mould are forged from iron bar quarters or found beside the die sets;
-  cast bullets and lead shot for the five pistol calibres and the shell
-  are cast at a Primitive Furnace and assembled into the same vanilla
-  rounds, at the copper recipes' levels, XP and times. Rifles keep
-  copper. Lead replaces only the bullet's copper; the brass, and so the
-  zinc, still comes from the mine. 16 recipes, 9 items with icons of
-  their own; no lead ore (geology is unchanged).
-- **Balance options for server owners** (sandbox page *Ammo Making*):
-  ore per deposit tile (x0.5 to x3), die sets as loot (x0 to x2),
-  reloading stock as loot (x0 to x2) and an Ammo Making XP multiplier
-  that the game applies like its own per-skill ones (used when the global
-  XP multiplier is off). All default to 1: nothing changes unless they are
-  set. The loot multipliers are applied once the save's options are
-  loaded, and only to containers filled from then on. Recycling yield is
-  not an option, on purpose (`docs/BALANCE_OPTIONS.md`).
 - **Multiplayer**: digging a sample, both portable assays and using the
   analyzer are now refused on a multiplayer client and shown as disabled
   options that say why, as mining and analyzer placement already were.
-- **Multiplayer server authority** (sandbox option, off, experimental,
-  never run on a server; `docs/MULTIPLAYER_DESIGN.md` 6): with it on, a
-  multiplayer client asks and the server checks and performs digging,
-  both assays, the analyzer (place, start, cancel, collect, pick up) and
-  mining. The three timed actions use Build 42's own mechanism (a
-  `complete()` the engine runs on the server; the files moved from
-  `client/` to `shared/`); the menu clicks are client commands. The server
-  checks distance (2 tiles), the tool in hand, that every item named is
-  the requester's own, whole coordinates on a loaded square, the metal,
-  and one request of each kind per player and second; items, item fields,
-  XP (`addXp`), the analyzer's ModData and the depletion store are sent
-  back with vanilla's calls. Two players cannot both take the last ore or
-  collect one sample. **Single player is unchanged**: a test replays a
-  whole session against the files as they were seen working in game
-  (`tests/sp_reference/`) and compares every message, item, XP grant and
-  console line. Spent cases and quality tracking stay single player.
+  Nothing is synchronised; multiplayer stays unsupported.
 - **Progression**: what each level from 0 to 10 gives, as a generated
   table. No recipe was invented to fill the upper levels.
 - **Placeholder visuals** in one place (`AC_Visuals.lua`), marked
@@ -116,12 +152,7 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
   flags, save schema, placeholder visuals).
 - **Game-update check**: body digests of the vanilla firearm functions
   the mod wraps, so a rewritten function is reported, not only a renamed
-  one. The snapshot also records each firearm's pellets per shot.
-- **Shell variants researched, not built** (buckshot, birdshot, slug):
-  vanilla has one 12 gauge item, each shotgun names one ammo type, a
-  loaded shell is only a count and the pellets, spread and damage are the
-  gun's. A variant would mean replacing the vanilla shotguns
-  (`docs/SHOTGUN_AMMUNITION_RESEARCH.md` 5.1); a test pins the evidence.
+  one.
 - **Release**: one archive with the three mod folders; an add-on that
   ships Lua, or a tile sheet that does not match its sources, is refused.
 - **Documents**: `INGAME_VALIDATION.md`, `ART_HANDOFF.md`,

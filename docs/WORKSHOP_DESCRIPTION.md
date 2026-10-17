@@ -51,7 +51,9 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [list]
 [*]A handloaded round fires exactly like a factory round. Case quality is recorded and shown; it has no effect on shooting.
 [*]Fired brass is only reloadable with the experimental Spent Cases add-on below.
-[*]The inventory icons are the mod's own; world models and the press's tile art are placeholders for now.
+[*]One 12 gauge shell, as in vanilla: no slug or birdshot variants (the game puts the pellets on the gun). No recipe magazines.
+[*]Gunpowder is charcoal and fertilizer and primers are toy caps or match heads: no sulfur, saltpetre or priming compound is invented.
+[*]The inventory icons and the mod list pictures are the mod's own; world models and the press's tile art are placeholders for now.
 [/list]
 
 [h2]Experimental, off by default[/h2]
@@ -69,13 +71,13 @@ Not supported. By default, sampling, assays, the laboratory analyzer and mining 
 [list]
 [*]Project Zomboid [b]Build 42.20 or later[/b]. Not for Build 41.
 [*]No other mod is required.
-[*]It replaces no vanilla file, item, recipe or function. It adds its own items and recipes, adds entries to six vanilla loot lists, and puts a level requirement on its own recipes. (The two experimental systems that touch firearms wrap vanilla's reload functions without changing what they do, and only when switched on.)
+[*]It replaces no vanilla file, item, recipe or function. It adds its own items and recipes, adds entries to ten vanilla loot lists, enters its five skill books in the game's own skill-book table, and puts a level requirement on its own recipes. (The two experimental systems that touch firearms wrap vanilla's reload functions without changing what they do, and only when switched on.)
 [*]It can be added to an existing save: geology is worked out from the save itself and nothing is stored until you dig or mine. Containers that were already filled keep what they have, so die sets only turn up in places not visited yet. (Not yet tried on a long-running save.)
 [/list]
 
 [h2]Testing status[/h2]
 Seen working in game (42.20.4): geological sampling, mining with a pickaxe, depletion and exhausted deposits.
-Implemented and checked against the installed game's files, but not yet seen in game: the recipes for the assay kits and the analyzer, metallurgy, case stock, every ammunition recipe, die-set and component loot, brass recycling, the placed laboratory analyzer, and all three experimental systems.
+Implemented and checked against the installed game's files, but not yet seen in game: the recipes for the assay kits and the analyzer, metallurgy, case stock, every ammunition recipe, lead casting and the bullet moulds, die-set, mould and component loot, the skill books, the balance options, brass recycling, the placed laboratory analyzer, the experimental server authority and all three experimental systems.
 Please report anything that does not work, with the relevant lines of console.txt.
 
 [h2]Debug mode[/h2]
@@ -104,16 +106,17 @@ require only Ammo Making itself.
 | The mod folders `AmmoMaking/`, `AmmoMakingPress/`, `AmmoMakingSpentCases/` (each `42/`, `common/`) | built by `python tools/build_release.py` into `release/` and one `release/AmmoMaking-<version>.zip` holding all three |
 | The decision whether a first release ships the add-ons at all | **open**: shipping only `AmmoMaking/` is the cautious choice until `docs/INGAME_VALIDATION.md` 18 and 19 have passed |
 | `mod.info` with `name`, `id`, `modversion`, `versionMin`, `description` | present; validated by the builder |
-| `poster=` image in the mod folder | **missing: needs art** (the mod list shows no picture without it; not an error) |
-| Workshop item folder: `Contents/mods/AmmoMaking/` beside `preview.png` (256 x 256) and `workshop.txt` | **not created: needs `preview.png`**; `workshop.txt` is written by the game's own uploader |
+| `poster=` image in each mod folder | present: `poster=poster.png`, 256 x 256 in each `42/`, drawn by `art/workshop/make_workshop_art.py`; the builder checks name and size |
+| Workshop item folder: `Contents/mods/<mod folder>/` beside `preview.png` (256 x 256) and `workshop.txt` | built by `python tools/build_release.py` as `release/Workshop/AmmoMaking/` (`preview.png` from `art/workshop/preview.png`, and all three mod folders: delete an add-on's folder there to leave it out); `workshop.txt` is written by the game's own uploader |
 | Changelog | `CHANGELOG.md` |
 | In-game pass on the published build | **not done**: see `DEVELOPMENT.md`, *REQUIRES IN-GAME VERIFICATION* |
 
 The game's uploader (main menu, Workshop) reads the item folder from
-`Zomboid/Workshop/<ItemName>/`. Copy `release/AmmoMaking/` to
-`Zomboid/Workshop/AmmoMaking/Contents/mods/AmmoMaking/` (and each add-on
-that is to ship beside it, as `Contents/mods/<its folder>/`), add `preview.png`,
-and upload from the game. **None of this was done or tried.**
+`Zomboid/Workshop/<ItemName>/`. Copy `release/Workshop/AmmoMaking/` to
+`Zomboid/Workshop/AmmoMaking/` (it already holds `preview.png` and
+`Contents/mods/` with the three mod folders; remove an add-on's folder
+that is not to ship), and upload from the game. **None of this was done
+or tried.**
 
 ## 7. Before publishing: the gate
 
@@ -135,3 +138,5 @@ round, has been made in game: every ammunition recipe is so far
 - That the built folder, copied into `Zomboid/mods/`, loads exactly as the
   repository's `mod/AmmoMaking` does.
 - The uploader's folder layout and tag names.
+- How the posters look in the mod list (drawn into 200 x 200) and the
+  preview on the Workshop page.

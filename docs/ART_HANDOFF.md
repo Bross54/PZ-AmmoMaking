@@ -1,8 +1,8 @@
 # Art handoff
 
 A brief for whoever makes the mod's final art. The mod is playable without
-any of it. Its inventory icons and the press's window icon are already the
-mod's own (section 2); the press's tile sprites are programmer art, the
+any of it. Its inventory icons, the press's window icon, the three mods'
+posters and the Workshop preview are already the mod's own (section 2); the press's tile sprites are programmer art, the
 analyzer's placed sprite and every world model are borrowed from vanilla
 (`docs/PLACEHOLDER_ASSETS.md` lists each one and where it is configured).
 Nothing here changes gameplay, and replacing an asset is a change of one
@@ -99,6 +99,30 @@ A spent case is the same drawing tarnished and sooted at the mouth;
 the icon of the unused case. Redrawn icons should keep that pairing: a
 spent case reads as the case it was, used.
 
+### 2.1 Posters and the Workshop preview
+
+Drawn by `python art/workshop/make_workshop_art.py` (deterministic;
+`--check` fails when a shipped file differs from a fresh drawing): a dark
+workbench with the icons above at twice their size, the title in a pixel
+alphabet defined in the script (no font file). No vanilla or third-party
+pixel.
+
+| File | Shown by | Scene |
+|---|---|---|
+| `mod/AmmoMaking/42/poster.png` | the mod list, `poster=poster.png` | ore, ingot, book; sheet, die set, primers, cases and bullets; "BUILD 42" |
+| `mod/AmmoMakingPress/42/poster.png` | the mod list, `poster=poster.png` | the press at three times its icon; "RELOADING PRESS", "EXPERIMENTAL" |
+| `mod/AmmoMakingSpentCases/42/poster.png` | the mod list, `poster=poster.png` | the die set and the four spent cases; "SPENT CASES", "EXPERIMENTAL" |
+| `art/workshop/preview.png` | the Steam Workshop page; `tools/build_release.py` puts it beside `Contents/` | the main mod's scene; "FROM ORE TO ROUND" |
+
+| | |
+|---|---|
+| Format | PNG, **256 x 256**, square. FILE `Workshop/ModTemplate/preview.png` is 256 x 256; FILE `ModInfoPanelDesc.lua` draws poster 0 scaled into 200 x 200; CLUE: installed Workshop posters are mostly 512 x 512 or 256 x 256 |
+| Where | the poster in the version folder `42/`: JAR `ChooseGameInfo.readModInfoAux` resolves `poster=` there first and in `common/` only when it is missing (CLUE: 413 of 427 posters of installed Build 42 mods are in the version folder) |
+| Replacing | draw a new file of the same name and size and drop its entry from `IMAGES` in the script; the suite and the release builder check the name in `mod.info` and the size |
+
+How a poster looks in the mod list, and the preview on Steam, is
+REQUIRES FUTURE IN-GAME VERIFICATION.
+
 ## 3. What is still needed, by priority
 
 Priority 1 is what a player looks at most or what is plainly wrong today.
@@ -138,11 +162,8 @@ model at all; one is welcome, not needed.
 
 ### Workshop images
 
-Missing (`docs/AMMUNITION_ROADMAP.md` 3.2): a `poster=` image for each
-`mod.info` (the mod list shows no picture without it; not an error) and
-a Workshop `preview.png`, 256 x 256, beside `Contents/` of the Workshop
-item (`docs/WORKSHOP_DESCRIPTION.md`). Concept: the press on its bench
-with a row of finished cases; no weapon.
+Done (section 2.1). An artist's painted poster is welcome, not needed:
+same names, same 256 x 256 square, no weapon.
 
 Not needed: brass ingot, brass scrap, copper items, gunpowder and the
 finished rounds are vanilla's own items with vanilla's own art. The Test

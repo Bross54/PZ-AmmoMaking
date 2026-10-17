@@ -395,7 +395,7 @@ Offline checks (no game required):
 lua5.1 tests/run_tests.lua
 ```
 
-`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 92,000+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy, case stock and ammunition components (the generated recipe script against its Lua mirror, the nine rounds (five pistol calibres, three rifle calibres and the 12 gauge shell) and four primer families, cross-calibre isolation, material conservation from ore to finished rounds, case quality and inspection, level requirements, a simulated XP career, the press recipes, the generated balance tables), translation keys, debug gating, startup cost and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
+`tests/mock_pz.lua` mocks the Project Zomboid API; `tests/run_tests.lua` loads every mod file and runs 100,000+ checks over geology, reserves, depletion, persistence, terrain, prospecting, the timed actions, menus, assays, the laboratory analyzer (state machine, pick-up rule, cancel, malformed data), metallurgy, case stock and ammunition components (the generated recipe script against its Lua mirror, the nine rounds (five pistol calibres, three rifle calibres and the 12 gauge shell) and four primer families, cross-calibre isolation, material conservation from ore to finished rounds, case quality and inspection, level requirements, a simulated XP career, the press recipes, the generated balance tables), translation keys, debug gating, startup cost and the compatibility check. It cannot verify vanilla item ids, animations, sounds or engine behaviour; the placed analyzer's engine side (placement cursor, world object, saving) is mocked and still needs the in-game test.
 
 Developer notes: `docs/DEVELOPMENT.md` (module map, constants, invariants, timed-action conventions, debug tools, what still needs the game). Metallurgy: `docs/METALLURGY_DESIGN.md` (the implemented furnace recipes, items, skill and conservation rules) and `docs/VANILLA_METALLURGY_RESEARCH.md` (what vanilla Build 42.20.4 provides, read from the installed files and jar).
 
@@ -446,7 +446,7 @@ case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bul
 
 - **Calibres**: all five vanilla pistol calibres (9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum), all three vanilla rifle calibres (5.56, .30-30, .308) and the vanilla 12 gauge shell; table below. A calibre is one data entry; no code names one, and pistol rounds, rifle rounds and the shell share one model. Each has its own case, bullet and die set, and nothing of one calibre fits another.
 - **12 gauge shells**: a brass hull drawn from three case cups, a charge of copper shot swaged from one copper scrap, a large pistol primer, three charges of gunpowder and a wad of ripped sheet or cotton, assembled into the vanilla `Base.ShotgunShells`. Vanilla has a single shell and puts the nine pellets on the gun, so there are no buckshot or slug variants.
-- **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is designed as the faster tier above it and will take the same die sets (`docs/RELOADING_PRESS_DESIGN.md`); its recipes, a tile sheet with placeholder art and its station script are prepared and switched off, and none of it is in the mod yet.
+- **Die set**: one forged tool per calibre (two steel bar quarters at a Simple Forge), kept by every recipe of that calibre. Rifles are loaded by hand with the same kind of die set; they take about twice as long. A reloading press is the faster tier above it and takes the same die sets; it is the experimental add-on *Ammo Making: Reloading Press*, off unless ticked (`docs/RELOADING_PRESS_DESIGN.md`).
 - **Bullets are copper, or cast lead**: copper is mined and swaged with the die set. Vanilla has no lead item except the **Lead Pipe** and the **Jig Lure**: melt them at any furnace (*Melt Lead from Lead Pipe*, two lead scrap; *Melt Lead from Jig Lures*, one from five), forge a **bullet mould** (one for pistols, one for buckshot, from two iron bar quarters) or find one, and cast bullets at the furnace. *Assemble 9mm Round (Cast Bullet)* makes the same vanilla round with the same XP. Lead saves the bullet's copper, never the brass, so zinc still comes from the mine. Rifle rounds keep copper: plain lead does not hold up at rifle speeds. Melting gives no XP; nothing turns a bullet back into lead.
 - **Primers** come in four families (small and large pistol, small and large rifle), all made the same way from a small brass sheet and toy cap-gun caps or match heads. A large primer holds twice the material of a small one; a rifle primer takes half as much priming charge again and is never interchangeable with a pistol primer. **Gunpowder** is charcoal and fertilizer. Vanilla has no sulfur or nitrate item and none is invented.
 - **Case quality**: 1–100, rolled when a case is formed from the maker's Ammo Making level with a random spread, stored on the case and passed on to the assembled round. It never changes how much material a recipe uses. Nothing reads it in combat yet.
@@ -454,7 +454,7 @@ case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bul
 - **Progression**: metallurgy and case stock from level 0; 9mm and .38 Special rounds at level 3, .45 ACP, .357 Magnum and 12 gauge shells at 4, .44 Magnum and the three rifle rounds at 5, each calibre's die set, cases and bullets one or two levels earlier. In a simulated career level 3 comes after about 19 ore, level 4 after 29, level 5 after 54, and the first rifle round after 70 ore and some 390 pistol rounds and shells. Nothing requires level 6.
 - **Material balance**: larger calibres cost more through whole-number knobs: cups of brass per case, projectiles per copper scrap, charges of gunpowder and, for a shell, a wad.
 - **Boxes**: handloaded rounds are the vanilla items, so vanilla's own *place ammo in box* recipe already packs them, 50, 20 or 25 to a box. The mod adds no box recipe. A box keeps only a count, so a round's case-quality record does not survive boxing.
-- **Die sets as loot**: besides forging one, a die set can be found, rarely: in a gun store's display case (any calibre), a garage gun locker (handgun dies) or among a hunter's things (rifle and shotgun dies). 9mm and .38 Special are the common ones, the magnums and .45 less so, rifle and shotgun dies rare. At default loot settings about one gun store in twelve holds a die set; military lockers are the likeliest place for handgun dies. Finding one opens nothing early: the Ammo Making levels are on the recipes. No component is loot.
+- **Die sets as loot**: besides forging one, a die set can be found, rarely: in a gun store's display case (any calibre), a garage gun locker (handgun dies) or among a hunter's things (rifle and shotgun dies). 9mm and .38 Special are the common ones, the magnums and .45 less so, rifle and shotgun dies rare. At default loot settings about one gun store in twelve holds a die set; military lockers are the likeliest place for handgun dies. Finding one opens nothing early: the Ammo Making levels are on the recipes. Bullet moulds turn up beside the die sets, and a little gunpowder, primers and brass stock in gun stores, hunting stores and metalwork crates; never cases, bullets or rounds.
 - **Brass recycling**: case cups, small brass sheets and empty cases or hulls you no longer want can be hammered into vanilla brass scrap on any surface, and ten brass scrap cast back into a brass ingot at a furnace. **Half of the brass is lost** and recycling gives **no Ammo Making XP**. Finished rounds, primers and bullets cannot be scrapped (vanilla already takes a round apart for its powder).
 
 <!-- CALIBRE TABLE: generated by tests/write_recipes.lua from AC_Calibres.lua. Do not edit. -->
@@ -495,9 +495,9 @@ The first metallurgy stage (ore to brass on the vanilla furnaces) is implemented
 
 The component chain above is the foundation. Still planned:
 
-- the reloading press station (designed in `docs/RELOADING_PRESS_DESIGN.md`; its recipes are prepared and 40 % faster than by hand, the world object needs a tile sheet of its own and an in-game pass)
+- the reloading press station: built as an experimental add-on with placeholder sprites; needs its in-game pass (`docs/RELOADING_PRESS_DESIGN.md`)
 - spent cases: built as an experimental add-on; fired brass is scrapped or resized two for one at the die set (`docs/SPENT_CASE_RESEARCH.md`)
-- a way for round quality to reach the shot: designed, not built (`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`)
+- a way for round quality to reach the shot: the tracking is built (experimental, off), the jam effect is written and locked off (`docs/AMMO_QUALITY_RUNTIME_DESIGN.md`)
 - bullet and primer quality, powder load, and their effect on reliability
 
 What is ready, what needs the game and what needs a decision: `docs/AMMUNITION_ROADMAP.md`.
@@ -679,7 +679,7 @@ session*.
 - **Spent cases are an experimental add-on.** They scrap at a loss, or resize two into one usable case; half the brass is lost either way, so the mine stays the source of brass (`docs/SPENT_CASE_RESEARCH.md` 8). Not yet seen in game.
 - **Multiplayer is not supported.** By default every action that changes the world or an item outside a recipe (sampling, assays, the analyzer, mining) is refused on a client. The experimental server authority (*Multiplayer* above) performs them on the server instead; it has never run on a server. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
 - **Ammo quality does not affect firearms.** The effect code exists and is locked off.
-- **All visuals are placeholders**: vanilla icons and models, a vanilla tile for the analyzer, programmer art for the press (`docs/PLACEHOLDER_ASSETS.md`, `docs/ART_HANDOFF.md`).
+- **Most visuals in the world are placeholders**: vanilla world models, a vanilla tile for the analyzer, programmer art for the press. The inventory icons, the mod list posters and the Workshop preview are the mod's own (`docs/PLACEHOLDER_ASSETS.md`, `docs/ART_HANDOFF.md`).
 - **The recipes for the assay kits and the laboratory analyzer have not been crafted in game yet.** They are what makes the chain playable without the debug menu, so they are the first thing to try. They are never loot.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
 - **Placing and picking up the analyzer is single-player only by default.** Multiplayer clients get disabled options unless the experimental server authority is on; an analyzer dropped on the floor as an item (older saves) stays single player even then.
@@ -720,6 +720,8 @@ Beside the chain:
 
 ```text
 die sets: forged, or found as rare loot
+lead pipes, jig lures → lead scrap → cast pistol bullets and lead shot (moulds forged or found)
+skill books: found, read like the game's own
 unwanted brass components → brass scrap (half the brass) → brass ingots
 finished rounds → vanilla boxes and cartons, by vanilla's own recipe
 a little gunpowder, primers and brass as loot
@@ -740,16 +742,23 @@ The code is complete as far as it can be without the game
 (`docs/AMMUNITION_ROADMAP.md`). What remains, in order:
 
 1. **In-game verification**: `docs/INGAME_VALIDATION.md`, one session.
-2. **Final art**: `docs/ART_HANDOFF.md`. The inventory icons are the
-   mod's own; tile sprites and world models are still placeholders.
+2. **Final art**: `docs/ART_HANDOFF.md`. The inventory icons, the three
+   mods' posters and the Workshop preview are the mod's own; tile sprites
+   and world models are still placeholders.
 3. **Balancing**, from play: loot weights, recipe costs, the press's time
    advantage, the spent-case rate. All are central tunables.
 4. **Runtime bug fixing** from 1.
 
 ## Optional, not planned
 
-Shell variants, further calibres, a mining machine, directional analyzer
-sprites.
+Further calibres, a mining machine, directional analyzer sprites, lead ore,
+cast rifle bullets.
+
+Researched and not built: recipe magazines (an Ammo Making recipe cannot
+be taught by one, `docs/AMMUNITION_DESIGN.md` 9.2) and 12 gauge shell
+variants (the game puts the pellets on the gun,
+`docs/SHOTGUN_AMMUNITION_RESEARCH.md` 5.1). Out of scope: black powder and
+primers from raw materials.
 
 ---
 
@@ -882,6 +891,8 @@ PZ-AmmoMaking
 │   ├── build_release.py                  gates, then a clean folder and archive
 │   └── build_tiles.py                    the game's tile-sheet formats
 ├── art
+│   ├── icons                             make_icons.py: the mod's own inventory icons
+│   ├── workshop                          make_workshop_art.py: the mod list posters and the Workshop preview.png
 │   └── reloading_press                   sources of the press's placeholder sprites and tile sheet
 │
 └── mod

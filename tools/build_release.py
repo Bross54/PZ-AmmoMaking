@@ -21,6 +21,10 @@ What it does, in order, stopping at the first failure:
   5. writes release/<mod folder>/ for each mod and one
      release/AmmoMaking-<version>.zip holding all of them, from the files
      git tracks under mod/, as committed in HEAD
+  6. writes release/Workshop/AmmoMaking/, the layout of a Workshop item:
+     preview.png (art/workshop/preview.png, as committed) beside
+     Contents/mods/<mod folder>/ for each mod. workshop.txt is not written:
+     the game's uploader writes it
 
 What is shipped is the main mod and its experimental ADD-ON mods (MODS
 below). The add-ons are separate entries in the game's mod list and are
@@ -34,7 +38,12 @@ sources.
 
 It does not publish anything. The Steam Workshop wants the folder inside
 Contents/mods/ of a workshop item, with a preview.png and workshop.txt next
-to it; see docs/WORKSHOP_DESCRIPTION.md.
+to it (FILE Workshop/ModTemplate/ of the installed game); see
+docs/WORKSHOP_DESCRIPTION.md.
+
+Images: each mod's poster (mod.info poster=, in 42/) and the Workshop
+preview are 256 x 256 PNGs drawn by art/workshop/make_workshop_art.py; the
+gates check their size and that they equal a fresh drawing.
 """
 
 import argparse
@@ -62,6 +71,12 @@ FORBIDDEN_NAMES = re.compile(r"(?i)(\.bak$|\.orig$|\.rej$|\.tmp$|\.swp$|~$|^thum
 # A drive letter path, a home directory, or this machine's library folders.
 LOCAL_PATH = re.compile(r"(?i)([a-z]:[\\/](users|steamlibrary|program files|project zomboid)|/home/\w+|/users/\w+|steamapps)")
 REQUIRED_KEYS = ("name", "id", "modversion", "versionMin", "description")
+# The Workshop item's preview image, beside Contents/ (not in a mod folder).
+PREVIEW = "art/workshop/preview.png"
+# Posters and the preview: square, the size of the game's own template
+# (FILE Workshop/ModTemplate/preview.png); the mod list draws a poster
+# into 200 x 200 (FILE ModInfoPanelDesc.lua).
+IMAGE_SIZE = (256, 256)
 VERSION = re.compile(r"^\d+\.\d+\.\d+$")
 
 
@@ -85,6 +100,13 @@ def git_bytes(path):
     if result.returncode != 0:
         raise Failure("cannot read %s from HEAD" % path)
     return result.stdout
+
+
+def png_size(data):
+    """(width, height) of PNG bytes, or None when they are not a PNG."""
+    if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+        return None
+    return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
 
 
 def read_mod_info(text):
@@ -125,6 +147,10 @@ def validate_package(files, folder=MOD, main=None):
     for key in ("poster", "icon"):
         if info.get(key) and ("42/" + info[key]) not in files and info[key] not in files:
             problems.append("mod.info %s=%s names a file that is not in the package" % (key, info[key]))
+    if not info.get("poster"):
+        problems.append("mod.info has no poster=: the mod list would show no picture")
+    elif ("42/" + info["poster"]) in files and png_size(files["42/" + info["poster"]]) != IMAGE_SIZE:
+        problems.append("the poster 42/%s is not a %d x %d PNG" % ((info["poster"],) + IMAGE_SIZE))
     for key in ("pack", "tiledef"):
         if info.get(key):
             name = info[key].split()[0]
@@ -286,6 +312,11 @@ def main():
             problems.append("mod/ holds a folder the release does not know: " + ", ".join(stray))
         if not changelog_has(version):
             problems.append("CHANGELOG.md has no '## %s' entry" % version)
+        preview = git_bytes(PREVIEW) if git("ls-files", PREVIEW).strip() == PREVIEW else None
+        if preview is None:
+            problems.append("%s is not committed: the Workshop item needs it" % PREVIEW)
+        elif png_size(preview) != IMAGE_SIZE:
+            problems.append("%s is not a %d x %d PNG" % ((PREVIEW,) + IMAGE_SIZE))
         if problems:
             raise Failure("the package is not valid:\n  " + "\n  ".join(problems))
         for folder in MODS:
@@ -307,6 +338,11 @@ def main():
         code, last, _ = gate_python("art/icons/make_icons.py", "icons", "--check")
         if code != 0:
             raise Failure("art/icons/make_icons.py --check fails: " + last)
+        print("PASS     " + last)
+        code, last, _ = gate_python("art/workshop/make_workshop_art.py", "posters", "--check")
+        if code != 0:
+            raise Failure("art/workshop/make_workshop_art.py --check fails: " + last)
+        print("PASS     " + last)
         code, last, _ = gate_python("tools/build_tiles.py", "tile builder", "--selftest")
         if code != 0:
             raise Failure("tools/build_tiles.py --selftest fails: " + last)
@@ -359,6 +395,20 @@ def main():
         with open(archive, "rb") as handle:
             checksum = hashlib.sha256(handle.read()).hexdigest()
 
+        # The Workshop item: preview.png beside Contents/mods/.
+        item = os.path.join(out, "Workshop", "AmmoMaking")
+        if os.path.isdir(item):
+            shutil.rmtree(item)
+        for folder in MODS:
+            name = os.path.basename(folder)
+            for path in sorted(packages[folder]):
+                destination = os.path.join(item, "Contents", "mods", name, path)
+                os.makedirs(os.path.dirname(destination), exist_ok=True)
+                with open(destination, "wb") as handle:
+                    handle.write(packages[folder][path])
+        with open(os.path.join(item, "preview.png"), "wb") as handle:
+            handle.write(preview)
+
         print("")
         print("Included files:")
         for folder in MODS:
@@ -369,6 +419,7 @@ def main():
         for target in targets:
             print("Wrote %s" % os.path.relpath(target, ROOT).replace("\\", "/"))
         print("Wrote %s  (%d bytes, sha256 %s)" % (os.path.relpath(archive, ROOT).replace("\\", "/"), os.path.getsize(archive), checksum))
+        print("Wrote %s  (preview.png and Contents/mods/; the uploader adds workshop.txt)" % os.path.relpath(item, ROOT).replace("\\", "/"))
         return 0
     except Failure as failure:
         print("FAILED   " + str(failure))

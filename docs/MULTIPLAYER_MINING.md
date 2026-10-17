@@ -1,6 +1,6 @@
 # Multiplayer mining: minimal server-authoritative design
 
-Status: **built in 0.10.0, experimental, off by default, never run on a
+Status: **built in 0.11.0, experimental, off by default, never run on a
 server** (`MULTIPLAYER_DESIGN.md` section 6). Without the sandbox option
 `AmmoMaking.ServerAuthority`, mining stays disabled on multiplayer clients
 (`AC_Mining.isAvailable()` returns false when `isClient()`), because the

@@ -1,7 +1,9 @@
 # Placeholder assets
 
 The mod draws its own inventory icons and the press's window icon
-(`art/icons/make_icons.py`, listed in `AC_Visuals.ICONS`). It ships **no
+(`art/icons/make_icons.py`, listed in `AC_Visuals.ICONS`), and its own
+mod list posters and Workshop preview (`art/workshop/make_workshop_art.py`,
+`docs/ART_HANDOFF.md` 2.1); none of those is a placeholder. It ships **no
 model of its own**, and its only tile sprites are the two programmer-art
 sprites of the reloading press. Every world model and the analyzer's
 placed sprite are vanilla assets borrowed until final art exists.

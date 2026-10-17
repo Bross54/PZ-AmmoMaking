@@ -10178,7 +10178,35 @@ do
     local major, minor = string.match(ENGINE.version, "^(%d+)%.(%d+)")
     eq(info.versionMin, major .. "." .. minor .. ".0", "versionMin is the game build the mod was checked against")
     eq(info.require, nil, "the mod requires no other mod")
-    eq(info.poster, nil, "no poster is named while there is no art to ship")
+    -- Each mod's poster: named in its mod.info, shipped in its version
+    -- folder (JAR ChooseGameInfo.readModInfoAux looks there before
+    -- common/), a square PNG of 256 x 256 (the mod list draws it into a
+    -- 200 x 200 square, FILE ModInfoPanelDesc.lua). The Workshop preview
+    -- is the same size (FILE Workshop/ModTemplate/preview.png). All four
+    -- are drawn by art/workshop/make_workshop_art.py.
+    local function pngSize(path)
+        local handle = io.open(path, "rb")
+        if not handle then return nil end
+        local head = handle:read(24) or ""
+        handle:close()
+        if string.sub(head, 1, 8) ~= "\137PNG\r\n\26\n" or string.sub(head, 13, 16) ~= "IHDR" then return nil end
+        local function word(at)
+            local a, b, c, d = string.byte(head, at, at + 3)
+            return ((a * 256 + b) * 256 + c) * 256 + d
+        end
+        return word(17), word(21)
+    end
+    for _, folder in ipairs({ "AmmoMaking", "AmmoMakingPress", "AmmoMakingSpentCases" }) do
+        local posterInfo = {}
+        for key, value in string.gmatch(readFile(ROOT .. "/mod/" .. folder .. "/42/mod.info"), "([%w_]+)=([^\r\n]*)") do posterInfo[key] = value end
+        eq(posterInfo.poster, "poster.png", folder .. ": mod.info names its poster")
+        local width, height = pngSize(ROOT .. "/mod/" .. folder .. "/42/poster.png")
+        eq(width, 256, folder .. ": the poster is a PNG in 42/, 256 wide")
+        eq(height, 256, folder .. ": and 256 high")
+    end
+    local previewWidth, previewHeight = pngSize(ROOT .. "/art/workshop/preview.png")
+    check(previewWidth == 256 and previewHeight == 256, "the Workshop preview art/workshop/preview.png is a 256 x 256 PNG")
+    check(string.find(readFile(ROOT .. "/tools/build_release.py"), 'PREVIEW = "art/workshop/preview.png"', 1, true) ~= nil, "and the release builder packages it")
     eq(info.pack, nil, "no texture pack is named: the mod ships no tile sheet")
     eq(info.tiledef, nil, "and no tile definition")
 

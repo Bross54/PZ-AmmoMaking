@@ -174,7 +174,7 @@ MUTANTS = [
     (SHARED + "AC_Mining.lua", "    if samples == nil then\n", "    if not samples then\n", "an explicit 'no samples' makes findProspect scan again"),
 
     # ---- release metadata
-    ("mod/AmmoMaking/42/mod.info", "modversion=0.10.0", "modversion=1.0.0", "the mod calls itself 1.0 with no changelog entry"),
+    ("mod/AmmoMaking/42/mod.info", "modversion=0.11.0", "modversion=1.0.0", "the mod calls itself 1.0 with no changelog entry"),
     ("mod/AmmoMaking/42/mod.info", "versionMin=42.20.0", "versionMin=41.78.0", "the mod claims to run on Build 41"),
 
     # ---- data files
@@ -369,6 +369,10 @@ MUTANTS = [
     (CLIENT + "AC_GeologySamplingContextMenu.lua", "        AC_GeologySampling.isAvailable()\n            or AC_Authority.canRequest(),", "        AC_Authority.canRequest(),", "the dig option follows the authority alone"),
     (CLIENT + "AC_MiningContextMenu.lua", "    if not AC_Mining.isAvailable()\n        and not AC_Authority.canRequest()\n    then", "    if not AC_Authority.canRequest() then", "the mining menu follows the authority alone"),
     ("mod/AmmoMaking/42/media/sandbox-options.txt", "    default = false,\n    page = AmmoMaking,\n    translation = AmmoMaking_ServerAuthority,", "    default = true,\n    page = AmmoMaking,\n    translation = AmmoMaking_ServerAuthority,", "the multiplayer server authority is on by default"),
+    # ---- release images
+    ("mod/AmmoMaking/42/mod.info", "poster=poster.png\n", "","the main mod names no poster"),
+    ("mod/AmmoMakingPress/42/mod.info", "poster=poster.png", "poster=preview.png", "the press add-on names a poster it does not ship"),
+    ("tools/build_release.py", "PREVIEW = \"art/workshop/preview.png\"", "PREVIEW = \"art/preview.png\"", "the release builder packages no Workshop preview"),
 ]
 
 

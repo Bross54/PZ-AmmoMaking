@@ -77,7 +77,7 @@ never move an item into that list.
 | `server/AC_SkillBookRegistration.lua` | server | Adds that entry at load: the engine loads vanilla's server files, which create the table, before any mod's |
 | `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype (test cartridge only), and `AmmoInspection.inspectComponent`: the read-only inspection of real cases and loose handloaded rounds |
 | `client/AC_GeologySamplingContextMenu.lua` | client | Dig / assay / laboratory menus (place, start, cancel, collect, pick up) |
-| `shared/AC_DigGeologicalSampleAction.lua` | shared | Shovel timed action (shared since 0.10.0: a multiplayer server rebuilds it and runs its `complete()`) |
+| `shared/AC_DigGeologicalSampleAction.lua` | shared | Shovel timed action (shared since 0.11.0: a multiplayer server rebuilds it and runs its `complete()`) |
 | `shared/AC_PickUpAnalyzerAction.lua` | shared | Timed action that picks a placed analyzer up again (shared, as above) |
 | `client/AC_MiningContextMenu.lua` | client | Mining options and tooltips |
 | `shared/AC_MineOreAction.lua` | shared | Pickaxe timed action (shared, as above) |
@@ -188,7 +188,7 @@ These are enforced by the code and asserted by `tests/run_tests.lua`.
   result, then calls `ISBaseTimedAction.perform(self)` last. On a
   multiplayer client with the server authority on it does no work: it
   ends the action, and the server's answer shows the result.
-- `complete()` (since 0.10.0): the engine calls it after `perform()` in
+- `complete()` (since 0.11.0): the engine calls it after `perform()` in
   single player, where it returns `true` at once, and on a multiplayer
   server, where it is the whole action (`AC_Authority.serverDig` /
   `serverMine` / `serverPickUp`). Its presence is what makes the engine
@@ -786,7 +786,7 @@ Not bugs, but worth knowing when adding multiplayer or a "view only" tool:
 
 The full authority map, each known duplication and how it is closed, and
 what was built are in `MULTIPLAYER_DESIGN.md` (section 6: the server
-authority of 0.10.0, experimental, off by default, never run on a server).
+authority of 0.11.0, experimental, off by default, never run on a server).
 What follows is the summary that was written with the code.
 
 Without the switch `serverAuthority`, mining, sampling, assays and the
@@ -1014,6 +1014,8 @@ lua5.1 tests/run_tests.lua
 python tests/run_mutants.py
 python tools/test_pz_compat.py
 python tools/build_tiles.py --selftest
+python art/icons/make_icons.py --check       the shipped icons equal a fresh drawing
+python art/workshop/make_workshop_art.py --check   the posters and the Workshop preview likewise
 python tools/build_release.py --check        all of the above but the full mutation run, and the package checks
 ```
 

@@ -1,7 +1,7 @@
 # Multiplayer: authority map and design
 
 Status: **BUILT, EXPERIMENTAL, OFF BY DEFAULT. Never run on a server.**
-Since 0.10.0 the server authority of section 6 exists
+Since 0.11.0 the server authority of section 6 exists
 (`shared/AC_Authority.lua`, `client/AC_AuthorityClient.lua`) behind the
 feature `serverAuthority`, a sandbox option of the save
 (`AmmoMaking.ServerAuthority`, default off). Off, everything is as it was:
@@ -124,7 +124,7 @@ files do not settle it.
 
 Six of the present systems are vanilla's and need nothing. Everything that
 is the mod's own and changes the world (sampling, assays, the analyzer,
-mining) has a server path since 0.10.0, behind the switch. The firearm
+mining) has a server path since 0.11.0, behind the switch. The firearm
 features (spent cases, quality) do not: they stay single player.
 
 ### 2.1 The guards
@@ -316,7 +316,7 @@ it.
 - That the disabled options and refusals of section 2.1 are what a client
   actually sees with the switch off.
 
-## 6. As built (0.10.0, experimental)
+## 6. As built (0.11.0, experimental)
 
 ### 6.1 The switch
 

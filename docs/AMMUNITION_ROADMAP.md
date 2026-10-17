@@ -1,7 +1,6 @@
 # Ammunition roadmap
 
-Where the mod stands after the code-complete pass of 2026-10-03, and what
-is left. *Implemented* means Lua and data checked offline (the suite, the
+Where the mod stands at 0.11.0 (in development), and what is left. *Implemented* means Lua and data checked offline (the suite, the
 installed game's files, the jar); it never means seen in game. What the
 running game has to confirm is one ordered session:
 `docs/INGAME_VALIDATION.md`.
@@ -51,7 +50,9 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Balance options for server owners (ore per tile, die-set and component loot, Ammo Making XP) | IMPLEMENTED (multipliers, default 1: nothing changes unless set) | sandbox options | `BALANCE_OPTIONS.md` |
 | Debug tree, compatibility check | IMPLEMENTED | `-debug` | `DEVELOPMENT.md` |
 | Game-update check | IMPLEMENTED | | `tools/pz_compat.py` |
-| Release packaging | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
+| Inventory icons, mod list posters, Workshop preview | IMPLEMENTED: the mod's own pixel art (`art/icons/make_icons.py`, `art/workshop/make_workshop_art.py`) | | `ART_HANDOFF.md` 2 |
+| Release packaging (three mod folders, one archive, a Workshop item folder with `preview.png`) | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
+| Black powder and primers from raw materials | out of scope: vanilla has no sulfur, saltpetre or priming compound; gunpowder stays charcoal and fertilizer | | `AMMUNITION_DESIGN.md` 12, `VANILLA_AMMUNITION_RESEARCH.md` |
 
 Numbers: the main mod has 55 items, 74 recipes (67 manufacturing, 16 of
 them for lead; 3 for the geology equipment, 3 scrapping, 1 recast) and 55
@@ -117,11 +118,14 @@ steps are in *After the session*. Nothing in single player depends on it.
 
 ### 3.2 Final art
 
-The inventory icons and the press's window icon are the mod's own
-(`art/icons/make_icons.py`). Every other visual is a placeholder.
-`docs/PLACEHOLDER_ASSETS.md` lists each one
-and where it is set; `docs/ART_HANDOFF.md` says what to draw. Also
-missing: a `poster=` image and a Workshop `preview.png`.
+The inventory icons, the press's window icon, the three mods' posters
+(`poster=poster.png`, 256 x 256 in each `42/`) and the Workshop
+`preview.png` are the mod's own (`art/icons/make_icons.py`,
+`art/workshop/make_workshop_art.py`). Every other visual (world models,
+the analyzer's placed sprite, the press's tiles) is a placeholder.
+`docs/PLACEHOLDER_ASSETS.md` lists each one and where it is set;
+`docs/ART_HANDOFF.md` says what to draw. How the posters look in the mod
+list is REQUIRES FUTURE IN-GAME VERIFICATION.
 
 ### 3.3 Balancing, from play
 
@@ -178,7 +182,10 @@ Nothing here is needed for a first release.
   run-time rewrite of the gun before each shot with a per-shell queue,
   which multiplayer does not synchronise. Pinned by a test against the
   engine snapshot.
-- Primer and powder chemistry beyond the present stand-ins.
+- Out of scope, not merely unplanned: black powder and primers from raw
+  materials. Vanilla has no sulfur, saltpetre or priming compound item, and
+  none is invented; gunpowder stays charcoal and fertilizer, primers toy
+  caps or match heads.
 - Better presses as further bench tags; batch recipes.
 - Component depth (match-grade cases, case trimming, tooling wear).
 - Recipe magazines: would need the recipes rewritten from Lua, which
