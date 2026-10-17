@@ -914,6 +914,11 @@ return {
             type = "base:weapon",
             weight = 1.5,
         },
+        ["Base.BlowTorch"] = {
+            type = "base:drainable",
+            uses = 10,
+            weight = 1,
+        },
         ["Base.BrassIngot"] = {
             tags = "base:hasmetal;base:ingot",
             type = "base:normal",
@@ -1044,6 +1049,11 @@ return {
             uses = 8,
             weight = 5,
         },
+        ["Base.File"] = {
+            tags = "base:file;base:hasmetal;base:smeltableironmedium",
+            type = "base:weapon",
+            weight = 1,
+        },
         ["Base.GunPowder"] = {
             type = "base:drainable",
             uses = 10,
@@ -1072,6 +1082,11 @@ return {
             type = "base:normal",
             weight = 0.1,
         },
+        ["Base.KitchenKnife"] = {
+            tags = "base:butcheranimal;base:cutplant;base:hasmetal;base:killanimal;base:sharpenable;base:sharpknife",
+            type = "base:weapon",
+            weight = 0.7,
+        },
         ["Base.LeadPipe"] = {
             tags = "base:hasmetal;base:killanimal;base:nomaintenancexp",
             type = "base:weapon",
@@ -1091,6 +1106,11 @@ return {
             tags = "base:hasmetal;base:magnifier",
             type = "base:normal",
             weight = 0.5,
+        },
+        ["Base.MasonsChisel"] = {
+            tags = "base:hasmetal;base:masonschisel;base:smeltableironmedium",
+            type = "base:weapon",
+            weight = 1,
         },
         ["Base.Matchbox"] = {
             tags = "base:ignorezombiedensity;base:lessfull;base:startfire",
@@ -1193,6 +1213,12 @@ return {
         ["Base.SteelIngotMold"] = {
             type = "base:normal",
             weight = 6,
+        },
+        ["Base.SteelWool"] = {
+            tags = "base:hasmetal;base:isfiretinder",
+            type = "base:drainable",
+            uses = 5,
+            weight = 0.3,
         },
         ["Base.StoneBlock"] = {
             type = "base:normal",
@@ -1363,6 +1389,7 @@ return {
         MakingHammer_Surface = true,
         Making_With_Kiln = true,
         UseHandPress = true,
+        Welding = true,
     },
     version = "42.20.4",
 }

@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "子彈品質: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "子彈品質: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "子彈品質: 未記錄",
+    "IGUI_AmmoMaking_Insp_Annealed": "彈頸已用瓦斯噴槍退火。",
+    "IGUI_AmmoMaking_Insp_Lubed": "已用蠟燭蠟潤滑。",
     "IGUI_AmmoMaking_Insp_LooseOnly": "此記錄僅保留在散裝子彈上；裝填或裝盒後只保留數量。",
     "IGUI_AmmoMaking_Insp_LooseTracked": "裝填這發子彈會保留其品質；裝盒後只保留數量。",
     "IGUI_AmmoMaking_InspectLoad": "檢查已裝填的彈藥",

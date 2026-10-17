@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "子弹质量: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "子弹质量: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "子弹质量: 未记录",
+    "IGUI_AmmoMaking_Insp_Annealed": "弹颈已用丙烷喷灯退火。",
+    "IGUI_AmmoMaking_Insp_Lubed": "已用蜡烛蜡润滑。",
     "IGUI_AmmoMaking_Insp_LooseOnly": "此记录仅保留在散装子弹上；装填或装盒后只保留数量。",
     "IGUI_AmmoMaking_Insp_LooseTracked": "装填这发子弹会保留其质量；装盒后只保留数量。",
     "IGUI_AmmoMaking_InspectLoad": "检查已装填的弹药",

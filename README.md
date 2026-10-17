@@ -450,12 +450,35 @@ case + primer + bullet + 1 charge ── Assemble 9mm Round ──► 1 Base.Bul
 - **Bullets are copper, or cast lead**: copper is mined and swaged with the die set. Vanilla has no lead item except the **Lead Pipe** and the **Jig Lure**: melt them at any furnace (*Melt Lead from Lead Pipe*, two lead scrap; *Melt Lead from Jig Lures*, one from five), forge a **bullet mould** (one for pistols, one for buckshot, from two iron bar quarters) or find one, and cast bullets at the furnace. *Assemble 9mm Round (Cast Bullet)* makes the same vanilla round with the same XP. Lead saves the bullet's copper, never the brass, so zinc still comes from the mine. Rifle rounds cast too, but only with a copper **gas check** on the bullet's base (*Punch Copper Gas Checks*, ten from a copper scrap), and they shoot a little worse than jacketed ones. Moulds can also be carved from stone, shaped from clay and fired in a kiln, or rammed from sand; the mould decides the bullet's quality, and candle wax improves it once. Melting gives no XP; nothing turns a bullet back into lead.
 - **Primers** come in four families (small and large pistol, small and large rifle), all made the same way from a small brass sheet and toy cap-gun caps or match heads. A large primer holds twice the material of a small one; a rifle primer takes half as much priming charge again and is never interchangeable with a pistol primer. **Gunpowder** is charcoal and fertilizer. Vanilla has no sulfur or nitrate item and none is invented.
 - **Case quality**: 1–100, rolled when a case is formed from the maker's Ammo Making level with a random spread, stored on the case and passed on to the assembled round. It never changes how much material a recipe uses. Nothing reads it in combat yet.
-- **Inspection**: right-click an empty case, or a loose round you loaded yourself, and choose *Inspect Ammunition* to see its calibre and case quality (a label from level 1, the number from level 5). Factory rounds have nothing to inspect. The record stays with the loose round: a magazine or firearm keeps only a count.
+- **Inspection**: right-click an empty case, a cast bullet, or a loose round you loaded yourself, and choose *Inspect Ammunition* to see its calibre and quality (a label from level 1, the number from level 5). Factory rounds have nothing to inspect. The record stays with the loose round: a magazine or firearm keeps only a count.
 - **Progression**: metallurgy and case stock from level 0; 9mm and .38 Special rounds at level 3, .45 ACP, .357 Magnum and 12 gauge shells at 4, .44 Magnum and the three rifle rounds at 5, each calibre's die set, cases and bullets one or two levels earlier. In a simulated career level 3 comes after about 19 ore, level 4 after 29, level 5 after 54, and the first rifle round after 70 ore and some 390 pistol rounds and shells. Nothing requires level 6.
 - **Material balance**: larger calibres cost more through whole-number knobs: cups of brass per case, projectiles per copper scrap, charges of gunpowder and, for a shell, a wad.
 - **Boxes**: handloaded rounds are the vanilla items, so vanilla's own *place ammo in box* recipe already packs them, 50, 20 or 25 to a box. The mod adds no box recipe. A box keeps only a count, so a round's case-quality record does not survive boxing.
 - **Die sets as loot**: besides forging one, a die set can be found, rarely: in a gun store's display case (any calibre), a garage gun locker (handgun dies) or among a hunter's things (rifle and shotgun dies). 9mm and .38 Special are the common ones, the magnums and .45 less so, rifle and shotgun dies rare. At default loot settings about one gun store in twelve holds a die set; military lockers are the likeliest place for handgun dies. Finding one opens nothing early: the Ammo Making levels are on the recipes. Bullet moulds turn up beside the die sets, and a little gunpowder, primers and brass stock in gun stores, hunting stores and metalwork crates; never cases, bullets or rounds.
 - **Brass recycling**: case cups, small brass sheets and empty cases or hulls you no longer want can be hammered into vanilla brass scrap on any surface, and ten brass scrap cast back into a brass ingot at a furnace. **Half of the brass is lost** and recycling gives **no Ammo Making XP**. Finished rounds, primers and bullets cannot be scrapped (vanilla already takes a round apart for its powder).
+
+### Player guide: moulds, tool care and treatments
+
+**Which bullet mould?** Every mould casts the same bullets for the same XP; the material decides how good they are and how long the mould lasts.
+
+| Mould | Where it is made | What you need | Lasts | Bullet quality |
+|---|---|---|---|---|
+| Iron | a Forge | 2 iron bar quarters, 2 charcoal, ball-peen hammer, tongs or pliers, file or whetstone | about 900 casts | best (+0) |
+| Stone | any surface | a stone block, a hammer and a chisel | about 300 casts | -5 |
+| Clay | any surface, then a kiln | 2 clay (dig a clay sack with a shovel and empty it), a sharp knife; fire it with a fire starter and a log or charcoal | one cast, then it breaks | -10 |
+| Sand | any surface | one use of a sandbag (dig sand with a shovel), 1 clay as binder, a sharp knife | one cast, used up | -20 |
+
+Stone, clay and sand need no forge: they are the way to cast bullets early. Rifle bullets also need a **gas check** at assembly (*Punch Copper Gas Checks*, ten from one copper scrap) and come out 10 lower than a pistol's.
+
+**Making bullets and cases better afterwards** (each once per item, no XP, the same items come back):
+
+- *Lube … Lead Bullets with Candle Wax*: five cast bullets and ten uses of a candle, +5 bullet quality.
+- *Anneal … Cases with a Blowtorch*: five empty cases and one use of a blowtorch, +3 case quality.
+- *Clean Spent … Cases with Steel Wool* (Spent Cases add-on): five spent cases and one use of steel wool; a case resized from clean spent cases loses 5 instead of 10.
+
+A round with a cast bullet takes the average of its case and its bullet; a copper round is its case's. *Inspect Ammunition* shows the quality and whether a case was annealed or a bullet lubed.
+
+**Tool care.** Die sets and iron moulds wear while you work (their condition shows on the item), Maintenance and Ammo Making slow it down. A broken die set is refused by its recipes: *Regrind Worn … Handloading Die Set* with a file or whetstone brings it back, a little less each time (to 8, then 6, 4, 2), until it has to be forged or found again.
 
 <!-- CALIBRE TABLE: generated by tests/write_recipes.lua from AC_Calibres.lua. Do not edit. -->
 

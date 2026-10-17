@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Qualité de la munition : %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Qualité de la munition : %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Qualité de la munition : non enregistrée",
+    "IGUI_AmmoMaking_Insp_Annealed": "Collet recuit au chalumeau.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Lubrifié à la cire de bougie.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Cette information reste attachée à la munition en vrac ; la charger ou la mettre en boîte ne conserve que le nombre.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Charger cette munition conserve sa qualité ; la mettre en boîte ne conserve que le nombre.",
     "IGUI_AmmoMaking_InspectLoad": "Inspecter les munitions chargées",

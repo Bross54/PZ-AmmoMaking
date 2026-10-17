@@ -426,6 +426,9 @@ return function(T)
         eq(seen.lines[1], "Cast bullet: " .. calibre.id, "its header")
         eq(seen.lines[2], "Bullet quality: " .. AmmoQuality.labelFor(50) .. " (50)", "and its quality, with the number from level 5")
         eq(AmmoInspection.getComponent(MOCK.newItem(calibre.castBullet)), nil, "a bullet that was not cast has nothing to inspect")
+        local lubedSeen = AmmoInspection.inspectComponent(inspector, lubed)
+        eq(lubedSeen.lines[3], "Lubed with candle wax.", "a lubed bullet says so")
+        eq(#seen.lines, 2, "an unlubed bullet does not")
     end
 
     section("Lead: the mine stays the way to rounds, and no loop pays (pure)")

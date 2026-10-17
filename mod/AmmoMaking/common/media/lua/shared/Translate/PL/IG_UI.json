@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Jakość naboju: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Jakość naboju: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Jakość naboju: brak zapisu",
+    "IGUI_AmmoMaking_Insp_Annealed": "Szyjka wyżarzona palnikiem gazowym.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Nasmarowano woskiem ze świeczki.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Ten zapis dotyczy tylko luźnego naboju; po załadowaniu lub zapakowaniu do pudełka zostaje tylko liczba sztuk.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Załadowanie tego naboju zachowuje jego jakość; zapakowanie do pudełka zachowuje tylko liczbę sztuk.",
     "IGUI_AmmoMaking_InspectLoad": "Obejrzyj załadowaną amunicję",

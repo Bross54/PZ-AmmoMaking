@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "คุณภาพกระสุน: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "คุณภาพกระสุน: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "คุณภาพกระสุน: ไม่มีบันทึก",
+    "IGUI_AmmoMaking_Insp_Annealed": "คอปลอกกระสุนผ่านการอบอ่อนด้วยหัวเชื่อมโลหะแล้ว",
+    "IGUI_AmmoMaking_Insp_Lubed": "หล่อลื่นด้วยขี้ผึ้งเทียนแล้ว",
     "IGUI_AmmoMaking_Insp_LooseOnly": "บันทึกนี้จะอยู่กับกระสุนนัดเดี่ยวเท่านั้น การบรรจุหรือใส่กล่องจะเหลือเพียงจำนวน",
     "IGUI_AmmoMaking_Insp_LooseTracked": "การบรรจุกระสุนนัดนี้จะคงคุณภาพไว้ การใส่กล่องจะเหลือเพียงจำนวน",
     "IGUI_AmmoMaking_InspectLoad": "ตรวจสอบกระสุนที่บรรจุอยู่",

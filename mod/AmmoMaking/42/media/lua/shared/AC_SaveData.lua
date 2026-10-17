@@ -583,6 +583,8 @@ AC_SaveData.SCHEMA = {
             { key = "AmmoMakingCase", type = "flag", read = false, repair = "a marker" },
 
             { key = "caseQuality", type = "number", min = 1, max = 100, default = "none", repair = "read as 1..100; not a finite number reads as no quality" },
+
+            { key = "caseAnnealed", type = "flag", read = false, repair = "a marker: annealing again adds nothing" },
         },
     },
 

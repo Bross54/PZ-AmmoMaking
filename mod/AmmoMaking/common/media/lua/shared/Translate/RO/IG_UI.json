@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Calitatea cartușului: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Calitatea cartușului: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Calitatea cartușului: neînregistrată",
+    "IGUI_AmmoMaking_Insp_Annealed": "Gât recopt cu torța de sudare.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Lubrifiat cu ceară de lumânare.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Această înregistrare rămâne la cartușul separat; la încărcare sau la punerea în cutie se păstrează doar numărul.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "La încărcare, acest cartuș își păstrează calitatea; la punerea în cutie se păstrează doar numărul.",
     "IGUI_AmmoMaking_InspectLoad": "Inspectează Muniția Încărcată",

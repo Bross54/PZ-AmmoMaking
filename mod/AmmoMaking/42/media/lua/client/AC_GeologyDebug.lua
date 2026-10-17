@@ -2567,6 +2567,135 @@ local function spawnSpentCasesKit(
 end
 
 
+-- Casting with every mould: one mould of every material
+-- for every class that casts (from AC_Casting, no class
+-- or calibre named here), lead, the furnace tools,
+-- charcoal, a candle for the lube and copper for gas
+-- checks with the punch and hammer.
+local function buildCastingKit()
+
+    local kit = {}
+
+
+    for _,
+        mould
+    in ipairs(
+        AC_Casting.getMoulds()
+    )
+    do
+
+        for _,
+            material
+        in ipairs(
+            AC_Casting.MOULD_MATERIALS
+        )
+        do
+
+            local items =
+                AC_Casting.getMouldItems(mould.class, material.id)
+
+
+            table.insert(
+                kit,
+                { items.item, 1 }
+            )
+        end
+    end
+
+
+    for _,
+        entry
+    in ipairs(
+        {
+            { AC_Casting.CONFIG.scrapItem, 10 },
+            { "Base.CeramicCrucible", 1 },
+            { "Base.Tongs", 1 },
+            { "Base.Charcoal", 10 },
+            { AC_Casting.LUBE.item, 1 },
+            { AC_Casting.GAS_CHECK.scrapItem, 2 },
+            { "Base.MetalworkingPunch", 1 },
+            { "Base.Hammer", 1 },
+        }
+    )
+    do
+
+        table.insert(
+            kit,
+            entry
+        )
+    end
+
+
+    return kit
+end
+
+
+local function spawnCastingKit(
+    player
+)
+
+    spawnKit(
+        player,
+        buildCastingKit(),
+        "Casting kit"
+    )
+end
+
+
+-- What the stone, clay and sand moulds are made from,
+-- and their tools.
+local MOULD_MATERIALS_KIT = {
+
+    { "Base.StoneBlock", 3 },
+
+    { "Base.Clay", 10 },
+
+    { "Base.Sandbag", 1 },
+
+    { "Base.MasonsChisel", 1 },
+
+    { "Base.KitchenKnife", 1 },
+
+    { "Base.Hammer", 1 },
+}
+
+
+local function spawnMouldMaterialsKit(
+    player
+)
+
+    spawnKit(
+        player,
+        MOULD_MATERIALS_KIT,
+        "Mould materials kit"
+    )
+end
+
+
+-- The treatments: a blowtorch (annealing), steel wool
+-- (cleaning spent cases) and a file (regrinding).
+local function buildTreatmentKit()
+
+    return {
+        { AC_Calibres.ANNEAL.item, 1 },
+        { AC_SpentCases.CLEAN.item, 1 },
+        { "Base.File", 1 },
+    }
+end
+
+
+local function spawnTreatmentKit(
+    player
+)
+
+    spawnKit(
+        player,
+        buildTreatmentKit(),
+        "Treatment kit"
+    )
+end
+
+
 ------------------------------------------------
 -- PUBLIC ENTRY POINTS
 ------------------------------------------------
@@ -2595,6 +2724,15 @@ AC_GeologyDebug.spawnSamplingKit =
 
 AC_GeologyDebug.spawnMiningKit =
     spawnMiningKit
+
+AC_GeologyDebug.buildCastingKit =
+    buildCastingKit
+
+AC_GeologyDebug.buildTreatmentKit =
+    buildTreatmentKit
+
+AC_GeologyDebug.MOULD_MATERIALS_KIT =
+    MOULD_MATERIALS_KIT
 
 AC_GeologyDebug.spawnLaboratoryAnalyzer =
     spawnLaboratoryAnalyzer
@@ -2925,6 +3063,12 @@ local function onFillWorldObjectContextMenu(
 
 
     ammunition:addOption("Spawn Primer and Powder Kit", player, spawnPrimerPowderKit)
+
+    ammunition:addOption("Spawn Casting Kit (every mould, lead, candle, gas check copper)", player, spawnCastingKit)
+
+    ammunition:addOption("Spawn Mould Materials Kit (stone, clay, sand, chisel, knife)", player, spawnMouldMaterialsKit)
+
+    ammunition:addOption("Spawn Treatment Kit (blowtorch, steel wool, file)", player, spawnTreatmentKit)
 
     ammunition:addOption("Print Calibre Definitions", player, printCalibreDefinitions)
 

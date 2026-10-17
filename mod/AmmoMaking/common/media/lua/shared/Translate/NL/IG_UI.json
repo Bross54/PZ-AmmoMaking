@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Patroonkwaliteit: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Patroonkwaliteit: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Patroonkwaliteit: niet vastgelegd",
+    "IGUI_AmmoMaking_Insp_Annealed": "Hals uitgegloeid met een gasbrander.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Gesmeerd met kaarsvet.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Deze gegevens blijven bij de losse patroon; bij laden of in een doos doen blijft alleen het aantal bewaard.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Bij het laden behoudt deze patroon zijn kwaliteit; in een doos blijft alleen het aantal bewaard.",
     "IGUI_AmmoMaking_InspectLoad": "Geladen munitie inspecteren",

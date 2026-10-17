@@ -446,6 +446,20 @@ local KINDS = {
 }
 
 
+-- What a treatment left on an item, as one line each: the
+-- ModData flag, and the text. Reads only.
+local MARKS = {
+
+    case = {
+        { key = function() return AC_Calibres.ANNEAL.annealedKey end, text = { "IGUI_AmmoMaking_Insp_Annealed", "Neck annealed with a blowtorch." } },
+    },
+
+    castBullet = {
+        { key = function() return AC_CaseQuality.CONFIG.bulletLubedKey end, text = { "IGUI_AmmoMaking_Insp_Lubed", "Lubed with candle wax." } },
+    },
+}
+
+
 -- kind ("case", "castBullet" or "round") and the calibre
 -- definition for an item this inspection covers, or nil.
 -- A round counts only when it carries a handloading
@@ -537,6 +551,36 @@ function AmmoInspection.inspectComponent(player, item)
                 AmmoQuality.labelFor(quality),
                 round(quality))
         )
+    end
+
+    -- Treatments, once the skill sees the quality at all.
+    if level > 0
+        and quality
+    then
+
+        local data =
+            (not item.hasModData or item:hasModData())
+            and item:getModData()
+            or nil
+
+
+        for _,
+            mark
+        in ipairs(
+            MARKS[kind] or {}
+        )
+        do
+
+            if data
+                and data[mark.key()] == true
+            then
+
+                table.insert(
+                    result.lines,
+                    text(mark.text[1], mark.text[2])
+                )
+            end
+        end
     end
 
     if kind == "round" then

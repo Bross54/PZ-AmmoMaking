@@ -22,10 +22,19 @@ add-on or behind an experimental switch that is off. Nothing in this entry
 has been seen in game; the session that checks it is
 `docs/INGAME_VALIDATION.md`.
 
+- **Annealing cases** with a blowtorch: five empty cases and one use of a
+  vanilla blowtorch, +3 case quality once, no XP. *Inspect Ammunition*
+  says when a case was annealed or a cast bullet lubed.
+- **Debug kits** for the new systems: a casting kit (every mould of every
+  material, lead, candle, copper for gas checks), a mould materials kit
+  (stone, clay, sand, chisel, knife) and a treatment kit (blowtorch, steel
+  wool, file).
+- **Player guide** in the README: which mould, tool care, finishing.
 - **Machine translations** of all three mods into 27 of the game's
   languages (AR, CA, CH, CN, CS, DA, DE, ES, ES_CL, ES_MX, FI, FR, HU, ID,
   IT, JP, KO, NL, NO, PL, PT, PTBR, RO, RU, TH, TR, UA; AR, ES_CL and ES_MX
-  share one Latin American Spanish text). Vanilla's own words are reused
+  share one Latin American Spanish text; AR, ES, PT and NO write .45 Auto
+  as the game does there). Vanilla's own words are reused
   for vanilla things. Machine-made, for native speakers to correct; the
   generated English files (the add-ons' recipe names) are not regenerated
   into them.

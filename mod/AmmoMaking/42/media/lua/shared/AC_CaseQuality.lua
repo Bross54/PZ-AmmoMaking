@@ -585,6 +585,124 @@ end
 
 
 ------------------------------------------------
+-- EFFECT: cases annealed
+------------------------------------------------
+--
+-- Like lubing, for cases: each created case takes one
+-- consumed case's quality, in order, plus the bonus if
+-- that case was not annealed yet. A case without a
+-- quality stays without one. Returns the list written.
+------------------------------------------------
+
+function AC_CaseQuality.onCasesAnnealed(
+    craftRecipeData,
+    bonus
+)
+
+    local config =
+        AC_CaseQuality.CONFIG
+
+
+    local key =
+        AC_Calibres.ANNEAL.annealedKey
+
+
+    local sources = {}
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllConsumedItems"
+        )
+    )
+    do
+
+        if AC_Calibres.identify(item:getFullType()) == "case" then
+
+            local quality =
+                AC_CaseQuality.get(item)
+
+
+            table.insert(
+                sources,
+                {
+                    quality = quality,
+                    annealed = quality ~= nil and item:getModData()[key] == true,
+                }
+            )
+        end
+    end
+
+
+    local written = {}
+
+    local index = 0
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllCreatedItems"
+        )
+    )
+    do
+
+        if AC_Calibres.identify(item:getFullType()) == "case" then
+
+            index = index + 1
+
+
+            local source =
+                sources[index]
+
+
+            if source
+                and source.quality
+            then
+
+                local quality =
+                    source.quality
+
+
+                if not source.annealed then
+
+                    quality =
+                        clamp(
+                            quality + (tonumber(bonus) or 0),
+                            config.minQuality,
+                            config.maxQuality
+                        )
+                end
+
+
+                AC_CaseQuality.set(
+                    item,
+                    quality
+                )
+
+
+                item:getModData()[key] = true
+
+
+                table.insert(
+                    written,
+                    quality
+                )
+            end
+        end
+    end
+
+
+    return written
+end
+
+
+------------------------------------------------
 -- EFFECT: cast bullets lubed
 ------------------------------------------------
 --
@@ -987,6 +1105,19 @@ end
 
 AC_CaseQuality.EFFECTS = {
 
+    -- Annealing case necks with a blowtorch
+    -- (AC_Calibres.ANNEAL).
+    annealCases =
+        function(
+            craftRecipeData
+        )
+
+            return
+                AC_CaseQuality.onCasesAnnealed(
+                    craftRecipeData,
+                    AC_Calibres.ANNEAL.qualityBonus
+                )
+        end,
     -- A worn die set filed true again
     -- (AC_Calibres.REGRIND).
     regrindDieSet =

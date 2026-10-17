@@ -1156,6 +1156,168 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_AnnealCases9mm
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases9mm,
+        inputs
+        {
+            item 5 [AmmoMaking.Case9mm],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases38Special
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases38Special,
+        inputs
+        {
+            item 5 [AmmoMaking.Case38Special],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases45ACP
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases45ACP,
+        inputs
+        {
+            item 5 [AmmoMaking.Case45ACP],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases357Magnum
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases357Magnum,
+        inputs
+        {
+            item 5 [AmmoMaking.Case357Magnum],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases44Magnum
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases44Magnum,
+        inputs
+        {
+            item 5 [AmmoMaking.Case44Magnum],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases556NATO
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases556NATO,
+        inputs
+        {
+            item 5 [AmmoMaking.Case556NATO],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases3030Win
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases3030Win,
+        inputs
+        {
+            item 5 [AmmoMaking.Case3030Win],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases308Win
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases308Win,
+        inputs
+        {
+            item 5 [AmmoMaking.Case308Win],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Case308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_AnnealCases12Gauge
+    {
+        time = 60,
+        timedAction = Welding,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onAnnealCases12Gauge,
+        inputs
+        {
+            item 5 [AmmoMaking.Hull12Gauge],
+            item 1 [Base.BlowTorch] flags[Prop1],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.Hull12Gauge,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet9mm
     {
         time = 150,

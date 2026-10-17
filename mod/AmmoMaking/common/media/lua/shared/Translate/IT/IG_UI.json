@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Qualità della munizione: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Qualità della munizione: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Qualità della munizione: non registrata",
+    "IGUI_AmmoMaking_Insp_Annealed": "Colletto ricotto con torcia al propano.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Lubrificato con cera di candela.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Questo dato resta con la munizione sfusa; caricarla o inscatolarla conserva solo il numero.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Caricare questa munizione ne conserva la qualità; inscatolarla conserva solo il numero.",
     "IGUI_AmmoMaking_InspectLoad": "Ispeziona munizioni caricate",

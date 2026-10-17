@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Kvalita náboje: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Kvalita náboje: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Kvalita náboje: nezaznamenána",
+    "IGUI_AmmoMaking_Insp_Annealed": "Krček vyžíhán svářecím hořákem.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Namazáno voskem ze svíčky.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Tento záznam platí jen pro volný náboj; nabitím nebo uložením do krabičky zůstane jen počet kusů.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Nabitím tohoto náboje se jeho kvalita zachová; uložením do krabičky zůstane jen počet kusů.",
     "IGUI_AmmoMaking_InspectLoad": "Prohlédnout nabité střelivo",

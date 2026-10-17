@@ -342,6 +342,7 @@ MUTANTS = [
     (SHARED + "AC_Calibres.lua", "        - AC_Calibres.REGRIND.lossPerRegrind * (tonumber(regrinds) or 1)\n", "", "a die set reground for ever comes back new"),
     (SHARED + "AC_Casting.lua", "    if class.gasCheck then\n\n        table.insert(\n            inputs,", "    if false then\n\n        table.insert(\n            inputs,", "a rifle's cast round needs no gas check"),
     (SHARED + "AC_CaseQuality.lua", "                    + config.cleanedBonus\n", "                    + 15\n", "a cleaned spent case resizes better than a new case"),
+    (SHARED + "AC_CaseQuality.lua", "                if not source.annealed then\n", "                if true then\n", "annealing the same case twice adds twice"),
     (SHARED + "AC_Casting.lua", "    { id = \"sand\", prefix = \"Sand\", qualityBonus = -20, keep = false },", "    { id = \"sand\", prefix = \"Sand\", qualityBonus = 0, keep = false },", "a sand mould casts as well as iron"),
     (SHARED + "AC_CaseQuality.lua", "                if bulletQuality then\n", "                if false then\n", "a cast bullet's quality never reaches its round"),
     (SHARED + "AC_Calibres.lua", "    if class.mould then\n\n        calibre.castBullet =", "    if true then\n\n        calibre.castBullet =", "rifles cast lead bullets"),

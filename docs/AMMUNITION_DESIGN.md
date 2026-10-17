@@ -339,6 +339,15 @@ die sets and the calibre model stay as they are.
 
 ## 8. Case quality
 
+**Annealing** (`AC_Calibres.ANNEAL`): *Anneal <calibre> Cases with a
+Blowtorch* takes five empty cases and one use of a vanilla blowtorch
+(`Base.BlowTorch`, ten uses; the line and the `Welding` action are vanilla's
+`CutIngotIntoBlocks`) and gives the same cases back, each +3, once: an
+annealed case is marked (`caseAnnealed`) and annealing it again adds
+nothing. A treatment: no XP, the forming level. Inspection says when a case
+was annealed. REQUIRES FUTURE IN-GAME VERIFICATION: the blowtorch loses one
+use and the cases keep their record.
+
 `AC_CaseQuality.lua`, one code path for every calibre and class; it names
 none.
 
@@ -421,9 +430,9 @@ from:
 | Ammo Making level | Recipes it opens | A formed case's quality (worst, typical, best) | Mining one ore takes | Forming a 9mm case takes |
 |---|---|---|---|---|
 | 0 | 13 | 35, 50, 65 | 400 | – |
-| 1 | 7 | 39, 54, 69 | 384 | 80 |
-| 2 | 29 | 43, 58, 73 | 368 | 76 |
-| 3 | 42 | 47, 62, 77 | 352 | 72 |
+| 1 | 9 | 39, 54, 69 | 384 | 80 |
+| 2 | 32 | 43, 58, 73 | 368 | 76 |
+| 3 | 46 | 47, 62, 77 | 352 | 72 |
 | 4 | 40 | 51, 66, 81 | 336 | 68 |
 | 5 | 8 | 55, 70, 85 | 320 | 64 |
 | 6 | – | 59, 74, 89 | 304 | 60 |

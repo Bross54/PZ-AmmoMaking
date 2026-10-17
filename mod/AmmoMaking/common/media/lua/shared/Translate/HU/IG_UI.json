@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Töltény minősége: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Töltény minősége: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Töltény minősége: nincs feljegyezve",
+    "IGUI_AmmoMaking_Insp_Annealed": "Nyak lágyítva propán égetővel.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Gyertyaviasszal kenve.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Ez az adat a különálló tölténynél marad; betöltéskor vagy dobozba tételkor csak a darabszám marad meg.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Betöltéskor a töltény megtartja a minőségét; dobozba tételkor csak a darabszám marad meg.",
     "IGUI_AmmoMaking_InspectLoad": "Betöltött lőszer megvizsgálása",

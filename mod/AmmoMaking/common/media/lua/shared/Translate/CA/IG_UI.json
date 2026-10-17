@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Qualitat del cartutx: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Qualitat del cartutx: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Qualitat del cartutx: no registrada",
+    "IGUI_AmmoMaking_Insp_Annealed": "Coll recuit amb soldador de gas.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Lubricat amb cera de ciri.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Aquest registre es manté amb el cartutx solt; en carregar-lo o desar-lo en una caixa només es conserva el recompte.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "En carregar aquest cartutx es conserva la seva qualitat; en desar-lo en una caixa només es conserva el recompte.",
     "IGUI_AmmoMaking_InspectLoad": "Inspeccionar munició carregada",

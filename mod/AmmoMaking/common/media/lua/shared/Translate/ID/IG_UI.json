@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Kualitas peluru: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Kualitas peluru: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Kualitas peluru: tidak tercatat",
+    "IGUI_AmmoMaking_Insp_Annealed": "Leher dilunakkan dengan obor propana.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Dilumasi dengan lilin.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Catatan ini hanya melekat pada peluru lepasan; jika diisikan atau dimasukkan ke kotak, hanya jumlahnya yang tersimpan.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Mengisikan peluru ini mempertahankan kualitasnya; memasukkannya ke kotak hanya menyimpan jumlahnya.",
     "IGUI_AmmoMaking_InspectLoad": "Periksa Amunisi Terisi",

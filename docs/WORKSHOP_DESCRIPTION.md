@@ -40,10 +40,13 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [*][b]Geology.[/b] Every save has its own hidden copper and zinc. Dig a geological sample with a shovel, then assay it: a field kit gives a rough grade, an advanced kit a range, the powered laboratory analyzer a precise figure a day later. All three are made at any surface from vanilla items; none is loot.
 [*][b]Mining.[/b] Inside an assayed area, a pickaxe takes ore from the ground. Deposits are finite and stay depleted.
 [*][b]Metallurgy[/b] on the vanilla furnaces and forge: zinc and copper ingots, brass (7 copper + 3 zinc), small brass sheets, case cups.
-[*][b]Ammunition.[/b] Die sets, cases, copper bullets (or lead bullets and buckshot cast in a mould from melted lead pipes and jig lures, for the pistol calibres and shells), four kinds of primer, gunpowder from charcoal and fertilizer, and assembly into the [b]vanilla[/b] rounds: 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308 and 12 gauge shells. Vanilla firearms, magazines and ammo boxes work with them unchanged.
+[*][b]Ammunition.[/b] Die sets, cases, copper bullets (or lead bullets and buckshot cast from melted lead pipes and jig lures; rifle bullets with a copper gas check), four kinds of primer, gunpowder from charcoal and fertilizer, and assembly into the [b]vanilla[/b] rounds: 9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308 and 12 gauge shells. Vanilla firearms, magazines and ammo boxes work with them unchanged.
 [*][b]Die sets and bullet moulds as rare loot[/b] in gun stores, gun lockers and hunting stores. They can always be forged instead. A little gunpowder, a few primers and some brass stock turn up as well; never cases, bullets or finished handloads.
 [*][b]Brass recycling.[/b] Unwanted brass parts become brass scrap at half the brass, and scrap is recast into ingots.
-[*][b]Inspection.[/b] Empty cases and loose handloaded rounds show their calibre and case quality.
+[*][b]Bullet moulds of iron, stone, clay or sand.[/b] Forge one, carve one from a stone block, shape one from dug clay and fire it in a kiln, or ram one from sand. The mould decides the bullet's quality and how long it lasts.
+[*][b]Tool care and finishing.[/b] Die sets and iron moulds wear and show their condition; a worn die set is reground with a file. Cast bullets are lubed with candle wax, cases annealed with a blowtorch, each once, for a better quality.
+[*][b]Inspection.[/b] Empty cases, cast bullets and loose handloaded rounds show their calibre and quality.
+[*][b]Translations[/b] into 27 of the game's languages, machine-made: corrections from native speakers are welcome.
 [*][b]Balance options[/b] (sandbox page Ammo Making): ore per deposit tile, how often die sets and reloading stock are found, and an Ammo Making XP multiplier that works like the game's per-skill ones. All at 1 by default.
 [/list]
 

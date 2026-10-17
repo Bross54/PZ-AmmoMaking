@@ -187,14 +187,38 @@ end
 for _,
     itemType
 in ipairs(
-    { "Base.MortarPestle", "Base.Hammer" }
+    {
+        "Base.MortarPestle", "Base.Hammer",
+        -- The casting, mould-material and treatment kits.
+        "Base.Tongs", "Base.MetalworkingPunch", "Base.MasonsChisel",
+        "Base.KitchenKnife", "Base.File", "Base.SteelWool",
+    }
 )
 do
 
-    table.insert(
-        AC_Compat.REQUIRED_ITEMS,
-        itemType
+    local known = false
+
+
+    for _,
+        existing
+    in ipairs(
+        AC_Compat.REQUIRED_ITEMS
     )
+    do
+
+        if existing == itemType then
+            known = true
+        end
+    end
+
+
+    if not known then
+
+        table.insert(
+            AC_Compat.REQUIRED_ITEMS,
+            itemType
+        )
+    end
 end
 
 

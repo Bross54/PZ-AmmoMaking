@@ -1340,9 +1340,10 @@ files, every Lua file and the installed game's item scripts.
 | Gas checks (copper, for rifle cast bullets) | 1 | `AnySurfaceCraft` | 4 | 0 | 80 | 2 | 1 | 1 |
 | Lubing cast bullets (candle wax) | 9 | `AnySurfaceCraft` | 2 to 4 | 0 | 60 | 0 | 2 | 1 |
 | Regrinding worn die sets | 9 | `AnySurfaceCraft` | 1 to 3 | 0 | 150 | 1 | 1 | 1 |
+| Annealing cases (blowtorch) | 9 | `AnySurfaceCraft` | 1 to 3 | 0 | 60 | 0 | 2 | 1 |
 | Scrapping brass | 3 | `AnySurfaceCraft` | 0 | 0 | 100 | 1 | 1 | 1 |
 | Recasting brass scrap | 1 | `Furnace` | 0 | 0 | 200 | 3 | 2 | 1 |
-| **All** | **139** | | | | | | | |
+| **All** | **148** | | | | | | | |
 
 <!-- END RECIPE AUDIT TABLE -->
 

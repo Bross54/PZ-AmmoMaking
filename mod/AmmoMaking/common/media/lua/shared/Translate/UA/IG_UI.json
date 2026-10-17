@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Якість патрона: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Якість патрона: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Якість патрона: не записано",
+    "IGUI_AmmoMaking_Insp_Annealed": "Дульце відпалено пальником.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Змащено свічковим воском.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Цей запис є лише в окремого патрона; під час заряджання або пакування в коробку зберігається лише кількість.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Під час заряджання цього патрона його якість зберігається; під час пакування в коробку — лише кількість.",
     "IGUI_AmmoMaking_InspectLoad": "Оглянути заряджені боєприпаси",

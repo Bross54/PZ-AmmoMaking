@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Qualidade do cartucho: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Qualidade do cartucho: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Qualidade do cartucho: não registrada",
+    "IGUI_AmmoMaking_Insp_Annealed": "Gargalo recozido com maçarico de soldagem.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Lubrificado com cera de vela.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Este registro fica com o cartucho avulso; carregá-lo ou guardá-lo em uma caixa mantém apenas a contagem.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Carregar este cartucho mantém sua qualidade; guardá-lo em uma caixa mantém apenas a contagem.",
     "IGUI_AmmoMaking_InspectLoad": "Inspecionar Munição Carregada",

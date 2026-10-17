@@ -715,6 +715,97 @@ function AC_Calibres.onDieSetReground(
 end
 
 
+------------------------------------------------
+-- ANNEALING CASES
+------------------------------------------------
+--
+-- Brass work-hardens when a case is formed; a short heat
+-- at the neck softens it again and the case lasts and
+-- seals better. Here: a few cases and some uses of a
+-- vanilla blowtorch (Base.BlowTorch, items/drainable.txt:
+-- ten uses, UseDelta 0.1; vanilla's CutIngotIntoBlocks
+-- takes it as "item 2 [Base.BlowTorch] flags[Prop1]" with
+-- timedAction Welding) give the same cases back, each
+-- qualityBonus better, once: an annealed case is marked
+-- (annealedKey) and annealing it again adds nothing. A
+-- treatment: no XP, the forming level.
+------------------------------------------------
+
+AC_Calibres.ANNEAL = {
+
+    item = "Base.BlowTorch",
+
+    uses = 1,
+
+    cases = 5,
+
+    qualityBonus = 3,
+
+    time = 60,
+
+    timedAction = "Welding",
+
+    benchTag = "AnySurfaceCraft",
+
+    category = "Metalworking",
+
+    idPrefix = "AmmoMaking_AnnealCases",
+
+    callbackPrefix = "onAnnealCases",
+
+    -- ModData key on a case.
+    annealedKey = "caseAnnealed",
+}
+
+
+-- One annealing recipe per calibre.
+function AC_Calibres.buildAnnealRecipes()
+
+    local anneal =
+        AC_Calibres.ANNEAL
+
+
+    local recipes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        table.insert(
+            recipes,
+            {
+                id = anneal.idPrefix .. calibre.suffix,
+                calibre = calibre.id,
+                step = "anneal",
+                treatment = true,
+                effect = "annealCases",
+                time = anneal.time,
+                timedAction = anneal.timedAction,
+                benchTag = anneal.benchTag,
+                category = anneal.category,
+                callback = anneal.callbackPrefix .. calibre.suffix,
+                xp = 0,
+                requiredLevel = calibre.levels.case,
+                inputs = {
+                    { count = anneal.cases, items = { calibre.case } },
+                    { count = anneal.uses, items = { anneal.item }, flags = { "Prop1" } },
+                },
+                outputs = {
+                    { count = anneal.cases, item = calibre.case },
+                },
+            }
+        )
+    end
+
+
+    return recipes
+end
+
+
 -- Crafts a die set is expected to last: condition points
 -- times the mean number of crafts per point.
 function AC_Calibres.dieSetExpectedUses(
@@ -2666,6 +2757,10 @@ function AC_Calibres.getItems()
             add(output.item)
         end
     end
+
+
+    -- The vanilla blowtorch the annealing takes.
+    add(AC_Calibres.ANNEAL.item)
 
 
     return items

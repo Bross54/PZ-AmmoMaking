@@ -303,6 +303,11 @@ Expected
 - The inspection window opens and shows a case quality; in `-debug` three
   `[debug]` lines follow.
 - A recipe above your level is shown but locked.
+- The quick way to everything below: **Ammunition > Spawn Casting Kit**,
+  **Spawn Mould Materials Kit** and **Spawn Treatment Kit**. Anneal five
+  9mm cases (*Anneal 9mm Cases with a Blowtorch*): each gains 3 and
+  *Inspect Ammunition* says "Neck annealed with a blowtorch."; lube five
+  cast bullets with candle wax: +5 and "Lubed with candle wax.".
 - Step 5 with the other moulds (take a Stone Block, Clay and a Sandbag
   from the vanilla debug item list): *Carve Stone Pistol Bullet Mould*
   with a hammer and chisel; *Shape Clay Pistol Bullet Mould*, then *Fire

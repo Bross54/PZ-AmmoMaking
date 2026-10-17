@@ -807,6 +807,7 @@ local FAMILIES = {
     { "gasCheck", "Gas checks (copper, for rifle cast bullets)" },
     { "lube", "Lubing cast bullets (candle wax)" },
     { "regrind", "Regrinding worn die sets" },
+    { "anneal", "Annealing cases (blowtorch)" },
     { "scrap", "Scrapping brass" },
     { "recast", "Recasting brass scrap" },
 }

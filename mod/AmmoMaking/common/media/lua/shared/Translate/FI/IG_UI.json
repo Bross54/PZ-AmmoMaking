@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Patruunan laatu: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Patruunan laatu: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Patruunan laatu: ei tallennettu",
+    "IGUI_AmmoMaking_Insp_Annealed": "Kaula hehkutettu propaanipolttimella.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Voideltu kynttilävahalla.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Tämä tieto säilyy vain irtopatruunassa; lataaminen tai laatikkoon pakkaaminen säilyttää vain määrän.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Tämän patruunan lataaminen säilyttää sen laadun; laatikkoon pakkaaminen säilyttää vain määrän.",
     "IGUI_AmmoMaking_InspectLoad": "Tarkasta ladatut ammukset",

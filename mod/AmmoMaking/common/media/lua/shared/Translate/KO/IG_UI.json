@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "탄약 품질: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "탄약 품질: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "탄약 품질: 기록 없음",
+    "IGUI_AmmoMaking_Insp_Annealed": "넥을 용접용 프로판 토치로 풀림 처리함.",
+    "IGUI_AmmoMaking_Insp_Lubed": "양초 왁스로 윤활함.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "이 기록은 낱개 탄약에만 남습니다. 장전하거나 상자에 넣으면 개수만 남습니다.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "이 탄약을 장전하면 품질이 유지됩니다. 상자에 넣으면 개수만 남습니다.",
     "IGUI_AmmoMaking_InspectLoad": "장전된 탄약 검사하기",

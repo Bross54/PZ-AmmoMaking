@@ -487,7 +487,8 @@ MOCK.knownScriptItems = {
     ["AmmoMaking.LeadScrap"] = true, ["AmmoMaking.BulletMouldPistol"] = true, ["AmmoMaking.BulletMouldShotgun"] = true,
     -- Moulds of stone, clay and sand, and what they are made from (vanilla
     -- ids confirmed in the installed 42.20.4 scripts).
-    ["Base.StoneBlock"] = true, ["Base.Clay"] = true, ["Base.Sandbag"] = true, ["Base.Candle"] = true,
+    ["Base.StoneBlock"] = true, ["Base.Clay"] = true, ["Base.Sandbag"] = true, ["Base.Candle"] = true, ["Base.BlowTorch"] = true,
+    ["Base.MasonsChisel"] = true, ["Base.KitchenKnife"] = true, ["Base.File"] = true, ["Base.SteelWool"] = true,
     ["AmmoMaking.StoneBulletMouldPistol"] = true, ["AmmoMaking.ClayBulletMouldPistolUnfired"] = true,
     ["AmmoMaking.ClayBulletMouldPistol"] = true, ["AmmoMaking.SandBulletMouldPistol"] = true,
     ["AmmoMaking.StoneBulletMouldShotgun"] = true, ["AmmoMaking.ClayBulletMouldShotgunUnfired"] = true,

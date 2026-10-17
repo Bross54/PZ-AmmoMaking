@@ -674,6 +674,22 @@ do
 end
 
 
+-- Annealing cases with a blowtorch (AC_Calibres.ANNEAL):
+-- a treatment, no XP.
+for _,
+    recipe
+in ipairs(
+    AC_Calibres.buildAnnealRecipes()
+)
+do
+
+    table.insert(
+        AC_Materials.RECIPES,
+        recipe
+    )
+end
+
+
 -- Regrinding worn die sets (AC_Calibres.REGRIND): a
 -- treatment, no XP.
 for _,

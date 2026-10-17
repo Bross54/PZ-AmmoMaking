@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Patronenqualität: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Patronenqualität: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Patronenqualität: nicht erfasst",
+    "IGUI_AmmoMaking_Insp_Annealed": "Hals mit Lötlampe ausgeglüht.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Mit Kerzenwachs gefettet.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Diese Angabe bleibt bei der losen Patrone; beim Laden oder Verpacken wird nur die Anzahl behalten.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Beim Laden behält diese Patrone ihre Qualität; beim Verpacken wird nur die Anzahl behalten.",
     "IGUI_AmmoMaking_InspectLoad": "Geladene Munition prüfen",

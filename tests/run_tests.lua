@@ -2326,7 +2326,11 @@ do
             "Print Material Ledger (inventory)",
         } },
         { "Ammunition", {
-            "Spawn Calibre Kit", "Spawn Primer and Powder Kit", "Print Calibre Definitions",
+            "Spawn Calibre Kit", "Spawn Primer and Powder Kit",
+            "Spawn Casting Kit (every mould, lead, candle, gas check copper)",
+            "Spawn Mould Materials Kit (stone, clay, sand, chisel, knife)",
+            "Spawn Treatment Kit (blowtorch, steel wool, file)",
+            "Print Calibre Definitions",
             "Print Primer Families", "Verify Ammo Dependencies", "Inspect Ammo Components (inventory)",
             "Inspect Loads (magazines and firearms carried)",
         } },
@@ -2898,6 +2902,55 @@ do
     eq(AC_CaseQuality.EFFECTS.regrindDieSet(nil), nil, "no recipe data")
 end
 
+section("Annealing cases: a blowtorch, once better, no XP (pure and mocked recipe data)")
+do
+    local A = AC_Calibres.ANNEAL
+    eq(A.item, "Base.BlowTorch", "a vanilla blowtorch")
+    local recipes = AC_Calibres.buildAnnealRecipes()
+    eq(#recipes, #AC_Calibres.LIST, "one annealing per calibre")
+    for _, recipe in ipairs(recipes) do
+        local calibre = AC_Calibres.get(recipe.calibre)
+        eq(recipe.treatment, true, recipe.id .. " is a treatment")
+        eq(recipe.xp, 0, recipe.id .. " pays no XP")
+        eq(recipe.inputs[1].items[1] .. "/" .. recipe.outputs[1].item, calibre.case .. "/" .. calibre.case, recipe.id .. ": the same cases back")
+        eq(recipe.inputs[1].count, recipe.outputs[1].count, recipe.id .. ": as many")
+        eq(recipe.requiredLevel, calibre.levels.case, recipe.id .. " at the forming level")
+        check(AC_Materials.checkConservation(recipe), recipe.id .. " conserves brass")
+    end
+    local first = AC_Calibres.LIST[1]
+    local function anneal(inputs, outputs)
+        return AC_CaseQuality.EFFECTS.annealCases({
+            getAllCreatedItems = function() return MOCK.arrayList(outputs) end,
+            getAllConsumedItems = function() return MOCK.arrayList(inputs) end,
+        })
+    end
+    local formed, bare = MOCK.newItem(first.case), MOCK.newItem(first.case)
+    AC_CaseQuality.set(formed, 60)
+    local outA, outB = MOCK.newItem(first.case), MOCK.newItem(first.case)
+    anneal({ formed, bare }, { outA, outB })
+    eq(AC_CaseQuality.get(outA), 60 + A.qualityBonus, "an annealed case gains the bonus")
+    eq(AC_CaseQuality.get(outB), nil, "a case without a quality stays without one")
+    local again = MOCK.newItem(first.case)
+    anneal({ outA }, { again })
+    eq(AC_CaseQuality.get(again), 60 + A.qualityBonus, "annealing twice adds nothing")
+end
+
+section("Debug kits for casting, mould materials and treatments hand out real items")
+do
+    local probed = {}
+    for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
+    local kits = { casting = AC_GeologyDebug.buildCastingKit(), moulds = AC_GeologyDebug.MOULD_MATERIALS_KIT, treatment = AC_GeologyDebug.buildTreatmentKit() }
+    for name, kit in pairs(kits) do
+        check(#kit > 0, name .. " kit is not empty")
+        for _, entry in ipairs(kit) do
+            local id = entry[1]
+            check(declaredItems[id] ~= nil or (probed[id] and ENGINE.items[id] ~= nil), name .. " kit: " .. tostring(id) .. " is a mod item or a probed vanilla item on the recorded build")
+            check(entry[2] >= 1, name .. " kit: at least one " .. tostring(id))
+        end
+    end
+    eq(#AC_GeologyDebug.buildCastingKit(), #AC_Casting.getMoulds() * #AC_Casting.MOULD_MATERIALS + 8, "every mould of every material, and eight supplies")
+end
+
 section("Station recipes: AC_Recipes.txt equals AC_Materials.RECIPES")
 do
     -- Vanilla keeps every recipe in module Base (42.20.4: all 1004 module
@@ -2929,7 +2982,7 @@ do
     -- knife line.
     local knownFields = { time = true, timedAction = true, Tags = true, category = true, OnCreate = true }
     local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true, KilnSmall = true, KilnLarge = true }
-    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true, HammerStoneStanding = true, Making_With_Kiln = true }
+    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true, HammerStoneStanding = true, Making_With_Kiln = true, Welding = true }
     local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true, Electrical = true, Masonry = true, Pottery = true }
     local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true, NoBrokenItems = true, AllowDestroyedItem = true, IsNotDull = true }
     local destroyLines = 0
@@ -3037,10 +3090,10 @@ do
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
-    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 5 * #AC_Calibres.LIST
+    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 6 * #AC_Calibres.LIST
         + #AC_Casting.SOURCES + 5 * #AC_Casting.getMoulds() + (#AC_Casting.MOULD_MATERIALS + 2) * #AC_Casting.getCastable() + 1 + #AC_Recycling.buildGroups() + 1,
-        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre and a regrinding, one melt per lead source, five mould recipes per casting class, a cast per mould material, an assembly and a lubing per castable calibre, the gas checks, one scrapping recipe per brass size and the recast")
-    eq(#AC_Materials.RECIPES, 139, "a hundred and thirty-nine recipes")
+        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, a regrinding and an annealing, one melt per lead source, five mould recipes per casting class, a cast per mould material, an assembly and a lubing per castable calibre, the gas checks, one scrapping recipe per brass size and the recast")
+    eq(#AC_Materials.RECIPES, 148, "a hundred and forty-eight recipes")
 
     -- The script body is exactly what tests/render_recipes.lua makes of the
     -- mirror: the file is generated, never typed.
@@ -3087,6 +3140,7 @@ do
             untracked[clay.unfired] = true
         end
         if recipe.step == "lube" then untracked[AC_Casting.LUBE.item] = true end
+        if recipe.step == "anneal" then untracked[AC_Calibres.ANNEAL.item] = true end
         -- A die set is a tool, not tracked material: only its regrinding consumes one.
         if recipe.step == "regrind" then untracked[AC_Calibres.get(recipe.calibre).dieSet] = true end
         if recipe.step == "cast" and recipe.material == "sand" then
@@ -3156,7 +3210,7 @@ do
     eq(families.assembleCast, #AC_Casting.getCastable(), "one cast assembly per castable calibre")
     eq(families.scrap, 3, "three scrapping recipes")
     eq(families.recast, 1, "one recast")
-    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **139** |", 1, true) ~= nil, "the audit table counts 139 recipes")
+    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **148** |", 1, true) ~= nil, "the audit table counts 148 recipes")
 end
 
 section("Material conservation: no recipe or chain creates metal")
@@ -3339,7 +3393,8 @@ do
                         if movesMetal(from, output.item) then
                             lossyEdges[from] = lossyEdges[from] or {}
                             lossyEdges[from][output.item] = true
-                            if not recipe.loss then
+                            -- A treatment gives the same item back: no loop of the chain.
+                            if not recipe.loss and not recipe.treatment then
                                 edges[from] = edges[from] or {}
                                 edges[from][output.item] = true
                             end
@@ -4679,7 +4734,7 @@ do
         local built = 0
         local realBuild = AC_Recycling.buildRecipes
         reloadMod()
-        eq(#AC_Materials.RECIPES, 139, "the reloaded mod has its 139 recipes")
+        eq(#AC_Materials.RECIPES, 148, "the reloaded mod has its 148 recipes")
         eq(type(AC_Loot.lastSummary), "nil", "loading the mod registers no loot by itself")
         check(realBuild ~= nil and built == 0, "the counters above were removed before the reload")
     end
@@ -6041,7 +6096,12 @@ do
             ["Base.StoneBlock"] = 6, ["Base.Clay"] = 60, ["Base.Sandbag"] = 20,
             ["base:crudechisel"] = 1, ["base:sharpknife"] = 1, ["base:startfire"] = 40, ["base:log"] = 40,
             -- Wax for lubing cast bullets.
-            ["Base.Candle"] = 2000,
+            ["Base.Candle"] = 2000, ["Base.BlowTorch"] = 2000,
+            -- A few cases of every calibre already formed, so annealing
+            -- five at a time meets them.
+            ["AmmoMaking.Case9mm"] = 10, ["AmmoMaking.Case38Special"] = 10, ["AmmoMaking.Case45ACP"] = 10,
+            ["AmmoMaking.Case357Magnum"] = 10, ["AmmoMaking.Case44Magnum"] = 10, ["AmmoMaking.Case556NATO"] = 10,
+            ["AmmoMaking.Case3030Win"] = 10, ["AmmoMaking.Case308Win"] = 10,
         }
         leadRounds = {}
         local tools = {}
@@ -6536,7 +6596,7 @@ do
     end
     -- And nothing is declared that the code no longer uses.
     local Q = AC_CaseQuality.CONFIG
-    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, [Q.bulletFlagKey] = true, [Q.bulletQualityKey] = true, [Q.bulletLubedKey] = true, [Q.spentCleanedKey] = true, [AC_Calibres.REGRIND.regrindKey] = true, copper = true, zinc = true }
+    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, [Q.bulletFlagKey] = true, [Q.bulletQualityKey] = true, [Q.bulletLubedKey] = true, [Q.spentCleanedKey] = true, [AC_Calibres.REGRIND.regrindKey] = true, [AC_Calibres.ANNEAL.annealedKey] = true, copper = true, zinc = true }
     for key in pairs(AmmoQuality.DEFAULTS) do byConfig[key] = true end
     -- The tally record: its key is a constant of the carrier, and its
     -- fields are written by the carrier as a table constructor, which the
@@ -9989,6 +10049,7 @@ do
     OTHERWISE["Base.Clay"] = "dug with a shovel, emptied from a clay sack"
     OTHERWISE["Base.Sandbag"] = "dug with a shovel"
     OTHERWISE["Base.StoneBlock"] = "cut from stone with a chisel"
+    OTHERWISE["Base.BlowTorch"] = "tool loot (garages, tool stores)"
     -- Candles: household loot in 24 entries of vanilla's ProceduralDistributions.lua.
     OTHERWISE["Base.Candle"] = "household loot"
     local unchecked = {}

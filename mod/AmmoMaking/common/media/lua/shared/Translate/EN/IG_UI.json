@@ -138,6 +138,8 @@
   "IGUI_AmmoMaking_Insp_RoundQuality": "Round quality: %1",
   "IGUI_AmmoMaking_Insp_RoundQualityExact": "Round quality: %1 (%2)",
   "IGUI_AmmoMaking_Insp_NoRoundRecord": "Round quality: not recorded",
+  "IGUI_AmmoMaking_Insp_Annealed": "Neck annealed with a blowtorch.",
+  "IGUI_AmmoMaking_Insp_Lubed": "Lubed with candle wax.",
   "IGUI_AmmoMaking_Insp_LooseOnly": "This record stays with the loose round; loading or boxing it keeps only a count.",
   "IGUI_AmmoMaking_Insp_LooseTracked": "Loading this round keeps its quality; boxing it keeps only a count.",
   "IGUI_AmmoMaking_InspectLoad": "Inspect Loaded Ammunition",

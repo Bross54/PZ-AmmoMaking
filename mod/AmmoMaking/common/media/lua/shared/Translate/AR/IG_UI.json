@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Calidad del cartucho: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Calidad del cartucho: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Calidad del cartucho: sin registrar",
+    "IGUI_AmmoMaking_Insp_Annealed": "Cuello recocido con soplete de gas.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Lubricado con cera de vela.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Este registro se mantiene con el cartucho suelto; al cargarlo o guardarlo en una caja solo se conserva el recuento.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Al cargar este cartucho se conserva su calidad; al guardarlo en una caja solo se conserva el recuento.",
     "IGUI_AmmoMaking_InspectLoad": "Inspeccionar munición cargada",

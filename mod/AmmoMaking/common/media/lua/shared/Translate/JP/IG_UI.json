@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "弾の品質: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "弾の品質: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "弾の品質: 記録なし",
+    "IGUI_AmmoMaking_Insp_Annealed": "ネックをプロパントーチで焼きなまし済み。",
+    "IGUI_AmmoMaking_Insp_Lubed": "ろうそくの蝋で潤滑済み。",
     "IGUI_AmmoMaking_Insp_LooseOnly": "この記録はバラの弾にのみ残ります。装填したり箱に詰めたりすると数だけが残ります。",
     "IGUI_AmmoMaking_Insp_LooseTracked": "この弾を装填しても品質は残ります。箱に詰めると数だけが残ります。",
     "IGUI_AmmoMaking_InspectLoad": "装填済みの弾薬を検査する",

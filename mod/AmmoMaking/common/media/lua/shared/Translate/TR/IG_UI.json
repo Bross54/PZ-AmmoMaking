@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Mermi kalitesi: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Mermi kalitesi: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Mermi kalitesi: kaydedilmedi",
+    "IGUI_AmmoMaking_Insp_Annealed": "Boyun hamlaçla tavlandı.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Mum ile yağlandı.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Bu kayıt yalnızca tek tek duran mermide kalır; silaha doldurmak veya kutulamak yalnızca sayısını korur.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Bu mermiyi silaha doldurmak kalitesini korur; kutulamak yalnızca sayısını korur.",
     "IGUI_AmmoMaking_InspectLoad": "Doldurulmuş Cephaneyi İncele",

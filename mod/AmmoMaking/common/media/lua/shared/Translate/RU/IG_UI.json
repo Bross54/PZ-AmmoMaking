@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Качество патрона: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Качество патрона: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Качество патрона: не записано",
+    "IGUI_AmmoMaking_Insp_Annealed": "Дульце отожжено пропановой горелкой.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Смазано свечным воском.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Эта запись есть только у россыпного патрона; при заряжании или укладке в коробку сохраняется только количество.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "При заряжании этого патрона его качество сохраняется; при укладке в коробку — только количество.",
     "IGUI_AmmoMaking_InspectLoad": "Осмотреть заряженные боеприпасы",

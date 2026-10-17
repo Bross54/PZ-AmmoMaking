@@ -127,6 +127,8 @@
     "IGUI_AmmoMaking_Insp_RoundQuality": "Patronkvalitet: %1",
     "IGUI_AmmoMaking_Insp_RoundQualityExact": "Patronkvalitet: %1 (%2)",
     "IGUI_AmmoMaking_Insp_NoRoundRecord": "Patronkvalitet: ikke registreret",
+    "IGUI_AmmoMaking_Insp_Annealed": "Halsen udglødet med svejseapparat.",
+    "IGUI_AmmoMaking_Insp_Lubed": "Smurt med stearinlysvoks.",
     "IGUI_AmmoMaking_Insp_LooseOnly": "Denne registrering følger den løse patron; ladning eller pakning i æske bevarer kun antallet.",
     "IGUI_AmmoMaking_Insp_LooseTracked": "Ladning af denne patron bevarer dens kvalitet; pakning i æske bevarer kun antallet.",
     "IGUI_AmmoMaking_InspectLoad": "Inspicér ladt ammunition",
