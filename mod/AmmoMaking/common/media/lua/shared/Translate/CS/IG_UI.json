@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Přesně posoudíš kvalitu, spolehlivost a riziko selhání střeliva.",
     "IGUI_AmmoMaking_Metal_Copper": "Měď",
     "IGUI_AmmoMaking_Metal_Zinc": "Zinek",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "měď",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "zinek",
     "IGUI_AmmoMaking_Grade_None": "Žádná",
     "IGUI_AmmoMaking_Grade_Trace": "Stopová",
     "IGUI_AmmoMaking_Grade_Poor": "Chudá",

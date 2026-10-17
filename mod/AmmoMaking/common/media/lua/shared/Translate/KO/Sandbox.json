@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "탄약 제작 (Ammo Making)",
     "Sandbox_AmmoMaking_QualityTracking": "탄창과 총기 안의 탄약 품질 추적 (실험적)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "실험적 기능이며 싱글플레이 전용입니다. 핸드로딩 탄약을 탄창이나 총기에 장전해도 탄피 품질이 유지되며, 빼낼 때 다시 돌려받습니다. 사격에는 영향을 주지 않습니다. 아직 게임 내에서 검증되지 않았습니다.",
+    "Sandbox_AmmoMaking_QualityEffects": "품질이 나쁜 핸드로딩 탄약은 탄 걸림이 더 잦음 (실험적)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "실험적 기능이며 싱글플레이 전용이고, 탄약 품질 추적도 켜져 있어야 합니다. 품질이 나쁜 핸드로딩 탄약이 장전되어 있으면 매 사격 후 총기 자체의 탄 걸림 확률이 품질이 나쁜 정도에 비례하여 조금씩 올라갑니다. 좋은 핸드로딩 탄약과 공장제 탄약은 아무것도 더하지 않습니다. 피해량, 사거리, 정확도는 절대 바뀌지 않습니다. 아직 게임 내에서 검증되지 않았습니다.",
     "Sandbox_AmmoMaking_ServerAuthority": "멀티플레이: 샘플 채취, 분석, 분석기, 채굴을 서버가 처리 (실험적)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "실험적 기능이며 멀티플레이 전용이고, 아직 서버에서 검증되지 않았습니다. 끔: 멀티플레이 서버에서는 샘플 채취, 분석 키트, 실험실 분석기, 채굴이 계속 거부됩니다. 켬: 클라이언트가 요청하면 서버가 거리, 도구, 아이템을 확인하고 작업을 수행하며, 모든 플레이어가 같은 광상을 보게 됩니다. 싱글플레이에서는 효과가 없습니다.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "광상 타일당 광석량 (배율)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "전리품으로 발견되는 핸드로딩 재료 (배율)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "이 모드가 전리품에 추가하는 화약, 낱개 뇌관, 황동 조각, 작은 황동판이 발견되는 빈도를 조정합니다. 1은 이 모드의 기본 밸런스이며, 0이면 제외됩니다. 이미 채워진 보관함의 내용물은 그대로 유지됩니다.",
     "Sandbox_AmmoMaking_XPMultiplier": "탄약 제작 경험치 배율",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "탄약 제작 기술 전용 경험치 배율로, 게임의 기술별 배율과 같습니다. 그것들과 마찬가지로 전체 경험치 배율이 꺼져 있을 때만 사용되며, 그렇지 않으면 전체 배율이 적용됩니다. 어떤 값이든 재활용으로는 경험치를 얻을 수 없습니다."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "탄약 제작 기술 전용 경험치 배율로, 게임의 기술별 배율과 같습니다. 그것들과 마찬가지로 전체 경험치 배율이 꺼져 있을 때만 사용되며, 그렇지 않으면 전체 배율이 적용됩니다. 어떤 값이든 재활용으로는 경험치를 얻을 수 없습니다.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "마무리 처리 보너스 (배율)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "양초 왁스로 주조 탄두 윤활하기, 용접용 프로판 토치로 탄피 풀림 처리하기, 강철솜으로 사용한 탄피 청소하기가 더하는 품질을 조정합니다. 1은 이 모드의 기본 밸런스이며, 0이면 효과가 없어집니다. 이미 처리된 아이템은 품질을 유지합니다.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "다이 세트 재연마 손실 (배율)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "재연마할 때마다 마모된 다이 세트를 되돌릴 수 있는 상태가 얼마나 낮아지는지 조정합니다. 1은 이 모드의 기본 밸런스(재연마 1회당 2포인트)이며, 값이 높을수록 다이 세트가 더 빨리 닳아 없어집니다. 항상 최소 1포인트입니다.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "품질이 나쁜 핸드로딩 탄약의 추가 탄 걸림 확률 (배율)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "실험적 옵션 '품질이 나쁜 핸드로딩 탄약은 탄 걸림이 더 잦음'이 켜져 있을 때만 적용됩니다. 가장 나쁜 핸드로딩 탄약이 장전되었을 때 더해지는 최대 추가 탄 걸림 확률을 조정합니다 (1일 때 4퍼센트포인트)."
 }

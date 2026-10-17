@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Pystyt arvioimaan tarkasti ammusten laadun, luotettavuuden ja vikariskin.",
     "IGUI_AmmoMaking_Metal_Copper": "Kupari",
     "IGUI_AmmoMaking_Metal_Zinc": "Sinkki",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "kupari",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "sinkki",
     "IGUI_AmmoMaking_Grade_None": "Ei mitään",
     "IGUI_AmmoMaking_Grade_Trace": "Jäämiä",
     "IGUI_AmmoMaking_Grade_Poor": "Köyhä",

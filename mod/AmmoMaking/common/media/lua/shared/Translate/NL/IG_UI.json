@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Je kunt de kwaliteit, betrouwbaarheid en het storingsrisico van munitie precies beoordelen.",
     "IGUI_AmmoMaking_Metal_Copper": "Koper",
     "IGUI_AmmoMaking_Metal_Zinc": "Zink",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "koper",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "zink",
     "IGUI_AmmoMaking_Grade_None": "Geen",
     "IGUI_AmmoMaking_Grade_Trace": "Sporen",
     "IGUI_AmmoMaking_Grade_Poor": "Arm",

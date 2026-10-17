@@ -59,6 +59,8 @@ return {
             ["base:heavyitem"] = true,
             ["base:ingot"] = true,
             ["base:showcondition"] = true,
+            ["base:smeltableironmedium"] = true,
+            ["base:smeltablesteelmedium"] = true,
         },
         types = {
             ["base:literature"] = true,

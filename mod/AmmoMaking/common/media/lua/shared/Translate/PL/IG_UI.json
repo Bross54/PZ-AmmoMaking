@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Precyzyjnie oceniasz jakość, niezawodność i ryzyko awarii amunicji.",
     "IGUI_AmmoMaking_Metal_Copper": "Miedź",
     "IGUI_AmmoMaking_Metal_Zinc": "Cynk",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "miedź",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "cynk",
     "IGUI_AmmoMaking_Grade_None": "Brak",
     "IGUI_AmmoMaking_Grade_Trace": "Śladowa",
     "IGUI_AmmoMaking_Grade_Poor": "Uboga",

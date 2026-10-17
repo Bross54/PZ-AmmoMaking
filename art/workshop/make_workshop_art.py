@@ -3,11 +3,12 @@
     python art/workshop/make_workshop_art.py            draw every image
     python art/workshop/make_workshop_art.py --check    fail when a shipped image differs from a fresh drawing
 
-Four square images, 256 x 256:
+Five square images, 256 x 256:
 
   mod/AmmoMaking/42/poster.png               the main mod's `poster=`
   mod/AmmoMakingPress/42/poster.png          the press add-on's `poster=`
   mod/AmmoMakingSpentCases/42/poster.png     the spent-cases add-on's `poster=`
+  mod/AmmoMakingCalibre762x39/42/poster.png  the 7.62x39 add-on's `poster=`
   art/workshop/preview.png                   the Workshop item's preview.png;
                                              tools/build_release.py puts it
                                              beside Contents/ of the item
@@ -50,6 +51,11 @@ SCALE = 2  # icons and the background are drawn on a grid of 2 x 2 pixels
 
 # A 5 x 7 pixel alphabet of the mod's own: only what the images write.
 GLYPHS = {
+    "3": ["11110", "00001", "00001", "01110", "00001", "00001", "11110"],
+    "6": ["00110", "01000", "10000", "11110", "10001", "10001", "01110"],
+    "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
+    "9": ["01110", "10001", "10001", "01111", "00001", "00010", "01100"],
+    ".": ["00000", "00000", "00000", "00000", "00000", "01100", "01100"],
     "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
     "B": ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
     "C": ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
@@ -276,6 +282,20 @@ def spent_scene():
     return finish(image)
 
 
+def calibre_scene():
+    """The 7.62x39 add-on: its die set, rifle cases, cast bullets with gas checks."""
+    image = background(seed=7639)
+    write(image, "AMMO MAKING", 18, 3, TITLE)
+    write(image, "7.62X39", 52, SCALE, [PAPER])
+    place(image, I.icon_die_set(), 96, 76, shadow=False)
+    place(image, I.icon_case_rifle(), 8, 138)
+    place(image, I.icon_cast_bullet_rifle(), 70, 140)
+    place(image, I.icon_gas_check(), 134, 140)
+    place(image, I.icon_bullet_rifle(), 192, 138)
+    badge(image, "EXPERIMENTAL", 228)
+    return finish(image)
+
+
 # ---------------------------------------------------------------- output
 
 # Where each image goes, relative to the repository, and how it is drawn.
@@ -283,6 +303,7 @@ IMAGES = [
     ("mod/AmmoMaking/42/poster.png", lambda: main_scene("BUILD 42")),
     ("mod/AmmoMakingPress/42/poster.png", press_scene),
     ("mod/AmmoMakingSpentCases/42/poster.png", spent_scene),
+    ("mod/AmmoMakingCalibre762x39/42/poster.png", calibre_scene),
     ("art/workshop/preview.png", lambda: main_scene("FROM ORE TO ROUND")),
 ]
 

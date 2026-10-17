@@ -57,7 +57,8 @@ local function mineText(
             AC_Text.get(
                 "IGUI_AmmoMaking_NoWorkableOre",
                 "No workable %1 ore here",
-                string.lower(
+                AC_Text.metalInSentence(
+                    metal,
                     AC_Deposits.getMetalName(
                         metal
                     )

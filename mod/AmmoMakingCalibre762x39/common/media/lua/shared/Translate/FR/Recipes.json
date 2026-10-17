@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "Forger un jeu de matrices de rechargement 7.62x39",
+    "AmmoMaking_FormCase762x39": "Former une douille 7.62x39",
+    "AmmoMaking_SwageBullets762x39": "Calibrer des balles en cuivre 7.62x39",
+    "AmmoMaking_AssembleRound762x39": "Assembler une munition 7.62x39",
+    "AmmoMaking_RegrindDieSet762x39": "Rectifier un jeu de matrices de rechargement usé 7.62x39",
+    "AmmoMaking_AnnealCases762x39": "Recuire des douilles 7.62x39 au chalumeau",
+    "AmmoMaking_CastBullets762x39": "Couler des balles en plomb 7.62x39",
+    "AmmoMaking_CastBullets762x39InStoneMould": "Couler des balles en plomb 7.62x39 (moule en pierre)",
+    "AmmoMaking_CastBullets762x39InClayMould": "Couler des balles en plomb 7.62x39 (moule en argile)",
+    "AmmoMaking_CastBullets762x39InSandMould": "Couler des balles en plomb 7.62x39 (moule en sable)",
+    "AmmoMaking_AssembleCastRound762x39": "Assembler une munition 7.62x39 (balle coulée, gas check)",
+    "AmmoMaking_LubeCastBullets762x39": "Lubrifier des balles en plomb 7.62x39 à la cire de bougie"
+}

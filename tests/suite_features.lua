@@ -19,10 +19,11 @@ return function(T)
             { "reloadingPress", F.EXPERIMENTAL, "mod", "AmmoMakingPress", false },
             { "spentCases", F.EXPERIMENTAL, "mod", "AmmoMakingSpentCases", true },
             { "qualityTracking", F.EXPERIMENTAL, "sandbox", "QualityTracking", true },
-            { "qualityEffects", F.DISABLED, "sandbox", "QualityEffects", true },
+            { "qualityEffects", F.EXPERIMENTAL, "sandbox", "QualityEffects", true },
             { "serverAuthority", F.EXPERIMENTAL, "sandbox", "ServerAuthority", false },
+            { "calibre762x39", F.EXPERIMENTAL, "mod", "AmmoMakingCalibre762x39", false },
         }
-        eq(#F.DEFINITIONS, #expected, "five switched features")
+        eq(#F.DEFINITIONS, #expected, "six switched features")
         for index, want in ipairs(expected) do
             local definition = F.DEFINITIONS[index]
             eq(definition.id, want[1], "feature " .. index .. " is " .. want[1])
@@ -92,22 +93,26 @@ return function(T)
         SandboxVars = { AmmoMaking = { QualityTracking = true } }
         eq(F.isEnabled("qualityTracking"), true, "the boolean true switches tracking on")
 
-        -- A locked feature has no switch: its option and everything it
-        -- needs can be on, and it stays off.
-        SandboxVars = { AmmoMaking = { QualityTracking = true, QualityEffects = true } }
+        -- The firing effects: experimental, off by default, and only with
+        -- their option and the tracking under them.
+        SandboxVars = { AmmoMaking = { QualityTracking = true } }
         local effects, whyEffects = F.getState("qualityEffects")
-        eq(effects, false, "firing effects stay off with their option on")
-        eq(whyEffects, "locked", "because they are locked")
-
-        -- Unlocked (as a later version would), it still needs the tracking.
+        eq(effects, false, "firing effects are off while their option is")
+        eq(whyEffects, "off", "and say so")
+        SandboxVars = { AmmoMaking = { QualityTracking = true, QualityEffects = true } }
         local definition = F.get("qualityEffects")
-        definition.stability = F.EXPERIMENTAL
-        eq(F.isEnabled("qualityEffects"), true, "(unlocked, with tracking on, the effects would be on)")
+        eq(F.isEnabled("qualityEffects"), true, "with their option and tracking on, the effects are on")
         SandboxVars = { AmmoMaking = { QualityEffects = true } }
         local alone, whyAlone = F.getState("qualityEffects")
         eq(alone, false, "(and off without the tracking)")
         eq(whyAlone, "needs qualityTracking", "saying what they need")
+        -- A locked feature still has no switch, whatever its option says.
         definition.stability = F.DISABLED
+        SandboxVars = { AmmoMaking = { QualityTracking = true, QualityEffects = true } }
+        local locked, whyLocked = F.getState("qualityEffects")
+        eq(locked, false, "(a locked feature stays off with its option on)")
+        eq(whyLocked, "locked", "(because it is locked)")
+        definition.stability = F.EXPERIMENTAL
 
         -- Multiplayer: a feature that changes items from Lua has no server
         -- authority yet and is off on a client and on a server. The press
@@ -141,7 +146,7 @@ return function(T)
         local lines = F.describe()
         eq(#lines, #F.DEFINITIONS, "one line per feature")
         check(string.find(lines[1], "Reloading Press [experimental]: ON (on; add-on mod AmmoMakingPress)", 1, true) ~= nil, "the press line: " .. lines[1])
-        check(string.find(lines[4], "[disabled]: off (locked; sandbox option AmmoMaking.QualityEffects)", 1, true) ~= nil, "the locked line: " .. lines[4])
+        check(string.find(lines[4], "[experimental]: off (off; sandbox option AmmoMaking.QualityEffects)", 1, true) ~= nil, "the effects line: " .. lines[4])
 
         MOCK.activeMods = {}
         SandboxVars = {}
@@ -237,7 +242,7 @@ return function(T)
         MOCK.activeMods = { "AmmoMaking" }
         SandboxVars.AmmoMaking = { QualityTracking = true, QualityEffects = true }
         eq(F.hasContent("qualityTracking"), F.isEnabled("qualityTracking"), "a sandbox feature: content is the feature")
-        eq(F.hasContent("qualityEffects"), false, "the locked feature has none")
+        eq(F.hasContent("qualityEffects"), F.isEnabled("qualityEffects"), "the firing effects: content is the feature too")
         eq(F.hasContent("nothing"), false, "an unknown feature has none")
         SandboxVars.AmmoMaking = nil
     end

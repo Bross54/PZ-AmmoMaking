@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Lőszerkészítés)",
     "Sandbox_AmmoMaking_QualityTracking": "Lőszerminőség követése tárakban és lőfegyverekben (kísérleti)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "KÍSÉRLETI, csak egyjátékos módban. A kézzel töltött töltények hüvelyminősége megmarad, amikor tárba vagy lőfegyverbe töltöd őket, és visszakapod, amikor kiveszed őket. A lövésre nincs hatása. Játékban még nem ellenőrzött.",
+    "Sandbox_AmmoMaking_QualityEffects": "A gyenge minőségű kézzel töltött töltények gyakrabban akadnak el (kísérleti)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "KÍSÉRLETI, csak egyjátékos módban, és a minőségkövetésnek is bekapcsolva kell lennie. A gyenge minőségű kézzel töltött töltényekből álló töltet minden lövés után kicsit növeli a fegyver saját elakadási esélyét, azzal arányosan, mennyire gyenge; a jó kézzel töltött és a gyári töltények semmit sem adnak hozzá. A sebzés, a lőtávolság és a pontosság soha nem változik. Játékban még nem ellenőrzött.",
     "Sandbox_AmmoMaking_ServerAuthority": "Többjátékos: a mintavételt, az elemzéseket, az elemzőkészüléket és a bányászatot a szerver végzi (kísérleti)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "KÍSÉRLETI, csak többjátékos módban, szerveren még nem ellenőrzött. Ki: többjátékos szerveren a mintaásás, az elemzőkészletek, a laboratóriumi elemzőkészülék és a bányászat tiltva marad. Be: a kliensek kérést küldenek, a szerver ellenőrzi a távolságot, az eszközöket és a tárgyakat, elvégzi a munkát, és minden játékos ugyanazokat a lelőhelyeket látja. Egyjátékos módban nincs hatása.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Érc lelőhelycellánként (szorzó)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Zsákmányként talált újratöltési alapanyagok (szorzó)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Meghatározza, milyen gyakran bukkan fel a mod által a zsákmányhoz adott lőpor, különálló gyutacs, sárgaréz hulladék és kis sárgarézlemez. Az 1 a mod alapegyensúlya, a 0 kiveszi őket. A már feltöltött tárolók megtartják a tartalmukat.",
     "Sandbox_AmmoMaking_XPMultiplier": "Lőszerkészítés TP szorzó",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "A Lőszerkészítés készség saját TP szorzója, a játék készségenkénti szorzóihoz hasonlóan. Azokhoz hasonlóan csak akkor érvényes, ha a globális TP szorzó ki van kapcsolva; egyébként a globális érvényes. Az újrahasznosítás semmilyen értéknél nem ad tapasztalatot."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "A Lőszerkészítés készség saját TP szorzója, a játék készségenkénti szorzóihoz hasonlóan. Azokhoz hasonlóan csak akkor érvényes, ha a globális TP szorzó ki van kapcsolva; egyébként a globális érvényes. Az újrahasznosítás semmilyen értéknél nem ad tapasztalatot.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Utókezelési bónusz (szorzó)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Meghatározza, mennyi minőséget ad az öntött lövedékek gyertyaviasszal való kenése, a hüvelyek propán égetővel való lágyítása és a kilőtt hüvelyek acélgyapottal való tisztítása. Az 1 a mod alapegyensúlya, a 0 értéktelenné teszi őket. A már kezelt tárgyak megtartják a minőségüket.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Matricakészlet-újracsiszolási veszteség (szorzó)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Meghatározza, mennyivel csökkenti minden újracsiszolás azt az állapotot, amelyre egy kopott matricakészlet visszaállítható. Az 1 a mod alapegyensúlya (újracsiszolásonként két pont); a nagyobb érték hamarabb elhasználja a matricakészleteket. Mindig legalább egy pont.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Gyenge minőségű kézzel töltött töltények további elakadási esélye (szorzó)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Csak „A gyenge minőségű kézzel töltött töltények gyakrabban akadnak el” kísérleti beállítással együtt. Meghatározza a legnagyobb további elakadási esélyt, amelyet a legrosszabb kézzel töltött töltényekből álló töltet hozzáad (1-es értéknél 4 százalékpont)."
 }

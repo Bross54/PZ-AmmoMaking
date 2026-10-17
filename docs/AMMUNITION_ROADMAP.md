@@ -51,7 +51,8 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | **Reloading press** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT; VISUAL PLACEHOLDER | add-on mod `AmmoMakingPress` | `RELOADING_PRESS_DESIGN.md` |
 | **Spent cases** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingSpentCases` | `SPENT_CASE_RESEARCH.md` |
 | **Quality tracking through magazines and firearms** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9 |
-| **Quality effects at the shot** | IMPLEMENTED, LOCKED OFF (no switch in this version) | none | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4 |
+| **Quality effects at the shot** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT (needs quality tracking on too) | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4 |
+| **7.62x39 of Vanilla Weapons Plus** (an extension calibre: items and recipes in its own add-on, which requires that mod) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingCalibre762x39` | `AC_Calibres.EXTENSIONS`, `tests/suite_extensions.lua` |
 | Feature switches, placeholder registry | IMPLEMENTED | | `AC_Features.lua`, `AC_Visuals.lua` |
 | Balance options for server owners (ore per tile, die-set and component loot, Ammo Making XP) | IMPLEMENTED (multipliers, default 1: nothing changes unless set) | sandbox options | `BALANCE_OPTIONS.md` |
 | Debug tree, compatibility check | IMPLEMENTED | `-debug` | `DEVELOPMENT.md` |
@@ -162,7 +163,8 @@ Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 | Reloading press | seen loading, building and crafting | state `experimental` to `stable`; optionally fold the add-on into the main mod |
 | Spent cases | seen for one gun of each class | state to `stable`; stays an add-on (it adds items) |
 | Quality tracking | seen staying in step across save and load | state to `stable`; default stays a sandbox choice |
-| Quality effects | only on tracking seen to stay in step, and a decision that quality should matter at the shot | state `disabled` to `experimental` |
+| Quality effects | seen with tracking on: a poor load jams a little more, a good one never | state to `stable`; the default stays off |
+| 7.62x39 add-on | seen loading beside Vanilla Weapons Plus and making a round the AK-47 fires | state to `stable` |
 | Multiplayer server authority | the steps of `INGAME_VALIDATION.md`, *After the session*, passed on a dedicated server with two clients | state to `stable`; the default stays off until a server owner has run it |
 
 ## 4. Optional, not planned

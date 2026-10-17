@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Munitionsherstellung)",
     "Sandbox_AmmoMaking_QualityTracking": "Munitionsqualität in Magazinen und Waffen verfolgen (experimentell)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTELL, nur Einzelspieler. Die Hülsenqualität wiedergeladener Patronen bleibt erhalten, wenn sie in ein Magazin oder eine Waffe geladen werden, und wird beim Entladen zurückgegeben. Keine Auswirkung auf das Schießen. Im Spiel noch nicht überprüft.",
+    "Sandbox_AmmoMaking_QualityEffects": "Schlechte wiedergeladene Patronen verursachen öfter Ladehemmungen (experimentell)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTELL, nur Einzelspieler, erfordert zusätzlich die Verfolgung der Munitionsqualität. Eine Ladung schlechter wiedergeladener Patronen erhöht nach jedem Schuss die eigene Ladehemmungschance der Waffe ein wenig, im Verhältnis dazu, wie schlecht sie ist; gute wiedergeladene Patronen und Fabrikmunition fügen nichts hinzu. Schaden, Reichweite und Genauigkeit werden nie verändert. Im Spiel noch nicht überprüft.",
     "Sandbox_AmmoMaking_ServerAuthority": "Mehrspieler: Der Server übernimmt Probenahme, Analysen, Analysegerät und Bergbau (experimentell)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTELL, nur Mehrspieler, noch nicht auf einem Server überprüft. Aus: Auf einem Mehrspieler-Server bleiben Probenahme, Analysesets, Labor-Analysegerät und Bergbau gesperrt. An: Clients fragen an, der Server prüft Entfernung, Werkzeuge und Gegenstände und führt die Arbeit aus, und alle Spieler sehen dieselben Vorkommen. Keine Auswirkung im Einzelspieler.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Erz pro Vorkommensfeld (Multiplikator)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Wiederladematerial als Beute (Multiplikator)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Skaliert, wie oft das von der Mod zur Beute hinzugefügte Schießpulver, lose Zündhütchen, Messingschrott und kleine Messingbleche auftauchen. 1 ist die Balance der Mod, 0 entfernt sie. Bereits gefüllte Behälter behalten ihren Inhalt.",
     "Sandbox_AmmoMaking_XPMultiplier": "EP-Multiplikator für Munitionsherstellung",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Der eigene EP-Multiplikator der Fertigkeit Munitionsherstellung, wie die Multiplikatoren des Spiels pro Fertigkeit. Wie diese wird er nur verwendet, wenn der globale EP-Multiplikator ausgeschaltet ist; andernfalls gilt der globale. Recycling bringt bei keinem Wert etwas bei."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Der eigene EP-Multiplikator der Fertigkeit Munitionsherstellung, wie die Multiplikatoren des Spiels pro Fertigkeit. Wie diese wird er nur verwendet, wenn der globale EP-Multiplikator ausgeschaltet ist; andernfalls gilt der globale. Recycling bringt bei keinem Wert etwas bei.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Veredelungsbonus (Multiplikator)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Skaliert die Qualität, die das Fetten gegossener Geschosse mit Kerzenwachs, das Ausglühen von Hülsen mit der Lötlampe und das Reinigen verschossener Hülsen mit Stahlwolle hinzufügen. 1 ist die Balance der Mod, 0 macht sie wertlos. Bereits behandelte Gegenstände behalten ihre Qualität.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Verlust beim Nachschleifen von Matrizensätzen (Multiplikator)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Skaliert, wie stark jedes Nachschleifen den Zustand senkt, auf den ein abgenutzter Matrizensatz zurückgebracht werden kann. 1 ist die Balance der Mod (zwei Punkte pro Nachschleifen); höhere Werte nutzen Matrizensätze schneller ab. Immer mindestens ein Punkt.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Zusätzliche Ladehemmungschance schlechter wiedergeladener Patronen (Multiplikator)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Nur mit der experimentellen Option 'Schlechte wiedergeladene Patronen verursachen öfter Ladehemmungen'. Skaliert die größte zusätzliche Ladehemmungschance, die eine Ladung der schlechtesten wiedergeladenen Patronen hinzufügt (4 Prozentpunkte bei 1)."
 }

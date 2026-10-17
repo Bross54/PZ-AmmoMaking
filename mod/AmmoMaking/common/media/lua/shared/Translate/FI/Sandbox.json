@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Ammusten valmistus)",
     "Sandbox_AmmoMaking_QualityTracking": "Seuraa ammusten laatua lippaissa ja tuliaseissa (kokeellinen)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "KOKEELLINEN, vain yksinpeli. Itse ladattujen patruunoiden hylsyn laatu säilyy, kun ne ladataan lippaaseen tai tuliaseeseen, ja palautetaan, kun ne puretaan. Ei vaikutusta ampumiseen. Ei vielä varmistettu pelissä.",
+    "Sandbox_AmmoMaking_QualityEffects": "Huonot itse ladatut patruunat aiheuttavat useammin syöttöhäiriöitä (kokeellinen)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "KOKEELLINEN, vain yksinpeli, vaatii myös laadun seurannan päälle. Huonoista itse ladatuista patruunoista koostuva lataus nostaa aseen omaa syöttöhäiriön todennäköisyyttä hieman jokaisen laukauksen jälkeen, suhteessa siihen, kuinka huonoja ne ovat; hyvät itse ladatut patruunat ja tehdaspatruunat eivät lisää mitään. Vahinko, kantama ja tarkkuus eivät koskaan muutu. Ei vielä varmistettu pelissä.",
     "Sandbox_AmmoMaking_ServerAuthority": "Moninpeli: palvelin hoitaa näytteenoton, analyysit, analysaattorin ja louhinnan (kokeellinen)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "KOKEELLINEN, vain moninpeli, ei vielä varmistettu palvelimella. Pois: moninpelipalvelimella näytteiden kaivaminen, analyysipakkaukset, laboratorioanalysaattori ja louhinta pysyvät estettyinä. Päällä: asiakkaat pyytävät, palvelin tarkistaa etäisyyden, työkalut ja esineet ja tekee työn, ja kaikki pelaajat näkevät samat esiintymät. Ei vaikutusta yksinpelissä.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Malmia esiintymäruutua kohden (kerroin)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Saaliina löytyvät jälleenlatausmateriaalit (kerroin)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Säätää, kuinka usein modin saaliiseen lisäämää ruutia, irtonalleja, messinkiromua ja pieniä messinkilevyjä löytyy. 1 on modin tasapaino, 0 poistaa ne. Jo täytetyt säiliöt säilyttävät sisältönsä.",
     "Sandbox_AmmoMaking_XPMultiplier": "Ammusten valmistuksen XP-kerroin",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Ammusten valmistus -taidon oma XP-kerroin, kuten pelin taitokohtaiset kertoimet. Niiden tapaan sitä käytetään vain, kun yleinen XP-kerroin on pois päältä; muuten yleinen kerroin on voimassa. Kierrätys ei opeta mitään millään arvolla."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Ammusten valmistus -taidon oma XP-kerroin, kuten pelin taitokohtaiset kertoimet. Niiden tapaan sitä käytetään vain, kun yleinen XP-kerroin on pois päältä; muuten yleinen kerroin on voimassa. Kierrätys ei opeta mitään millään arvolla.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Viimeistelybonus (kerroin)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Säätää laatua, jonka valettujen luotien voitelu kynttilävahalla, hylsyjen hehkutus propaanipolttimella ja käytettyjen hylsyjen puhdistus teräsvillalla lisäävät. 1 on modin tasapaino, 0 tekee niistä arvottomia. Jo viimeistellyt esineet säilyttävät laatunsa.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Matriisisarjan hionnan menetys (kerroin)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Säätää, kuinka paljon jokainen hionta laskee kuntoa, johon kulunut matriisisarja voidaan palauttaa. 1 on modin tasapaino (kaksi pistettä hiontaa kohden); suurempi arvo kuluttaa matriisisarjat loppuun nopeammin. Aina vähintään yksi piste.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Huonojen itse ladattujen patruunoiden ylimääräinen syöttöhäiriön todennäköisyys (kerroin)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Vain kokeellisen asetuksen 'Huonot itse ladatut patruunat aiheuttavat useammin syöttöhäiriöitä' kanssa. Säätää suurinta ylimääräistä syöttöhäiriön todennäköisyyttä, jonka huonoimmista itse ladatuista patruunoista koostuva lataus lisää (4 prosenttiyksikköä arvolla 1)."
 }

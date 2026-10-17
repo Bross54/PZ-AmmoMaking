@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "弾薬の品質、信頼性、不具合のリスクを正確に評価できる。",
     "IGUI_AmmoMaking_Metal_Copper": "銅",
     "IGUI_AmmoMaking_Metal_Zinc": "亜鉛",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "銅",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "亜鉛",
     "IGUI_AmmoMaking_Grade_None": "なし",
     "IGUI_AmmoMaking_Grade_Trace": "痕跡程度",
     "IGUI_AmmoMaking_Grade_Poor": "乏しい",

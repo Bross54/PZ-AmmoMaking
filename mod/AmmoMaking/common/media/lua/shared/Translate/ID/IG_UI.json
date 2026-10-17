@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Kamu dapat menilai secara tepat kualitas, keandalan, dan risiko kegagalan amunisi.",
     "IGUI_AmmoMaking_Metal_Copper": "Tembaga",
     "IGUI_AmmoMaking_Metal_Zinc": "Seng",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "tembaga",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "seng",
     "IGUI_AmmoMaking_Grade_None": "Tidak Ada",
     "IGUI_AmmoMaking_Grade_Trace": "Jejak",
     "IGUI_AmmoMaking_Grade_Poor": "Miskin",

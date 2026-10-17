@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "Smed genladningsmatricesæt til 7.62x39",
+    "AmmoMaking_FormCase762x39": "Form 7.62x39-hylster",
+    "AmmoMaking_SwageBullets762x39": "Pres 7.62x39-kobberprojektiler",
+    "AmmoMaking_AssembleRound762x39": "Saml 7.62x39-patron",
+    "AmmoMaking_RegrindDieSet762x39": "Omslib slidt genladningsmatricesæt til 7.62x39",
+    "AmmoMaking_AnnealCases762x39": "Udglød 7.62x39-hylstre med svejseapparat",
+    "AmmoMaking_CastBullets762x39": "Støb 7.62x39-blyprojektiler",
+    "AmmoMaking_CastBullets762x39InStoneMould": "Støb 7.62x39-blyprojektiler (stenform)",
+    "AmmoMaking_CastBullets762x39InClayMould": "Støb 7.62x39-blyprojektiler (lerform)",
+    "AmmoMaking_CastBullets762x39InSandMould": "Støb 7.62x39-blyprojektiler (sandform)",
+    "AmmoMaking_AssembleCastRound762x39": "Saml 7.62x39-patron (støbt projektil, gascheck)",
+    "AmmoMaking_LubeCastBullets762x39": "Smør 7.62x39-blyprojektiler med stearin"
+}

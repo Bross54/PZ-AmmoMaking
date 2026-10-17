@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Consegues avaliar com precisão a qualidade, a fiabilidade e o risco de falha das munições.",
     "IGUI_AmmoMaking_Metal_Copper": "Cobre",
     "IGUI_AmmoMaking_Metal_Zinc": "Zinco",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "cobre",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "zinco",
     "IGUI_AmmoMaking_Grade_None": "Nenhum",
     "IGUI_AmmoMaking_Grade_Trace": "Vestígios",
     "IGUI_AmmoMaking_Grade_Poor": "Pobre",

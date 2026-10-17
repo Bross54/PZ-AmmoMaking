@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making",
     "Sandbox_AmmoMaking_QualityTracking": "Track ammunition quality in magazines and firearms (experimental)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, single player only. The casing quality of handloaded rounds is kept when they are loaded into a magazine or firearm, and given back when they are unloaded. It has no effect on firing. Not yet verified in game.",
+    "Sandbox_AmmoMaking_QualityEffects": "Poor handloads jam more often (experimental)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTAL, single player only, needs quality tracking on as well. A load of poor handloaded rounds raises the gun's own jam chance a little after each shot, in proportion to how poor it is; good handloads and factory rounds add nothing. Damage, range and accuracy are never changed. Not yet verified in game.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: the server performs sampling, assays, the analyzer and mining (experimental)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, multiplayer only, not yet verified on a server. Off: on a multiplayer server, digging samples, the assay kits, the laboratory analyzer and mining stay refused. On: clients ask, the server checks distance, tools and items and does the work, and every player sees the same deposits. No effect in single player.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Ore per deposit tile (multiplier)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Reloading stock found as loot (multiplier)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Scales how often the gunpowder, loose primers, brass scrap and small brass sheets the mod adds to loot turn up. 1 is the mod's balance, 0 takes them out. Containers already filled keep what they hold.",
     "Sandbox_AmmoMaking_XPMultiplier": "Ammo Making XP multiplier",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "The Ammo Making skill's own XP multiplier, like the game's per-skill multipliers. Like them, it is used only when the global XP multiplier is switched off; otherwise the global one applies. Recycling teaches nothing at any value."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "The Ammo Making skill's own XP multiplier, like the game's per-skill multipliers. Like them, it is used only when the global XP multiplier is switched off; otherwise the global one applies. Recycling teaches nothing at any value.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Finishing bonus (multiplier)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Scales the quality that lubing cast bullets with candle wax, annealing cases with a blowtorch and cleaning spent cases with steel wool add. 1 is the mod's balance, 0 makes them worthless. Items already finished keep their quality.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Die set regrinding loss (multiplier)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Scales how much each regrind lowers the condition a worn die set can be brought back to. 1 is the mod's balance (two points a regrind); higher wears die sets out sooner. Always at least one point.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Extra jam chance of poor handloads (multiplier)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Only with the experimental option 'Poor handloads jam more often'. Scales the largest extra jam chance a load of the worst handloads adds (4 percentage points at 1)."
 }

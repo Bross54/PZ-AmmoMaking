@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Fabrico de Munições)",
     "Sandbox_AmmoMaking_QualityTracking": "Registar a qualidade das munições em carregadores e armas de fogo (experimental)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, apenas um jogador. A qualidade do invólucro dos cartuchos recarregados à mão mantém-se quando são carregados num carregador ou numa arma de fogo, e é devolvida quando são descarregados. Não tem efeito no disparo. Ainda não verificado no jogo.",
+    "Sandbox_AmmoMaking_QualityEffects": "Os cartuchos recarregados à mão de má qualidade encravam mais vezes (experimental)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTAL, apenas um jogador, requer também o registo da qualidade das munições ativado. Uma carga de cartuchos recarregados à mão de má qualidade aumenta um pouco a probabilidade de encravamento própria da arma após cada disparo, em proporção à sua má qualidade; os bons cartuchos recarregados à mão e os de fábrica não acrescentam nada. O dano, o alcance e a precisão nunca são alterados. Ainda não verificado no jogo.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multijogador: o servidor trata da amostragem, dos ensaios, do analisador e da mineração (experimental)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, apenas multijogador, ainda não verificado num servidor. Desligado: num servidor multijogador, escavar amostras, os kits de ensaio, o analisador de laboratório e a mineração continuam recusados. Ligado: os clientes pedem, o servidor verifica a distância, as ferramentas e os itens e faz o trabalho, e todos os jogadores veem as mesmas jazidas. Sem efeito no modo de um jogador.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minério por quadrado de jazida (multiplicador)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Material de recarga encontrado como saque (multiplicador)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajusta a frequência com que aparecem a pólvora, as escorvas soltas, a sucata de latão e as folhas pequenas de latão que o mod adiciona ao saque. 1 é o equilíbrio do mod, 0 retira-os. Os contentores já preenchidos mantêm o que têm.",
     "Sandbox_AmmoMaking_XPMultiplier": "Multiplicador de XP de Fabrico de Munições",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "O multiplicador de XP próprio da perícia Fabrico de Munições, como os multiplicadores por perícia do jogo. Tal como eles, só é usado quando o multiplicador de XP global está desligado; caso contrário, aplica-se o global. A reciclagem não ensina nada, seja qual for o valor."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "O multiplicador de XP próprio da perícia Fabrico de Munições, como os multiplicadores por perícia do jogo. Tal como eles, só é usado quando o multiplicador de XP global está desligado; caso contrário, aplica-se o global. A reciclagem não ensina nada, seja qual for o valor.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bónus de acabamento (multiplicador)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Ajusta a qualidade que acrescentam lubrificar projéteis fundidos com cera de vela, recozer invólucros com maçarico de soldadura e limpar invólucros usados com palha de aço. 1 é o equilíbrio do mod, 0 torna-os inúteis. Os objetos já acabados mantêm a sua qualidade.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Perda ao retificar conjuntos de matrizes (multiplicador)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Ajusta quanto cada retificação baixa o estado a que um conjunto de matrizes gasto pode ser reposto. 1 é o equilíbrio do mod (dois pontos por retificação); valores mais altos gastam os conjuntos de matrizes mais depressa. Sempre pelo menos um ponto.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Probabilidade extra de encravamento dos cartuchos recarregados à mão de má qualidade (multiplicador)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Apenas com a opção experimental 'Os cartuchos recarregados à mão de má qualidade encravam mais vezes'. Ajusta a maior probabilidade extra de encravamento que uma carga dos piores cartuchos recarregados à mão acrescenta (4 pontos percentuais com 1)."
 }

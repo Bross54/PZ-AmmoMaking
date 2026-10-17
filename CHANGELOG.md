@@ -22,6 +22,22 @@ add-on or behind an experimental switch that is off. Nothing in this entry
 has been seen in game; the session that checks it is
 `docs/INGAME_VALIDATION.md`.
 
+- **7.62x39 add-on** (*Ammo Making: 7.62x39 (experimental)*, requires
+  Vanilla Weapons Plus - Gunworks Edition): the AK-47's round
+  (`Base.762Bullets`) handloaded like the vanilla rifle rounds, with its
+  die set, case, copper and gas-checked cast bullets, every mould and
+  treatment. The calibre is an extension (`AC_Calibres.EXTENSIONS`): its
+  items and recipes are generated into the add-on, and the vanilla
+  calibres, the press, the spent cases and loot are untouched.
+- **Poor handloads jam more often**: the firing effect, written and locked
+  until now, is an experimental sandbox option, off by default and only
+  with quality tracking on.
+- **Three more balance options** (default 1, nothing changes unless set):
+  the finishing bonus, the die set regrinding loss, the extra jam chance.
+- **Broken die sets and iron moulds smelt back** to steel and iron at the
+  vanilla furnaces, like the small punch set and the file.
+- **Metal names inside sentences** follow the language: German keeps
+  "Kupfer" (a translation key per metal, lowercase where it had been).
 - **Annealing cases** with a blowtorch: five empty cases and one use of a
   vanilla blowtorch, +3 case quality once, no XP. *Inspect Ammunition*
   says when a case was annealed or a cast bullet lubed.

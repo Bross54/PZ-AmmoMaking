@@ -22,6 +22,9 @@ Engine facts are marked **JAR** (`javap` of the 42.20.4
 | `AmmoMaking.DieSetLootMultiplier` | 0 to 2 | 1 | the mod (`AC_Loot`) | the loot weight of every die set and bullet mould; 0 takes them out of loot |
 | `AmmoMaking.ComponentLootMultiplier` | 0 to 2 | 1 | the mod (`AC_Loot`) | the loot weight of the gunpowder, loose primers, brass scrap and small brass sheets the mod adds; 0 takes them out |
 | `MultiplierConfig.AmmoMaking` | 0 to 1000 | 1 | the engine | Ammo Making XP, when vanilla's global XP multiplier is switched off |
+| `AmmoMaking.TreatmentBonusMultiplier` | 0 to 1.5 | 1 | the mod (`AC_CaseQuality`) | the quality lubing, annealing and cleaning add; 1.5 at most, so a resized case from clean spent cases stays below a new one (`AC_SpentCases.validateResize`) |
+| `AmmoMaking.RegrindLossMultiplier` | 0.5 to 2.5 | 1 | the mod (`AC_Calibres`) | how far each regrind lowers a die set's ceiling (2 points at 1, never less than 1) |
+| `AmmoMaking.ExtraJamMultiplier` | 0 to 2.5 | 1 | the mod (`AC_QualityEffects`) | the largest extra jam chance of a poor load (4 points at 1); only with the experimental firing effects on, and still linear in quality |
 
 `AC_Balance.lua` holds the table and is the one reader. Every value is
 checked there: a number outside the range is clamped to the nearest end, and

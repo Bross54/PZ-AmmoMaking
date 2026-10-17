@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "Forjar Conjunto de Matrizes de Recarga de 7.62x39",
+    "AmmoMaking_FormCase762x39": "Formar Invólucro de 7.62x39",
+    "AmmoMaking_SwageBullets762x39": "Estampar Projéteis de Cobre de 7.62x39",
+    "AmmoMaking_AssembleRound762x39": "Montar Cartucho de 7.62x39",
+    "AmmoMaking_RegrindDieSet762x39": "Retificar Conjunto de Matrizes de Recarga de 7.62x39 Gasto",
+    "AmmoMaking_AnnealCases762x39": "Recozer Invólucros de 7.62x39 com Maçarico de Soldadura",
+    "AmmoMaking_CastBullets762x39": "Fundir Projéteis de Chumbo de 7.62x39",
+    "AmmoMaking_CastBullets762x39InStoneMould": "Fundir Projéteis de Chumbo de 7.62x39 (Molde de Pedra)",
+    "AmmoMaking_CastBullets762x39InClayMould": "Fundir Projéteis de Chumbo de 7.62x39 (Molde de Barro)",
+    "AmmoMaking_CastBullets762x39InSandMould": "Fundir Projéteis de Chumbo de 7.62x39 (Molde de Areia)",
+    "AmmoMaking_AssembleCastRound762x39": "Montar Cartucho de 7.62x39 (Projétil Fundido, Gas Check)",
+    "AmmoMaking_LubeCastBullets762x39": "Lubrificar Projéteis de Chumbo de 7.62x39 com Cera de Vela"
+}

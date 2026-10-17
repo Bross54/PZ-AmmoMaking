@@ -633,22 +633,23 @@ return function(T)
             eq(found["quality tracking: ISEjectMagazine.unloadAmmo"], "WARNING", "the missing function is a WARNING")
             eq(found["quality tracking: ISInsertMagazine.loadAmmo"], "OK", "a wrapped one is OK")
             eq(found["quality tracking: the shot"], "OK", "and so is the shot")
-            eq(found["feature Ammunition Quality Firing Effects: off (locked)"], "OK", "the firing effects are reported as locked")
+            eq(found["feature Ammunition Quality Firing Effects: off (off)"], "OK", "the firing effects are reported as off")
         end
         finish()
     end
 
-    section("Quality effects: written, linear in quality, and locked")
+    section("Quality effects: written, linear in quality, experimental and off by default")
     do
         start(true)
         local E = AC_QualityEffects
         eq(#E.validate(), 0, "the effects description is sound: " .. table.concat(E.validate(), "; "))
-        eq(AC_Features.get("qualityEffects").stability, AC_Features.DISABLED, "the feature is locked")
+        eq(AC_Features.get("qualityEffects").stability, AC_Features.EXPERIMENTAL, "the feature is experimental")
+        eq(AC_Features.isEnabled("qualityEffects"), false, "and off by default")
 
-        -- Locked: afterShot looks at nothing and does nothing.
+        -- Off: afterShot looks at nothing and does nothing.
         local touched = false
         local probe = setmetatable({}, { __index = function() touched = true return nil end })
-        eq(E.afterShot(probe, probe, probe), nil, "locked: afterShot returns nil")
+        eq(E.afterShot(probe, probe, probe), nil, "off: afterShot returns nil")
         eq(touched, false, "without reading the character, the weapon or what was fired")
 
         -- The chance: nothing for factory rounds or perfect handloads, the
@@ -677,10 +678,15 @@ return function(T)
             check(math.abs(summed(a) + summed(b) - summed(mixed)) < 1e-9, "mixing two loads changes nothing in total (" .. summed(mixed) .. ")")
         end
 
-        -- Unlocked (as a later version would be): a poor load can set
-        -- vanilla's own jam, only on a firearm that can jam.
+        -- The balance option scales the largest chance, linearly.
+        SandboxVars = { AmmoMaking = { ExtraJamMultiplier = 2 } }
+        eq(E.getExtraJamPercent({ count = 10, handloaded = 10, qualitySum = 10 }), maximum * 2, "the jam multiplier scales the maximum")
+        SandboxVars = { AmmoMaking = { ExtraJamMultiplier = 0 } }
+        eq(E.getExtraJamPercent({ count = 10, handloaded = 10, qualitySum = 10 }), 0, "and at 0 there is none")
+
+        -- Switched on: a poor load can set vanilla's own jam, only on a
+        -- firearm that can jam.
         local definition = AC_Features.get("qualityEffects")
-        definition.stability = AC_Features.EXPERIMENTAL
         SandboxVars = { AmmoMaking = { QualityTracking = true, QualityEffects = true } }
         local poor = { rounds = 1, handloaded = 1, qualitySum = 1, before = { count = 6, handloaded = 6, qualitySum = 6 } }
         local gun = MODEL.newFirearm(MOCK, "pistol")

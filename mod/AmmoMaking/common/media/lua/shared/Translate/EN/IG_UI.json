@@ -15,6 +15,8 @@
 
   "IGUI_AmmoMaking_Metal_Copper": "Copper",
   "IGUI_AmmoMaking_Metal_Zinc": "Zinc",
+  "IGUI_AmmoMaking_MetalInSentence_copper": "copper",
+  "IGUI_AmmoMaking_MetalInSentence_zinc": "zinc",
 
   "IGUI_AmmoMaking_Grade_None": "None",
   "IGUI_AmmoMaking_Grade_Trace": "Trace",

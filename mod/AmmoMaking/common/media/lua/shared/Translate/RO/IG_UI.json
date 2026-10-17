@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Poți evalua cu exactitate calitatea, fiabilitatea și riscul de defecțiune al muniției.",
     "IGUI_AmmoMaking_Metal_Copper": "Cupru",
     "IGUI_AmmoMaking_Metal_Zinc": "Zinc",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "cupru",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "zinc",
     "IGUI_AmmoMaking_Grade_None": "Deloc",
     "IGUI_AmmoMaking_Grade_Trace": "Urme",
     "IGUI_AmmoMaking_Grade_Poor": "Sărac",

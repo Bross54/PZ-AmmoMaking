@@ -22,6 +22,16 @@
 --   componentLoot   reloading stock as  AC_Loot
 --                   loot
 --   xp              Ammo Making XP      the ENGINE
+--   treatmentBonus  what lubing,        AC_CaseQuality
+--                   annealing and
+--                   cleaning add
+--   regrindLoss     what each regrind   AC_Calibres
+--                   takes off a die
+--                   set's ceiling
+--   jamChance       the largest extra   AC_QualityEffects
+--                   jam chance of a
+--                   poor load (only
+--                   with the effects)
 --
 -- The XP multiplier is not applied by the mod. Vanilla's
 -- IsoGameCharacter$XP.AddXP multiplies a skill's XP by
@@ -133,8 +143,39 @@ AC_Balance.OPTIONS = {
         default = 1.0,
 
         appliedBy = "engine",
-
         what = "Ammo Making XP, applied by vanilla when its global XP multiplier is switched off",
+    },
+    {
+        id = "treatmentBonus",
+        table = "AmmoMaking",
+        option = "TreatmentBonusMultiplier",
+        min = 0.0,
+        -- At 1.5 a resized case from clean spent cases is
+        -- still below a new one (AC_SpentCases.validateResize).
+        max = 1.5,
+        default = 1.0,
+        appliedBy = "lua",
+        what = "the quality lubing a cast bullet, annealing a case and cleaning spent cases add; 0 makes them worthless",
+    },
+    {
+        id = "regrindLoss",
+        table = "AmmoMaking",
+        option = "RegrindLossMultiplier",
+        min = 0.5,
+        max = 2.5,
+        default = 1.0,
+        appliedBy = "lua",
+        what = "how much each regrind lowers the condition a die set can be brought back to; at least one point",
+    },
+    {
+        id = "jamChance",
+        table = "AmmoMaking",
+        option = "ExtraJamMultiplier",
+        min = 0.0,
+        max = 2.5,
+        default = 1.0,
+        appliedBy = "lua",
+        what = "the largest extra jam chance of a poor handload, only while the experimental firing effects are on",
     },
 }
 

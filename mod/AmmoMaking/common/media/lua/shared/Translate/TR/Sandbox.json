@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Cephane Yapımı)",
     "Sandbox_AmmoMaking_QualityTracking": "Şarjör ve ateşli silahlardaki cephane kalitesini takip et (deneysel)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "DENEYSEL, yalnızca tek oyunculu. Elle doldurulmuş mermilerin kovan kalitesi, bir şarjöre veya ateşli silaha doldurulduklarında korunur ve boşaltıldıklarında geri verilir. Atışa hiçbir etkisi yoktur. Henüz oyun içinde doğrulanmadı.",
+    "Sandbox_AmmoMaking_QualityEffects": "Kötü elle doldurulmuş mermiler daha sık tutukluk yapar (deneysel)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "DENEYSEL, yalnızca tek oyunculu, cephane kalitesi takibinin de açık olması gerekir. Kötü elle doldurulmuş mermilerden oluşan bir dolum, her atıştan sonra silahın kendi tutukluk şansını ne kadar kötü olduğuyla orantılı olarak biraz artırır; iyi elle doldurulmuş mermiler ve fabrika mermileri hiçbir şey eklemez. Hasar, menzil ve isabet asla değişmez. Henüz oyun içinde doğrulanmadı.",
     "Sandbox_AmmoMaking_ServerAuthority": "Çok oyunculu: numune alma, analizler, analiz cihazı ve kazıyı sunucu yapar (deneysel)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "DENEYSEL, yalnızca çok oyunculu, henüz bir sunucuda doğrulanmadı. Kapalı: çok oyunculu bir sunucuda numune kazma, analiz kitleri, laboratuvar analiz cihazı ve kazı reddedilmeye devam eder. Açık: istemciler istekte bulunur, sunucu mesafeyi, aletleri ve eşyaları kontrol edip işi yapar ve her oyuncu aynı yatakları görür. Tek oyunculuda etkisi yoktur.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Yatak karesi başına cevher (çarpan)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Ganimet olarak bulunan dolum malzemeleri (çarpan)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Modun ganimete eklediği barut, tek kapsüller, pirinç hurdası ve küçük pirinç levhaların ne sıklıkla çıktığını ölçekler. 1, modun dengesidir; 0 onları çıkarır. Önceden doldurulmuş kaplar içeriklerini korur.",
     "Sandbox_AmmoMaking_XPMultiplier": "Cephane Yapımı TP çarpanı",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Cephane Yapımı becerisinin kendi TP çarpanı, oyunun beceri başına çarpanları gibi. Onlar gibi yalnızca genel TP çarpanı kapalıyken kullanılır; aksi halde genel çarpan geçerlidir. Geri dönüşüm hiçbir değerde tecrübe kazandırmaz."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Cephane Yapımı becerisinin kendi TP çarpanı, oyunun beceri başına çarpanları gibi. Onlar gibi yalnızca genel TP çarpanı kapalıyken kullanılır; aksi halde genel çarpan geçerlidir. Geri dönüşüm hiçbir değerde tecrübe kazandırmaz.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Son işlem bonusu (çarpan)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Dökme çekirdeklerin mumla yağlanmasının, kovanların hamlaçla tavlanmasının ve atılmış kovanların çelik yünüyle temizlenmesinin eklediği kaliteyi ölçekler. 1, modun dengesidir; 0 onları değersiz kılar. Zaten işlenmiş eşyalar kalitelerini korur.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Matris seti yeniden bileme kaybı (çarpan)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Her yeniden bilemenin, aşınmış bir matris setinin geri getirilebileceği durumu ne kadar düşürdüğünü ölçekler. 1, modun dengesidir (bileme başına iki puan); daha yüksek değerler matris setlerini daha çabuk tüketir. Her zaman en az bir puan.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Kötü elle doldurulmuş mermilerin ek tutukluk şansı (çarpan)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Yalnızca 'Kötü elle doldurulmuş mermiler daha sık tutukluk yapar' deneysel seçeneğiyle. En kötü elle doldurulmuş mermilerden oluşan bir dolumun eklediği en yüksek ek tutukluk şansını ölçekler (1'de 4 yüzde puan)."
 }

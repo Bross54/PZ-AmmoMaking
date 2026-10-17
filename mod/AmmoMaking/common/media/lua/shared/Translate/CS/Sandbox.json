@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (výroba střeliva)",
     "Sandbox_AmmoMaking_QualityTracking": "Sledovat kvalitu střeliva v zásobnících a zbraních (experimentální)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTÁLNÍ, pouze pro jednoho hráče. Kvalita nábojnic přebíjených nábojů se zachová při nabití do zásobníku nebo zbraně a vrátí se při vybití. Nemá vliv na střelbu. Zatím neověřeno ve hře.",
+    "Sandbox_AmmoMaking_QualityEffects": "Nekvalitní přebité náboje se častěji zasekávají (experimentální)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTÁLNÍ, pouze pro jednoho hráče, vyžaduje také zapnuté sledování kvality. Nabité nekvalitní přebité náboje po každém výstřelu mírně zvýší vlastní šanci zbraně na zaseknutí, úměrně tomu, jak jsou nekvalitní; kvalitní přebité náboje a tovární náboje nepřidávají nic. Poškození, dostřel a přesnost se nikdy nemění. Zatím neověřeno ve hře.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: odběr vzorků, rozbory, analyzátor a těžbu provádí server (experimentální)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTÁLNÍ, pouze multiplayer, zatím neověřeno na serveru. Vypnuto: na multiplayerovém serveru zůstává kopání vzorků, sady pro rozbor, laboratorní analyzátor i těžba zakázána. Zapnuto: klienti žádají, server ověří vzdálenost, nástroje a předměty a provede práci, a všichni hráči vidí stejná ložiska. Ve hře pro jednoho hráče bez vlivu.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Ruda na pole ložiska (násobitel)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Komponenty pro přebíjení jako kořist (násobitel)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Určuje, jak často se objevuje střelný prach, volné zápalky, mosazný šrot a malé mosazné plechy, které mod přidává do kořisti. 1 je vyvážení modu, 0 je odstraní. Již naplněné kontejnery si ponechají obsah.",
     "Sandbox_AmmoMaking_XPMultiplier": "Násobitel zkušeností dovednosti Výroba střeliva",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Vlastní násobitel zkušeností dovednosti Výroba střeliva, podobně jako násobitele jednotlivých dovedností ve hře. Stejně jako ony se použije jen tehdy, když je globální násobitel zkušeností vypnutý; jinak platí globální. Recyklace nic nenaučí při žádné hodnotě."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Vlastní násobitel zkušeností dovednosti Výroba střeliva, podobně jako násobitele jednotlivých dovedností ve hře. Stejně jako ony se použije jen tehdy, když je globální násobitel zkušeností vypnutý; jinak platí globální. Recyklace nic nenaučí při žádné hodnotě.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bonus za dokončovací úpravy (násobitel)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Určuje, kolik kvality přidává mazání litých střel svíčkovým voskem, žíhání nábojnic svářecím hořákem a čištění vystřelených nábojnic ocelovou vlnou. 1 je vyvážení modu, 0 je činí bezcennými. Již upravené předměty si ponechají svou kvalitu.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Ztráta při přebroušení sady matric (násobitel)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Určuje, o kolik každé přebroušení sníží stav, na který lze opotřebovanou sadu matric obnovit. 1 je vyvážení modu (dva body za přebroušení); vyšší hodnota opotřebuje sady matric dříve. Vždy alespoň jeden bod.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Dodatečná šance na zaseknutí u nekvalitních přebitých nábojů (násobitel)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Pouze s experimentální možností 'Nekvalitní přebité náboje se častěji zasekávají'. Určuje největší dodatečnou šanci na zaseknutí, kterou přidají nabité nejhorší přebité náboje (4 procentní body při 1)."
 }

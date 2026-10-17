@@ -102,6 +102,115 @@ function A.pressNames(handNames)
 end
 
 ------------------------------------------------
+-- Calibres of other mods (AC_Calibres.EXTENSIONS)
+------------------------------------------------
+--
+-- One add-on per extension calibre: its four items, made from its
+-- template calibre's (the same look and weight, the calibre's name in place
+-- of the template's), its recipes (AC_Calibres.buildAllRecipesOf) and
+-- their English names, made from the template's recipe names.
+
+A.EXTENSION_MODS = {
+    calibre762x39 = "mod/AmmoMakingCalibre762x39/",
+}
+
+local function extensionPaths(calibre)
+    local root = assert(A.EXTENSION_MODS[calibre.extension], "no add-on folder for " .. tostring(calibre.extension))
+    return {
+        items = root .. "42/media/scripts/AC_" .. calibre.suffix .. "Items.txt",
+        script = root .. "42/media/scripts/AC_" .. calibre.suffix .. "Recipes.txt",
+        itemNames = root .. "common/media/lua/shared/Translate/EN/ItemName.json",
+        names = root .. "common/media/lua/shared/Translate/EN/Recipes.json",
+    }
+end
+A.extensionPaths = extensionPaths
+
+-- Replaces every plain occurrence of from in text.
+local function swap(text, from, to)
+    local out, start = {}, 1
+    while true do
+        local i, j = string.find(text, from, start, true)
+        if not i then break end
+        table.insert(out, string.sub(text, start, i - 1))
+        table.insert(out, to)
+        start = j + 1
+    end
+    table.insert(out, string.sub(text, start))
+    return table.concat(out)
+end
+A.swap = swap
+
+-- The extension's items in the order of ITEM_ROLES, each a copy of its
+-- template's item: { name, fullType, fields = { {key, value}, ... } }.
+local ITEM_ROLES = { "dieSet", "case", "bullet", "castBullet" }
+
+function A.extensionItems(calibre, mainItems)
+    local template = assert(AC_Calibres.get(calibre.template) or (function()
+        for _, c in ipairs(AC_Calibres.LIST) do if c.id == calibre.template then return c end end
+    end)(), "no template calibre " .. tostring(calibre.template))
+    local source = string.gsub(mainItems, "\r", "")
+    local items = {}
+    for _, role in ipairs(ITEM_ROLES) do
+        local fullType, templateType = calibre[role], template[role]
+        if fullType and templateType then
+            local templateName = string.match(templateType, "%.([%w_]+)$")
+            local body = assert(string.match(source, "item%s+" .. templateName .. "%s*(%b{})"), "no template item " .. templateType)
+            local fields = {}
+            for key, value in string.gmatch(body, "([%w_]+)%s*=%s*([^,\n]+),") do
+                if key == "DisplayName" then value = swap(value, template.id, calibre.id) end
+                table.insert(fields, { key, value })
+            end
+            table.insert(items, { name = string.match(fullType, "%.([%w_]+)$"), fullType = fullType, fields = fields })
+        end
+    end
+    return items, template
+end
+
+function A.extensionItemsBody(calibre, mainItems)
+    local blocks = {}
+    for _, item in ipairs(A.extensionItems(calibre, mainItems)) do
+        local lines = { "    item " .. item.name, "    {" }
+        for _, field in ipairs(item.fields) do
+            table.insert(lines, "        " .. field[1] .. " = " .. field[2] .. ",")
+        end
+        table.insert(lines, "    }")
+        table.insert(blocks, table.concat(lines, "\n"))
+    end
+    return "module AmmoMaking\n{\n" .. table.concat(blocks, "\n\n") .. "\n}\n"
+end
+
+function A.extensionItemNames(calibre, mainItems)
+    local list = {}
+    for _, item in ipairs(A.extensionItems(calibre, mainItems)) do
+        for _, field in ipairs(item.fields) do
+            if field[1] == "DisplayName" then table.insert(list, { item.fullType, field[2] }) end
+        end
+    end
+    return A.renderNames(list)
+end
+
+function A.extensionScriptBody(calibre, RENDER)
+    return RENDER.renderModule(AC_Calibres.buildAllRecipesOf(calibre))
+end
+
+-- handNames: the main mod's recipe names. Each recipe is named after the
+-- template's recipe of the same id, the calibre's name in place of the
+-- template's.
+function A.extensionNames(calibre, handNames)
+    local template = nil
+    for _, c in ipairs(AC_Calibres.LIST) do if c.id == calibre.template then template = c end end
+    assert(template, "no template calibre " .. tostring(calibre.template))
+    local list = {}
+    for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do
+        local templateId = swap(recipe.id, calibre.suffix, template.suffix)
+        local name = handNames[templateId]
+        assert(name and name ~= "", "no name for " .. templateId)
+        table.insert(list, { recipe.id, swap(name, template.id, calibre.id) })
+    end
+    return A.renderNames(list)
+end
+
+------------------------------------------------
 -- Spent cases
 ------------------------------------------------
 
@@ -331,6 +440,20 @@ function A.writeAll(root, RENDER, which)
         write(root .. "/" .. A.SPENT_NAMES, A.spentNames(handNames))
         for _, path in ipairs({ A.SPENT_ITEMS, A.SPENT_SCRIPT, A.SPENT_ITEM_NAMES, A.SPENT_NAMES }) do
             table.insert(written, path)
+        end
+    end
+    if which == nil or which == "extensions" then
+        local mainItems = assert(read(root .. "/mod/AmmoMaking/42/media/scripts/AC_Items.txt"))
+        local handNames = A.readNames(assert(read(root .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
+        for _, calibre in ipairs(AC_Calibres.EXTENSIONS) do
+            local paths = extensionPaths(calibre)
+            writeScript(root .. "/" .. paths.items, A.extensionItemsBody(calibre, mainItems), RENDER)
+            writeScript(root .. "/" .. paths.script, A.extensionScriptBody(calibre, RENDER), RENDER)
+            write(root .. "/" .. paths.itemNames, A.extensionItemNames(calibre, mainItems))
+            write(root .. "/" .. paths.names, A.extensionNames(calibre, handNames))
+            for _, path in ipairs({ paths.items, paths.script, paths.itemNames, paths.names }) do
+                table.insert(written, path)
+            end
         end
     end
     if which == nil then

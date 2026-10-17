@@ -120,6 +120,31 @@ end
 
 
 ------------------------------------------------
+-- A METAL'S NAME INSIDE A SENTENCE
+------------------------------------------------
+--
+-- English writes "No workable copper ore here", so the
+-- metal's name is lowercased there. Not every language
+-- does: German nouns keep their capital ("Kupfer"). A
+-- translation that needs another form gives it under
+-- IGUI_AmmoMaking_MetalInSentence_<metal>; without one,
+-- the name is lowercased as before.
+------------------------------------------------
+
+function AC_Text.metalInSentence(
+    metal,
+    name
+)
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_MetalInSentence_" .. tostring(metal),
+            string.lower(tostring(name or metal or ""))
+        )
+end
+
+
+------------------------------------------------
 -- LOAD MESSAGE
 ------------------------------------------------
 

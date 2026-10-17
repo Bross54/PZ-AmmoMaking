@@ -74,7 +74,10 @@ module AmmoMaking
        shared by a primer family; case, bullet and die set exist per calibre
        and are listed in AC_Calibres.LIST. The assembled round is the vanilla
        item (Base.Bullets9mm), never a mod copy. The die set copies the look
-       of Base.SmallPunchSet, and wears like it: ConditionMax and
+       of Base.SmallPunchSet, wears like it and, broken or not, is smelted
+       back to steel by vanilla's own furnace recipe like it
+       (base:smeltablesteelmedium); the iron moulds likewise to iron
+       (base:smeltableironmedium). ConditionMax and
        ConditionLowerChanceOneIn are AC_Calibres.DIE_WEAR (the tests compare).
        Vanilla art as placeholders throughout. */
 
@@ -100,7 +103,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case9mm
@@ -136,7 +139,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case38Special
@@ -183,7 +186,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case45ACP
@@ -219,7 +222,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case357Magnum
@@ -255,7 +258,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case44Magnum
@@ -316,7 +319,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case556NATO
@@ -352,7 +355,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case3030Win
@@ -388,7 +391,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Case308Win
@@ -428,7 +431,7 @@ module AmmoMaking
         WorldStaticModel = SmallMetalworkingPunches,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltablesteelmedium,
     }
 
     item Hull12Gauge
@@ -482,7 +485,7 @@ module AmmoMaking
         WorldStaticModel = Pliers,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltableironmedium,
     }
 
     item BulletMouldShotgun
@@ -495,7 +498,7 @@ module AmmoMaking
         WorldStaticModel = Pliers,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltableironmedium,
     }
 
     item BulletMouldRifle
@@ -508,7 +511,7 @@ module AmmoMaking
         WorldStaticModel = Pliers,
         ConditionLowerChanceOneIn = 15,
         ConditionMax = 10,
-        Tags = base:hasmetal;base:showcondition,
+        Tags = base:hasmetal;base:showcondition;base:smeltableironmedium,
     }
 
     /* Bullet moulds of stone, clay and sand (AC_Casting.MOULD_MATERIALS),

@@ -1444,9 +1444,18 @@ function AC_SpentCases.validateResize()
         and AC_CaseQuality.CONFIG.cleanedBonus
 
 
+    -- At the largest treatment option the sandbox allows.
+    local most =
+        AC_Balance
+        and AC_Balance.getOption
+        and AC_Balance.getOption("treatmentBonus")
+        and AC_Balance.getOption("treatmentBonus").max
+        or 1
+
+
     if type(cleaned) ~= "number"
         or cleaned < 0
-        or (type(bonus) == "number" and bonus + cleaned >= 0)
+        or (type(bonus) == "number" and bonus + cleaned * most >= 0)
     then
         problem("cleaning may help, never up to a new case (cleanedBonus of at least 0, and resizedBonus + cleanedBonus below 0)")
     end

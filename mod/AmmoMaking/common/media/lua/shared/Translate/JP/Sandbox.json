@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "弾薬製造 (Ammo Making)",
     "Sandbox_AmmoMaking_QualityTracking": "マガジンと銃の中の弾薬品質を記録する(実験的)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "実験的機能、シングルプレイ専用。ハンドロード弾の薬莢の品質は、マガジンや銃に装填しても保持され、取り出したときに戻ります。射撃には影響しません。ゲーム内ではまだ検証されていません。",
+    "Sandbox_AmmoMaking_QualityEffects": "質の悪いハンドロード弾はジャムしやすくなる(実験的)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "実験的機能、シングルプレイ専用。弾薬品質の記録もオンにする必要があります。質の悪いハンドロード弾が装填されていると、射撃ごとに銃本来のジャム確率が品質の悪さに応じて少し上がります。良質なハンドロード弾と工場製の弾は何も加算しません。ダメージ、射程、命中精度は一切変わりません。ゲーム内ではまだ検証されていません。",
     "Sandbox_AmmoMaking_ServerAuthority": "マルチプレイ: サンプル採取、分析、分析装置、採掘をサーバーが処理する(実験的)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "実験的機能、マルチプレイ専用、サーバーではまだ検証されていません。オフ: マルチプレイサーバーでは、サンプルの採取、分析キット、実験室用分析装置、採掘は引き続き拒否されます。オン: クライアントが要求し、サーバーが距離、道具、アイテムを確認して処理を行い、全プレイヤーが同じ鉱床を見ます。シングルプレイでは効果がありません。",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "鉱床タイル1つあたりの鉱石量(倍率)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "戦利品として見つかるハンドロード用資材(倍率)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "このMODが戦利品に追加する火薬、バラの雷管、真鍮のくず、真鍮板(小)が見つかる頻度を調整します。1がこのMODの標準バランスで、0にすると除外されます。すでに中身が生成されたコンテナはそのままです。",
     "Sandbox_AmmoMaking_XPMultiplier": "弾薬製造のXP倍率",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "弾薬製造スキル専用のXP倍率で、ゲームのスキルごとの倍率と同じものです。それらと同様、全体のXP倍率がオフのときにのみ使われ、それ以外は全体の倍率が適用されます。どの値でも、リサイクルではXPを得られません。"
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "弾薬製造スキル専用のXP倍率で、ゲームのスキルごとの倍率と同じものです。それらと同様、全体のXP倍率がオフのときにのみ使われ、それ以外は全体の倍率が適用されます。どの値でも、リサイクルではXPを得られません。",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "仕上げボーナス(倍率)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "鋳造弾頭へのろうそくのロウ塗り、プロパントーチでの薬莢の焼きなまし、スチールウールでの使用済み薬莢の清掃によって加わる品質を調整します。1がこのMODの標準バランスで、0にすると効果がなくなります。すでに仕上げ済みのアイテムは品質を保持します。",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "ダイセット再研磨による損失(倍率)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "再研磨するたびに、摩耗したダイセットを戻せる状態の上限がどれだけ下がるかを調整します。1がこのMODの標準バランス(再研磨1回につき2ポイント)で、値が高いほどダイセットが早く使えなくなります。最低でも1ポイントです。",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "質の悪いハンドロード弾の追加ジャム確率(倍率)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "実験的オプション「質の悪いハンドロード弾はジャムしやすくなる」が有効な場合のみ。最も質の悪いハンドロード弾の装填が加える追加ジャム確率の最大値を調整します(1で4パーセントポイント)。"
 }

@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Pots avaluar amb precisió la qualitat, la fiabilitat i el risc de fallada de la munició.",
     "IGUI_AmmoMaking_Metal_Copper": "Coure",
     "IGUI_AmmoMaking_Metal_Zinc": "Zinc",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "coure",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "zinc",
     "IGUI_AmmoMaking_Grade_None": "Cap",
     "IGUI_AmmoMaking_Grade_Trace": "Indicis",
     "IGUI_AmmoMaking_Grade_Poor": "Pobre",

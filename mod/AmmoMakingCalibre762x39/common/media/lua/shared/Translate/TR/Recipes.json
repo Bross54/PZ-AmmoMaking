@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "7.62x39 Dolum Matris Seti Döv",
+    "AmmoMaking_FormCase762x39": "7.62x39 Kovan Biçimlendir",
+    "AmmoMaking_SwageBullets762x39": "7.62x39 Bakır Çekirdek Presle",
+    "AmmoMaking_AssembleRound762x39": "7.62x39 Mermi Birleştir",
+    "AmmoMaking_RegrindDieSet762x39": "Aşınmış 7.62x39 Dolum Matris Setini Yeniden Bile",
+    "AmmoMaking_AnnealCases762x39": "7.62x39 Kovanları Hamlaçla Tavla",
+    "AmmoMaking_CastBullets762x39": "7.62x39 Kurşun Çekirdek Dök",
+    "AmmoMaking_CastBullets762x39InStoneMould": "7.62x39 Kurşun Çekirdek Dök (Taş Kalıp)",
+    "AmmoMaking_CastBullets762x39InClayMould": "7.62x39 Kurşun Çekirdek Dök (Kil Kalıp)",
+    "AmmoMaking_CastBullets762x39InSandMould": "7.62x39 Kurşun Çekirdek Dök (Kum Kalıp)",
+    "AmmoMaking_AssembleCastRound762x39": "7.62x39 Mermi Birleştir (Dökme Çekirdek, Gaz Kapağı)",
+    "AmmoMaking_LubeCastBullets762x39": "7.62x39 Kurşun Çekirdekleri Mumla Yağla"
+}

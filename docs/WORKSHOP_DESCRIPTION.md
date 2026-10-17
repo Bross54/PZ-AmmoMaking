@@ -60,11 +60,13 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [/list]
 
 [h2]Experimental, off by default[/h2]
-Three systems are written and have [b]not been verified in game[/b]. Leave them off for a normal game; switch them on only to test them, on a save you can afford to lose.
+Five systems are written and have [b]not been verified in game[/b]. Leave them off for a normal game; switch them on only to test them, on a save you can afford to lose.
 [list]
 [*][b]Reloading Press[/b] (separate mod in this item: Ammo Making: Reloading Press). A placed station that does the case, bullet and assembly steps faster, with the same die sets and material. Placeholder art.
 [*][b]Spent Cases[/b] (separate mod: Ammo Making: Spent Cases). Fired rounds leave spent brass, half of it found (a sandbox option). It is scrapped at a loss, or resized at the calibre's die set: two spent cases make one usable case, of a lower quality, for no XP. Single player. Do not combine with another mod that leaves casings.
-[*][b]Quality tracking[/b] (sandbox option, page Ammo Making). The case quality of handloaded rounds is kept through magazines and firearms and can be inspected there. Single player. Still no effect on shooting.
+[*][b]Quality tracking[/b] (sandbox option, page Ammo Making). The case quality of handloaded rounds is kept through magazines and firearms and can be inspected there. Single player.
+[*][b]Poor handloads jam more often[/b] (sandbox option, needs quality tracking). A load of poor handloads raises the gun's own jam chance a little; good handloads and factory rounds add nothing. Off by default: then a handloaded round fires exactly like a factory round.
+[*][b]7.62x39[/b] (separate mod: Ammo Making: 7.62x39, requires Vanilla Weapons Plus - Gunworks Edition). The AK-47's round handloaded like the vanilla rifle rounds.
 [/list]
 
 [h2]Multiplayer[/h2]

@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "Forjar joc de matrius de recàrrega de 7.62x39",
+    "AmmoMaking_FormCase762x39": "Conformar beina de 7.62x39",
+    "AmmoMaking_SwageBullets762x39": "Estampar projectils de coure de 7.62x39",
+    "AmmoMaking_AssembleRound762x39": "Muntar cartutx de 7.62x39",
+    "AmmoMaking_RegrindDieSet762x39": "Rectificar joc de matrius de recàrrega de 7.62x39 desgastat",
+    "AmmoMaking_AnnealCases762x39": "Recuir beines de 7.62x39 amb soldador de gas",
+    "AmmoMaking_CastBullets762x39": "Fondre projectils de plom de 7.62x39",
+    "AmmoMaking_CastBullets762x39InStoneMould": "Fondre projectils de plom de 7.62x39 (motlle de pedra)",
+    "AmmoMaking_CastBullets762x39InClayMould": "Fondre projectils de plom de 7.62x39 (motlle d'argila)",
+    "AmmoMaking_CastBullets762x39InSandMould": "Fondre projectils de plom de 7.62x39 (motlle de sorra)",
+    "AmmoMaking_AssembleCastRound762x39": "Muntar cartutx de 7.62x39 (projectil fos, gas check)",
+    "AmmoMaking_LubeCastBullets762x39": "Lubricar projectils de plom de 7.62x39 amb cera de ciri"
+}

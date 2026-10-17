@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Munitie maken)",
     "Sandbox_AmmoMaking_QualityTracking": "Munitiekwaliteit bijhouden in magazijnen en vuurwapens (experimenteel)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTEEL, alleen singleplayer. De hulskwaliteit van herladen patronen blijft behouden wanneer ze in een magazijn of vuurwapen worden geladen, en wordt teruggegeven wanneer ze worden ontladen. Heeft geen effect op het schieten. Nog niet in het spel geverifieerd.",
+    "Sandbox_AmmoMaking_QualityEffects": "Slechte herladen patronen lopen vaker vast (experimenteel)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTEEL, alleen singleplayer, vereist ook dat munitiekwaliteit bijhouden aan staat. Een lading slechte herladen patronen verhoogt na elk schot de eigen kans op vastlopen van het wapen een beetje, naar verhouding van hoe slecht ze zijn; goede herladen patronen en fabrieksmunitie voegen niets toe. Schade, bereik en nauwkeurigheid veranderen nooit. Nog niet in het spel geverifieerd.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: de server voert monstername, analyses, de analysator en mijnbouw uit (experimenteel)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTEEL, alleen multiplayer, nog niet op een server geverifieerd. Uit: op een multiplayerserver blijven monsters graven, de analysesets, de laboratoriumanalysator en mijnbouw geweigerd. Aan: clients vragen het aan, de server controleert afstand, gereedschap en voorwerpen en doet het werk, en alle spelers zien dezelfde afzettingen. Geen effect in singleplayer.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Erts per afzettingsvak (vermenigvuldiger)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Herlaadmateriaal als buit (vermenigvuldiger)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Bepaalt hoe vaak het buskruid, de losse slaghoedjes, de messingrestjes en de kleine messingplaten die de mod aan de buit toevoegt opduiken. 1 is de balans van de mod, 0 haalt ze weg. Reeds gevulde containers houden hun inhoud.",
     "Sandbox_AmmoMaking_XPMultiplier": "XP-vermenigvuldiger voor Munitie maken",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "De eigen XP-vermenigvuldiger van de vaardigheid Munitie maken, zoals de vermenigvuldigers per vaardigheid van het spel. Net als die wordt hij alleen gebruikt als de globale XP-vermenigvuldiger uitgeschakeld is; anders geldt de globale. Recyclen leert je bij geen enkele waarde iets."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "De eigen XP-vermenigvuldiger van de vaardigheid Munitie maken, zoals de vermenigvuldigers per vaardigheid van het spel. Net als die wordt hij alleen gebruikt als de globale XP-vermenigvuldiger uitgeschakeld is; anders geldt de globale. Recyclen leert je bij geen enkele waarde iets.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Afwerkingsbonus (vermenigvuldiger)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Bepaalt de kwaliteit die het invetten van gegoten kogels met kaarsvet, het uitgloeien van hulzen met een gasbrander en het reinigen van verschoten hulzen met staalwol toevoegen. 1 is de balans van de mod, 0 maakt ze waardeloos. Reeds afgewerkte voorwerpen houden hun kwaliteit.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Verlies bij naslijpen van matrijzensets (vermenigvuldiger)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Bepaalt hoeveel elke naslijpbeurt de staat verlaagt waarnaar een versleten matrijzenset kan worden teruggebracht. 1 is de balans van de mod (twee punten per naslijpbeurt); hoger slijt matrijzensets sneller op. Altijd minstens één punt.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Extra kans op vastlopen bij slechte herladen patronen (vermenigvuldiger)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Alleen met de experimentele optie 'Slechte herladen patronen lopen vaker vast'. Bepaalt de grootste extra kans op vastlopen die een lading van de slechtste herladen patronen toevoegt (4 procentpunten bij 1)."
 }

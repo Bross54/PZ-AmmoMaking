@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Cephane kalitesini, güvenilirliğini ve arıza riskini kesin olarak değerlendirebilirsin.",
     "IGUI_AmmoMaking_Metal_Copper": "Bakır",
     "IGUI_AmmoMaking_Metal_Zinc": "Çinko",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "bakır",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "çinko",
     "IGUI_AmmoMaking_Grade_None": "Yok",
     "IGUI_AmmoMaking_Grade_Trace": "Eser Miktar",
     "IGUI_AmmoMaking_Grade_Poor": "Fakir",

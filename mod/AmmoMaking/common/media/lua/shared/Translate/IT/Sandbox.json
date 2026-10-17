@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Fabbricazione munizioni)",
     "Sandbox_AmmoMaking_QualityTracking": "Traccia la qualità delle munizioni in caricatori e armi (sperimentale)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "SPERIMENTALE, solo giocatore singolo. La qualità del bossolo delle munizioni ricaricate viene conservata quando vengono inserite in un caricatore o in un'arma, e restituita quando vengono scaricate. Non ha effetto sullo sparo. Non ancora verificato in gioco.",
+    "Sandbox_AmmoMaking_QualityEffects": "Le munizioni ricaricate scadenti si inceppano più spesso (sperimentale)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "SPERIMENTALE, solo giocatore singolo, richiede anche il tracciamento della qualità attivo. Un caricamento di munizioni ricaricate scadenti aumenta un po' la probabilità di inceppamento propria dell'arma dopo ogni colpo, in proporzione a quanto sono scadenti; le buone munizioni ricaricate e quelle di fabbrica non aggiungono nulla. Danno, gittata e precisione non vengono mai modificati. Non ancora verificato in gioco.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multigiocatore: il server esegue campionamenti, analisi, analizzatore ed estrazione (sperimentale)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "SPERIMENTALE, solo multigiocatore, non ancora verificato su un server. Disattivato: su un server multigiocatore, il prelievo di campioni, i kit di analisi, l'analizzatore da laboratorio e l'estrazione restano rifiutati. Attivato: i client fanno richiesta, il server controlla distanza, attrezzi e oggetti ed esegue il lavoro, e tutti i giocatori vedono gli stessi giacimenti. Nessun effetto in giocatore singolo.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minerale per casella di giacimento (moltiplicatore)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Materiale da ricarica trovato come bottino (moltiplicatore)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Regola quanto spesso compaiono la polvere da sparo, gli inneschi sfusi, gli scarti d'ottone e le lamiere d'ottone piccole che la mod aggiunge al bottino. 1 è il bilanciamento della mod, 0 li rimuove. I contenitori già riempiti mantengono il loro contenuto.",
     "Sandbox_AmmoMaking_XPMultiplier": "Moltiplicatore PE di Fabbricazione munizioni",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Il moltiplicatore PE proprio dell'abilità Fabbricazione munizioni, come i moltiplicatori per abilità del gioco. Come quelli, viene usato solo quando il moltiplicatore PE globale è disattivato; altrimenti si applica quello globale. Il riciclo non insegna nulla, a qualsiasi valore."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Il moltiplicatore PE proprio dell'abilità Fabbricazione munizioni, come i moltiplicatori per abilità del gioco. Come quelli, viene usato solo quando il moltiplicatore PE globale è disattivato; altrimenti si applica quello globale. Il riciclo non insegna nulla, a qualsiasi valore.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bonus di rifinitura (moltiplicatore)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Regola la qualità aggiunta dalla lubrificazione dei proiettili fusi con cera di candela, dalla ricottura dei bossoli con la torcia al propano e dalla pulizia dei bossoli sparati con la lana d'acciaio. 1 è il bilanciamento della mod, 0 li rende inutili. Gli oggetti già rifiniti mantengono la loro qualità.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Perdita da rettifica dei set di matrici (moltiplicatore)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Regola di quanto ogni rettifica abbassa la condizione a cui un set di matrici usurato può essere riportato. 1 è il bilanciamento della mod (due punti per rettifica); valori più alti consumano prima i set di matrici. Sempre almeno un punto.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Probabilità extra di inceppamento delle munizioni ricaricate scadenti (moltiplicatore)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Solo con l'opzione sperimentale 'Le munizioni ricaricate scadenti si inceppano più spesso'. Regola la massima probabilità extra di inceppamento che aggiunge un caricamento delle peggiori munizioni ricaricate (4 punti percentuali a 1)."
 }

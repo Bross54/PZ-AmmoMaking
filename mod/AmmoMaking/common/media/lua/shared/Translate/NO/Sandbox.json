@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (ammunisjonslaging)",
     "Sandbox_AmmoMaking_QualityTracking": "Spor ammunisjonskvalitet i magasiner og skytevåpen (eksperimentelt)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EKSPERIMENTELT, kun enspiller. Hylsekvaliteten til håndladede patroner beholdes når de lades i et magasin eller skytevåpen, og gis tilbake når de lades ut. Det har ingen virkning på skyting. Ikke verifisert i spillet ennå.",
+    "Sandbox_AmmoMaking_QualityEffects": "Dårlige håndladede patroner kiler seg oftere (eksperimentelt)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EKSPERIMENTELT, kun enspiller, krever også at kvalitetssporing er slått på. En ladning dårlige håndladede patroner øker våpenets egen sjanse for kiling litt etter hvert skudd, i forhold til hvor dårlige de er; gode håndladede patroner og fabrikkpatroner legger ikke til noe. Skade, rekkevidde og presisjon endres aldri. Ikke verifisert i spillet ennå.",
     "Sandbox_AmmoMaking_ServerAuthority": "Flerspiller: serveren utfører prøvetaking, analyser, analysatoren og gruvedrift (eksperimentelt)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EKSPERIMENTELT, kun flerspiller, ikke verifisert på en server ennå. Av: på en flerspillerserver forblir graving av prøver, analysesettene, laboratorieanalysatoren og gruvedrift avvist. På: klientene spør, serveren sjekker avstand, verktøy og gjenstander og gjør jobben, og alle spillere ser de samme forekomstene. Ingen virkning i enspiller.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Malm per forekomstrute (multiplikator)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Ladekomponenter funnet som bytte (multiplikator)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Skalerer hvor ofte krutt, løse tennhetter, skrot av messing og små messingplater som moden legger til i byttet, dukker opp. 1 er modens balanse, 0 fjerner dem. Beholdere som allerede er fylt, beholder innholdet sitt.",
     "Sandbox_AmmoMaking_XPMultiplier": "XP-multiplikator for ammunisjonslaging",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Ammunisjonslaging-ferdighetens egen XP-multiplikator, som spillets multiplikatorer per ferdighet. Som dem brukes den bare når den globale XP-multiplikatoren er slått av; ellers gjelder den globale. Resirkulering gir ingen lærdom uansett verdi."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Ammunisjonslaging-ferdighetens egen XP-multiplikator, som spillets multiplikatorer per ferdighet. Som dem brukes den bare når den globale XP-multiplikatoren er slått av; ellers gjelder den globale. Resirkulering gir ingen lærdom uansett verdi.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Etterbehandlingsbonus (multiplikator)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Skalerer kvaliteten som smøring av støpte kuler med stearin, glødning av hylser med propanbrenner og rengjøring av brukte hylser med stålull legger til. 1 er modens balanse, 0 gjør dem verdiløse. Gjenstander som allerede er etterbehandlet, beholder kvaliteten sin.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Tap ved omsliping av matrisesett (multiplikator)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Skalerer hvor mye hver omsliping senker tilstanden et slitt matrisesett kan bringes tilbake til. 1 er modens balanse (to poeng per omsliping); høyere verdi sliter ut matrisesett raskere. Alltid minst ett poeng.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Ekstra sjanse for kiling med dårlige håndladede patroner (multiplikator)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Bare med det eksperimentelle valget 'Dårlige håndladede patroner kiler seg oftere'. Skalerer den største ekstra sjansen for kiling som en ladning av de dårligste håndladede patronene legger til (4 prosentpoeng ved 1)."
 }

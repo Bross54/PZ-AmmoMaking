@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Pembuatan Amunisi)",
     "Sandbox_AmmoMaking_QualityTracking": "Lacak kualitas amunisi di magasin dan senjata api (eksperimental)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EKSPERIMENTAL, khusus single player. Kualitas selongsong peluru isi ulang buatan tangan tetap tersimpan saat diisikan ke magasin atau senjata api, dan dikembalikan saat dikeluarkan. Tidak berpengaruh pada tembakan. Belum diverifikasi di dalam game.",
+    "Sandbox_AmmoMaking_QualityEffects": "Peluru isi ulang buruk lebih sering macet (eksperimental)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EKSPERIMENTAL, khusus single player, pelacakan kualitas juga harus aktif. Isian peluru isi ulang buatan tangan yang buruk sedikit menaikkan peluang macet milik senjata itu sendiri setelah setiap tembakan, sebanding dengan seberapa buruk kualitasnya; peluru isi ulang yang bagus dan peluru pabrikan tidak menambah apa pun. Kerusakan, jarak, dan akurasi tidak pernah berubah. Belum diverifikasi di dalam game.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: server menjalankan pengambilan sampel, uji kadar, alat analisis, dan penambangan (eksperimental)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EKSPERIMENTAL, khusus multiplayer, belum diverifikasi di server. Mati: di server multiplayer, menggali sampel, kit uji kadar, alat analisis laboratorium, dan penambangan tetap ditolak. Nyala: klien mengajukan permintaan, server memeriksa jarak, alat, dan item lalu mengerjakannya, dan semua pemain melihat endapan yang sama. Tidak berpengaruh di single player.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Bijih per petak endapan (multiplier)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Bahan reloading sebagai loot (multiplier)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Mengatur seberapa sering bubuk mesiu, primer lepasan, brass bekas, dan lembaran brass kecil yang ditambahkan mod ke loot muncul. 1 adalah keseimbangan bawaan mod, 0 menghapusnya. Kontainer yang sudah terisi tetap menyimpan isinya.",
     "Sandbox_AmmoMaking_XPMultiplier": "Multiplier XP Pembuatan Amunisi",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplier XP khusus skill Pembuatan Amunisi, seperti multiplier per skill bawaan game. Sama seperti itu, nilai ini hanya dipakai jika multiplier XP global dimatikan; jika tidak, multiplier global yang berlaku. Daur ulang tidak memberikan XP pada nilai berapa pun."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplier XP khusus skill Pembuatan Amunisi, seperti multiplier per skill bawaan game. Sama seperti itu, nilai ini hanya dipakai jika multiplier XP global dimatikan; jika tidak, multiplier global yang berlaku. Daur ulang tidak memberikan XP pada nilai berapa pun.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bonus penyelesaian (multiplier)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Mengatur kualitas yang ditambahkan dengan melumasi proyektil cor dengan lilin, melunakkan selongsong dengan obor propana, dan membersihkan selongsong bekas dengan wol baja. 1 adalah keseimbangan bawaan mod, 0 membuatnya tidak berguna. Item yang sudah selesai diproses tetap mempertahankan kualitasnya.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Kehilangan saat mengasah ulang set die (multiplier)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Mengatur seberapa banyak setiap asah ulang menurunkan kondisi yang dapat dipulihkan kembali pada set die yang aus. 1 adalah keseimbangan bawaan mod (dua poin per asah ulang); nilai lebih tinggi membuat set die lebih cepat habis. Selalu minimal satu poin.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Peluang macet tambahan peluru isi ulang buruk (multiplier)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Hanya dengan opsi eksperimental 'Peluru isi ulang buruk lebih sering macet'. Mengatur peluang macet tambahan terbesar yang ditambahkan oleh isian peluru isi ulang terburuk (4 poin persentase pada nilai 1)."
 }

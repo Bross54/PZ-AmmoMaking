@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "锻造7.62x39复装模具组",
+    "AmmoMaking_FormCase762x39": "成形7.62x39弹壳",
+    "AmmoMaking_SwageBullets762x39": "压制7.62x39铜弹头",
+    "AmmoMaking_AssembleRound762x39": "组装7.62x39子弹",
+    "AmmoMaking_RegrindDieSet762x39": "重新研磨磨损的7.62x39复装模具组",
+    "AmmoMaking_AnnealCases762x39": "用丙烷喷灯退火7.62x39弹壳",
+    "AmmoMaking_CastBullets762x39": "铸造7.62x39铅弹头",
+    "AmmoMaking_CastBullets762x39InStoneMould": "铸造7.62x39铅弹头 (石模)",
+    "AmmoMaking_CastBullets762x39InClayMould": "铸造7.62x39铅弹头 (黏土模)",
+    "AmmoMaking_CastBullets762x39InSandMould": "铸造7.62x39铅弹头 (砂模)",
+    "AmmoMaking_AssembleCastRound762x39": "组装7.62x39子弹 (铸造弹头、铜护底)",
+    "AmmoMaking_LubeCastBullets762x39": "用蜡烛蜡润滑7.62x39铅弹头"
+}

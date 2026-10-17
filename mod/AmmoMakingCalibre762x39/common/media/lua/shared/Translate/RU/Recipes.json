@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "Выковать набор матриц для снаряжения патронов 7.62x39",
+    "AmmoMaking_FormCase762x39": "Сформовать гильзу 7.62x39",
+    "AmmoMaking_SwageBullets762x39": "Обжать медные пули 7.62x39",
+    "AmmoMaking_AssembleRound762x39": "Собрать патрон 7.62x39",
+    "AmmoMaking_RegrindDieSet762x39": "Перешлифовать изношенный набор матриц для снаряжения патронов 7.62x39",
+    "AmmoMaking_AnnealCases762x39": "Отжечь гильзы 7.62x39 пропановой горелкой",
+    "AmmoMaking_CastBullets762x39": "Отлить свинцовые пули 7.62x39",
+    "AmmoMaking_CastBullets762x39InStoneMould": "Отлить свинцовые пули 7.62x39 (каменная форма)",
+    "AmmoMaking_CastBullets762x39InClayMould": "Отлить свинцовые пули 7.62x39 (глиняная форма)",
+    "AmmoMaking_CastBullets762x39InSandMould": "Отлить свинцовые пули 7.62x39 (песчаная форма)",
+    "AmmoMaking_AssembleCastRound762x39": "Собрать патрон 7.62x39 (литая пуля, газчек)",
+    "AmmoMaking_LubeCastBullets762x39": "Смазать свинцовые пули 7.62x39 свечным воском"
+}

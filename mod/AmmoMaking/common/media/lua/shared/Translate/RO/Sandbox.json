@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Fabricare Muniție)",
     "Sandbox_AmmoMaking_QualityTracking": "Urmărește calitatea muniției în încărcătoare și arme de foc (experimental)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, doar pentru un singur jucător. Calitatea tubului cartușelor reîncărcate manual se păstrează când sunt încărcate într-un încărcător sau într-o armă de foc și este redată când sunt descărcate. Nu are niciun efect asupra tragerii. Încă neverificat în joc.",
+    "Sandbox_AmmoMaking_QualityEffects": "Cartușele reîncărcate manual de calitate slabă se blochează mai des (experimental)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTAL, doar pentru un singur jucător, necesită și urmărirea calității muniției activată. O încărcătură de cartușe reîncărcate manual de calitate slabă crește puțin șansa proprie de blocare a armei după fiecare foc, proporțional cu cât de slabă este; cartușele reîncărcate manual bune și cele din fabrică nu adaugă nimic. Daunele, raza de acțiune și precizia nu se schimbă niciodată. Încă neverificat în joc.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: serverul efectuează prelevarea, analizele, analizorul și mineritul (experimental)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, doar pentru multiplayer, încă neverificat pe un server. Oprit: pe un server multiplayer, săparea probelor, trusele de analiză, analizorul de laborator și mineritul rămân refuzate. Pornit: clienții cer, serverul verifică distanța, uneltele și obiectele și face munca, iar toți jucătorii văd aceleași zăcăminte. Niciun efect în modul pentru un singur jucător.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minereu per pătrat de zăcământ (multiplicator)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Materiale de reîncărcare găsite ca pradă (multiplicator)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Stabilește cât de des apar praful de pușcă, capsele separate, resturile de alamă și tablele mici din alamă pe care modul le adaugă în pradă. 1 este echilibrul modului, 0 le scoate. Containerele deja umplute păstrează ce conțin.",
     "Sandbox_AmmoMaking_XPMultiplier": "Multiplicator XP Fabricare Muniție",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplicatorul XP propriu al abilității Fabricare Muniție, ca multiplicatorii pe abilitate ai jocului. Ca și aceștia, se folosește doar când multiplicatorul XP global este dezactivat; altfel se aplică cel global. Reciclarea nu oferă experiență la nicio valoare."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplicatorul XP propriu al abilității Fabricare Muniție, ca multiplicatorii pe abilitate ai jocului. Ca și aceștia, se folosește doar când multiplicatorul XP global este dezactivat; altfel se aplică cel global. Reciclarea nu oferă experiență la nicio valoare.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bonus de finisare (multiplicator)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Stabilește calitatea pe care o adaugă ungerea proiectilelor turnate cu ceară de lumânare, recoacerea tuburilor cu torța de sudare și curățarea tuburilor trase cu lână de oțel. 1 este echilibrul modului, 0 le face inutile. Obiectele deja finisate își păstrează calitatea.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Pierdere la rectificarea seturilor de matrițe (multiplicator)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Stabilește cât scade fiecare rectificare starea la care poate fi readus un set uzat de matrițe. 1 este echilibrul modului (două puncte pe rectificare); valorile mai mari uzează seturile de matrițe mai repede. Întotdeauna cel puțin un punct.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Șansă suplimentară de blocare a cartușelor reîncărcate manual de calitate slabă (multiplicator)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Doar cu opțiunea experimentală 'Cartușele reîncărcate manual de calitate slabă se blochează mai des'. Stabilește cea mai mare șansă suplimentară de blocare pe care o adaugă o încărcătură din cele mai slabe cartușe reîncărcate manual (4 puncte procentuale la 1)."
 }

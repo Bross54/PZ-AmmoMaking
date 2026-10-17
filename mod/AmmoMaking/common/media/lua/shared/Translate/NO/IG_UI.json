@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Du kan nøyaktig vurdere ammunisjonens kvalitet, pålitelighet og feilrisiko.",
     "IGUI_AmmoMaking_Metal_Copper": "Kobber",
     "IGUI_AmmoMaking_Metal_Zinc": "Sink",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "kobber",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "sink",
     "IGUI_AmmoMaking_Grade_None": "Ingen",
     "IGUI_AmmoMaking_Grade_Trace": "Spor",
     "IGUI_AmmoMaking_Grade_Poor": "Fattig",

@@ -6,7 +6,8 @@ to vanilla's reload functions by `AC_QualityCarrier.lua` (section 9), behind
 the sandbox option *Track ammunition quality in magazines and firearms*,
 single player only. With the option off nothing is wrapped, listened to or
 stored. It has no effect on firing. An effect is written
-(`AC_QualityEffects.lua`, 9.4) and locked: no setting switches it on.
+(`AC_QualityEffects.lua`, 9.4): an experimental sandbox option, off by
+default, that also needs the tracking on.
 Sections 1 to 7 are the research as it was written before the wiring.
 
 Today a handloaded round carries its casing quality in the loose item's
@@ -473,11 +474,14 @@ The model is the mod's reading of vanilla's Lua, not the game. Section 6
 stays open in full, and `docs/INGAME_VALIDATION.md` 20 and 21 are the
 session that closes it.
 
-### 9.4 The effect, locked: `AC_QualityEffects.lua`
+### 9.4 The effect, experimental and off: `AC_QualityEffects.lua`
 
-Feature `qualityEffects`: **disabled**. It has no sandbox option and no
-add-on; `AC_Features` answers "locked" whatever is set, and `afterShot`
-returns before it looks at anything.
+Feature `qualityEffects`: **experimental** since the developer's decision
+of 2026-10-17, switched by the sandbox option *Poor handloads jam more
+often* (`AmmoMaking.QualityEffects`, default off) and only with quality
+tracking on as well. Off, `afterShot` returns before it looks at anything.
+The largest extra chance is scaled by `AmmoMaking.ExtraJamMultiplier`
+(default 1). Neither the tracking nor the effect has been seen in game.
 
 What is written, for the day tracking has been seen to stay in step and a
 decision is made that quality should matter:

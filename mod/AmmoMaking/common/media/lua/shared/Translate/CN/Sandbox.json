@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "弹药制造 (Ammo Making)",
     "Sandbox_AmmoMaking_QualityTracking": "在弹匣和枪械中追踪弹药质量 (实验性)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "实验性功能，仅限单人游戏。复装子弹装入弹匣或枪械时会保留其弹壳质量，卸下时会返还。对射击没有影响。尚未在游戏中验证。",
+    "Sandbox_AmmoMaking_QualityEffects": "劣质复装子弹更容易卡壳 (实验性)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "实验性功能，仅限单人游戏，还需同时开启弹药质量追踪。一组劣质复装子弹会在每次射击后略微提高枪械自身的卡壳几率，提高幅度与其劣质程度成正比；优质复装子弹和工厂子弹不会增加任何几率。伤害、射程和精准度永远不会改变。尚未在游戏中验证。",
     "Sandbox_AmmoMaking_ServerAuthority": "联机: 由服务器执行采样、化验、分析仪和开采 (实验性)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "实验性功能，仅限联机，尚未在服务器上验证。关闭: 在联机服务器上，挖掘样本、化验套件、实验室分析仪和开采仍会被拒绝。开启: 客户端发出请求，服务器检查距离、工具和物品并执行操作，所有玩家看到相同的矿藏。在单人游戏中无效。",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "每格矿藏的矿石量 (倍率)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "作为物资出现的复装材料 (倍率)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "调整本模组添加到物资中的火药、散装底火、黄铜废料和小黄铜板出现的频率。1 为本模组的默认平衡，0 则将其移除。已生成物品的容器保留原有物品。",
     "Sandbox_AmmoMaking_XPMultiplier": "弹药制造经验倍率",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "弹药制造技能自身的经验倍率，与游戏中各技能的经验倍率相同。与它们一样，仅在关闭全局经验倍率时使用；否则采用全局倍率。无论设为何值，回收都不会获得经验。"
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "弹药制造技能自身的经验倍率，与游戏中各技能的经验倍率相同。与它们一样，仅在关闭全局经验倍率时使用；否则采用全局倍率。无论设为何值，回收都不会获得经验。",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "后处理加成 (倍率)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "调整用蜡烛蜡润滑铸造弹头、用丙烷喷灯退火弹壳以及用钢丝绒清洁旧弹壳所增加的质量。1 为本模组的默认平衡，0 则使其毫无效果。已处理完成的物品保留其质量。",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "模具组重新研磨损耗 (倍率)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "调整每次重新研磨使磨损模具组可恢复到的耐久度降低多少。1 为本模组的默认平衡 (每次重新研磨降低两点)；数值越高，模具组越快报废。至少为一点。",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "劣质复装子弹的额外卡壳几率 (倍率)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "仅在开启实验性选项“劣质复装子弹更容易卡壳”时生效。调整一组最差的复装子弹所增加的最大额外卡壳几率 (为 1 时为 4 个百分点)。"
 }

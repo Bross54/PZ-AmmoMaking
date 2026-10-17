@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Fabricación de munición)",
     "Sandbox_AmmoMaking_QualityTracking": "Registrar la calidad de la munición en cargadores y armas de fuego (experimental)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, solo para un jugador. La calidad del casquillo de los cartuchos recargados a mano se conserva al cargarlos en un cargador o un arma de fuego, y se recupera al descargarlos. No afecta al disparo. Todavía no se verificó en el juego.",
+    "Sandbox_AmmoMaking_QualityEffects": "Los cartuchos recargados a mano de mala calidad se traban más seguido (experimental)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPERIMENTAL, solo para un jugador; también requiere activar el registro de calidad de la munición. Una carga de cartuchos recargados a mano de mala calidad aumenta un poco la probabilidad de trabado propia del arma después de cada disparo, en proporción a qué tan mala sea; los cartuchos recargados a mano buenos y los de fábrica no suman nada. El daño, el alcance y la precisión nunca cambian. Todavía no se verificó en el juego.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multijugador: el servidor se encarga del muestreo, los ensayos, el analizador y la minería (experimental)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, solo multijugador, todavía no verificado en un servidor. Desactivado: en un servidor multijugador, extraer muestras, los kits de ensayo, el analizador de laboratorio y la minería siguen bloqueados. Activado: los clientes lo solicitan, el servidor comprueba la distancia, las herramientas y los objetos y hace el trabajo, y todos los jugadores ven los mismos yacimientos. Sin efecto en un jugador.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Mineral por casilla de yacimiento (multiplicador)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Material de recarga como botín (multiplicador)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajusta la frecuencia con la que aparecen la pólvora, los fulminantes sueltos, la chatarra de latón y las láminas de latón pequeñas que el mod agrega al botín. 1 es el balance del mod; 0 los quita. Los contenedores ya llenos conservan su contenido.",
     "Sandbox_AmmoMaking_XPMultiplier": "Multiplicador de XP de Fabricación de munición",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplicador de XP propio de la habilidad Fabricación de munición, como los multiplicadores por habilidad del juego. Al igual que ellos, solo se usa cuando el multiplicador de XP global está desactivado; si no, se aplica el global. El reciclaje no enseña nada con ningún valor."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplicador de XP propio de la habilidad Fabricación de munición, como los multiplicadores por habilidad del juego. Al igual que ellos, solo se usa cuando el multiplicador de XP global está desactivado; si no, se aplica el global. El reciclaje no enseña nada con ningún valor.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bonificación por acabado (multiplicador)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Ajusta la calidad que suman lubricar proyectiles de plomo fundidos con cera de vela, recocer casquillos con pistola para soldar y limpiar casquillos usados con lana de acero. 1 es el balance del mod; 0 los vuelve inútiles. Los objetos ya terminados conservan su calidad.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Pérdida al rectificar juegos de matrices (multiplicador)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Ajusta cuánto baja cada rectificado el estado al que se puede devolver un juego de matrices desgastado. 1 es el balance del mod (dos puntos por rectificado); los valores más altos desgastan antes los juegos de matrices. Siempre al menos un punto.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Probabilidad extra de trabado de los cartuchos recargados a mano de mala calidad (multiplicador)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Solo con la opción experimental 'Los cartuchos recargados a mano de mala calidad se traban más seguido'. Ajusta la mayor probabilidad extra de trabado que suma una carga de los peores cartuchos recargados a mano (4 puntos porcentuales con 1)."
 }

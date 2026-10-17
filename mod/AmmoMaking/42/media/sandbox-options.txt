@@ -8,6 +8,14 @@ option AmmoMaking.QualityTracking
     translation = AmmoMaking_QualityTracking,
 }
 
+option AmmoMaking.QualityEffects
+{
+    type = boolean,
+    default = false,
+    page = AmmoMaking,
+    translation = AmmoMaking_QualityEffects,
+}
+
 option AmmoMaking.ServerAuthority
 {
     type = boolean,
@@ -54,4 +62,34 @@ option MultiplierConfig.AmmoMaking
     default = 1.0,
     page = AmmoMaking,
     translation = AmmoMaking_XPMultiplier,
+}
+
+option AmmoMaking.TreatmentBonusMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 1.5,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_TreatmentBonusMultiplier,
+}
+
+option AmmoMaking.RegrindLossMultiplier
+{
+    type = double,
+    min = 0.5,
+    max = 2.5,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_RegrindLossMultiplier,
+}
+
+option AmmoMaking.ExtraJamMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 2.5,
+    default = 1.0,
+    page = AmmoMaking,
+    translation = AmmoMaking_ExtraJamMultiplier,
 }

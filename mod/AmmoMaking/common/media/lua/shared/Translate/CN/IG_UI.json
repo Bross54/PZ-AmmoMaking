@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "你能精确评估弹药的质量、可靠性和故障风险。",
     "IGUI_AmmoMaking_Metal_Copper": "铜",
     "IGUI_AmmoMaking_Metal_Zinc": "锌",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "铜",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "锌",
     "IGUI_AmmoMaking_Grade_None": "无",
     "IGUI_AmmoMaking_Grade_Trace": "微量",
     "IGUI_AmmoMaking_Grade_Poor": "贫乏",

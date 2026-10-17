@@ -209,7 +209,7 @@ MUTANTS = [
     (SHARED + "AC_Features.lua", "    if definition.stability ~= AC_Features.EXPERIMENTAL then\n        return false, \"locked\"\n    end\n", "", "a locked feature can be switched on"),
     (SHARED + "AC_Features.lua", "    if definition.singlePlayerOnly\n        and AC_Features.isMultiplayer()\n    then\n        return false, \"multiplayer\"\n    end\n", "", "a single-player feature runs on a multiplayer client"),
     (SHARED + "AC_Features.lua", "        if AC_Features.isModActive(other) then\n            return false, \"conflict with \" .. other\n        end\n", "", "spent cases run beside a mod that already leaves casings"),
-    (SHARED + "AC_Features.lua", "        stability = AC_Features.DISABLED,", "        stability = AC_Features.EXPERIMENTAL,", "firing effects are unlocked"),
+    (SHARED + "AC_Features.lua", "        -- game.\n        stability = AC_Features.EXPERIMENTAL,", "        -- game.\n        stability = AC_Features.DISABLED,", "firing effects are locked again"),
     (SHARED + "AC_Features.lua", "    if definition.requires\n        and not AC_Features.isEnabled(definition.requires)\n    then\n        return false, \"needs \" .. definition.requires\n    end\n", "", "a feature runs without the one it needs"),
 
     # ---- the press add-on
@@ -278,7 +278,7 @@ MUTANTS = [
 
     # ---- quality effects (locked)
     (SHARED + "AC_QualityEffects.lua", "    if not AC_Features.isEnabled(\"qualityEffects\") then\n        return nil\n    end\n", "", "firing effects run although the feature is locked"),
-    (SHARED + "AC_QualityEffects.lua", "        config.maximumExtraJamPercent * missing / (span * count)", "        config.maximumExtraJamPercent * missing / (span * handloaded)", "factory rounds in a load do not dilute the jam chance"),
+    (SHARED + "AC_QualityEffects.lua", "        maximum * missing / (span * count)", "        maximum * missing / (span * handloaded)", "factory rounds in a load do not dilute the jam chance"),
     (SHARED + "AC_QualityEffects.lua", "            if (tonumber(weapon:getJamGunChance()) or 0) <= 0\n                or weapon:isJammed()\n            then\n                return false\n            end\n", "", "a firearm that cannot jam is jammed by a poor handload"),
     (SHARED + "AC_QualityEffects.lua", "    local missing =\n        handloaded * config.bestQuality - qualitySum\n", "    local missing =\n        handloaded * config.bestQuality\n", "the jam chance ignores how good the handloads are"),
 
@@ -339,10 +339,13 @@ MUTANTS = [
     (SHARED + "AC_Casting.lua", "                { count = input.count, items = { calibre.castBullet } }", "                { count = input.count, items = { calibre.bullet } }", "the cast assembly takes the copper bullet"),
     (SHARED + "AC_Casting.lua", "                        keep = material.keep or nil,", "                        keep = nil,", "the cast consumes the mould"),
     (SHARED + "AC_CaseQuality.lua", "                if not source.lubed then\n", "                if true then\n", "lubing the same bullet twice adds twice"),
-    (SHARED + "AC_Calibres.lua", "        - AC_Calibres.REGRIND.lossPerRegrind * (tonumber(regrinds) or 1)\n", "", "a die set reground for ever comes back new"),
+    (SHARED + "AC_Calibres.lua", "        - loss * (tonumber(regrinds) or 1)\n", "", "a die set reground for ever comes back new"),
     (SHARED + "AC_Casting.lua", "    if class.gasCheck then\n\n        table.insert(\n            inputs,", "    if false then\n\n        table.insert(\n            inputs,", "a rifle's cast round needs no gas check"),
-    (SHARED + "AC_CaseQuality.lua", "                    + config.cleanedBonus\n", "                    + 15\n", "a cleaned spent case resizes better than a new case"),
+    (SHARED + "AC_CaseQuality.lua", "                    + treatment(config.cleanedBonus)\n", "                    + 15\n", "a cleaned spent case resizes better than a new case"),
     (SHARED + "AC_CaseQuality.lua", "                if not source.annealed then\n", "                if true then\n", "annealing the same case twice adds twice"),
+    (SHARED + "AC_Calibres.lua", "for _,\n    calibre\nin ipairs(\n    AC_Calibres.getActiveExtensions()\n)\ndo\n\n    table.insert(\n        AC_Calibres.ALL,", "for _,\n    calibre\nin ipairs(\n    AC_Calibres.EXTENSIONS\n)\ndo\n\n    table.insert(\n        AC_Calibres.ALL,", "an extension calibre is in the game without its add-on"),
+    (SHARED + "AC_CaseQuality.lua", "    return (tonumber(bonus) or 0) * scale\n", "    return (tonumber(bonus) or 0)\n", "the finishing bonus ignores its sandbox option"),
+    (SHARED + "AC_Calibres.lua", "AC_Calibres.REGRIND.lossPerRegrind * scale + 0.5", "AC_Calibres.REGRIND.lossPerRegrind + 0.5", "the regrinding loss ignores its sandbox option"),
     (SHARED + "AC_Casting.lua", "    { id = \"sand\", prefix = \"Sand\", qualityBonus = -20, keep = false },", "    { id = \"sand\", prefix = \"Sand\", qualityBonus = 0, keep = false },", "a sand mould casts as well as iron"),
     (SHARED + "AC_CaseQuality.lua", "                if bulletQuality then\n", "                if false then\n", "a cast bullet's quality never reaches its round"),
     (SHARED + "AC_Calibres.lua", "    if class.mould then\n\n        calibre.castBullet =", "    if true then\n\n        calibre.castBullet =", "rifles cast lead bullets"),

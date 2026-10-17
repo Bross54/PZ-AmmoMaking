@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "คุณสามารถประเมินคุณภาพ ความน่าเชื่อถือ และความเสี่ยงที่กระสุนจะเสียหายได้อย่างแม่นยำ",
     "IGUI_AmmoMaking_Metal_Copper": "ทองแดง",
     "IGUI_AmmoMaking_Metal_Zinc": "สังกะสี",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "ทองแดง",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "สังกะสี",
     "IGUI_AmmoMaking_Grade_None": "ไม่มี",
     "IGUI_AmmoMaking_Grade_Trace": "เล็กน้อยมาก",
     "IGUI_AmmoMaking_Grade_Poor": "ต่ำ",

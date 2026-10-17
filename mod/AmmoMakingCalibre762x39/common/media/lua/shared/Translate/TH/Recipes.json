@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "ตีขึ้นรูปชุดดายบรรจุกระสุน 7.62x39",
+    "AmmoMaking_FormCase762x39": "ขึ้นรูปปลอกกระสุน 7.62x39",
+    "AmmoMaking_SwageBullets762x39": "อัดขึ้นรูปหัวกระสุนทองแดง 7.62x39",
+    "AmmoMaking_AssembleRound762x39": "ประกอบกระสุน 7.62x39",
+    "AmmoMaking_RegrindDieSet762x39": "เจียรชุดดายบรรจุกระสุน 7.62x39 ที่สึกหรอ",
+    "AmmoMaking_AnnealCases762x39": "อบอ่อนปลอกกระสุน 7.62x39 ด้วยหัวเชื่อมโลหะ",
+    "AmmoMaking_CastBullets762x39": "หล่อหัวกระสุนตะกั่ว 7.62x39",
+    "AmmoMaking_CastBullets762x39InStoneMould": "หล่อหัวกระสุนตะกั่ว 7.62x39 (แม่พิมพ์หิน)",
+    "AmmoMaking_CastBullets762x39InClayMould": "หล่อหัวกระสุนตะกั่ว 7.62x39 (แม่พิมพ์ดินเหนียว)",
+    "AmmoMaking_CastBullets762x39InSandMould": "หล่อหัวกระสุนตะกั่ว 7.62x39 (แม่พิมพ์ทราย)",
+    "AmmoMaking_AssembleCastRound762x39": "ประกอบกระสุน 7.62x39 (หัวกระสุนหล่อ, แก๊สเช็ค)",
+    "AmmoMaking_LubeCastBullets762x39": "หล่อลื่นหัวกระสุนตะกั่ว 7.62x39 ด้วยขี้ผึ้งเทียน"
+}

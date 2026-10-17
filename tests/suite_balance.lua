@@ -20,7 +20,7 @@ return function(T)
         if not ok then error(err, 0) end
     end
 
-    section("Balance options: four multipliers, default 1, checked in one place")
+    section("Balance options: seven multipliers, default 1, checked in one place")
     do
         local B = AC_Balance
         eq(#B.validate(), 0, "the option table is sound: " .. table.concat(B.validate(), "; "))
@@ -32,8 +32,11 @@ return function(T)
             { "dieSetLoot", "AmmoMaking", "DieSetLootMultiplier", 0.0, 2.0, "lua" },
             { "componentLoot", "AmmoMaking", "ComponentLootMultiplier", 0.0, 2.0, "lua" },
             { "xp", "MultiplierConfig", "AmmoMaking", 0.0, 1000.0, "engine" },
+            { "treatmentBonus", "AmmoMaking", "TreatmentBonusMultiplier", 0.0, 1.5, "lua" },
+            { "regrindLoss", "AmmoMaking", "RegrindLossMultiplier", 0.5, 2.5, "lua" },
+            { "jamChance", "AmmoMaking", "ExtraJamMultiplier", 0.0, 2.5, "lua" },
         }
-        eq(#B.OPTIONS, #expected, "four balance options")
+        eq(#B.OPTIONS, #expected, "seven balance options")
         for index, want in ipairs(expected) do
             local option = B.OPTIONS[index]
             eq(option.id, want[1], "option " .. index .. " is " .. want[1])

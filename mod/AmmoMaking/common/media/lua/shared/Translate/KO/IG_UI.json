@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "탄약의 품질, 신뢰성, 고장 위험을 정밀하게 평가할 수 있습니다.",
     "IGUI_AmmoMaking_Metal_Copper": "구리",
     "IGUI_AmmoMaking_Metal_Zinc": "아연",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "구리",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "아연",
     "IGUI_AmmoMaking_Grade_None": "없음",
     "IGUI_AmmoMaking_Grade_Trace": "미량",
     "IGUI_AmmoMaking_Grade_Poor": "빈약",

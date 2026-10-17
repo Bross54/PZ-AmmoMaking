@@ -2,6 +2,8 @@
     "Sandbox_AmmoMaking": "Ammo Making (Fabrication de munitions)",
     "Sandbox_AmmoMaking_QualityTracking": "Suivre la qualité des munitions dans les chargeurs et les armes (expérimental)",
     "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPÉRIMENTAL, solo uniquement. La qualité de douille des munitions rechargées est conservée lorsqu'elles sont chargées dans un chargeur ou une arme, et restituée lorsqu'elles sont déchargées. Aucun effet sur le tir. Pas encore vérifié en jeu.",
+    "Sandbox_AmmoMaking_QualityEffects": "Les munitions rechargées médiocres s'enrayent plus souvent (expérimental)",
+    "Sandbox_AmmoMaking_QualityEffects_tooltip": "EXPÉRIMENTAL, solo uniquement, nécessite aussi le suivi de la qualité des munitions. Un chargement de munitions rechargées médiocres augmente un peu le risque d'enrayement propre à l'arme après chaque tir, en proportion de leur médiocrité ; les bonnes munitions rechargées et les munitions d'usine n'ajoutent rien. Les dégâts, la portée et la précision ne sont jamais modifiés. Pas encore vérifié en jeu.",
     "Sandbox_AmmoMaking_ServerAuthority": "Multijoueur : le serveur gère les prélèvements, les analyses, l'analyseur et l'extraction minière (expérimental)",
     "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPÉRIMENTAL, multijoueur uniquement, pas encore vérifié sur un serveur. Désactivé : sur un serveur multijoueur, le prélèvement d'échantillons, les kits d'analyse, l'analyseur de laboratoire et l'extraction minière restent refusés. Activé : les clients font la demande, le serveur vérifie la distance, les outils et les objets et effectue le travail, et tous les joueurs voient les mêmes gisements. Aucun effet en solo.",
     "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minerai par case de gisement (multiplicateur)",
@@ -11,5 +13,11 @@
     "Sandbox_AmmoMaking_ComponentLootMultiplier": "Fournitures de rechargement trouvées dans le butin (multiplicateur)",
     "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajuste la fréquence d'apparition de la poudre à canon, des amorces en vrac, du laiton de récupération et des petites plaques de laiton que le mod ajoute au butin. 1 correspond à l'équilibrage du mod, 0 les retire. Les conteneurs déjà remplis conservent leur contenu.",
     "Sandbox_AmmoMaking_XPMultiplier": "Multiplicateur d'XP de Fabrication de munitions",
-    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Le multiplicateur d'XP propre à la compétence Fabrication de munitions, comme les multiplicateurs par compétence du jeu. Comme eux, il n'est utilisé que lorsque le multiplicateur d'XP global est désactivé ; sinon, c'est le global qui s'applique. Le recyclage n'apprend rien, quelle que soit la valeur."
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Le multiplicateur d'XP propre à la compétence Fabrication de munitions, comme les multiplicateurs par compétence du jeu. Comme eux, il n'est utilisé que lorsque le multiplicateur d'XP global est désactivé ; sinon, c'est le global qui s'applique. Le recyclage n'apprend rien, quelle que soit la valeur.",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier": "Bonus de finition (multiplicateur)",
+    "Sandbox_AmmoMaking_TreatmentBonusMultiplier_tooltip": "Ajuste la qualité qu'apportent la lubrification des balles coulées à la cire de bougie, le recuit des douilles au chalumeau et le nettoyage des douilles usagées à la laine d'acier. 1 correspond à l'équilibrage du mod, 0 les rend inutiles. Les objets déjà traités conservent leur qualité.",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier": "Perte à la rectification des jeux de matrices (multiplicateur)",
+    "Sandbox_AmmoMaking_RegrindLossMultiplier_tooltip": "Ajuste de combien chaque rectification abaisse l'état auquel un jeu de matrices usé peut être ramené. 1 correspond à l'équilibrage du mod (deux points par rectification) ; une valeur plus élevée use les jeux de matrices plus vite. Toujours au moins un point.",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier": "Risque d'enrayement supplémentaire des munitions rechargées médiocres (multiplicateur)",
+    "Sandbox_AmmoMaking_ExtraJamMultiplier_tooltip": "Uniquement avec l'option expérimentale « Les munitions rechargées médiocres s'enrayent plus souvent ». Ajuste le plus grand risque d'enrayement supplémentaire qu'ajoute un chargement des pires munitions rechargées (4 points de pourcentage à 1)."
 }

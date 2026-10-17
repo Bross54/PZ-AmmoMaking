@@ -124,11 +124,12 @@ AC_Features.DEFINITIONS = {
 
         name = "Ammunition Quality Firing Effects",
 
-        -- Locked. The code path exists and is tested; no
-        -- effect on firing may be switched on before the
-        -- tracking under it has been seen to stay in step
-        -- in the game.
-        stability = AC_Features.DISABLED,
+        -- Experimental, off by default (the developer's
+        -- decision of 2026-10-17): a sandbox option, which
+        -- also needs quality tracking on. Neither has been
+        -- seen in game yet; leave both off for a normal
+        -- game.
+        stability = AC_Features.EXPERIMENTAL,
 
         sandbox = "QualityEffects",
 
@@ -151,6 +152,24 @@ AC_Features.DEFINITIONS = {
         sandbox = "ServerAuthority",
         singlePlayerOnly = false,
         what = "on a multiplayer server, sampling, assays, the laboratory analyzer and mining are performed by the server for the clients that ask, instead of being refused",
+    },
+
+    {
+        id = "calibre762x39",
+
+        name = "7.62x39 Handloading (Vanilla Weapons Plus)",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Four items and the calibre's recipes, for the
+        -- 7.62x39 round (Base.762Bullets) that Vanilla
+        -- Weapons Plus - Gunworks Edition adds; its
+        -- mod.info requires that mod.
+        mod = "AmmoMakingCalibre762x39",
+
+        singlePlayerOnly = false,
+
+        what = "the 7.62x39 round of Vanilla Weapons Plus (the AK-47's) is handloaded like the vanilla rifle rounds: die set, case, copper or gas-checked cast bullet, assembly",
     },
 }
 

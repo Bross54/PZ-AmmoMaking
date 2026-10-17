@@ -657,7 +657,8 @@ function AC_Casting.getMould(
 end
 
 
--- The calibres that can be cast, in LIST order.
+-- The calibres that can be cast, in order: the vanilla
+-- calibres, then the extensions in the game.
 function AC_Casting.getCastable()
 
     local castable = {}
@@ -666,7 +667,7 @@ function AC_Casting.getCastable()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        AC_Calibres.ALL or AC_Calibres.LIST
     )
     do
 
@@ -1288,8 +1289,11 @@ function AC_Casting.buildCalibreRecipes(
 end
 
 
--- One lube recipe per castable calibre.
-function AC_Casting.buildLubeRecipes()
+-- One lube recipe per castable calibre (of list, when
+-- given).
+function AC_Casting.buildLubeRecipes(
+    list
+)
 
     local config =
         AC_Casting.CONFIG
@@ -1305,7 +1309,7 @@ function AC_Casting.buildLubeRecipes()
     for _,
         calibre
     in ipairs(
-        AC_Casting.getCastable()
+        list or AC_Casting.getCastable()
     )
     do
 

@@ -673,7 +673,7 @@ function AC_CaseQuality.onCasesAnnealed(
 
                     quality =
                         clamp(
-                            quality + (tonumber(bonus) or 0),
+                            math.floor(quality + (tonumber(bonus) or 0) + 0.5),
                             config.minQuality,
                             config.maxQuality
                         )
@@ -790,7 +790,7 @@ function AC_CaseQuality.onBulletsLubed(
 
                     quality =
                         clamp(
-                            quality + (tonumber(bonus) or 0),
+                            math.floor(quality + (tonumber(bonus) or 0) + 0.5),
                             config.minQuality,
                             config.maxQuality
                         )
@@ -1103,6 +1103,26 @@ end
 -- function(craftRecipeData, character, recipe).
 ------------------------------------------------
 
+-- What a treatment adds, scaled by the balance option
+-- treatmentBonus (default 1).
+local function treatment(
+    bonus
+)
+
+    local scale =
+        AC_Balance
+        and AC_Balance.get
+        and AC_Balance.get("treatmentBonus")
+        or 1
+
+
+    return (tonumber(bonus) or 0) * scale
+end
+
+
+AC_CaseQuality.treatmentBonus =
+    treatment
+
 AC_CaseQuality.EFFECTS = {
 
     -- Annealing case necks with a blowtorch
@@ -1115,7 +1135,7 @@ AC_CaseQuality.EFFECTS = {
             return
                 AC_CaseQuality.onCasesAnnealed(
                     craftRecipeData,
-                    AC_Calibres.ANNEAL.qualityBonus
+                    treatment(AC_Calibres.ANNEAL.qualityBonus)
                 )
         end,
     -- A worn die set filed true again
@@ -1141,10 +1161,12 @@ AC_CaseQuality.EFFECTS = {
             return
                 AC_CaseQuality.onBulletsLubed(
                     craftRecipeData,
-                    AC_Casting
-                    and AC_Casting.LUBE
-                    and AC_Casting.LUBE.qualityBonus
-                    or 0
+                    treatment(
+                        AC_Casting
+                        and AC_Casting.LUBE
+                        and AC_Casting.LUBE.qualityBonus
+                        or 0
+                    )
                 )
         end,
 
@@ -1197,7 +1219,7 @@ AC_CaseQuality.EFFECTS = {
                     craftRecipeData,
                     character,
                     config.resizedBonus
-                    + config.cleanedBonus
+                    + treatment(config.cleanedBonus)
                     * AC_CaseQuality.cleanedShare(craftRecipeData)
                 )
         end,

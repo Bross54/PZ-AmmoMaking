@@ -1,0 +1,14 @@
+{
+    "AmmoMaking_ForgeDieSet762x39": "Vykovat sadu matric pro přebíjení 7.62x39",
+    "AmmoMaking_FormCase762x39": "Vytvarovat nábojnici 7.62x39",
+    "AmmoMaking_SwageBullets762x39": "Kalibrovat měděné střely 7.62x39",
+    "AmmoMaking_AssembleRound762x39": "Sestavit náboj 7.62x39",
+    "AmmoMaking_RegrindDieSet762x39": "Přebrousit opotřebovanou sadu matric pro přebíjení 7.62x39",
+    "AmmoMaking_AnnealCases762x39": "Vyžíhat nábojnice 7.62x39 svářecím hořákem",
+    "AmmoMaking_CastBullets762x39": "Odlít olověné střely 7.62x39",
+    "AmmoMaking_CastBullets762x39InStoneMould": "Odlít olověné střely 7.62x39 (kamenná forma)",
+    "AmmoMaking_CastBullets762x39InClayMould": "Odlít olověné střely 7.62x39 (hliněná forma)",
+    "AmmoMaking_CastBullets762x39InSandMould": "Odlít olověné střely 7.62x39 (písková forma)",
+    "AmmoMaking_AssembleCastRound762x39": "Sestavit náboj 7.62x39 (litá střela, gas check)",
+    "AmmoMaking_LubeCastBullets762x39": "Namazat olověné střely 7.62x39 svíčkovým voskem"
+}

@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Pontosan felméred a lőszer minőségét, megbízhatóságát és meghibásodási kockázatát.",
     "IGUI_AmmoMaking_Metal_Copper": "Réz",
     "IGUI_AmmoMaking_Metal_Zinc": "Cink",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "réz",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "cink",
     "IGUI_AmmoMaking_Grade_None": "Nincs",
     "IGUI_AmmoMaking_Grade_Trace": "Nyomokban",
     "IGUI_AmmoMaking_Grade_Poor": "Gyenge",

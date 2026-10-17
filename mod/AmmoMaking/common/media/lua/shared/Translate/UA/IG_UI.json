@@ -13,6 +13,8 @@
     "IGUI_perks_Ammo Making_Description10": "Ви точно оцінюєте якість, надійність і ризик відмови боєприпасів.",
     "IGUI_AmmoMaking_Metal_Copper": "Мідь",
     "IGUI_AmmoMaking_Metal_Zinc": "Цинк",
+    "IGUI_AmmoMaking_MetalInSentence_copper": "мідь",
+    "IGUI_AmmoMaking_MetalInSentence_zinc": "цинк",
     "IGUI_AmmoMaking_Grade_None": "Немає",
     "IGUI_AmmoMaking_Grade_Trace": "Сліди",
     "IGUI_AmmoMaking_Grade_Poor": "Бідна",

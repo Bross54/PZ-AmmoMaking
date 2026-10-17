@@ -230,7 +230,7 @@ local function addMetalOption(
             AC_Text.get(
                 "IGUI_AmmoMaking_Tooltip_Exhausted",
                 "No workable %1 ore is left on this spot.",
-                string.lower(metalName)
+                AC_Text.metalInSentence(metal, metalName)
             )
         )
 

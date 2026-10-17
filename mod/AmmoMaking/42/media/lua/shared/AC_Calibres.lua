@@ -555,9 +555,24 @@ function AC_Calibres.regroundCondition(
         AC_Calibres.DIE_WEAR
 
 
+    local scale =
+        AC_Balance
+        and AC_Balance.get
+        and AC_Balance.get("regrindLoss")
+        or 1
+
+
+    -- At least one point a regrind, whatever the option.
+    local loss =
+        math.max(
+            1,
+            math.floor(AC_Calibres.REGRIND.lossPerRegrind * scale + 0.5)
+        )
+
+
     local cap =
         wear.conditionMax
-        - AC_Calibres.REGRIND.lossPerRegrind * (tonumber(regrinds) or 1)
+        - loss * (tonumber(regrinds) or 1)
 
 
     condition =
@@ -573,7 +588,9 @@ end
 
 
 -- One regrinding recipe per calibre.
-function AC_Calibres.buildRegrindRecipes()
+function AC_Calibres.buildRegrindRecipes(
+    list
+)
 
     local regrind =
         AC_Calibres.REGRIND
@@ -585,7 +602,7 @@ function AC_Calibres.buildRegrindRecipes()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.ALL
     )
     do
 
@@ -759,7 +776,9 @@ AC_Calibres.ANNEAL = {
 
 
 -- One annealing recipe per calibre.
-function AC_Calibres.buildAnnealRecipes()
+function AC_Calibres.buildAnnealRecipes(
+    list
+)
 
     local anneal =
         AC_Calibres.ANNEAL
@@ -771,7 +790,7 @@ function AC_Calibres.buildAnnealRecipes()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.ALL
     )
     do
 
@@ -799,6 +818,56 @@ function AC_Calibres.buildAnnealRecipes()
                 },
             }
         )
+    end
+
+
+    return recipes
+end
+
+
+-- Every recipe of one calibre: its four steps, the
+-- regrinding and annealing, its casts, cast assembly and
+-- lubing. For an extension's add-on script
+-- (tests/render_addons.lua); the game builds the same
+-- recipes through the lists above.
+function AC_Calibres.buildAllRecipesOf(
+    calibre
+)
+
+    local recipes = {}
+
+
+    local function add(
+        list
+    )
+
+        for _,
+            recipe
+        in ipairs(
+            list
+        )
+        do
+
+            table.insert(
+                recipes,
+                recipe
+            )
+        end
+    end
+
+
+    add(AC_Calibres.buildCalibreRecipes(calibre))
+
+    add(AC_Calibres.buildRegrindRecipes({ calibre }))
+
+    add(AC_Calibres.buildAnnealRecipes({ calibre }))
+
+
+    if AC_Casting then
+
+        add(AC_Casting.buildCalibreRecipes(calibre))
+
+        add(AC_Casting.buildLubeRecipes({ calibre }))
     end
 
 
@@ -1372,6 +1441,114 @@ AC_Calibres.LIST = {
 
 
 ------------------------------------------------
+-- CALIBRES OF OTHER MODS (EXTENSIONS)
+------------------------------------------------
+--
+-- A round another mod adds is handloaded through an
+-- add-on of this mod: the add-on ships the calibre's
+-- items and recipe scripts (generated, like the press's),
+-- the calibre is defined here, because Lua lives only in
+-- the main mod. extension names its feature
+-- (AC_Features), which is on when the add-on is ticked.
+--
+-- LIST stays the vanilla calibres: the press, the spent
+-- cases, loot and brass recycling are scripts of their
+-- own and know nothing of an add-on's items. ALL is LIST
+-- and the extensions whose add-on is in the game; it is
+-- what identify(), get(), the recipe list, the material
+-- units and casting read.
+------------------------------------------------
+
+AC_Calibres.EXTENSIONS = {
+
+    ------------------------------------------------
+    -- 7.62x39 of Vanilla Weapons Plus - Gunworks Edition
+    -- (Workshop 3773834525, mod MarzVanillaGuns): item
+    -- Base.762Bullets, AmmoType mvgi:bullets_762, the
+    -- AK-47's, a box of 20 (its own OpenBoxOfBullets20
+    -- recipe). A rifle round loaded like the 5.56: small
+    -- rifle primer, two cups, one bullet per copper scrap,
+    -- three charges.
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "7.62x39",
+        class = "rifle",
+        suffix = "762x39",
+        extension = "calibre762x39",
+        -- The vanilla calibre whose item look and names the
+        -- add-on's are made from (tests/render_addons.lua).
+        template = ".308",
+        round = "Base.762Bullets",
+        box = "Base.762Box",
+        roundsPerBox = 20,
+        ammoType = "mvgi:bullets_762",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+    }),
+}
+
+
+-- The extensions whose add-on is in the game.
+function AC_Calibres.getActiveExtensions()
+
+    local active = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.EXTENSIONS
+    )
+    do
+
+        if AC_Features.hasContent(calibre.extension) then
+
+            table.insert(
+                active,
+                calibre
+            )
+        end
+    end
+
+
+    return active
+end
+
+
+AC_Calibres.ALL = {}
+
+
+for _,
+    calibre
+in ipairs(
+    AC_Calibres.LIST
+)
+do
+
+    table.insert(
+        AC_Calibres.ALL,
+        calibre
+    )
+end
+
+
+for _,
+    calibre
+in ipairs(
+    AC_Calibres.getActiveExtensions()
+)
+do
+
+    table.insert(
+        AC_Calibres.ALL,
+        calibre
+    )
+end
+
+
+------------------------------------------------
 -- VALIDATION (pure)
 ------------------------------------------------
 --
@@ -1805,7 +1982,7 @@ function AC_Calibres.get(
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        AC_Calibres.ALL
     )
     do
 
@@ -1861,7 +2038,7 @@ function AC_Calibres.identify(
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        AC_Calibres.ALL
     )
     do
 
@@ -2503,7 +2680,7 @@ function AC_Calibres.buildRecipes()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        AC_Calibres.ALL
     )
     do
 
@@ -2641,7 +2818,7 @@ function AC_Calibres.buildUnits()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        AC_Calibres.ALL
     )
     do
 

@@ -1,10 +1,12 @@
 -- Ammo Making - What ammunition quality does at the shot
 -- Project Zomboid Build 42.20
 --
--- LOCKED. Feature "qualityEffects" (AC_Features) is
--- "disabled": no switch turns it on, and with it off
--- afterShot() returns before it looks at anything. A
--- handloaded round fires exactly like a factory round.
+-- EXPERIMENTAL, OFF BY DEFAULT. Feature "qualityEffects"
+-- (AC_Features) is the sandbox option QualityEffects, and
+-- needs quality tracking on too. Off, afterShot() returns
+-- before it looks at anything and a handloaded round fires
+-- exactly like a factory round. The largest extra chance
+-- is scaled by the balance option jamChance (default 1).
 --
 -- The code path is complete so that the day the quality
 -- tracking under it (AC_QualityCarrier) has been seen to
@@ -127,8 +129,21 @@ function AC_QualityEffects.getExtraJamPercent(
         handloaded * config.bestQuality - qualitySum
 
 
+    -- The balance option jamChance scales the largest
+    -- chance (default 1). Still linear in qualitySum.
+    local scale =
+        AC_Balance
+        and AC_Balance.get
+        and AC_Balance.get("jamChance")
+        or 1
+
+
+    local maximum =
+        config.maximumExtraJamPercent * scale
+
+
     local percent =
-        config.maximumExtraJamPercent * missing / (span * count)
+        maximum * missing / (span * count)
 
 
     if percent < 0 then
@@ -136,8 +151,8 @@ function AC_QualityEffects.getExtraJamPercent(
     end
 
 
-    if percent > config.maximumExtraJamPercent then
-        return config.maximumExtraJamPercent
+    if percent > maximum then
+        return maximum
     end
 
 

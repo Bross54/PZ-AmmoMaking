@@ -2748,7 +2748,8 @@ do
             end
         end
         for _, tag in ipairs(split(block.fields.Tags or "", ";")) do
-            check(knownTags[tag] or ((dieSets[block.name] or stoneMoulds[block.name]) and tag == "base:showcondition") or (clayMoulds[block.name] and clayTags[tag]), block.name .. " uses only vanilla tags (" .. tag .. ")")
+            local smelt = (dieSets[block.name] and tag == "base:smeltablesteelmedium") or (stoneMoulds[block.name] and string.find(block.name, "^BulletMould") and tag == "base:smeltableironmedium")
+            check(knownTags[tag] or smelt or ((dieSets[block.name] or stoneMoulds[block.name]) and tag == "base:showcondition") or (clayMoulds[block.name] and clayTags[tag]), block.name .. " uses only vanilla tags (" .. tag .. ")")
         end
         eq(block.fields.ItemType, book and "base:literature" or "base:normal", block.name .. " item type")
         check(block.fields.DisplayName ~= nil, block.name .. " has a display name")
@@ -2869,6 +2870,13 @@ do
     eq(AC_Calibres.regroundCondition(0, 4), 2, "fourth regrind: 2")
     eq(AC_Calibres.regroundCondition(0, 5), 0, "fifth: nothing left to gain")
     eq(AC_Calibres.regroundCondition(3, 5), 3, "and nothing lost")
+    -- The balance option scales the loss, never below one point.
+    local savedVars = SandboxVars
+    SandboxVars = { AmmoMaking = { RegrindLossMultiplier = 2 } }
+    eq(AC_Calibres.regroundCondition(0, 1), 6, "twice the loss: 6 after the first regrind")
+    SandboxVars = { AmmoMaking = { RegrindLossMultiplier = 0.5 } }
+    eq(AC_Calibres.regroundCondition(0, 1), 9, "half the loss: 9")
+    SandboxVars = savedVars
     local recipes = AC_Calibres.buildRegrindRecipes()
     eq(#recipes, #AC_Calibres.LIST, "one regrinding per calibre")
     for _, recipe in ipairs(recipes) do
@@ -2933,6 +2941,19 @@ do
     local again = MOCK.newItem(first.case)
     anneal({ outA }, { again })
     eq(AC_CaseQuality.get(again), 60 + A.qualityBonus, "annealing twice adds nothing")
+    -- The balance option scales what a treatment adds.
+    local savedVars = SandboxVars
+    SandboxVars = { AmmoMaking = { TreatmentBonusMultiplier = 0 } }
+    local plain, plainOut = MOCK.newItem(first.case), MOCK.newItem(first.case)
+    AC_CaseQuality.set(plain, 60)
+    anneal({ plain }, { plainOut })
+    eq(AC_CaseQuality.get(plainOut), 60, "at 0 annealing adds nothing")
+    SandboxVars = { AmmoMaking = { TreatmentBonusMultiplier = 1.5 } }
+    local more, moreOut = MOCK.newItem(first.case), MOCK.newItem(first.case)
+    AC_CaseQuality.set(more, 60)
+    anneal({ more }, { moreOut })
+    eq(AC_CaseQuality.get(moreOut), 60 + math.floor(A.qualityBonus * 1.5 + 0.5), "at 1.5 half again, rounded to a whole quality")
+    SandboxVars = savedVars
 end
 
 section("Debug kits for casting, mould materials and treatments hand out real items")
@@ -10501,7 +10522,7 @@ do
         makeSample = makeSample, equipShovel = equipShovel, placeAnalyzerObject = placeAnalyzerObject, poweredLabSquare = poweredLabSquare,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "authority", "skillbooks", "casting", "docs" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "authority", "skillbooks", "casting", "extensions", "docs" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

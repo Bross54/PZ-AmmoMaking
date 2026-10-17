@@ -71,8 +71,10 @@ Expected / Console
 - Five feature lines, all off:
   `feature Reloading Press: off (off)`, `feature Spent Cases: off (off)`,
   `feature Ammunition Quality Tracking: off (off)`,
-  `feature Ammunition Quality Firing Effects: off (locked)`,
-  `feature Multiplayer Server Authority: off (off)`.
+  `feature Ammunition Quality Firing Effects: off (off)`,
+  `feature Multiplayer Server Authority: off (off)`,
+  `feature 7.62x39 Handloading (Vanilla Weapons Plus): off (off)` (on, with
+  its add-on and Vanilla Weapons Plus ticked).
 - One line per calibre class (`.../... complete`).
 - `OK: die set loot (...)` and `OK: component loot (...)`.
 - `OK: skill books entered in vanilla's reading table (server Lua)` and
@@ -538,6 +540,19 @@ Expected
   ticked.
 
 Result: ____
+
+Then, with the same tracking on, switch on *Poor handloads jam more often*
+as well (new world, or the sandbox page of a copy): fire a magazine of the
+worst handloads you can make (level 0, sand mould): the gun jams a little
+more often than with factory rounds and racking clears it; a magazine of
+factory rounds never jams more than vanilla does.
+
+**7.62x39 add-on** (only with Vanilla Weapons Plus - Gunworks Edition):
+tick *Ammo Making: 7.62x39 (experimental)*; the world loads; **Ammunition >
+Spawn Calibre Kit** has no 7.62x39 entry yet, so take the steel bar quarters,
+brass and copper from the other kits, forge the 7.62x39 die set, then form,
+swage and assemble one round; it is the mod's `Base.762Bullets`,
+stacks with found ones and fires in the AK-47.
 
 ## 21. Save and reload
 
