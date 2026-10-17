@@ -3,7 +3,8 @@
     python art/workshop/make_workshop_art.py            draw every image
     python art/workshop/make_workshop_art.py --check    fail when a shipped image differs from a fresh drawing
 
-Five square images, 256 x 256:
+Twelve square images, 256 x 256 (the six gun-mod packs share the
+7.62x39 add-on's scene with their own title):
 
   mod/AmmoMaking/42/poster.png               the main mod's `poster=`
   mod/AmmoMakingPress/42/poster.png          the press add-on's `poster=`
@@ -51,6 +52,8 @@ SCALE = 2  # icons and the background are drawn on a grid of 2 x 2 pixels
 
 # A 5 x 7 pixel alphabet of the mod's own: only what the images write.
 GLYPHS = {
+    "V": ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
+    "'": ["00100", "00100", "01000", "00000", "00000", "00000", "00000"],
     "3": ["11110", "00001", "00001", "01110", "00001", "00001", "11110"],
     "6": ["00110", "01000", "10000", "11110", "10001", "10001", "01110"],
     "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
@@ -268,11 +271,11 @@ def press_scene():
     return finish(image)
 
 
-def spent_scene():
+def spent_scene(title="SPENT CASES"):
     """The spent-cases add-on: fired brass on the bench, the die set that resizes it."""
     image = background(seed=2222)
     write(image, "AMMO MAKING", 18, 3, TITLE)
-    write(image, "SPENT CASES", 52, SCALE, [PAPER])
+    write(image, title, 52, SCALE, [PAPER])
     place(image, I.icon_die_set(), 96, 76, shadow=False)
     place(image, I.icon_case_pistol(True), 8, 136)
     place(image, I.icon_case_rifle(True), 70, 140)
@@ -282,11 +285,11 @@ def spent_scene():
     return finish(image)
 
 
-def calibre_scene():
-    """The 7.62x39 add-on: its die set, rifle cases, cast bullets with gas checks."""
-    image = background(seed=7639)
+def calibre_scene(title="7.62X39", seed=7639):
+    """A calibre add-on: its die set, rifle cases, cast bullets with gas checks."""
+    image = background(seed=seed)
     write(image, "AMMO MAKING", 18, 3, TITLE)
-    write(image, "7.62X39", 52, SCALE, [PAPER])
+    write(image, title, 52, SCALE, [PAPER])
     place(image, I.icon_die_set(), 96, 76, shadow=False)
     place(image, I.icon_case_rifle(), 8, 138)
     place(image, I.icon_cast_bullet_rifle(), 70, 140)
@@ -304,6 +307,13 @@ IMAGES = [
     ("mod/AmmoMakingPress/42/poster.png", press_scene),
     ("mod/AmmoMakingSpentCases/42/poster.png", spent_scene),
     ("mod/AmmoMakingCalibre762x39/42/poster.png", calibre_scene),
+    ("mod/AmmoMakingVFE/42/poster.png", lambda: calibre_scene("VFE", 3761)),
+    ("mod/AmmoMakingRains/42/poster.png", lambda: calibre_scene("RAIN'S", 3773)),
+    ("mod/AmmoMakingRainsExpanded/42/poster.png", lambda: calibre_scene("RAIN'S EXP", 3774)),
+    ("mod/AmmoMakingGaelGunStore/42/poster.png", lambda: calibre_scene("GAELGUNSTORE", 3616)),
+    ("mod/AmmoMakingRealFirearms/42/poster.png", lambda: calibre_scene("REAL FIREARMS", 3238)),
+    ("mod/AmmoMakingMFS/42/poster.png", lambda: calibre_scene("MFS", 3633)),
+    ("mod/AmmoMakingHotBrass/42/poster.png", lambda: spent_scene("HOT BRASS")),
     ("art/workshop/preview.png", lambda: main_scene("FROM ORE TO ROUND")),
 ]
 

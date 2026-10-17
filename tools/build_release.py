@@ -61,7 +61,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))).replace("\\",
 MOD = "mod/AmmoMaking"
 MOD_INFO = MOD + "/42/mod.info"
 # Every mod folder of the release: the main mod first, then its add-ons.
-MODS = [MOD, "mod/AmmoMakingPress", "mod/AmmoMakingSpentCases", "mod/AmmoMakingCalibre762x39"]
+MODS = [MOD, "mod/AmmoMakingPress", "mod/AmmoMakingSpentCases", "mod/AmmoMakingCalibre762x39",
+        "mod/AmmoMakingVFE", "mod/AmmoMakingRains", "mod/AmmoMakingRainsExpanded",
+        "mod/AmmoMakingGaelGunStore", "mod/AmmoMakingRealFirearms", "mod/AmmoMakingMFS",
+        "mod/AmmoMakingHotBrass"]
 # Tile sheets built from art: description -> the mod that ships the result.
 TILE_SHEETS = ["art/reloading_press/tiles.json"]
 

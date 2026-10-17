@@ -1,0 +1,22 @@
+{
+    "AmmoMaking.DieSet50BMG": "Jeu de matrices de rechargement .50 BMG",
+    "AmmoMaking.Case50BMG": "Douille vide .50 BMG",
+    "AmmoMaking.Bullet50BMG": "Balle en cuivre .50 BMG",
+    "AmmoMaking.CastBullet50BMG": "Balle en plomb coulé .50 BMG",
+    "AmmoMaking.DieSet58x42": "Jeu de matrices de rechargement 5.8x42",
+    "AmmoMaking.Case58x42": "Douille vide 5.8x42",
+    "AmmoMaking.Bullet58x42": "Balle en cuivre 5.8x42",
+    "AmmoMaking.CastBullet58x42": "Balle en plomb coulé 5.8x42",
+    "AmmoMaking.DieSet545MFS": "Jeu de matrices de rechargement 5.45x39 (MFS)",
+    "AmmoMaking.Case545MFS": "Douille vide 5.45x39 (MFS)",
+    "AmmoMaking.Bullet545MFS": "Balle en cuivre 5.45x39 (MFS)",
+    "AmmoMaking.CastBullet545MFS": "Balle en plomb coulé 5.45x39 (MFS)",
+    "AmmoMaking.DieSet86mm": "Jeu de matrices de rechargement 8.6mm",
+    "AmmoMaking.Case86mm": "Douille vide 8.6mm",
+    "AmmoMaking.Bullet86mm": "Balle en cuivre 8.6mm",
+    "AmmoMaking.CastBullet86mm": "Balle en plomb coulé 8.6mm",
+    "AmmoMaking.DieSet145mm": "Jeu de matrices de rechargement 14.5mm",
+    "AmmoMaking.Case145mm": "Douille vide 14.5mm",
+    "AmmoMaking.Bullet145mm": "Balle en cuivre 14.5mm",
+    "AmmoMaking.CastBullet145mm": "Balle en plomb coulé 14.5mm"
+}

@@ -73,8 +73,16 @@ Expected / Console
   `feature Ammunition Quality Tracking: off (off)`,
   `feature Ammunition Quality Firing Effects: off (off)`,
   `feature Multiplayer Server Authority: off (off)`,
-  `feature 7.62x39 Handloading (Vanilla Weapons Plus): off (off)` (on, with
-  its add-on and Vanilla Weapons Plus ticked).
+  `feature 7.62x39 Handloading (Vanilla Weapons Plus): off (off)`,
+  `feature Hot Brass Casings Resized: off (off)`,
+  `feature Handloading for Vanilla Firearms Expansion: off (off)`,
+  `feature Handloading for Rain's Firearms: off (off)`,
+  `feature Handloading for Rain's Firearms Expanded: off (off)`,
+  `feature Handloading for GaelGunStore: off (off)`,
+  `feature Handloading for Real Firearms: off (off)`,
+  `feature Handloading for Modern Firearms System: off (off)` (each on with
+  its add-on and its gun mod ticked; with Modern Firearms System also a
+  WARNING that its Base.Bullets38 is a 6.8mm round).
 - One line per calibre class (`.../... complete`).
 - `OK: die set loot (...)` and `OK: component loot (...)`.
 - `OK: skill books entered in vanilla's reading table (server Lua)` and

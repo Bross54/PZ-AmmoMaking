@@ -1,0 +1,7 @@
+name=Ammo Making: Hot Brass Casings (experimental)
+id=AmmoMakingHotBrass
+require=\AmmoMaking,\HBVCEFb42
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and Hot Brass: the casings Hot Brass ejects are resized at the calibre's die set like Ammo Making's spent cases, two into one usable case of a lower quality, for no XP. Not yet verified in game.

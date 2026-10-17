@@ -1,14 +1,14 @@
 -- Ammo Making - offline tests: calibres of other mods (AC_Calibres.EXTENSIONS)
--- and their add-ons (mod/AmmoMakingCalibre762x39).
+-- and their add-ons, one per gun mod (tests/render_addons.lua,
+-- EXTENSION_PACKS).
 --
--- Loaded by tests/run_tests.lua. The add-on's scripts are generated
--- (tests/render_addons.lua); here they are held to the model, the
--- calibre is checked with its add-on in the game and out of it, and the
--- vanilla calibres are shown to be untouched either way. That the round
--- Base.762Bullets and its AmmoType are what Vanilla Weapons Plus -
--- Gunworks Edition ships was read from its installed files (Workshop
--- 3773834525); that the add-on loads beside it is REQUIRES FUTURE
--- IN-GAME VERIFICATION.
+-- Loaded by tests/run_tests.lua. The add-ons' scripts are generated; here
+-- they are held to the model, every pack is checked with its add-on in the
+-- game and out of it, and the vanilla calibres are shown to be untouched
+-- either way. The round ids and AmmoType keys were read from the gun mods'
+-- installed files (Workshop 3773834525, 3761077099, 3773858287, 3616176188,
+-- 3238830225, 3633421539); that each add-on loads beside its gun mod is
+-- REQUIRES FUTURE IN-GAME VERIFICATION.
 
 return function(T)
     local check, eq, section, MOCK = T.check, T.eq, T.section, T.MOCK
@@ -19,97 +19,170 @@ return function(T)
 
     local function strip(text) return (string.gsub(text or "", "\r", "")) end
 
-    section("Calibres of other mods: absent unless their add-on is in the game (pure)")
+    section("Calibres of other mods: the model, absent unless an add-on is in the game (pure)")
     do
-        eq(#AC_Calibres.EXTENSIONS, 1, "one extension calibre: 7.62x39")
-        local ext = AC_Calibres.EXTENSIONS[1]
-        eq(ext.id, "7.62x39", "its id")
-        eq(ext.round, "Base.762Bullets", "the round of Vanilla Weapons Plus")
-        eq(ext.ammoType, "mvgi:bullets_762", "and its AmmoType")
-        eq(ext.class, "rifle", "a rifle round")
-        eq(AC_Features.get(ext.extension).mod, "AmmoMakingCalibre762x39", "switched by its add-on")
-        eq(#AC_Calibres.validate(AC_Calibres.EXTENSIONS), 0, "the definition is sound: " .. table.concat(AC_Calibres.validate(AC_Calibres.EXTENSIONS), "; "))
-        eq(#AC_Calibres.ALL, #AC_Calibres.LIST, "without the add-on: only the vanilla calibres")
-        eq(AC_Calibres.identify(ext.round), nil, "and its round is nothing to the mod")
-        for _, recipe in ipairs(AC_Materials.RECIPES) do
-            check(recipe.calibre ~= ext.id, recipe.id .. " is not of the extension")
-        end
-        local seen = {}
+        local E = AC_Calibres.EXTENSIONS
+        eq(#E, 38, "38 calibres of six gun mods")
+        eq(#ADDONS.EXTENSION_PACKS, 7, "seven add-ons")
+        eq(#AC_Calibres.ALL, #AC_Calibres.LIST, "without an add-on: only the vanilla calibres")
+        local vanillaRound, ids, suffixes = {}, {}, {}
         for _, calibre in ipairs(AC_Calibres.LIST) do
-            seen[calibre.round] = true
-            seen[calibre.suffix] = true
+            vanillaRound[calibre.round] = true
+            ids[calibre.id], suffixes[calibre.suffix] = "vanilla", "vanilla"
         end
-        check(not seen[ext.round] and not seen[ext.suffix], "it shares no round or suffix with a vanilla calibre")
+        for _, calibre in ipairs(E) do
+            check(ids[calibre.id] == nil, calibre.id .. ": an id of its own")
+            check(suffixes[calibre.suffix] == nil, calibre.id .. ": a suffix of its own (" .. calibre.suffix .. ")")
+            ids[calibre.id], suffixes[calibre.suffix] = true, true
+            check(not vanillaRound[calibre.round], calibre.id .. ": not a vanilla round")
+            eq(AC_Calibres.identify(calibre.round), nil, calibre.id .. ": nothing to the mod without its add-on")
+            check(#AC_Calibres.extensionFeatures(calibre) >= 1, calibre.id .. " comes with an add-on")
+            for _, feature in ipairs(AC_Calibres.extensionFeatures(calibre)) do
+                check(ADDONS.getPack(feature) ~= nil, calibre.id .. ": its add-on " .. feature .. " is a pack")
+            end
+            check(string.find(calibre.round, "Bullets22", 1, true) == nil and calibre.round ~= "Base.22Bullets", calibre.id .. ": no rimfire round")
+        end
+        for _, recipe in ipairs(AC_Materials.RECIPES) do
+            check(not AC_Calibres.get(recipe.calibre or "") or AC_Calibres.get(recipe.calibre).extension == nil, recipe.id .. " is not of an extension")
+        end
+        -- The packs that may be loaded together never give one round two calibres.
+        for _, pack in ipairs(ADDONS.EXTENSION_PACKS) do
+            local list = ADDONS.packCalibres(pack)
+            check(#list >= 1, pack.feature .. " has calibres")
+            eq(#AC_Calibres.validate(list), 0, pack.feature .. ": its calibres are sound: " .. table.concat(AC_Calibres.validate(list), "; "))
+            local mod = AC_Features.get(pack.feature).mod
+            for _, other in ipairs(ADDONS.EXTENSION_PACKS) do
+                if other ~= pack then
+                    local blocked = false
+                    for _, id in ipairs(pack.incompatible) do
+                        if id == AC_Features.get(other.feature).mod then blocked = true end
+                    end
+                    local reverse = false
+                    for _, id in ipairs(other.incompatible) do
+                        if id == mod then reverse = true end
+                    end
+                    eq(blocked, reverse, pack.feature .. " and " .. other.feature .. ": incompatibility is declared on both sides")
+                    if not blocked then
+                        local rounds = {}
+                        for _, calibre in ipairs(list) do rounds[calibre.round] = calibre.id end
+                        for _, calibre in ipairs(ADDONS.packCalibres(other)) do
+                            local mine = rounds[calibre.round]
+                            check(mine == nil or mine == calibre.id, pack.feature .. " and " .. other.feature .. " may load together: " .. calibre.round .. " is one calibre in both")
+                        end
+                    end
+                end
+            end
+        end
+        -- Base.762Bullets: 7.62x39 for Vanilla Weapons Plus and VFE, 7.62x51 for Rain's.
+        local seen = {}
+        for _, calibre in ipairs(E) do
+            if calibre.round == "Base.762Bullets" then table.insert(seen, calibre.id) end
+        end
+        eq(table.concat(seen, ","), "7.62x39,7.62x51", "Base.762Bullets is two calibres, kept apart by incompatible=")
     end
 
-    section("Calibres of other mods: the add-on's files are the model's rendering")
+    section("Calibres of other mods: every add-on's files are the model's rendering")
     do
         local mainItems = assert(readFile(ROOT .. "/mod/AmmoMaking/42/media/scripts/AC_Items.txt"))
         local handNames = ADDONS.readNames(assert(readFile(ROOT .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
-        for _, calibre in ipairs(AC_Calibres.EXTENSIONS) do
-            local paths = ADDONS.extensionPaths(calibre)
-            local items = strip(readFile(ROOT .. "/" .. paths.items))
-            local _, itemsBody = RENDER.splitHeader(items)
-            eq(itemsBody, ADDONS.extensionItemsBody(calibre, mainItems), paths.items .. " equals the rendering (run tests/write_recipes.lua)")
-            local script = strip(readFile(ROOT .. "/" .. paths.script))
-            local _, scriptBody = RENDER.splitHeader(script)
-            eq(scriptBody, ADDONS.extensionScriptBody(calibre, RENDER), paths.script .. " equals the rendering")
-            eq(strip(readFile(ROOT .. "/" .. paths.itemNames)), ADDONS.extensionItemNames(calibre, mainItems), paths.itemNames .. " equals the rendering")
-            eq(strip(readFile(ROOT .. "/" .. paths.names)), ADDONS.extensionNames(calibre, handNames), paths.names .. " equals the rendering")
-            -- The add-on's mod.info: the main mod and the gun mod are required.
-            local root = ADDONS.EXTENSION_MODS[calibre.extension]
-            local info = strip(readFile(ROOT .. "/" .. root .. "42/mod.info"))
-            check(string.find(info, "id=" .. AC_Features.get(calibre.extension).mod .. "\n", 1, true) ~= nil, "its mod.info has the feature's mod id")
-            check(string.find(info, "require=\\AmmoMaking,\\MarzVanillaGuns", 1, true) ~= nil, "and requires Ammo Making and Vanilla Weapons Plus")
-            local version = string.match(strip(readFile(ROOT .. "/mod/AmmoMaking/42/mod.info")), "modversion=([^\n]+)")
-            check(string.find(info, "modversion=" .. version, 1, true) ~= nil, "the same version as the main mod")
-            check(string.find(info, "pack=", 1, true) == nil and string.find(info, "tiledef=", 1, true) == nil, "no tile sheet")
-            -- Recipes count: four steps, regrind, anneal, four casts, the cast assembly, the lube.
-            local parsed = parseScript(ROOT .. "/" .. paths.script)
-            eq(#parsed.blocks, 12, "twelve recipes in the add-on's script")
+        local version = string.match(strip(readFile(ROOT .. "/mod/AmmoMaking/42/mod.info")), "modversion=([^\n]+)")
+        for _, pack in ipairs(ADDONS.EXTENSION_PACKS) do
+            local calibres = ADDONS.packCalibres(pack)
+            local paths = ADDONS.packPaths(pack)
+            local _, itemsBody = RENDER.splitHeader(strip(readFile(ROOT .. "/" .. paths.items)))
+            eq(itemsBody, ADDONS.extensionItemsBody(calibres, mainItems), paths.items .. " equals the rendering (run tests/write_recipes.lua)")
+            local _, scriptBody = RENDER.splitHeader(strip(readFile(ROOT .. "/" .. paths.script)))
+            eq(scriptBody, ADDONS.extensionScriptBody(calibres, RENDER), paths.script .. " equals the rendering")
+            eq(strip(readFile(ROOT .. "/" .. paths.itemNames)), ADDONS.extensionItemNames(calibres, mainItems), paths.itemNames .. " equals the rendering")
+            eq(strip(readFile(ROOT .. "/" .. paths.names)), ADDONS.extensionNames(calibres, handNames), paths.names .. " equals the rendering")
+            local info = strip(readFile(ROOT .. "/" .. paths.info))
+            eq(info, ADDONS.packInfo(pack, version), paths.info .. " equals the rendering")
+            check(string.find(info, "require=\\AmmoMaking,\\" .. pack.requires .. "\n", 1, true) ~= nil, pack.feature .. ": requires Ammo Making and its gun mod")
+            check(string.find(info, "pack=", 1, true) == nil and string.find(info, "tiledef=", 1, true) == nil, pack.feature .. ": no tile sheet")
+            check(readFile(ROOT .. "/" .. pack.root .. "42/poster.png") ~= nil, pack.feature .. " has a poster")
+            eq(#parseScript(ROOT .. "/" .. paths.script).blocks, 12 * #calibres, pack.feature .. ": twelve recipes per calibre")
         end
     end
 
-    section("Calibres of other mods: with the add-on in the game (mocked engine)")
+    section("Calibres of other mods: each add-on in the game (mocked engine)")
     do
         local saved = MOCK.activeMods
-        MOCK.activeMods = { "AmmoMaking", "AmmoMakingCalibre762x39", "MarzVanillaGuns" }
+        for _, pack in ipairs(ADDONS.EXTENSION_PACKS) do
+            MOCK.activeMods = { "AmmoMaking", AC_Features.get(pack.feature).mod, pack.requires }
+            T.reloadMod()
+            local calibres = ADDONS.packCalibres(pack)
+            eq(#AC_Calibres.ALL, #AC_Calibres.LIST + #calibres, pack.feature .. ": ALL holds its calibres")
+            eq(#AC_Calibres.LIST, 9, pack.feature .. ": LIST stays the nine vanilla calibres")
+            eq(#AC_Calibres.validate(AC_Calibres.ALL), 0, pack.feature .. ": ALL is sound: " .. table.concat(AC_Calibres.validate(AC_Calibres.ALL), "; "))
+            local listed = {}
+            for _, recipe in ipairs(AC_Materials.RECIPES) do listed[recipe.id] = recipe end
+            for _, block in ipairs(parseScript(ROOT .. "/" .. ADDONS.packPaths(pack).script).blocks) do
+                local recipe = listed[block.name]
+                check(recipe ~= nil, block.name .. " is listed by AC_Materials")
+                if recipe then
+                    check(type(AC_Materials[recipe.callback]) == "function", block.name .. ": its OnCreate callback exists")
+                    check(AC_Materials.checkConservation(recipe), block.name .. " conserves material")
+                end
+            end
+            for _, calibre in ipairs(calibres) do
+                eq(AC_Calibres.identify(calibre.round), "round", calibre.id .. ": its round is a round")
+                check(AC_Materials.UNITS[calibre.case] ~= nil and AC_Materials.UNITS[calibre.castBullet] ~= nil, calibre.id .. ": its case and cast bullet carry units")
+                local gas = AC_Calibres.CLASSES[calibre.class].gasCheck == true
+                local assemble = listed["AmmoMaking_AssembleCastRound" .. calibre.suffix]
+                eq(assemble and assemble.inputs[#assemble.inputs].items[1] == AC_Casting.GAS_CHECK.item, gas, calibre.id .. ": a gas check exactly when a rifle")
+            end
+            for _, recipe in ipairs(AC_Materials.RECIPES) do
+                if recipe.calibre and AC_Calibres.get(recipe.calibre).extension then
+                    check(recipe.step ~= "resize" and recipe.step ~= "clean" and not string.find(recipe.id, AC_Calibres.PRESS.idSuffix, 1, true), recipe.id .. " is no press or spent-case recipe")
+                end
+            end
+        end
+        -- Modern Firearms System's Base.Bullets38 is a 6.8mm: a WARNING, nothing changed.
+        MOCK.activeMods = { "AmmoMaking", "ModernFirearmsSystem" }
         T.reloadMod()
-        local ext = AC_Calibres.get("7.62x39")
-        check(ext ~= nil, "the calibre is in the game")
-        eq(AC_Features.hasContent("calibre762x39"), true, "the add-on's content is in")
-        eq(#AC_Calibres.ALL, #AC_Calibres.LIST + 1, "ALL holds it")
-        eq(#AC_Calibres.LIST, 9, "LIST stays the nine vanilla calibres: press, spent cases, loot and recycling are untouched")
-        eq(AC_Calibres.identify("Base.762Bullets"), "round", "its round is a round")
-        eq(AC_Calibres.identify(ext.case), "case", "its case a case")
-        eq(AC_Calibres.identify(ext.castBullet), "castBullet", "its cast bullet a cast bullet")
-        -- Every recipe of the add-on's script is listed, with its callback.
-        local listed = {}
-        for _, recipe in ipairs(AC_Materials.RECIPES) do listed[recipe.id] = recipe end
-        local paths = ADDONS.extensionPaths(ext)
-        for _, block in ipairs(parseScript(ROOT .. "/" .. paths.script).blocks) do
-            local recipe = listed[block.name]
-            check(recipe ~= nil, block.name .. " is listed by AC_Materials")
-            if recipe then
-                check(type(AC_Materials[recipe.callback]) == "function", block.name .. ": its OnCreate callback exists")
-                check(AC_Materials.checkConservation(recipe), block.name .. " conserves material")
-            end
-        end
-        -- Units: its items are tracked like the vanilla rifles'.
-        check(AC_Materials.UNITS[ext.case] ~= nil and AC_Materials.UNITS[ext.bullet] ~= nil and AC_Materials.UNITS[ext.castBullet] ~= nil, "its case and bullets carry material units")
-        check(AC_Materials.UNITS[ext.round] ~= nil, "and its round")
-        -- The press and the spent cases know nothing of it.
-        for _, recipe in ipairs(AC_Materials.RECIPES) do
-            if recipe.calibre == ext.id then
-                check(recipe.step ~= "resize" and recipe.step ~= "clean" and not string.find(recipe.id, AC_Calibres.PRESS.idSuffix, 1, true), recipe.id .. " is no press or spent-case recipe")
-            end
-        end
-        -- Its cast round takes a gas check, like the vanilla rifles.
-        local assemble = listed["AmmoMaking_AssembleCastRound" .. ext.suffix]
-        eq(assemble.inputs[#assemble.inputs].items[1], AC_Casting.GAS_CHECK.item, "its cast round takes a gas check")
-        eq(#AC_Calibres.validate(AC_Calibres.ALL), 0, "ALL is sound: " .. table.concat(AC_Calibres.validate(AC_Calibres.ALL), "; "))
+        local results = {}
+        AC_Compat.checkRoundOverrides(results)
+        eq(#results, 1, "beside MFS: one warning")
+        eq(results[1] and results[1].status, "WARNING", "a WARNING")
+        check(results[1] and string.find(results[1].label, "6.8mm", 1, true) ~= nil, "naming the 6.8mm")
         MOCK.activeMods = saved
         T.reloadMod()
-        eq(#AC_Calibres.ALL, #AC_Calibres.LIST, "(and back without the add-on)")
+        local none = {}
+        AC_Compat.checkRoundOverrides(none)
+        eq(#none, 0, "without MFS: none")
+        eq(#AC_Calibres.ALL, #AC_Calibres.LIST, "(and back without the add-ons)")
+    end
+
+    section("Hot Brass bridge: its casings resized at the die set like spent cases")
+    do
+        local handNames = ADDONS.readNames(assert(readFile(ROOT .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
+        local version = string.match(strip(readFile(ROOT .. "/mod/AmmoMaking/42/mod.info")), "modversion=([^\n]+)")
+        local _, body = RENDER.splitHeader(strip(readFile(ROOT .. "/" .. ADDONS.HOT_BRASS_SCRIPT)))
+        eq(body, ADDONS.hotBrassScriptBody(RENDER), "AC_HotBrassRecipes.txt equals the rendering")
+        eq(strip(readFile(ROOT .. "/" .. ADDONS.HOT_BRASS_NAMES)), ADDONS.hotBrassNames(handNames), "its names equal the rendering")
+        eq(strip(readFile(ROOT .. "/" .. ADDONS.HOT_BRASS_INFO)), ADDONS.hotBrassInfo(version), "its mod.info equals the rendering")
+        local recipes = AC_SpentCases.buildHotBrassRecipes()
+        eq(#recipes, #AC_Calibres.LIST, "one resizing per vanilla calibre")
+        for _, recipe in ipairs(recipes) do
+            local calibre = AC_Calibres.get(recipe.calibre)
+            eq(recipe.inputs[1].items[1], calibre.hotBrassCasing, recipe.id .. " takes the Hot Brass casing")
+            eq(string.sub(calibre.hotBrassCasing, 1, 7), "HBVCEF.", recipe.id .. ": a Hot Brass item")
+            eq(recipe.inputs[1].count, AC_SpentCases.RESIZE.spentPerCase, recipe.id .. ": two for one, like a spent case")
+            eq(recipe.effect, "resizedCaseQuality", recipe.id .. ": the resized malus")
+            eq(recipe.xp, 0, recipe.id .. ": no XP")
+        end
+        local saved = MOCK.activeMods
+        MOCK.activeMods = { "AmmoMaking", "AmmoMakingHotBrass", "HBVCEFb42" }
+        T.reloadMod()
+        local listed = {}
+        for _, recipe in ipairs(AC_Materials.RECIPES) do listed[recipe.id] = recipe end
+        for _, recipe in ipairs(AC_SpentCases.buildHotBrassRecipes()) do
+            local mine = listed[recipe.id]
+            check(mine ~= nil and type(AC_Materials[mine.callback]) == "function", recipe.id .. " is listed with its callback")
+            check(mine and AC_Materials.checkConservation(mine), recipe.id .. " loses brass, never makes it")
+            check(AC_Materials.UNITS[recipe.inputs[1].items[1]] ~= nil, recipe.id .. ": its casing carries brass units")
+        end
+        MOCK.activeMods = saved
+        T.reloadMod()
     end
 end

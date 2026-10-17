@@ -1,0 +1,22 @@
+{
+    "AmmoMaking.DieSet50BMG": ".50 BMG latausmatriisisarja",
+    "AmmoMaking.Case50BMG": "Tyhjä .50 BMG hylsy",
+    "AmmoMaking.Bullet50BMG": ".50 BMG kupariluoti",
+    "AmmoMaking.CastBullet50BMG": ".50 BMG valettu lyijyluoti",
+    "AmmoMaking.DieSet58x42": "5.8x42 latausmatriisisarja",
+    "AmmoMaking.Case58x42": "Tyhjä 5.8x42 hylsy",
+    "AmmoMaking.Bullet58x42": "5.8x42 kupariluoti",
+    "AmmoMaking.CastBullet58x42": "5.8x42 valettu lyijyluoti",
+    "AmmoMaking.DieSet545MFS": "5.45x39 (MFS) latausmatriisisarja",
+    "AmmoMaking.Case545MFS": "Tyhjä 5.45x39 (MFS) hylsy",
+    "AmmoMaking.Bullet545MFS": "5.45x39 (MFS) kupariluoti",
+    "AmmoMaking.CastBullet545MFS": "5.45x39 (MFS) valettu lyijyluoti",
+    "AmmoMaking.DieSet86mm": "8.6mm latausmatriisisarja",
+    "AmmoMaking.Case86mm": "Tyhjä 8.6mm hylsy",
+    "AmmoMaking.Bullet86mm": "8.6mm kupariluoti",
+    "AmmoMaking.CastBullet86mm": "8.6mm valettu lyijyluoti",
+    "AmmoMaking.DieSet145mm": "14.5mm latausmatriisisarja",
+    "AmmoMaking.Case145mm": "Tyhjä 14.5mm hylsy",
+    "AmmoMaking.Bullet145mm": "14.5mm kupariluoti",
+    "AmmoMaking.CastBullet145mm": "14.5mm valettu lyijyluoti"
+}

@@ -1,0 +1,8 @@
+name=Ammo Making: Rain's Firearms Expanded (experimental)
+id=AmmoMakingRainsExpanded
+require=\AmmoMaking,\B42RainsFirearmsAndGunPartsExpanded4220
+incompatible=\AmmoMakingCalibre762x39,\AmmoMakingVFE,\AmmoMakingRains
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and B42 Rain's Firearms & Gun Parts Expanded: handload its .223, 7.62x51, 7.62x39 M43, .45-70, .45 Colt, 7.63x25 like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

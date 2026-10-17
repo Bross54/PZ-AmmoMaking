@@ -171,6 +171,129 @@ AC_Features.DEFINITIONS = {
 
         what = "the 7.62x39 round of Vanilla Weapons Plus (the AK-47's) is handloaded like the vanilla rifle rounds: die set, case, copper or gas-checked cast bullet, assembly",
     },
+
+    {
+        id = "hotBrass",
+
+        name = "Hot Brass Casings Resized",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Recipes only: Hot Brass's casings at the die set.
+        mod = "AmmoMakingHotBrass",
+
+        singlePlayerOnly = false,
+
+        what = "the casings Hot Brass ejects are resized at the die set like the mod's spent cases, two into one usable case, for no XP",
+    },
+
+    {
+        id = "packVFE",
+
+        name = "Handloading for Vanilla Firearms Expansion",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Items and recipes of its calibres
+        -- (AC_Calibres.EXTENSIONS); its mod.info requires
+        -- the gun mod and names the add-ons it cannot be
+        -- loaded with.
+        mod = "AmmoMakingVFE",
+
+        singlePlayerOnly = false,
+
+        what = "the .223 and the 7.62x39 of Vanilla Firearms Expansion (B42) are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packRains",
+
+        name = "Handloading for Rain's Firearms",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Items and recipes of its calibres
+        -- (AC_Calibres.EXTENSIONS); its mod.info requires
+        -- the gun mod and names the add-ons it cannot be
+        -- loaded with.
+        mod = "AmmoMakingRains",
+
+        singlePlayerOnly = false,
+
+        what = "the 7.62x51, 7.62x39 M43 and .223 of Rain's Firearms & Gun Parts are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packRainsExpanded",
+
+        name = "Handloading for Rain's Firearms Expanded",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Items and recipes of its calibres
+        -- (AC_Calibres.EXTENSIONS); its mod.info requires
+        -- the gun mod and names the add-ons it cannot be
+        -- loaded with.
+        mod = "AmmoMakingRainsExpanded",
+
+        singlePlayerOnly = false,
+
+        what = "the calibres of Rain's Firearms & Gun Parts Expanded, with the .45-70, .45 Colt and 7.63x25 are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packGaelGunStore",
+
+        name = "Handloading for GaelGunStore",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Items and recipes of its calibres
+        -- (AC_Calibres.EXTENSIONS); its mod.info requires
+        -- the gun mod and names the add-ons it cannot be
+        -- loaded with.
+        mod = "AmmoMakingGaelGunStore",
+
+        singlePlayerOnly = false,
+
+        what = "the centrefire calibres of GaelGunStore, from the .32 ACP to the .50 BMG are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packRealFirearms",
+
+        name = "Handloading for Real Firearms",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Items and recipes of its calibres
+        -- (AC_Calibres.EXTENSIONS); its mod.info requires
+        -- the gun mod and names the add-ons it cannot be
+        -- loaded with.
+        mod = "AmmoMakingRealFirearms",
+
+        singlePlayerOnly = false,
+
+        what = "the eighteen RF_ calibres of Real Firearms, from the 9x18 to the 12.7x55 and its 12 gauge shells are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packMFS",
+
+        name = "Handloading for Modern Firearms System",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        -- Items and recipes of its calibres
+        -- (AC_Calibres.EXTENSIONS); its mod.info requires
+        -- the gun mod and names the add-ons it cannot be
+        -- loaded with.
+        mod = "AmmoMakingMFS",
+
+        singlePlayerOnly = false,
+
+        what = "the 5.8x42, 5.45x39, 8.6mm, 14.5mm and .50 BMG of Modern Firearms System are handloaded like the vanilla rounds",
+    },
 }
 
 

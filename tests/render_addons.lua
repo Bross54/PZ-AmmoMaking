@@ -105,25 +105,73 @@ end
 -- Calibres of other mods (AC_Calibres.EXTENSIONS)
 ------------------------------------------------
 --
--- One add-on per extension calibre: its four items, made from its
--- template calibre's (the same look and weight, the calibre's name in place
--- of the template's), its recipes (AC_Calibres.buildAllRecipesOf) and
--- their English names, made from the template's recipe names.
+-- One add-on per gun mod (a "pack"): the items of each of its calibres,
+-- made from the calibre's template (the same look and weight, the
+-- calibre's name in place of the template's), their recipes
+-- (AC_Calibres.buildAllRecipesOf), their English names, made from the
+-- template's recipe names, and the add-on's mod.info. A calibre two gun
+-- mods share (the same round item) is in both packs, identically.
+--
+-- requires: the gun mod's id. incompatible: the packs whose calibres
+-- name the same round item as a different calibre (Base.762Bullets is
+-- 7.62x39 in Vanilla Weapons Plus and VFE, 7.62x51 in Rain's).
 
-A.EXTENSION_MODS = {
-    calibre762x39 = "mod/AmmoMakingCalibre762x39/",
+A.EXTENSION_PACKS = {
+    { feature = "calibre762x39", root = "mod/AmmoMakingCalibre762x39/", prefix = "762x39",
+      title = "Ammo Making: 7.62x39 (experimental)", poster = "7.62X39",
+      gunMod = "Vanilla Weapons Plus - Gunworks Edition", requires = "MarzVanillaGuns",
+      incompatible = { "AmmoMakingRains", "AmmoMakingRainsExpanded" } },
+    { feature = "packVFE", root = "mod/AmmoMakingVFE/", prefix = "VFE",
+      title = "Ammo Making: Vanilla Firearms Expansion (experimental)", poster = "VFE",
+      gunMod = "Vanilla Firearms Expansion", requires = "VFExpansion1",
+      incompatible = { "AmmoMakingRains", "AmmoMakingRainsExpanded" } },
+    { feature = "packRains", root = "mod/AmmoMakingRains/", prefix = "Rains",
+      title = "Ammo Making: Rain's Firearms (experimental)", poster = "RAIN'S",
+      gunMod = "B42 Rain's Firearms & Gun Parts", requires = "B42RainsFirearmsAndGunParts4220",
+      incompatible = { "AmmoMakingCalibre762x39", "AmmoMakingVFE", "AmmoMakingRainsExpanded" } },
+    { feature = "packRainsExpanded", root = "mod/AmmoMakingRainsExpanded/", prefix = "RainsExpanded",
+      title = "Ammo Making: Rain's Firearms Expanded (experimental)", poster = "RAIN'S EXP",
+      gunMod = "B42 Rain's Firearms & Gun Parts Expanded", requires = "B42RainsFirearmsAndGunPartsExpanded4220",
+      incompatible = { "AmmoMakingCalibre762x39", "AmmoMakingVFE", "AmmoMakingRains" } },
+    { feature = "packGaelGunStore", root = "mod/AmmoMakingGaelGunStore/", prefix = "GaelGunStore",
+      title = "Ammo Making: GaelGunStore (experimental)", poster = "GAELGUNSTORE",
+      gunMod = "GaelGunStore", requires = "GaelGunStore_B42", incompatible = {} },
+    { feature = "packRealFirearms", root = "mod/AmmoMakingRealFirearms/", prefix = "RealFirearms",
+      title = "Ammo Making: Real Firearms (experimental)", poster = "REAL FIREARMS",
+      gunMod = "Real Firearms", requires = "RealFirearms", incompatible = {} },
+    { feature = "packMFS", root = "mod/AmmoMakingMFS/", prefix = "MFS",
+      title = "Ammo Making: Modern Firearms System (experimental)", poster = "MFS",
+      gunMod = "Modern Firearms System", requires = "ModernFirearmsSystem", incompatible = {} },
 }
 
-local function extensionPaths(calibre)
-    local root = assert(A.EXTENSION_MODS[calibre.extension], "no add-on folder for " .. tostring(calibre.extension))
+function A.getPack(feature)
+    for _, pack in ipairs(A.EXTENSION_PACKS) do
+        if pack.feature == feature then return pack end
+    end
+    return nil
+end
+
+-- The extension calibres of a pack, in AC_Calibres.EXTENSIONS order.
+function A.packCalibres(pack)
+    local list = {}
+    for _, calibre in ipairs(AC_Calibres.EXTENSIONS) do
+        for _, feature in ipairs(AC_Calibres.extensionFeatures(calibre)) do
+            if feature == pack.feature then table.insert(list, calibre) end
+        end
+    end
+    return list
+end
+
+function A.packPaths(pack)
+    local root = pack.root
     return {
-        items = root .. "42/media/scripts/AC_" .. calibre.suffix .. "Items.txt",
-        script = root .. "42/media/scripts/AC_" .. calibre.suffix .. "Recipes.txt",
+        items = root .. "42/media/scripts/AC_" .. pack.prefix .. "Items.txt",
+        script = root .. "42/media/scripts/AC_" .. pack.prefix .. "Recipes.txt",
         itemNames = root .. "common/media/lua/shared/Translate/EN/ItemName.json",
         names = root .. "common/media/lua/shared/Translate/EN/Recipes.json",
+        info = root .. "42/mod.info",
     }
 end
-A.extensionPaths = extensionPaths
 
 -- Replaces every plain occurrence of from in text.
 local function swap(text, from, to)
@@ -166,9 +214,13 @@ function A.extensionItems(calibre, mainItems)
     return items, template
 end
 
-function A.extensionItemsBody(calibre, mainItems)
+function A.extensionItemsBody(calibres, mainItems)
     local blocks = {}
-    for _, item in ipairs(A.extensionItems(calibre, mainItems)) do
+    local items = {}
+    for _, calibre in ipairs(calibres) do
+        for _, item in ipairs((A.extensionItems(calibre, mainItems))) do table.insert(items, item) end
+    end
+    for _, item in ipairs(items) do
         local lines = { "    item " .. item.name, "    {" }
         for _, field in ipairs(item.fields) do
             table.insert(lines, "        " .. field[1] .. " = " .. field[2] .. ",")
@@ -179,35 +231,111 @@ function A.extensionItemsBody(calibre, mainItems)
     return "module AmmoMaking\n{\n" .. table.concat(blocks, "\n\n") .. "\n}\n"
 end
 
-function A.extensionItemNames(calibre, mainItems)
+function A.extensionItemNames(calibres, mainItems)
     local list = {}
-    for _, item in ipairs(A.extensionItems(calibre, mainItems)) do
-        for _, field in ipairs(item.fields) do
-            if field[1] == "DisplayName" then table.insert(list, { item.fullType, field[2] }) end
+    for _, calibre in ipairs(calibres) do
+        for _, item in ipairs((A.extensionItems(calibre, mainItems))) do
+            for _, field in ipairs(item.fields) do
+                if field[1] == "DisplayName" then table.insert(list, { item.fullType, field[2] }) end
+            end
         end
     end
     return A.renderNames(list)
 end
 
-function A.extensionScriptBody(calibre, RENDER)
-    return RENDER.renderModule(AC_Calibres.buildAllRecipesOf(calibre))
+function A.extensionRecipes(calibres)
+    local recipes = {}
+    for _, calibre in ipairs(calibres) do
+        for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do table.insert(recipes, recipe) end
+    end
+    return recipes
+end
+
+function A.extensionScriptBody(calibres, RENDER)
+    return RENDER.renderModule(A.extensionRecipes(calibres))
+end
+
+-- The pack's mod.info. version: the main mod's modversion.
+function A.packInfo(pack, version)
+    local incompatible = {}
+    for _, id in ipairs(pack.incompatible) do table.insert(incompatible, "\\" .. id) end
+    local calibres = {}
+    for _, calibre in ipairs(A.packCalibres(pack)) do table.insert(calibres, calibre.id) end
+    local lines = {
+        "name=" .. pack.title,
+        "id=" .. AC_Features.get(pack.feature).mod,
+        "require=\\AmmoMaking,\\" .. pack.requires,
+    }
+    if #incompatible > 0 then table.insert(lines, "incompatible=" .. table.concat(incompatible, ",")) end
+    table.insert(lines, "modversion=" .. version)
+    table.insert(lines, "versionMin=" .. A.mainVersionMin())
+    table.insert(lines, "poster=poster.png")
+    table.insert(lines, "description=EXPERIMENTAL add-on for Ammo Making and " .. pack.gunMod .. ": handload its "
+        .. table.concat(calibres, ", ") .. " like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.")
+    return table.concat(lines, "\n") .. "\n"
 end
 
 -- handNames: the main mod's recipe names. Each recipe is named after the
 -- template's recipe of the same id, the calibre's name in place of the
 -- template's.
-function A.extensionNames(calibre, handNames)
-    local template = nil
-    for _, c in ipairs(AC_Calibres.LIST) do if c.id == calibre.template then template = c end end
-    assert(template, "no template calibre " .. tostring(calibre.template))
+function A.extensionNames(calibres, handNames)
     local list = {}
-    for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do
-        local templateId = swap(recipe.id, calibre.suffix, template.suffix)
-        local name = handNames[templateId]
-        assert(name and name ~= "", "no name for " .. templateId)
-        table.insert(list, { recipe.id, swap(name, template.id, calibre.id) })
+    for _, calibre in ipairs(calibres) do
+        local template = nil
+        for _, c in ipairs(AC_Calibres.LIST) do if c.id == calibre.template then template = c end end
+        assert(template, "no template calibre " .. tostring(calibre.template))
+        for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do
+            local templateId = swap(recipe.id, calibre.suffix, template.suffix)
+            local name = handNames[templateId]
+            assert(name and name ~= "", "no name for " .. templateId)
+            table.insert(list, { recipe.id, swap(name, template.id, calibre.id) })
+        end
     end
     return A.renderNames(list)
+end
+
+-- The main mod's versionMin: every add-on asks for the same build.
+function A.mainVersionMin()
+    local root = (arg and arg[0] and arg[0]:match("^(.*)/tests/[^/]*$")) or "."
+    local handle = assert(io.open(root .. "/mod/AmmoMaking/42/mod.info", "r"))
+    local text = handle:read("*a")
+    handle:close()
+    return assert(string.match(text, "versionMin=([^\r\n]+)"), "no versionMin")
+end
+
+------------------------------------------------
+-- Hot Brass bridge
+------------------------------------------------
+
+A.HOT_BRASS = "mod/AmmoMakingHotBrass/"
+A.HOT_BRASS_SCRIPT = A.HOT_BRASS .. "42/media/scripts/AC_HotBrassRecipes.txt"
+A.HOT_BRASS_NAMES = A.HOT_BRASS .. "common/media/lua/shared/Translate/EN/Recipes.json"
+A.HOT_BRASS_INFO = A.HOT_BRASS .. "42/mod.info"
+
+function A.hotBrassScriptBody(RENDER)
+    return RENDER.renderModule(AC_SpentCases.buildHotBrassRecipes())
+end
+
+function A.hotBrassNames(handNames)
+    local list = {}
+    for _, recipe in ipairs(AC_SpentCases.buildHotBrassRecipes()) do
+        local form = handNames[recipe.formRecipe]
+        assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
+        table.insert(list, { recipe.id, AC_SpentCases.getResizeName(form) .. AC_SpentCases.HOT_BRASS.nameSuffix })
+    end
+    return A.renderNames(list)
+end
+
+function A.hotBrassInfo(version)
+    return table.concat({
+        "name=Ammo Making: Hot Brass Casings (experimental)",
+        "id=" .. AC_Features.get("hotBrass").mod,
+        "require=\\AmmoMaking,\\HBVCEFb42",
+        "modversion=" .. version,
+        "versionMin=" .. A.mainVersionMin(),
+        "poster=poster.png",
+        "description=EXPERIMENTAL add-on for Ammo Making and Hot Brass: the casings Hot Brass ejects are resized at the calibre's die set like Ammo Making's spent cases, two into one usable case of a lower quality, for no XP. Not yet verified in game.",
+    }, "\n") .. "\n"
 end
 
 ------------------------------------------------
@@ -414,9 +542,19 @@ local function write(path, text)
 end
 
 -- Rewrites a script's body, keeping its leading comment.
-local function writeScript(path, body, RENDER)
-    local header = RENDER.splitHeader(assert(read(path), "cannot open " .. path))
+local function writeScript(path, body, RENDER, defaultHeader)
+    local existing = read(path)
+    local header = existing and RENDER.splitHeader(existing) or assert(defaultHeader, "cannot open " .. path)
     write(path, header .. body)
+end
+
+-- The leading comment of a pack's generated scripts.
+local function packHeader(pack, what)
+    return "/* " .. pack.title .. " - " .. what .. ".\n\n"
+        .. "   EXPERIMENTAL, NOT YET SEEN IN GAME. Needs " .. pack.gunMod .. " (" .. pack.requires .. ").\n\n"
+        .. "   THE BODY OF THIS FILE IS GENERATED by tests/write_recipes.lua from\n"
+        .. "   AC_Calibres.EXTENSIONS of the main mod (tests/render_addons.lua). The\n"
+        .. "   OnCreate callbacks are the main mod's. Do not edit the body. */\n\n"
 end
 
 -- which: "press", "spent" or nil for both. Returns the paths written.
@@ -442,16 +580,33 @@ function A.writeAll(root, RENDER, which)
             table.insert(written, path)
         end
     end
+    if which == nil or which == "hotbrass" then
+        local handNames = A.readNames(assert(read(root .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
+        local version = string.match(assert(read(root .. "/mod/AmmoMaking/42/mod.info")), "modversion=([^\n]+)")
+        writeScript(root .. "/" .. A.HOT_BRASS_SCRIPT, A.hotBrassScriptBody(RENDER), RENDER,
+            "/* Ammo Making: Hot Brass Casings (add-on) - resizing Hot Brass's casings.\n\n"
+            .. "   EXPERIMENTAL, NOT YET SEEN IN GAME. Needs Hot Brass (HBVCEFb42).\n\n"
+            .. "   THE BODY OF THIS FILE IS GENERATED by tests/write_recipes.lua from\n"
+            .. "   AC_SpentCases.buildHotBrassRecipes of the main mod: the spent cases'\n"
+            .. "   resizing with Hot Brass's casing in place of the spent case. The OnCreate\n"
+            .. "   callbacks are the main mod's. Do not edit the body. */\n\n")
+        write(root .. "/" .. A.HOT_BRASS_NAMES, A.hotBrassNames(handNames))
+        write(root .. "/" .. A.HOT_BRASS_INFO, A.hotBrassInfo(version))
+        for _, path in ipairs({ A.HOT_BRASS_SCRIPT, A.HOT_BRASS_NAMES, A.HOT_BRASS_INFO }) do table.insert(written, path) end
+    end
     if which == nil or which == "extensions" then
         local mainItems = assert(read(root .. "/mod/AmmoMaking/42/media/scripts/AC_Items.txt"))
         local handNames = A.readNames(assert(read(root .. "/mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json")))
-        for _, calibre in ipairs(AC_Calibres.EXTENSIONS) do
-            local paths = extensionPaths(calibre)
-            writeScript(root .. "/" .. paths.items, A.extensionItemsBody(calibre, mainItems), RENDER)
-            writeScript(root .. "/" .. paths.script, A.extensionScriptBody(calibre, RENDER), RENDER)
-            write(root .. "/" .. paths.itemNames, A.extensionItemNames(calibre, mainItems))
-            write(root .. "/" .. paths.names, A.extensionNames(calibre, handNames))
-            for _, path in ipairs({ paths.items, paths.script, paths.itemNames, paths.names }) do
+        local version = string.match(assert(read(root .. "/mod/AmmoMaking/42/mod.info")), "modversion=([^\n]+)")
+        for _, pack in ipairs(A.EXTENSION_PACKS) do
+            local calibres = A.packCalibres(pack)
+            local paths = A.packPaths(pack)
+            writeScript(root .. "/" .. paths.items, A.extensionItemsBody(calibres, mainItems), RENDER, packHeader(pack, "the items of its calibres"))
+            writeScript(root .. "/" .. paths.script, A.extensionScriptBody(calibres, RENDER), RENDER, packHeader(pack, "the recipes of its calibres"))
+            write(root .. "/" .. paths.itemNames, A.extensionItemNames(calibres, mainItems))
+            write(root .. "/" .. paths.names, A.extensionNames(calibres, handNames))
+            write(root .. "/" .. paths.info, A.packInfo(pack, version))
+            for _, path in ipairs({ paths.items, paths.script, paths.itemNames, paths.names, paths.info }) do
                 table.insert(written, path)
             end
         end

@@ -79,7 +79,7 @@ MUTANTS = [
     # ---- ammo boxes
     (SHARED + "AC_Calibres.lua", "        box = \"Base.Bullets9mmBox\",", "        box = \"Base.Bullets9mmCarton\",", "the 9mm box is a carton"),
     (SHARED + "AC_Calibres.lua", "        box = \"Base.556Box\",", "        box = \"Base.308Box\",", "two calibres share a box"),
-    (SHARED + "AC_Calibres.lua", "        round = \"Base.Bullets9mm\",\n\n        box = \"Base.Bullets9mmBox\",\n\n        roundsPerBox = 50,", "        round = \"Base.Bullets9mm\",\n\n        box = \"Base.Bullets9mmBox\",\n\n        roundsPerBox = 20,", "a 9mm box of twenty"),
+    (SHARED + "AC_Calibres.lua", "        box = \"Base.Bullets9mmBox\",\n\n        roundsPerBox = 50,", "        box = \"Base.Bullets9mmBox\",\n\n        roundsPerBox = 20,", "a 9mm box of twenty"),
     (SHARED + "AC_Compat.lua", "AC_Compat.BOX_RECIPE = \"place_ammo_in_box\"", "AC_Compat.BOX_RECIPE = \"PlaceAmmoInBox\"", "the probed box recipe id is not vanilla's"),
 
     # ---- save data
@@ -176,7 +176,7 @@ MUTANTS = [
 
     # ---- release metadata
     ("mod/AmmoMaking/42/mod.info", "modversion=0.11.0", "modversion=1.0.0", "the mod calls itself 1.0 with no changelog entry"),
-    ("mod/AmmoMaking/42/mod.info", "versionMin=42.20.0", "versionMin=41.78.0", "the mod claims to run on Build 41"),
+    ("mod/AmmoMaking/42/mod.info", "versionMin=42.21.0", "versionMin=41.78.0", "the mod claims to run on Build 41"),
 
     # ---- data files
     ("mod/AmmoMaking/common/media/lua/shared/Translate/EN/Recipes.json", "    \"AmmoMaking_ScrapBrass10\": \"Scrap Small Brass Sheets and Medium Cases\",\n", "", "a recipe has no name"),
@@ -219,7 +219,7 @@ MUTANTS = [
     ("mod/AmmoMakingPress/42/mod.info", "tiledef=ammomaking_press 6142\n", "", "the press add-on does not declare its tile sheet"),
     ("art/reloading_press/tiles.json", "\"output\": \"../../mod/AmmoMakingPress/42/media\",", "\"output\": \"../../mod/AmmoMaking/42/media\",", "the press tile sheet is built into the main mod"),
     (SHARED + "AC_Visuals.lua", "        value = \"ammomaking_press_01_1\",", "        value = \"ammomaking_press_01_0\",", "the game-start check probes the south sprite twice and never the east one"),
-    (SHARED + "AC_Compat.lua", "    checkSkillBooks(results)\n\n    checkFeatures(results)\n", "    checkSkillBooks(results)\n", "the game-start check never looks at the features"),
+    (SHARED + "AC_Compat.lua", "    checkSkillBooks(results)\n    checkFeatures(results)\n", "    checkSkillBooks(results)\n", "the game-start check never looks at the features"),
     (SHARED + "AC_Compat.lua", "    checkLoot(results)\n\n    checkSkillBooks(results)\n", "    checkLoot(results)\n", "the game-start check never looks at the skill books"),
 
     # ---- spent cases
@@ -346,6 +346,8 @@ MUTANTS = [
     (SHARED + "AC_Calibres.lua", "for _,\n    calibre\nin ipairs(\n    AC_Calibres.getActiveExtensions()\n)\ndo\n\n    table.insert(\n        AC_Calibres.ALL,", "for _,\n    calibre\nin ipairs(\n    AC_Calibres.EXTENSIONS\n)\ndo\n\n    table.insert(\n        AC_Calibres.ALL,", "an extension calibre is in the game without its add-on"),
     (SHARED + "AC_CaseQuality.lua", "    return (tonumber(bonus) or 0) * scale\n", "    return (tonumber(bonus) or 0)\n", "the finishing bonus ignores its sandbox option"),
     (SHARED + "AC_Calibres.lua", "AC_Calibres.REGRIND.lossPerRegrind * scale + 0.5", "AC_Calibres.REGRIND.lossPerRegrind + 0.5", "the regrinding loss ignores its sandbox option"),
+    ("tests/render_addons.lua", "      gunMod = \"Vanilla Weapons Plus - Gunworks Edition\", requires = \"MarzVanillaGuns\",\n      incompatible = { \"AmmoMakingRains\", \"AmmoMakingRainsExpanded\" } },", "      gunMod = \"Vanilla Weapons Plus - Gunworks Edition\", requires = \"MarzVanillaGuns\",\n      incompatible = { \"AmmoMakingRainsExpanded\" } },", "the 7.62x39 add-on may load beside Rain's"),
+    (SHARED + "AC_SpentCases.lua", "            resize.inputs[1] = {\n                count = resize.inputs[1].count,", "            resize.inputs[1] = {\n                count = 1,", "one Hot Brass casing makes one case"),
     (SHARED + "AC_Casting.lua", "    { id = \"sand\", prefix = \"Sand\", qualityBonus = -20, keep = false },", "    { id = \"sand\", prefix = \"Sand\", qualityBonus = 0, keep = false },", "a sand mould casts as well as iron"),
     (SHARED + "AC_CaseQuality.lua", "                if bulletQuality then\n", "                if false then\n", "a cast bullet's quality never reaches its round"),
     (SHARED + "AC_Calibres.lua", "    if class.mould then\n\n        calibre.castBullet =", "    if true then\n\n        calibre.castBullet =", "rifles cast lead bullets"),

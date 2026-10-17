@@ -1242,6 +1242,9 @@ AC_Calibres.LIST = {
 
         round = "Base.Bullets9mm",
 
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.9x19_Casing",
+
         box = "Base.Bullets9mmBox",
 
         roundsPerBox = 50,
@@ -1257,6 +1260,9 @@ AC_Calibres.LIST = {
 
         round = "Base.Bullets38",
 
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.38_Casing",
+
         box = "Base.Bullets38Box",
 
         roundsPerBox = 50,
@@ -1271,6 +1277,9 @@ AC_Calibres.LIST = {
         suffix = "45ACP",
 
         round = "Base.Bullets45",
+
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.45_Casing",
 
         box = "Base.Bullets45Box",
 
@@ -1297,6 +1306,9 @@ AC_Calibres.LIST = {
 
         round = "Base.Bullets357",
 
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.357_Casing",
+
         box = "Base.Bullets357Box",
 
         roundsPerBox = 50,
@@ -1319,6 +1331,9 @@ AC_Calibres.LIST = {
         suffix = "44Magnum",
 
         round = "Base.Bullets44",
+
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.44_Casing",
 
         box = "Base.Bullets44Box",
 
@@ -1355,6 +1370,9 @@ AC_Calibres.LIST = {
 
         round = "Base.556Bullets",
 
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.556x45_Casing",
+
         box = "Base.556Box",
 
         roundsPerBox = 20,
@@ -1378,6 +1396,9 @@ AC_Calibres.LIST = {
 
         round = "Base.3030Bullets",
 
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.3030_Casing",
+
         box = "Base.3030Box",
 
         roundsPerBox = 20,
@@ -1394,6 +1415,9 @@ AC_Calibres.LIST = {
         suffix = "308Win",
 
         round = "Base.308Bullets",
+
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.762x51_Casing",
 
         box = "Base.308Box",
 
@@ -1424,6 +1448,9 @@ AC_Calibres.LIST = {
         suffix = "12Gauge",
 
         round = "Base.ShotgunShells",
+
+        -- What Hot Brass ejects for it (its Init.lua).
+        hotBrassCasing = "HBVCEF.12Gauge_Hull_Red",
 
         box = "Base.ShotgunShellsBox",
 
@@ -1474,7 +1501,8 @@ AC_Calibres.EXTENSIONS = {
         id = "7.62x39",
         class = "rifle",
         suffix = "762x39",
-        extension = "calibre762x39",
+        -- Vanilla Firearms Expansion uses the same item.
+        extension = { "calibre762x39", "packVFE" },
         -- The vanilla calibre whose item look and names the
         -- add-on's are made from (tests/render_addons.lua).
         template = ".308",
@@ -1487,7 +1515,661 @@ AC_Calibres.EXTENSIONS = {
         bulletsPerScrap = 1,
         powderUses = 3,
     }),
+
+    ------------------------------------------------
+    -- Shared by Vanilla Firearms Expansion and Rain's
+    -- Firearms (both define Base.223Bullets).
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = ".223",
+        class = "rifle",
+        suffix = "223Rem",
+        extension = { "packVFE", "packRains", "packRainsExpanded" },
+        template = ".308",
+        round = "Base.223Bullets",
+        box = "Base.223Box",
+        roundsPerBox = 20,
+        ammoType = "vfe:bullets_223",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+    }),
+
+    ------------------------------------------------
+    -- Rain's Firearms: its 7.62x51 is Base.762Bullets,
+    -- the item Vanilla Firearms Expansion and Vanilla
+    -- Weapons Plus use for 7.62x39. The add-ons cannot be
+    -- loaded together (incompatible= in their mod.info).
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "7.62x51",
+        class = "rifle",
+        suffix = "762x51",
+        extension = { "packRains", "packRainsExpanded" },
+        template = ".308",
+        round = "Base.762Bullets",
+        box = "Base.762Box",
+        roundsPerBox = 50,
+        ammoType = "firearms:bullets_762x51",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+
+    ------------------------------------------------
+    -- Base.762x39Bullets: Rain's Firearms and
+    -- GaelGunStore.
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "7.62x39 M43",
+        class = "rifle",
+        suffix = "762x39M43",
+        extension = { "packRains", "packRainsExpanded", "packGaelGunStore" },
+        template = ".308",
+        round = "Base.762x39Bullets",
+        box = "Base.762x39Box",
+        roundsPerBox = 30,
+        ammoType = "firearms:bullets_762x39",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+    }),
+
+    ------------------------------------------------
+    -- Rain's Firearms Expanded.
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = ".45-70",
+        class = "rifle",
+        suffix = "4570Gov",
+        extension = { "packRainsExpanded" },
+        template = ".308",
+        round = "Base.4570Bullets",
+        box = "Base.4570Box",
+        roundsPerBox = 50,
+        ammoType = "hiraeth:bullets_4570",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 4,
+    }),
+    AC_Calibres.define({
+        id = ".45 Colt",
+        class = "pistol",
+        suffix = "45Colt",
+        extension = { "packRainsExpanded" },
+        template = ".357 Magnum",
+        round = "Base.45ColtBullets",
+        box = "Base.45ColtBulletsBox",
+        roundsPerBox = 50,
+        ammoType = "hiraeth:bullets_45colt",
+        primerFamily = "LargePistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 1,
+        powderUses = 2,
+        assembleLevel = 4,
+    }),
+    AC_Calibres.define({
+        id = "7.63x25",
+        class = "pistol",
+        suffix = "763x25",
+        extension = { "packRainsExpanded" },
+        template = ".357 Magnum",
+        round = "Base.763x25Bullets",
+        box = "Base.Bullets76325Box",
+        roundsPerBox = 50,
+        ammoType = "hiraeth:bullets_76325",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+    }),
+
+    ------------------------------------------------
+    -- GaelGunStore (its .22 LR is rimfire: the priming
+    -- is in the rim, it is not reloaded).
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = ".32 ACP",
+        class = "pistol",
+        suffix = "32ACP",
+        extension = { "packGaelGunStore" },
+        template = ".357 Magnum",
+        round = "Base.Bullets32",
+        box = "Base.Bullets32Box",
+        roundsPerBox = 50,
+        ammoType = "ggs:bullets_32",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+    }),
+    AC_Calibres.define({
+        id = "9x39",
+        class = "rifle",
+        suffix = "9x39",
+        extension = { "packGaelGunStore" },
+        template = ".308",
+        round = "Base.9x39Bullets",
+        box = "Base.9x39Box",
+        roundsPerBox = 30,
+        ammoType = "ggs:9x39_bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 2,
+    }),
+    AC_Calibres.define({
+        id = "5.45x39",
+        class = "rifle",
+        suffix = "545x39",
+        extension = { "packGaelGunStore" },
+        template = ".308",
+        round = "Base.545x39Bullets",
+        box = "Base.545x39Box",
+        roundsPerBox = 30,
+        ammoType = "ggs:545x39_bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "7.62x54R",
+        class = "rifle",
+        suffix = "762x54R",
+        extension = { "packGaelGunStore" },
+        template = ".308",
+        round = "Base.762x54rBullets",
+        box = "Base.762x54rBox",
+        roundsPerBox = 20,
+        ammoType = "ggs:762x54r_bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.92x57",
+        class = "rifle",
+        suffix = "792x57",
+        extension = { "packGaelGunStore" },
+        template = ".308",
+        round = "Base.792x57Bullets",
+        box = "Base.792x57Box",
+        roundsPerBox = 20,
+        ammoType = "ggs:792x57_bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = ".30-06",
+        class = "rifle",
+        suffix = "3006Spr",
+        extension = { "packGaelGunStore" },
+        template = ".308",
+        round = "Base.30_06Bullets",
+        box = "Base.30_06Box",
+        roundsPerBox = 20,
+        ammoType = "ggs:30_06_bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = ".303 British",
+        class = "rifle",
+        suffix = "303Brit",
+        extension = { "packGaelGunStore" },
+        template = ".308",
+        round = "Base.303Bullets",
+        box = "Base.303Box",
+        roundsPerBox = 20,
+        ammoType = "ggs:303_bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = ".50 AE",
+        class = "pistol",
+        suffix = "50AE",
+        extension = { "packGaelGunStore" },
+        template = ".357 Magnum",
+        round = "Base.Bullets50Magnum",
+        box = "Base.Bullets50MagnumBox",
+        roundsPerBox = 30,
+        ammoType = "ggs:bullets_50magnum",
+        primerFamily = "LargePistol",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+        assembleLevel = 5,
+    }),
+
+    ------------------------------------------------
+    -- Base.Bullets50: GaelGunStore and Modern Firearms
+    -- System. A heavy round, at level 6.
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = ".50 BMG",
+        class = "rifle",
+        suffix = "50BMG",
+        extension = { "packGaelGunStore", "packMFS" },
+        template = ".308",
+        round = "Base.Bullets50",
+        box = "Base.Bullets50Box",
+        roundsPerBox = 20,
+        ammoType = "ggs:bullets_50",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 6,
+        bulletsPerScrap = 1,
+        powderUses = 10,
+        assembleLevel = 6,
+    }),
+
+    ------------------------------------------------
+    -- Real Firearms: every round is an RF_ item of its
+    -- own, so the calibres the mod already knows come
+    -- again, marked (RF).
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "9x19 (RF)",
+        class = "pistol",
+        suffix = "RF9x19",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_9x19Bullets",
+        box = "Base.RF_9x19Box",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_9x19Bullets",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+    }),
+    AC_Calibres.define({
+        id = "9x18 (RF)",
+        class = "pistol",
+        suffix = "RF9x18",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_9x18Bullets",
+        box = "Base.RF_9x18Box",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_9x18Bullets",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+    }),
+    AC_Calibres.define({
+        id = ".45 ACP (RF)",
+        class = "pistol",
+        suffix = "RF45ACP",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_45Bullets",
+        box = "Base.RF_45Box",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_45Bullets",
+        primerFamily = "LargePistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 1,
+        powderUses = 1,
+        assembleLevel = 4,
+    }),
+    AC_Calibres.define({
+        id = ".357 Magnum (RF)",
+        class = "pistol",
+        suffix = "RF357Mag",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_357Bullets",
+        box = "Base.RF_357Box",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_357Bullets",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 2,
+        assembleLevel = 4,
+    }),
+    AC_Calibres.define({
+        id = ".380 ACP (RF)",
+        class = "pistol",
+        suffix = "RF380ACP",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_380Bullets",
+        box = "Base.RF_380Box",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_380Bullets",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+    }),
+    AC_Calibres.define({
+        id = ".500 Magnum (RF)",
+        class = "pistol",
+        suffix = "RF500Mag",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_500Bullets",
+        box = "Base.RF_500Box",
+        roundsPerBox = 10,
+        ammoType = "RealFirearms:RF_500Bullets",
+        primerFamily = "LargePistol",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 4,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.62x25 (RF)",
+        class = "pistol",
+        suffix = "RF762x25",
+        extension = { "packRealFirearms" },
+        template = ".357 Magnum",
+        round = "Base.RF_762x25Bullets",
+        box = "Base.RF_762x25Box",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_762x25Bullets",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+    }),
+    AC_Calibres.define({
+        id = ".30 Carbine (RF)",
+        class = "rifle",
+        suffix = "RF30Carb",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_30CarbineBullets",
+        box = "Base.RF_30CarbineBox",
+        roundsPerBox = 50,
+        ammoType = "RealFirearms:RF_30CarbineBullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 2,
+    }),
+    AC_Calibres.define({
+        id = "5.45x39 (RF)",
+        class = "rifle",
+        suffix = "RF545x39",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_545x39Bullets",
+        box = "Base.RF_545x39Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_545x39Bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "5.56x45 (RF)",
+        class = "rifle",
+        suffix = "RF556x45",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_556x45Bullets",
+        box = "Base.RF_556x45Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_556x45Bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "7.62x39 (RF)",
+        class = "rifle",
+        suffix = "RF762x39",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_762x39Bullets",
+        box = "Base.RF_762x39Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_762x39Bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "7.62x51 (RF)",
+        class = "rifle",
+        suffix = "RF762x51",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_762x51Bullets",
+        box = "Base.RF_762x51Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_762x51Bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.62x54R (RF)",
+        class = "rifle",
+        suffix = "RF762x54R",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_762x54Bullets",
+        box = "Base.RF_762x54Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_762x54Bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.92x33 (RF)",
+        class = "rifle",
+        suffix = "RF792x33",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_792x33Bullets",
+        box = "Base.RF_792x33Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_792x33Bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "7.92x57 (RF)",
+        class = "rifle",
+        suffix = "RF792x57",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_792x57Bullets",
+        box = "Base.RF_792x57Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_792x57Bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = ".30-06 (RF)",
+        class = "rifle",
+        suffix = "RF3006",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_3006Bullets",
+        box = "Base.RF_3006Box",
+        roundsPerBox = 30,
+        ammoType = "RealFirearms:RF_3006Bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+    }),
+    AC_Calibres.define({
+        id = "12.7x55 (RF)",
+        class = "rifle",
+        suffix = "RF127x55",
+        extension = { "packRealFirearms" },
+        template = ".308",
+        round = "Base.RF_127x55Bullets",
+        box = "Base.RF_127x55Box",
+        roundsPerBox = 10,
+        ammoType = "RealFirearms:RF_127x55Bullets",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 4,
+        bulletsPerScrap = 1,
+        powderUses = 6,
+        assembleLevel = 6,
+    }),
+    AC_Calibres.define({
+        id = "12 Gauge (RF)",
+        class = "shotgun",
+        suffix = "RF12Ga",
+        extension = { "packRealFirearms" },
+        template = "12 Gauge",
+        round = "Base.RF_12GaugeBullets",
+        box = "Base.RF_12GaugeBox",
+        roundsPerBox = 24,
+        ammoType = "RealFirearms:RF_12GaugeBullets",
+        primerFamily = "LargePistol",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+        wads = 1,
+    }),
+
+    ------------------------------------------------
+    -- Modern Firearms System (its Bullets38 is a 6.8mm,
+    -- see AC_Compat; .50 BMG above).
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "5.8x42",
+        class = "rifle",
+        suffix = "58x42",
+        extension = { "packMFS" },
+        template = ".308",
+        round = "Base.A_58bullets",
+        box = "Base.58Box",
+        roundsPerBox = 50,
+        ammoType = "efk:cat_58bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "5.45x39 (MFS)",
+        class = "rifle",
+        suffix = "545MFS",
+        extension = { "packMFS" },
+        template = ".308",
+        round = "Base.545Bullets",
+        box = "Base.545Box",
+        roundsPerBox = 50,
+        ammoType = "efk:cat_545bullets",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+    }),
+    AC_Calibres.define({
+        id = "8.6mm",
+        class = "rifle",
+        suffix = "86mm",
+        extension = { "packMFS" },
+        template = ".308",
+        round = "Base.Bullets86",
+        box = "Base.Bullets86Box",
+        roundsPerBox = 50,
+        ammoType = "efk:cat_bullets86",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 7,
+        assembleLevel = 6,
+    }),
+    AC_Calibres.define({
+        id = "14.5mm",
+        class = "rifle",
+        suffix = "145mm",
+        extension = { "packMFS" },
+        template = ".308",
+        round = "Base.Bullets145",
+        box = "Base.Bullets145Box",
+        roundsPerBox = 20,
+        ammoType = "efk:cat_bullets145",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 8,
+        bulletsPerScrap = 1,
+        powderUses = 16,
+        assembleLevel = 6,
+    }),
 }
+
+
+-- The features (add-ons) an extension calibre comes with:
+-- extension is one feature id or a list of them.
+function AC_Calibres.extensionFeatures(
+    calibre
+)
+
+    local extension =
+        calibre and calibre.extension
+
+
+    if type(extension) == "table" then
+        return extension
+    end
+
+
+    if type(extension) == "string" then
+        return { extension }
+    end
+
+
+    return {}
+end
+
+
+-- Is the extension calibre in the game: any of its
+-- add-ons ticked.
+function AC_Calibres.isExtensionActive(
+    calibre
+)
+
+    for _,
+        feature
+    in ipairs(
+        AC_Calibres.extensionFeatures(calibre)
+    )
+    do
+
+        if AC_Features.hasContent(feature) then
+            return true
+        end
+    end
+
+
+    return false
+end
 
 
 -- The extensions whose add-on is in the game.
@@ -1503,7 +2185,7 @@ function AC_Calibres.getActiveExtensions()
     )
     do
 
-        if AC_Features.hasContent(calibre.extension) then
+        if AC_Calibres.isExtensionActive(calibre) then
 
             table.insert(
                 active,
@@ -2741,6 +3423,34 @@ end
 -- buildUnits(): the items exist only with the spent-cases
 -- add-on, and AC_Materials takes these in only when that
 -- feature is on.
+-- Hot Brass casings (the bridge add-on): the brass of the
+-- case they were, like a spent case of the mod.
+function AC_Calibres.buildHotBrassUnits()
+
+    local units = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        if calibre.hotBrassCasing then
+
+            units[calibre.hotBrassCasing] = {
+                metal = "brass",
+                units = AC_Calibres.CONFIG.cupUnits * calibre.cupsPerCase,
+            }
+        end
+    end
+
+
+    return units
+end
+
+
 function AC_Calibres.buildSpentUnits()
 
     local units = {}

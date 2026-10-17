@@ -1,0 +1,7 @@
+name=Ammo Making: Real Firearms (experimental)
+id=AmmoMakingRealFirearms
+require=\AmmoMaking,\RealFirearms
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and Real Firearms: handload its 9x19 (RF), 9x18 (RF), .45 ACP (RF), .357 Magnum (RF), .380 ACP (RF), .500 Magnum (RF), 7.62x25 (RF), .30 Carbine (RF), 5.45x39 (RF), 5.56x45 (RF), 7.62x39 (RF), 7.62x51 (RF), 7.62x54R (RF), 7.92x33 (RF), 7.92x57 (RF), .30-06 (RF), 12.7x55 (RF), 12 Gauge (RF) like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

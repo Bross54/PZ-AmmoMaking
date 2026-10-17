@@ -2674,10 +2674,59 @@ AC_Compat.FEATURE_CHECKS.reloadingPress =
     end
 
 
-local function checkFeatures(
+------------------------------------------------
+-- OTHER MODS THAT CHANGE A VANILLA ROUND
+------------------------------------------------
+--
+-- Read from the installed mods' scripts (Workshop):
+-- Modern Firearms System (3633421539) and its Community
+-- Fix (3780151182) redefine Base.Bullets38 as a 6.8mm
+-- round. The mod's .38 Special recipes still make
+-- Base.Bullets38, so beside MFS they make its 6.8mm. A
+-- WARNING says so; nothing is changed.
+------------------------------------------------
+
+AC_Compat.ROUND_OVERRIDES = {
+
+    {
+        mod = "ModernFirearmsSystem",
+        round = "Base.Bullets38",
+        text = "Modern Firearms System is active: its Base.Bullets38 is a 6.8mm round, so the .38 Special recipes make MFS 6.8mm rounds",
+    },
+}
+
+
+local function checkRoundOverrides(
     results
 )
 
+    for _,
+        override
+    in ipairs(
+        AC_Compat.ROUND_OVERRIDES
+    )
+    do
+
+        if AC_Features.isModActive(override.mod) then
+
+            addResult(
+                results,
+                "WARNING",
+                override.text,
+                override.round
+            )
+        end
+    end
+end
+
+
+AC_Compat.checkRoundOverrides =
+    checkRoundOverrides
+
+
+local function checkFeatures(
+    results
+)
     for _,
         problem
     in ipairs(
@@ -2975,8 +3024,8 @@ function AC_Compat.run(
     checkLoot(results)
 
     checkSkillBooks(results)
-
     checkFeatures(results)
+    checkRoundOverrides(results)
 
 
     local summary =

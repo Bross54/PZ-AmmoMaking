@@ -1,7 +1,8 @@
 name=Ammo Making: 7.62x39 (experimental)
 id=AmmoMakingCalibre762x39
 require=\AmmoMaking,\MarzVanillaGuns
+incompatible=\AmmoMakingRains,\AmmoMakingRainsExpanded
 modversion=0.11.0
-versionMin=42.20.0
+versionMin=42.21.0
 poster=poster.png
-description=EXPERIMENTAL add-on for Ammo Making and Vanilla Weapons Plus - Gunworks Edition: handload the 7.62x39 round of its AK-47 like the vanilla rifle rounds, with a die set, cases, copper or gas-checked cast lead bullets and the same tools. Not yet verified in game.
+description=EXPERIMENTAL add-on for Ammo Making and Vanilla Weapons Plus - Gunworks Edition: handload its 7.62x39 like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

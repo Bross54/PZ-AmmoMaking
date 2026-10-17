@@ -52,7 +52,8 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | **Spent cases** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingSpentCases` | `SPENT_CASE_RESEARCH.md` |
 | **Quality tracking through magazines and firearms** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9 |
 | **Quality effects at the shot** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT (needs quality tracking on too) | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4 |
-| **7.62x39 of Vanilla Weapons Plus** (an extension calibre: items and recipes in its own add-on, which requires that mod) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingCalibre762x39` | `AC_Calibres.EXTENSIONS`, `tests/suite_extensions.lua` |
+| **Gun mod compatibility**: 38 extension calibres in seven add-ons (Vanilla Weapons Plus, VFE, Rain's, Rain's Expanded, GaelGunStore, Real Firearms, MFS), each requiring its gun mod | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mods `AmmoMakingCalibre762x39`, `AmmoMakingVFE`, `AmmoMakingRains`, `AmmoMakingRainsExpanded`, `AmmoMakingGaelGunStore`, `AmmoMakingRealFirearms`, `AmmoMakingMFS` | `GUN_MOD_COMPATIBILITY.md` |
+| **Hot Brass bridge** (its casings resized at the die set) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingHotBrass` | `GUN_MOD_COMPATIBILITY.md` 4 |
 | Feature switches, placeholder registry | IMPLEMENTED | | `AC_Features.lua`, `AC_Visuals.lua` |
 | Balance options for server owners (ore per tile, die-set and component loot, Ammo Making XP) | IMPLEMENTED (multipliers, default 1: nothing changes unless set) | sandbox options | `BALANCE_OPTIONS.md` |
 | Debug tree, compatibility check | IMPLEMENTED | `-debug` | `DEVELOPMENT.md` |
@@ -164,7 +165,8 @@ Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 | Spent cases | seen for one gun of each class | state to `stable`; stays an add-on (it adds items) |
 | Quality tracking | seen staying in step across save and load | state to `stable`; default stays a sandbox choice |
 | Quality effects | seen with tracking on: a poor load jams a little more, a good one never | state to `stable`; the default stays off |
-| 7.62x39 add-on | seen loading beside Vanilla Weapons Plus and making a round the AK-47 fires | state to `stable` |
+| Gun mod packs | each seen loading beside its gun mod and making a round its firearm fires | state to `stable`, pack by pack |
+| Hot Brass bridge | a Hot Brass casing seen resized | state to `stable` |
 | Multiplayer server authority | the steps of `INGAME_VALIDATION.md`, *After the session*, passed on a dedicated server with two clients | state to `stable`; the default stays off until a server owner has run it |
 
 ## 4. Optional, not planned

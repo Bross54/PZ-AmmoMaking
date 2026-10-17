@@ -1,0 +1,7 @@
+name=Ammo Making: GaelGunStore (experimental)
+id=AmmoMakingGaelGunStore
+require=\AmmoMaking,\GaelGunStore_B42
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and GaelGunStore: handload its 7.62x39 M43, .32 ACP, 9x39, 5.45x39, 7.62x54R, 7.92x57, .30-06, .303 British, .50 AE, .50 BMG like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

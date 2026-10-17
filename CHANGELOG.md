@@ -22,6 +22,24 @@ add-on or behind an experimental switch that is off. Nothing in this entry
 has been seen in game; the session that checks it is
 `docs/INGAME_VALIDATION.md`.
 
+- **Build 42.21**: the game updated to 42.21.0 on 2026-10-17; the
+  compatibility tool found nothing that breaks (a new vanilla tag, loot
+  lists refreshed), and every mod.info now asks for 42.21.0, the build it
+  was checked against.
+- **Compatibility with six gun mods**: an add-on per gun mod, each
+  requiring it, for 38 calibres in all (`docs/GUN_MOD_COMPATIBILITY.md`):
+  Vanilla Firearms Expansion, Rain's Firearms (and Expanded),
+  GaelGunStore, Real Firearms and Modern Firearms System, besides the
+  7.62x39 of Vanilla Weapons Plus. Packs whose round ids mean different
+  calibres (`Base.762Bullets` is 7.62x39 in VFE, 7.62x51 in Rain's) are
+  `incompatible=` with each other. Rimfire is left out. Names in all 27
+  languages, derived from each language's own names
+  (`tools/derive_addon_translations.py`).
+- **Hot Brass bridge** (*Ammo Making: Hot Brass Casings*): the casings Hot
+  Brass ejects are resized at the die set like the mod's spent cases.
+- **A warning beside Modern Firearms System**, whose `Base.Bullets38` is a
+  6.8mm round: the .38 Special recipes make it.
+- **Debug calibre kits** list the calibres of the add-ons in the game.
 - **7.62x39 add-on** (*Ammo Making: 7.62x39 (experimental)*, requires
   Vanilla Weapons Plus - Gunworks Edition): the AK-47's round
   (`Base.762Bullets`) handloaded like the vanilla rifle rounds, with its

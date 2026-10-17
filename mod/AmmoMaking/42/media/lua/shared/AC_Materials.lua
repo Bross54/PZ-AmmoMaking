@@ -222,6 +222,21 @@ if AC_Features.hasContent("spentCases") then
 end
 
 
+-- Hot Brass casings, with the bridge add-on.
+if AC_Features.hasContent("hotBrass") then
+
+    for itemType,
+        entry
+    in pairs(
+        AC_Calibres.buildHotBrassUnits()
+    )
+    do
+
+        AC_Materials.UNITS[itemType] = entry
+    end
+end
+
+
 ------------------------------------------------
 -- Which metals an alloy is made of. Used only by
 -- the conservation check: brass counts as the sum
@@ -766,6 +781,25 @@ if AC_Features.hasContent("spentCases") then
         recipe
     in ipairs(
         AC_SpentCases.buildCleanRecipes()
+    )
+    do
+
+        table.insert(
+            AC_Materials.RECIPES,
+            recipe
+        )
+    end
+end
+
+
+-- Hot Brass casings resized at the die set (the bridge
+-- add-on), whenever its content is in the game.
+if AC_Features.hasContent("hotBrass") then
+
+    for _,
+        recipe
+    in ipairs(
+        AC_SpentCases.buildHotBrassRecipes()
     )
     do
 

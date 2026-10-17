@@ -1,0 +1,7 @@
+name=Ammo Making: Modern Firearms System (experimental)
+id=AmmoMakingMFS
+require=\AmmoMaking,\ModernFirearmsSystem
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and Modern Firearms System: handload its .50 BMG, 5.8x42, 5.45x39 (MFS), 8.6mm, 14.5mm like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

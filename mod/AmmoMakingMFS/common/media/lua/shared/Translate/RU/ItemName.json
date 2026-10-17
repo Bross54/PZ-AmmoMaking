@@ -1,0 +1,22 @@
+{
+    "AmmoMaking.DieSet50BMG": "Набор матриц для снаряжения патронов .50 BMG",
+    "AmmoMaking.Case50BMG": "Пустая гильза .50 BMG",
+    "AmmoMaking.Bullet50BMG": "Медная пуля .50 BMG",
+    "AmmoMaking.CastBullet50BMG": "Литая свинцовая пуля .50 BMG",
+    "AmmoMaking.DieSet58x42": "Набор матриц для снаряжения патронов 5.8x42",
+    "AmmoMaking.Case58x42": "Пустая гильза 5.8x42",
+    "AmmoMaking.Bullet58x42": "Медная пуля 5.8x42",
+    "AmmoMaking.CastBullet58x42": "Литая свинцовая пуля 5.8x42",
+    "AmmoMaking.DieSet545MFS": "Набор матриц для снаряжения патронов 5.45x39 (MFS)",
+    "AmmoMaking.Case545MFS": "Пустая гильза 5.45x39 (MFS)",
+    "AmmoMaking.Bullet545MFS": "Медная пуля 5.45x39 (MFS)",
+    "AmmoMaking.CastBullet545MFS": "Литая свинцовая пуля 5.45x39 (MFS)",
+    "AmmoMaking.DieSet86mm": "Набор матриц для снаряжения патронов 8.6mm",
+    "AmmoMaking.Case86mm": "Пустая гильза 8.6mm",
+    "AmmoMaking.Bullet86mm": "Медная пуля 8.6mm",
+    "AmmoMaking.CastBullet86mm": "Литая свинцовая пуля 8.6mm",
+    "AmmoMaking.DieSet145mm": "Набор матриц для снаряжения патронов 14.5mm",
+    "AmmoMaking.Case145mm": "Пустая гильза 14.5mm",
+    "AmmoMaking.Bullet145mm": "Медная пуля 14.5mm",
+    "AmmoMaking.CastBullet145mm": "Литая свинцовая пуля 14.5mm"
+}

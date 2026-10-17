@@ -995,6 +995,7 @@ return {
             weight = 2,
         },
         ["Base.CeramicCrucible"] = {
+            tags = "base:cookable",
             type = "base:normal",
             weight = 5,
         },
@@ -1393,5 +1394,5 @@ return {
         UseHandPress = true,
         Welding = true,
     },
-    version = "42.20.4",
+    version = "42.21.0",
 }

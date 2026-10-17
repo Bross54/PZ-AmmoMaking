@@ -1,0 +1,8 @@
+name=Ammo Making: Vanilla Firearms Expansion (experimental)
+id=AmmoMakingVFE
+require=\AmmoMaking,\VFExpansion1
+incompatible=\AmmoMakingRains,\AmmoMakingRainsExpanded
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and Vanilla Firearms Expansion: handload its 7.62x39, .223 like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

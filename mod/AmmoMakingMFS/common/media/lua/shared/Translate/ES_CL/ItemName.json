@@ -1,0 +1,22 @@
+{
+    "AmmoMaking.DieSet50BMG": "Juego de matrices de recarga de .50 BMG",
+    "AmmoMaking.Case50BMG": "Casquillo vacío de .50 BMG",
+    "AmmoMaking.Bullet50BMG": "Proyectil de cobre de .50 BMG",
+    "AmmoMaking.CastBullet50BMG": "Proyectil de plomo fundido de .50 BMG",
+    "AmmoMaking.DieSet58x42": "Juego de matrices de recarga de 5.8x42",
+    "AmmoMaking.Case58x42": "Casquillo vacío de 5.8x42",
+    "AmmoMaking.Bullet58x42": "Proyectil de cobre de 5.8x42",
+    "AmmoMaking.CastBullet58x42": "Proyectil de plomo fundido de 5.8x42",
+    "AmmoMaking.DieSet545MFS": "Juego de matrices de recarga de 5.45x39 (MFS)",
+    "AmmoMaking.Case545MFS": "Casquillo vacío de 5.45x39 (MFS)",
+    "AmmoMaking.Bullet545MFS": "Proyectil de cobre de 5.45x39 (MFS)",
+    "AmmoMaking.CastBullet545MFS": "Proyectil de plomo fundido de 5.45x39 (MFS)",
+    "AmmoMaking.DieSet86mm": "Juego de matrices de recarga de 8.6mm",
+    "AmmoMaking.Case86mm": "Casquillo vacío de 8.6mm",
+    "AmmoMaking.Bullet86mm": "Proyectil de cobre de 8.6mm",
+    "AmmoMaking.CastBullet86mm": "Proyectil de plomo fundido de 8.6mm",
+    "AmmoMaking.DieSet145mm": "Juego de matrices de recarga de 14.5mm",
+    "AmmoMaking.Case145mm": "Casquillo vacío de 14.5mm",
+    "AmmoMaking.Bullet145mm": "Proyectil de cobre de 14.5mm",
+    "AmmoMaking.CastBullet145mm": "Proyectil de plomo fundido de 14.5mm"
+}

@@ -547,6 +547,78 @@ function AC_SpentCases.buildResizeRecipes()
 end
 
 
+------------------------------------------------
+-- HOT BRASS BRIDGE
+------------------------------------------------
+--
+-- Beside Hot Brass (Workshop 3610677934, HBVCEFb42) the
+-- spent cases stand down: it ejects casings of its own.
+-- The bridge add-on (AmmoMakingHotBrass) lets those
+-- casings be resized at the die set exactly like the
+-- mod's spent cases: two into one usable case, the same
+-- level, time, malus and no XP. Its casings carry the
+-- brass of their case (AC_Calibres.buildHotBrassUnits),
+-- so the brass bound of RESIZE holds for them too.
+------------------------------------------------
+
+AC_SpentCases.HOT_BRASS = {
+
+    idPrefix = "AmmoMaking_ResizeHotBrassCase",
+
+    callbackPrefix = "onResizeHotBrassCase",
+
+    -- "Resize Spent <calibre> Case" -> "... (Hot Brass)"
+    nameSuffix = " (Hot Brass)",
+}
+
+
+-- One resizing per calibre that has a Hot Brass casing.
+function AC_SpentCases.buildHotBrassRecipes()
+
+    local hot =
+        AC_SpentCases.HOT_BRASS
+
+
+    local recipes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local resize =
+            calibre.hotBrassCasing
+            and AC_SpentCases.buildResizeRecipe(calibre)
+
+
+        if resize then
+
+            resize.inputs[1] = {
+                count = resize.inputs[1].count,
+                items = { calibre.hotBrassCasing },
+            }
+
+            resize.id = hot.idPrefix .. calibre.suffix
+
+            resize.callback = hot.callbackPrefix .. calibre.suffix
+
+            resize.hotBrass = true
+
+            table.insert(
+                recipes,
+                resize
+            )
+        end
+    end
+
+
+    return recipes
+end
+
+
 -- What a resizing recipe is called, from the name of its
 -- forming recipe (formName).
 function AC_SpentCases.getResizeName(

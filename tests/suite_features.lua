@@ -22,8 +22,15 @@ return function(T)
             { "qualityEffects", F.EXPERIMENTAL, "sandbox", "QualityEffects", true },
             { "serverAuthority", F.EXPERIMENTAL, "sandbox", "ServerAuthority", false },
             { "calibre762x39", F.EXPERIMENTAL, "mod", "AmmoMakingCalibre762x39", false },
+            { "hotBrass", F.EXPERIMENTAL, "mod", "AmmoMakingHotBrass", false },
+            { "packVFE", F.EXPERIMENTAL, "mod", "AmmoMakingVFE", false },
+            { "packRains", F.EXPERIMENTAL, "mod", "AmmoMakingRains", false },
+            { "packRainsExpanded", F.EXPERIMENTAL, "mod", "AmmoMakingRainsExpanded", false },
+            { "packGaelGunStore", F.EXPERIMENTAL, "mod", "AmmoMakingGaelGunStore", false },
+            { "packRealFirearms", F.EXPERIMENTAL, "mod", "AmmoMakingRealFirearms", false },
+            { "packMFS", F.EXPERIMENTAL, "mod", "AmmoMakingMFS", false },
         }
-        eq(#F.DEFINITIONS, #expected, "six switched features")
+        eq(#F.DEFINITIONS, #expected, "thirteen switched features")
         for index, want in ipairs(expected) do
             local definition = F.DEFINITIONS[index]
             eq(definition.id, want[1], "feature " .. index .. " is " .. want[1])

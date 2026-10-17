@@ -3051,10 +3051,12 @@ local function onFillWorldObjectContextMenu(
         )
 
 
+    -- The vanilla calibres, and those of a gun mod's
+    -- add-on when it is in the game (AC_Calibres.ALL).
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        AC_Calibres.ALL or AC_Calibres.LIST
     )
     do
 

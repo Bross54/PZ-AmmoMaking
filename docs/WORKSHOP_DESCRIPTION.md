@@ -32,7 +32,7 @@ Advanced ammunition manufacturing, mining and metallurgy for Project Zomboid Bui
 
 Make ammunition from the ground up: find ore, mine it, smelt brass, and load the nine vanilla cartridges by hand.
 
-[b]Work in progress, Build 42.20 or later, single player.[/b] Recipes, balance and item names may still change between versions.
+[b]Work in progress, Build 42.21 or later, single player.[/b] Recipes, balance and item names may still change between versions.
 
 [h2]What it adds[/h2]
 [list]
@@ -60,13 +60,14 @@ Make ammunition from the ground up: find ore, mine it, smelt brass, and load the
 [/list]
 
 [h2]Experimental, off by default[/h2]
-Five systems are written and have [b]not been verified in game[/b]. Leave them off for a normal game; switch them on only to test them, on a save you can afford to lose.
+These are written and have [b]not been verified in game[/b]. Leave them off for a normal game; switch them on only to test them, on a save you can afford to lose.
 [list]
 [*][b]Reloading Press[/b] (separate mod in this item: Ammo Making: Reloading Press). A placed station that does the case, bullet and assembly steps faster, with the same die sets and material. Placeholder art.
 [*][b]Spent Cases[/b] (separate mod: Ammo Making: Spent Cases). Fired rounds leave spent brass, half of it found (a sandbox option). It is scrapped at a loss, or resized at the calibre's die set: two spent cases make one usable case, of a lower quality, for no XP. Single player. Do not combine with another mod that leaves casings.
 [*][b]Quality tracking[/b] (sandbox option, page Ammo Making). The case quality of handloaded rounds is kept through magazines and firearms and can be inspected there. Single player.
 [*][b]Poor handloads jam more often[/b] (sandbox option, needs quality tracking). A load of poor handloads raises the gun's own jam chance a little; good handloads and factory rounds add nothing. Off by default: then a handloaded round fires exactly like a factory round.
-[*][b]7.62x39[/b] (separate mod: Ammo Making: 7.62x39, requires Vanilla Weapons Plus - Gunworks Edition). The AK-47's round handloaded like the vanilla rifle rounds.
+[*][b]Gun mods[/b]: one separate mod each, requiring its gun mod: Ammo Making: 7.62x39 (Vanilla Weapons Plus - Gunworks Edition), Vanilla Firearms Expansion, Rain's Firearms, Rain's Firearms Expanded, GaelGunStore, Real Firearms, Modern Firearms System. 38 more calibres. Some cannot be loaded together (the game says which).
+[*][b]Hot Brass Casings[/b] (requires Hot Brass): Hot Brass's ejected casings resized at the die set.
 [/list]
 
 [h2]Multiplayer[/h2]
@@ -74,7 +75,7 @@ Not supported. By default, sampling, assays, the laboratory analyzer and mining 
 
 [h2]Compatibility[/h2]
 [list]
-[*]Project Zomboid [b]Build 42.20 or later[/b]. Not for Build 41.
+[*]Project Zomboid [b]Build 42.21 or later[/b]. Not for Build 41.
 [*]No other mod is required.
 [*]It replaces no vanilla file, item, recipe or function. It adds its own items and recipes, adds entries to ten vanilla loot lists, enters its five skill books in the game's own skill-book table, and puts a level requirement on its own recipes. (The two experimental systems that touch firearms wrap vanilla's reload functions without changing what they do, and only when switched on.)
 [*]It can be added to an existing save: geology is worked out from the save itself and nothing is stored until you dig or mine. Containers that were already filled keep what they have, so die sets only turn up in places not visited yet. (Not yet tried on a long-running save.)

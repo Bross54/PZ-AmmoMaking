@@ -8712,7 +8712,7 @@ end
 section("Die set loot: rare, centralised, only in lists the game uses")
 do
     local C = AC_Loot.CONFIG
-    eq(VANILLA.version, "42.20.4", "the snapshot is of the build the mod targets")
+    eq(VANILLA.version, "42.21.0", "the snapshot is of the build the mod targets")
     eq(#AC_Loot.validate(), 0, "the loot model is sound: " .. table.concat(AC_Loot.validate(), "; "))
     eq(C.enabled, true, "die set loot is switched on")
 
