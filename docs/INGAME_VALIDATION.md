@@ -295,6 +295,9 @@ Steps
 Expected
 - One round per assembly craft; the die set is kept; powder is taken by
   uses.
+- The die set shows a condition (10 of 10 when forged). Over many crafts it
+  now and then loses a point (about one craft in 95 at level 5); a die set
+  at 0 is broken and its recipes no longer offer it.
 - The round is vanilla's 9mm round: it stacks with factory rounds, loads
   into vanilla magazines and fires exactly like one.
 - The inspection window opens and shows a case quality; in `-debug` three

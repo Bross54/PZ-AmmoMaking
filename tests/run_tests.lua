@@ -2708,6 +2708,10 @@ do
         StaticModel = true, WorldStaticModel = true, Tags = true, RequiresEquippedBothHands = true,
     }
     local knownTags = { ["base:hasmetal"] = true, ["base:heavyitem"] = true, ["base:ingot"] = true }
+    -- The die sets also wear, with the fields and tag of Base.SmallPunchSet.
+    local dieSets = {}
+    for _, calibre in ipairs(AC_Calibres.LIST) do dieSets[string.match(calibre.dieSet, "%.(.+)$")] = true end
+    local wearFields = { ConditionLowerChanceOneIn = true, ConditionMax = true }
     -- The skill books are literature, with the fields of vanilla's
     -- Base.BookReloading1 to 5 (items/literature.txt) and no tag.
     local bookFields = {
@@ -2723,11 +2727,11 @@ do
             if book then
                 check(bookFields[key], block.name .. " uses only fields vanilla skill books use (" .. key .. ")")
             else
-                check(knownFields[key], block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
+                check(knownFields[key] or (dieSets[block.name] and wearFields[key]), block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
             end
         end
         for _, tag in ipairs(split(block.fields.Tags or "", ";")) do
-            check(knownTags[tag], block.name .. " uses only vanilla tags (" .. tag .. ")")
+            check(knownTags[tag] or (dieSets[block.name] and tag == "base:showcondition"), block.name .. " uses only vanilla tags (" .. tag .. ")")
         end
         eq(block.fields.ItemType, book and "base:literature" or "base:normal", block.name .. " item type")
         check(block.fields.DisplayName ~= nil, block.name .. " has a display name")
@@ -2787,6 +2791,56 @@ do
     end
     eq(AC_Geology.ITEMS.ZincOre, AC_Materials.ITEMS.ZincOre, "mining and metallurgy agree on the zinc ore id")
     eq(AC_Geology.ITEMS.CopperOre, AC_Materials.ITEMS.CopperOre, "mining and metallurgy agree on the copper ore id")
+end
+
+section("Die set wear: the item script, every recipe line, and how long a die set lasts")
+do
+    local wear = AC_Calibres.DIE_WEAR
+    -- The multipliers CraftRecipeData.processKeepInputItem passes to
+    -- InventoryItem.damageCheck for each flag (javap, 42.20.4).
+    local JAR_MULTIPLIER = { MayDegradeHeavy = 1, MayDegrade = 2, MayDegradeLight = 3, MayDegradeVeryLight = 6 }
+    eq(JAR_MULTIPLIER[wear.flag], wear.flagMultiplier, "the wear flag's multiplier is the jar's")
+    -- Item's default ConditionMax (javap, the Item constructor): a die set
+    -- saved before it wore loads as a full one.
+    eq(wear.conditionMax, 10, "a die set's condition is the engine's default")
+
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local block = declaredItems[calibre.dieSet]
+        check(block ~= nil, calibre.id .. " die set is declared")
+        if block then
+            eq(tonumber(block.fields.ConditionMax), wear.conditionMax, calibre.id .. " die set ConditionMax is DIE_WEAR's")
+            eq(tonumber(block.fields.ConditionLowerChanceOneIn), wear.conditionLowerChanceOneIn, calibre.id .. " die set ConditionLowerChanceOneIn is DIE_WEAR's")
+            check(string.find(";" .. (block.fields.Tags or "") .. ";", ";base:showcondition;", 1, true) ~= nil, calibre.id .. " die set shows its condition")
+        end
+    end
+
+    -- No script of the three mods keeps a die set without wearing it.
+    for _, path in ipairs({
+        SCRIPTS .. "AC_Recipes.txt",
+        ROOT .. "/mod/AmmoMakingPress/42/media/scripts/AC_PressRecipes.txt",
+        ROOT .. "/mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseRecipes.txt",
+    }) do
+        local body = readFile(path) or ""
+        local kept = 0
+        for line in string.gmatch(body, "[^\r\n]+") do
+            if string.find(line, "%[AmmoMaking%.DieSet[^%]]*%] mode:keep") then
+                kept = kept + 1
+                check(string.find(line, "mode:keep flags[" .. wear.flag .. "],", 1, true) ~= nil, path .. ": the die set line wears it (" .. line .. ")")
+            end
+        end
+        check(kept > 0, path .. " keeps die sets")
+    end
+
+    -- Expected crafts per die set, and copper rounds per die set: a form,
+    -- 1 / bulletsPerScrap of a swaging and an assembly per round.
+    eq(AC_Calibres.dieSetExpectedUses(0, 0), 900, "900 crafts at level 0")
+    eq(AC_Calibres.dieSetExpectedUses(10, 10), 1100, "1,100 crafts at Ammo Making and Maintenance 10")
+    for _, calibre in ipairs(AC_Calibres.LIST) do
+        local perScrap = calibre.bulletsPerScrap or AC_Calibres.DEFAULTS.bulletsPerScrap
+        local craftsPerRound = 1 + 1 / perScrap + 1
+        local rounds = AC_Calibres.dieSetExpectedUses(0, 0) / craftsPerRound
+        check(rounds >= 250 and rounds <= 500, calibre.id .. " die set lasts " .. math.floor(rounds) .. " rounds at level 0 (250 to 500)")
+    end
 end
 
 section("Station recipes: AC_Recipes.txt equals AC_Materials.RECIPES")
@@ -8555,7 +8609,7 @@ do
                 if input.items and input.items[1] == calibre.dieSet then
                     eq(#input.items, 1, recipe.id .. " names the die set by item type alone")
                     eq(input.keep, true, recipe.id .. " keeps the die set")
-                    eq(input.flags, nil, recipe.id .. " puts no condition on the die set: found, forged or spawned all work")
+                    eq(table.concat(input.flags or {}, ";"), AC_Calibres.DIE_WEAR.flag, recipe.id .. " wears the die set and asks nothing else of it: found, forged or spawned all work")
                 end
             end
         end

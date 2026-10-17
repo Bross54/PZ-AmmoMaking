@@ -31,6 +31,7 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Metallurgy, case stock | IMPLEMENTED | | `METALLURGY_DESIGN.md` |
 | Nine calibres: die sets, cases, bullets, primers, powder, assembly | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `AMMUNITION_DESIGN.md` |
 | Die sets as loot | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 1 |
+| Die set wear (condition, worn by the engine while crafting) | IMPLEMENTED | | `AMMUNITION_DESIGN.md` 7 |
 | Component loot (powder, primers, brass) | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 4 |
 | Brass recycling | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 2 |
 | Copper recycling | not built, on purpose | | `LOOT_AND_RECYCLING.md` 2.5 |
@@ -143,6 +144,7 @@ Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 | What the kits and the analyzer cost | `AC_Materials.EQUIPMENT_RECIPES` |
 | Recipe levels, times, XP per calibre | `AC_Calibres.lua` |
 | The press's time advantage and build cost | `AC_Calibres.PRESS` |
+| How long a die set lasts | `AC_Calibres.DIE_WEAR` (and the die set items in `AC_Items.txt`) |
 | Spent cases found per hundred shots; scrap return; resizing rate, level and quality | sandbox option; `AC_Recycling.SPENT`; `AC_SpentCases.RESIZE` (the rate is capped by `validateResize`) |
 | Recycling yield (half) | `AC_Recycling.lua` |
 | The largest extra jam chance, once effects are unlocked | `AC_QualityEffects.CONFIG` |
@@ -187,7 +189,8 @@ Nothing here is needed for a first release.
   none is invented; gunpowder stays charcoal and fertilizer, primers toy
   caps or match heads.
 - Better presses as further bench tags; batch recipes.
-- Component depth (match-grade cases, case trimming, tooling wear).
+- Component depth (match-grade cases, case trimming). Tooling wear is
+  built for die sets; the bullet moulds still last for ever.
 - Recipe magazines: would need the recipes rewritten from Lua, which
   `REFERENCE_IMPLEMENTATIONS.md` 7 already declines (`AMMUNITION_DESIGN.md`
   9.2).

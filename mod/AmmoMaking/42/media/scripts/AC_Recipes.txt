@@ -466,7 +466,7 @@ module Base
         inputs
         {
             item 1 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+            item 1 [AmmoMaking.DieSet9mm] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -485,7 +485,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+            item 1 [AmmoMaking.DieSet9mm] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -507,7 +507,7 @@ module Base
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.Bullet9mm],
             item 1 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+            item 1 [AmmoMaking.DieSet9mm] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -546,7 +546,7 @@ module Base
         inputs
         {
             item 1 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+            item 1 [AmmoMaking.DieSet38Special] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -565,7 +565,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+            item 1 [AmmoMaking.DieSet38Special] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -587,7 +587,7 @@ module Base
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.Bullet38Special],
             item 1 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+            item 1 [AmmoMaking.DieSet38Special] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -626,7 +626,7 @@ module Base
         inputs
         {
             item 1 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -645,7 +645,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -667,7 +667,7 @@ module Base
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.Bullet45ACP],
             item 1 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -706,7 +706,7 @@ module Base
         inputs
         {
             item 1 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -725,7 +725,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -747,7 +747,7 @@ module Base
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.Bullet357Magnum],
             item 2 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -786,7 +786,7 @@ module Base
         inputs
         {
             item 2 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -805,7 +805,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -827,7 +827,7 @@ module Base
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.Bullet44Magnum],
             item 3 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -866,7 +866,7 @@ module Base
         inputs
         {
             item 2 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -885,7 +885,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -907,7 +907,7 @@ module Base
             item 1 [AmmoMaking.SmallRiflePrimer],
             item 1 [AmmoMaking.Bullet556NATO],
             item 3 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet556NATO] mode:keep,
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -946,7 +946,7 @@ module Base
         inputs
         {
             item 2 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -965,7 +965,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -987,7 +987,7 @@ module Base
             item 1 [AmmoMaking.LargeRiflePrimer],
             item 1 [AmmoMaking.Bullet3030Win],
             item 4 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet3030Win] mode:keep,
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1026,7 +1026,7 @@ module Base
         inputs
         {
             item 3 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+            item 1 [AmmoMaking.DieSet308Win] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -1045,7 +1045,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+            item 1 [AmmoMaking.DieSet308Win] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -1067,7 +1067,7 @@ module Base
             item 1 [AmmoMaking.LargeRiflePrimer],
             item 1 [AmmoMaking.Bullet308Win],
             item 5 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet308Win] mode:keep,
+            item 1 [AmmoMaking.DieSet308Win] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1106,7 +1106,7 @@ module Base
         inputs
         {
             item 3 [AmmoMaking.BrassCaseCup],
-            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -1125,7 +1125,7 @@ module Base
         inputs
         {
             item 1 [Base.CopperScrap],
-            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep flags[MayDegradeVeryLight],
             item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
@@ -1147,7 +1147,7 @@ module Base
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.ShotCharge12Gauge],
             item 3 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep flags[MayDegradeVeryLight],
             item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,
         }
         outputs
@@ -1269,7 +1269,7 @@ module Base
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.CastBullet9mm],
             item 1 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet9mm] mode:keep,
+            item 1 [AmmoMaking.DieSet9mm] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1310,7 +1310,7 @@ module Base
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.CastBullet38Special],
             item 1 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet38Special] mode:keep,
+            item 1 [AmmoMaking.DieSet38Special] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1351,7 +1351,7 @@ module Base
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.CastBullet45ACP],
             item 1 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet45ACP] mode:keep,
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1392,7 +1392,7 @@ module Base
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.CastBullet357Magnum],
             item 2 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet357Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1433,7 +1433,7 @@ module Base
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.CastBullet44Magnum],
             item 3 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet44Magnum] mode:keep,
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep flags[MayDegradeVeryLight],
         }
         outputs
         {
@@ -1474,7 +1474,7 @@ module Base
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.LeadShotCharge12Gauge],
             item 3 [Base.GunPowder],
-            item 1 [AmmoMaking.DieSet12Gauge] mode:keep,
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep flags[MayDegradeVeryLight],
             item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,
         }
         outputs

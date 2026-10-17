@@ -22,6 +22,13 @@ add-on or behind an experimental switch that is off. Nothing in this entry
 has been seen in game; the session that checks it is
 `docs/INGAME_VALIDATION.md`.
 
+- **Die sets wear out**, as vanilla's small punch set does: condition 10,
+  shown on the item, and each completed case, swaging or assembly (by hand,
+  at the press or resizing) has a small chance of costing a point; Ammo
+  Making and Maintenance make it rarer. A die set lasts about 900 to 1,100
+  crafts, some 360 to 440 copper pistol rounds; a worn-out one is refused by
+  its recipes and is forged or found again (`docs/AMMUNITION_DESIGN.md` 7).
+  The engine does the wearing; a die set from an older save is a full one.
 - **The mod's own art.** 36 original inventory icons drawn by
   `art/icons/make_icons.py`: the main mod's items, the spent cases (a
   tarnished drawing of their own) and the press's 48 x 48 window icon.

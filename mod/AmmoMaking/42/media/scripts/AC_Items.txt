@@ -74,7 +74,9 @@ module AmmoMaking
        shared by a primer family; case, bullet and die set exist per calibre
        and are listed in AC_Calibres.LIST. The assembled round is the vanilla
        item (Base.Bullets9mm), never a mod copy. The die set copies the look
-       of Base.SmallPunchSet. Vanilla art as placeholders throughout. */
+       of Base.SmallPunchSet, and wears like it: ConditionMax and
+       ConditionLowerChanceOneIn are AC_Calibres.DIE_WEAR (the tests compare).
+       Vanilla art as placeholders throughout. */
 
     item SmallPistolPrimer
     {
@@ -96,7 +98,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case9mm
@@ -130,7 +134,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case38Special
@@ -175,7 +181,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case45ACP
@@ -209,7 +217,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case357Magnum
@@ -243,7 +253,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case44Magnum
@@ -302,7 +314,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case556NATO
@@ -336,7 +350,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case3030Win
@@ -370,7 +386,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Case308Win
@@ -408,7 +426,9 @@ module AmmoMaking
         Icon = AmmoMakingDieSet,
         StaticModel = MetalworkingPunch,
         WorldStaticModel = SmallMetalworkingPunches,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item Hull12Gauge

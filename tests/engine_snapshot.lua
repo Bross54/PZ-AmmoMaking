@@ -51,6 +51,7 @@ return {
             ["base:hasmetal"] = true,
             ["base:heavyitem"] = true,
             ["base:ingot"] = true,
+            ["base:showcondition"] = true,
         },
         types = {
             ["base:literature"] = true,

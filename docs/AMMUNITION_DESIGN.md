@@ -292,6 +292,22 @@ gun store's display case, a garage gun locker or among a hunter's things.
 and keep it, so a found, a forged and a debug-spawned die set are the same
 thing, and finding one opens no recipe before its level.
 
+**A die set wears out** (`AC_Calibres.DIE_WEAR`), as vanilla's small punch
+set does: `ConditionMax = 10`, `ConditionLowerChanceOneIn = 15` and
+`base:showcondition` on the item, `flags[MayDegradeVeryLight]` on every
+recipe line that keeps it (hand, press and spent-case resizing). The engine
+does the rest (`CraftRecipeData.processKeepInputItem`, 42.20.4): each
+completed craft has one chance in 15 × 6 + Ammo Making level + Maintenance
+level of costing one point, and a broken die set is refused by the recipe.
+That is 900 crafts at level 0 and 1,100 at level 10 with Maintenance 10:
+with a case, half a swaging and an assembly per copper-jacketed pistol round,
+about 360 to 440 rounds per die set (fewer for a shell, whose swaging makes
+one charge; more with cast bullets, which skip the swaging). A worn-out die
+set is forged or found again. A die set from a save made before die sets wore
+has the engine's default condition, 10 of 10. REQUIRES FUTURE IN-GAME
+VERIFICATION: the condition shown, the wear while crafting, the refusal at 0,
+and the condition of a die set found as loot.
+
 **Future press**, designed and not built
 (`docs/RELOADING_PRESS_DESIGN.md`):
 

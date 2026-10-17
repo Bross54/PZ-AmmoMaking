@@ -440,6 +440,82 @@ AC_Calibres.WAD = {
 }
 
 
+------------------------------------------------
+-- DIE SET WEAR
+------------------------------------------------
+--
+-- A die set wears out like vanilla's small punch set
+-- (Base.SmallPunchSet, items/normal.txt: a base:normal
+-- tool with ConditionMax, ConditionLowerChanceOneIn and
+-- base:showcondition, kept with flags[MayDegradeLight]).
+-- Without it one die set, found or forged, served a
+-- calibre for the rest of the game.
+--
+-- The engine does the wearing; no Lua runs for it. What
+-- the jar (42.20.4) does with a kept input when a craft
+-- completes (processKeepInputItem of the class
+-- CraftRecipeData):
+--
+--   skill  = the recipe's highest relevant skill level
+--            (Ammo Making, attached at boot) + the
+--            character's Maintenance level
+--   damageCheck(skill, multiplier): one chance in
+--            (ConditionLowerChanceOneIn * multiplier
+--             + skill) of losing one point of condition
+--
+-- with the multiplier 6 for MayDegradeVeryLight, 3 for
+-- MayDegradeLight, 2 for MayDegrade, 1 for
+-- MayDegradeHeavy. At condition 0 the item is broken,
+-- and InputScript.passesBrokenTest refuses a broken
+-- item unless the line says AllowDestroyedItem: a worn
+-- out die set stops its recipes, and a new one is forged
+-- or found.
+--
+-- conditionMax is the engine's default (Item: 10), so a
+-- die set saved before this change is a full one.
+--
+-- The item script (AC_Items.txt) carries the two
+-- numbers; the tests hold it to this table. The press
+-- and the spent-case resizing copy the hand recipe's
+-- kept lines, so they wear the die set as hand work does.
+--
+-- REQUIRES FUTURE IN-GAME VERIFICATION: that the
+-- condition shows on the die set, falls while crafting
+-- and that a broken die set is refused.
+------------------------------------------------
+
+AC_Calibres.DIE_WEAR = {
+
+    flag = "MayDegradeVeryLight",
+
+    -- The jar's multiplier for that flag.
+    flagMultiplier = 6,
+
+    conditionMax = 10,
+
+    conditionLowerChanceOneIn = 15,
+}
+
+
+-- Crafts a die set is expected to last: condition points
+-- times the mean number of crafts per point.
+function AC_Calibres.dieSetExpectedUses(
+    skillLevel,
+    maintenanceLevel
+)
+
+    local wear =
+        AC_Calibres.DIE_WEAR
+
+    local oneIn =
+        wear.conditionLowerChanceOneIn * wear.flagMultiplier
+        + (skillLevel or 0)
+        + (maintenanceLevel or 0)
+
+    return wear.conditionMax * oneIn
+end
+
+
 AC_Calibres.DEFAULTS = {
 
     primerFamily = "SmallPistol",
@@ -1530,14 +1606,15 @@ local function punch()
 end
 
 
--- A calibre's die set. Kept, never consumed. It has no
--- wear flag: the item defines no condition.
+-- A calibre's die set. Kept, never consumed; it wears
+-- (DIE_WEAR).
 local function dieSet(calibre)
 
     return {
         count = 1,
         items = { calibre.dieSet },
         keep = true,
+        flags = { AC_Calibres.DIE_WEAR.flag },
     }
 end
 
