@@ -26,7 +26,11 @@ return {
             Tool = true,
         },
         icons = {
+            CeramicCast_Bar_Fired = true,
+            CeramicCast_Bar_Unfired = true,
             RifleAmmo308loose = true,
+            RoughBlock = true,
+            Sandbag = true,
         },
         models = {
             ["38SpecialBullets"] = true,
@@ -36,18 +40,24 @@ return {
             Book13_Ground = true,
             BrassScrap = true,
             CapGunCap = true,
+            CeramicIngotCast = true,
+            CeramicIngotCastUnfired = true,
             IronOre = true,
             MetalworkingPunch = true,
             Pliers = true,
             RifleAmmo = true,
+            SandBag = true,
             ShotGunShells = true,
             SilverBar = true,
             SilverScrap = true,
             SmallCopperSheet = true,
             SmallMetalworkingPunches = true,
             SteelSlug = true,
+            StoneBlock = true,
         },
         tags = {
+            ["base:breakonsmithing"] = true,
+            ["base:destructible"] = true,
             ["base:hasmetal"] = true,
             ["base:heavyitem"] = true,
             ["base:ingot"] = true,
@@ -74,6 +84,14 @@ return {
         Furnace = {
             stations = 2,
             vanillaRecipes = 12,
+        },
+        KilnLarge = {
+            stations = 1,
+            vanillaRecipes = 19,
+        },
+        KilnSmall = {
+            stations = 1,
+            vanillaRecipes = 18,
         },
         PrimitiveForge = {
             stations = 3,
@@ -843,14 +861,19 @@ return {
         ["base:ballpeenhammer"] = 2,
         ["base:charcoal"] = 3,
         ["base:clubhammer"] = 3,
+        ["base:crudechisel"] = 1,
         ["base:crudetongs"] = 2,
         ["base:file"] = 2,
         ["base:hammer"] = 6,
+        ["base:log"] = 1,
+        ["base:masonschisel"] = 1,
         ["base:metalworkingpliers"] = 2,
         ["base:metalworkingpunch"] = 1,
         ["base:mortarpestle"] = 2,
         ["base:screwdriver"] = 5,
+        ["base:sharpknife"] = 29,
         ["base:smallpunch"] = 1,
+        ["base:startfire"] = 8,
         ["base:tongs"] = 1,
         ["base:whetstone"] = 2,
     },
@@ -968,6 +991,10 @@ return {
             tags = "base:charcoal;base:isfirefuel",
             type = "base:normal",
             weight = 0.8,
+        },
+        ["Base.Clay"] = {
+            type = "base:normal",
+            weight = 0.3,
         },
         ["Base.ClayIngotMold"] = {
             tags = "base:breakonsmithing;base:destructible",
@@ -1107,6 +1134,11 @@ return {
             type = "base:normal",
             weight = 0.1,
         },
+        ["Base.Sandbag"] = {
+            type = "base:drainable",
+            uses = 4,
+            weight = 2,
+        },
         ["Base.Screwdriver"] = {
             tags = "base:hasmetal;base:screwdriver",
             type = "base:weapon",
@@ -1157,6 +1189,10 @@ return {
         ["Base.SteelIngotMold"] = {
             type = "base:normal",
             weight = 6,
+        },
+        ["Base.StoneBlock"] = {
+            type = "base:normal",
+            weight = 0.3,
         },
         ["Base.Tongs"] = {
             tags = "base:hasmetal;base:showcondition;base:smeltableironmedium;base:tongs",
@@ -1317,9 +1353,11 @@ return {
     },
     timedActions = {
         HammerMetalStanding = true,
+        HammerStoneStanding = true,
         Making = true,
         MakingElectrical = true,
         MakingHammer_Surface = true,
+        Making_With_Kiln = true,
         UseHandPress = true,
     },
     version = "42.20.4",

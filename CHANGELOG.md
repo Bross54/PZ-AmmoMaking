@@ -29,6 +29,17 @@ has been seen in game; the session that checks it is
   crafts, some 360 to 440 copper pistol rounds; a worn-out one is refused by
   its recipes and is forged or found again (`docs/AMMUNITION_DESIGN.md` 7).
   The engine does the wearing; a die set from an older save is a full one.
+- **Bullet moulds of stone, clay and sand**, for casting without a forge:
+  a stone mould carved from a stone block with a hammer and chisel (wears,
+  some 300 casts), a clay mould shaped from dug clay and fired in a kiln
+  (breaks after one cast, as vanilla's clay moulds do) and a sand mould
+  rammed from a dug sandbag with a clay binder (used up by its cast). How a
+  mould is made decides the bullet's quality: iron +0, stone -5, clay -10,
+  sand -20 on the roll. Cast bullets now carry a quality, a round with cast
+  bullets averages its case and its bullet, and *Inspect Ammunition* shows
+  cast bullets ("Bullet quality") and labels a round's record "Round
+  quality". 8 items, 26 recipes; XP, levels and metal are the iron cast's
+  (`docs/METALLURGY_DESIGN.md` 12.8).
 - **The mod's own art.** 36 original inventory icons drawn by
   `art/icons/make_icons.py`: the main mod's items, the spent cases (a
   tarnished drawing of their own) and the press's 48 x 48 window icon.

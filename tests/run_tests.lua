@@ -2712,6 +2712,14 @@ do
     local dieSets = {}
     for _, calibre in ipairs(AC_Calibres.LIST) do dieSets[string.match(calibre.dieSet, "%.(.+)$")] = true end
     local wearFields = { ConditionLowerChanceOneIn = true, ConditionMax = true }
+    -- The stone moulds wear like the die sets; the fired clay moulds carry
+    -- Base.ClayIngotMold's tags and tooltip.
+    local stoneMoulds, clayMoulds = {}, {}
+    for _, mould in ipairs(AC_Casting.getMoulds()) do
+        stoneMoulds[string.match(AC_Casting.getMouldItems(mould.class, "stone").item, "%.(.+)$")] = true
+        clayMoulds[string.match(AC_Casting.getMouldItems(mould.class, "clay").item, "%.(.+)$")] = true
+    end
+    local clayTags = { ["base:destructible"] = true, ["base:breakonsmithing"] = true }
     -- The skill books are literature, with the fields of vanilla's
     -- Base.BookReloading1 to 5 (items/literature.txt) and no tag.
     local bookFields = {
@@ -2727,11 +2735,11 @@ do
             if book then
                 check(bookFields[key], block.name .. " uses only fields vanilla skill books use (" .. key .. ")")
             else
-                check(knownFields[key] or (dieSets[block.name] and wearFields[key]), block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
+                check(knownFields[key] or ((dieSets[block.name] or stoneMoulds[block.name]) and wearFields[key]) or (clayMoulds[block.name] and key == "Tooltip"), block.name .. " uses only fields vanilla metal items use (" .. key .. ")")
             end
         end
         for _, tag in ipairs(split(block.fields.Tags or "", ";")) do
-            check(knownTags[tag] or (dieSets[block.name] and tag == "base:showcondition"), block.name .. " uses only vanilla tags (" .. tag .. ")")
+            check(knownTags[tag] or ((dieSets[block.name] or stoneMoulds[block.name]) and tag == "base:showcondition") or (clayMoulds[block.name] and clayTags[tag]), block.name .. " uses only vanilla tags (" .. tag .. ")")
         end
         eq(block.fields.ItemType, book and "base:literature" or "base:normal", block.name .. " item type")
         check(block.fields.DisplayName ~= nil, block.name .. " has a display name")
@@ -2868,12 +2876,15 @@ do
 
     -- Only what the vanilla 42.20.4 template recipes use (furnace recipes,
     -- Forge_Copper_Sheet, the scrap-armour cold work, NailSpikeWeapon,
-    -- and MakeImprovisedFlashlight for the analyzer), plus OnCreate.
+    -- and MakeImprovisedFlashlight for the analyzer), plus OnCreate. The
+    -- stone, clay and sand moulds add Make_Stone_Block_from_Stone,
+    -- PressClayBrickManually, FireClayIngotMold and the leather recipes'
+    -- knife line.
     local knownFields = { time = true, timedAction = true, Tags = true, category = true, OnCreate = true }
-    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true }
-    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true }
-    local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true, Electrical = true }
-    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true, NoBrokenItems = true, AllowDestroyedItem = true }
+    local knownBenchTags = { PrimitiveFurnace = true, Furnace = true, PrimitiveForge = true, Forge = true, AnySurfaceCraft = true, KilnSmall = true, KilnLarge = true }
+    local knownTimedActions = { HammerMetalStanding = true, MakingHammer_Surface = true, Making = true, MakingElectrical = true, HammerStoneStanding = true, Making_With_Kiln = true }
+    local knownCategories = { Blacksmithing = true, Metalworking = true, Tools = true, Weaponry = true, Miscellaneous = true, Electrical = true, Masonry = true, Pottery = true }
+    local knownFlags = { IsEmpty = true, MayDegradeLight = true, MayDegradeVeryLight = true, Prop1 = true, Prop2 = true, NoBrokenItems = true, AllowDestroyedItem = true, IsNotDull = true }
     local destroyLines = 0
     local knownItemTags = {
         ["base:charcoal"] = true, ["base:crudetongs"] = true, ["base:tongs"] = true,
@@ -2881,6 +2892,8 @@ do
         ["base:metalworkingpunch"] = true, ["base:smallpunch"] = true,
         ["base:ballpeenhammer"] = true, ["base:whetstone"] = true, ["base:file"] = true,
         ["base:mortarpestle"] = true, ["base:screwdriver"] = true,
+        ["base:crudechisel"] = true, ["base:masonschisel"] = true, ["base:sharpknife"] = true,
+        ["base:startfire"] = true, ["base:log"] = true,
     }
     local probed = {}
     for _, id in ipairs(AC_Compat.REQUIRED_ITEMS) do probed[id] = true end
@@ -2898,7 +2911,9 @@ do
 
             eq(tonumber(block.fields.time), recipe.time, recipe.id .. " time")
             eq(block.fields.Tags, recipe.benchTag, recipe.id .. " bench tag")
-            check(knownBenchTags[block.fields.Tags], recipe.id .. " attaches to a vanilla bench tag")
+            for tag in string.gmatch(block.fields.Tags or "", "[^;]+") do
+                check(knownBenchTags[tag], recipe.id .. " attaches to a vanilla bench tag (" .. tag .. ")")
+            end
             eq(block.fields.category, recipe.category, recipe.id .. " category")
             check(knownCategories[block.fields.category], recipe.id .. " uses a vanilla crafting category")
             eq(block.fields.timedAction, recipe.timedAction, recipe.id .. " timed action")
@@ -2976,9 +2991,9 @@ do
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
     eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST
-        + #AC_Casting.SOURCES + #AC_Casting.getMoulds() + 2 * #AC_Casting.getCastable() + #AC_Recycling.buildGroups() + 1,
-        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, one melt per lead source, one mould per casting class, two per castable calibre, one scrapping recipe per brass size and the recast")
-    eq(#AC_Materials.RECIPES, 74, "seventy-four recipes")
+        + #AC_Casting.SOURCES + 5 * #AC_Casting.getMoulds() + (#AC_Casting.MOULD_MATERIALS + 1) * #AC_Casting.getCastable() + #AC_Recycling.buildGroups() + 1,
+        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, one melt per lead source, five mould recipes per casting class, a cast per mould material and an assembly per castable calibre, one scrapping recipe per brass size and the recast")
+    eq(#AC_Materials.RECIPES, 100, "a hundred recipes")
 
     -- The script body is exactly what tests/render_recipes.lua makes of the
     -- mirror: the file is generated, never typed.
@@ -3016,6 +3031,17 @@ do
         -- Iron for the moulds; vanilla junk only where it is melted for lead
         -- (a declared source).
         if recipe.step == "mould" then untracked[AC_Casting.CONFIG.mouldBarItem] = true end
+        -- The stone, clay and sand moulds: dug or cut vanilla material, the
+        -- unfired clay mould into the kiln, and a sand mould into its cast.
+        -- None holds a metal the accounting follows.
+        if recipe.step == "mould" and recipe.material then
+            for _, id in ipairs({ "Base.StoneBlock", "Base.Clay", "Base.Sandbag" }) do untracked[id] = true end
+            local clay = AC_Casting.getMouldItems(recipe.class, "clay")
+            untracked[clay.unfired] = true
+        end
+        if recipe.step == "cast" and recipe.material == "sand" then
+            untracked[AC_Casting.getMouldItems(AC_Calibres.get(recipe.calibre).class, "sand").item] = true
+        end
         if recipe.step == "leadSource" then
             for _, source in ipairs(AC_Casting.SOURCES) do
                 for _, id in ipairs(source.items) do untracked[id] = true end
@@ -3072,12 +3098,14 @@ do
     eq(families.primer, 8, "eight primer recipes")
     for _, step in ipairs({ "dieSet", "case", "bullet", "assemble" }) do eq(families[step], #AC_Calibres.LIST, "one " .. step .. " recipe per calibre") end
     eq(families.leadSource, 2, "two lead melts")
-    eq(families.mould, 2, "two bullet moulds")
-    eq(families.cast, #AC_Casting.getCastable(), "one cast per castable calibre")
+    -- Per casting class: the forged mould, then stone, clay (shaped and
+    -- fired) and sand.
+    eq(families.mould, 2 * 5, "five mould recipes per casting class")
+    eq(families.cast, #AC_Casting.getCastable() * #AC_Casting.MOULD_MATERIALS, "one cast per castable calibre and mould material")
     eq(families.assembleCast, #AC_Casting.getCastable(), "one cast assembly per castable calibre")
     eq(families.scrap, 3, "three scrapping recipes")
     eq(families.recast, 1, "one recast")
-    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **74** |", 1, true) ~= nil, "the audit table counts 74 recipes")
+    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **100** |", 1, true) ~= nil, "the audit table counts 100 recipes")
 end
 
 section("Material conservation: no recipe or chain creates metal")
@@ -3152,12 +3180,17 @@ do
         -- gunpowder, where charcoal is an ingredient.
         local expectedCharcoal = 1
         if recipe.benchTag == "AnySurfaceCraft" and recipe.source ~= "powder" then expectedCharcoal = 0 end
+        -- A kiln burns its fuel line, a log or charcoal, with a fire starter
+        -- (FireClayIngotMold): one line, which names the log first.
+        local kiln = string.find(recipe.benchTag, "Kiln", 1, true) ~= nil
+        if kiln then expectedCharcoal = 0 end
         eq(charcoalInputs, expectedCharcoal, recipe.id .. " charcoal inputs")
 
         -- Tools named by tag are never consumed (charcoal is the only
         -- consumed tag input), and every die set is kept.
         for _, input in ipairs(recipe.inputs) do
-            if input.tags and input.tags[1] ~= "base:charcoal" then
+            local fuel = kiln and (input.tags and (input.tags[1] == "base:log" or input.tags[1] == "base:startfire"))
+            if input.tags and input.tags[1] ~= "base:charcoal" and not fuel then
                 check(input.keep == true, recipe.id .. " keeps its tool " .. input.tags[1])
             end
             for _, id in ipairs(input.items or {}) do
@@ -4594,7 +4627,7 @@ do
         local built = 0
         local realBuild = AC_Recycling.buildRecipes
         reloadMod()
-        eq(#AC_Materials.RECIPES, 74, "the reloaded mod has its 74 recipes")
+        eq(#AC_Materials.RECIPES, 100, "the reloaded mod has its 100 recipes")
         eq(type(AC_Loot.lastSummary), "nil", "loading the mod registers no loot by itself")
         check(realBuild ~= nil and built == 0, "the counters above were removed before the reload")
     end
@@ -5008,16 +5041,16 @@ do
     eq(AC_CaseQuality.onRoundsAssembled(nil), nil, "no recipe data")
     eq(AC_CaseQuality.getRoundQuality(nil), nil, "no round")
 
-    -- Only case forming and assembly have an effect.
+    -- Only case forming, casting and assembly have an effect.
     local effects = 0
     for _, recipe in ipairs(AC_Materials.RECIPES) do
         if recipe.effect then
             effects = effects + 1
             check(type(AC_CaseQuality.EFFECTS[recipe.effect]) == "function", recipe.id .. " effect exists")
-            check(recipe.step == "case" or recipe.step == "assemble" or recipe.step == "assembleCast", recipe.id .. " is a case or assembly step")
+            check(recipe.step == "case" or recipe.step == "assemble" or recipe.step == "assembleCast" or recipe.step == "cast", recipe.id .. " is a case, cast or assembly step")
         end
     end
-    eq(effects, 2 * #AC_Calibres.LIST + #AC_Casting.getCastable(), "nothing upstream of the case carries quality; a round with a cast bullet inherits its case's")
+    eq(effects, 2 * #AC_Calibres.LIST + #AC_Casting.getCastable() * (1 + #AC_Casting.MOULD_MATERIALS), "nothing upstream of the case or the cast bullet carries quality")
 
     -- A broken effect must not break the craft or the XP.
     local form = calibreRecipe(first, "case")
@@ -5946,11 +5979,16 @@ do
             ["Base.LightBulb"] = 2, ["Base.Screws"] = 12, ["Base.SheetMetal"] = 8, ["Base.CarBatteryCharger"] = 2,
             -- Lead: junk to melt, and iron for two of each mould.
             ["Base.LeadPipe"] = 30, ["Base.JigLure"] = 50, [AC_Casting.CONFIG.mouldBarItem] = 4 * AC_Casting.CONFIG.mouldBars * #AC_Casting.getMoulds(),
+            -- Stone, clay and sand for the other moulds, a chisel and a knife,
+            -- and fire and fuel for the kiln.
+            ["Base.StoneBlock"] = 6, ["Base.Clay"] = 60, ["Base.Sandbag"] = 20,
+            ["base:crudechisel"] = 1, ["base:sharpknife"] = 1, ["base:startfire"] = 40, ["base:log"] = 40,
         }
         leadRounds = {}
         local tools = {}
         for id, count in pairs(inv) do
-            if string.sub(id, 1, 5) == "base:" and id ~= "base:charcoal" then tools[id] = count end
+            -- Charcoal, a fire starter and a kiln's log are burnt, not kept.
+            if string.sub(id, 1, 5) == "base:" and id ~= "base:charcoal" and id ~= "base:startfire" and id ~= "base:log" then tools[id] = count end
         end
         tools["Base.CeramicCrucible"], tools["Base.ClayIngotMold"] = 1, 1
 
@@ -6439,7 +6477,7 @@ do
     end
     -- And nothing is declared that the code no longer uses.
     local Q = AC_CaseQuality.CONFIG
-    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, copper = true, zinc = true }
+    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, [Q.bulletFlagKey] = true, [Q.bulletQualityKey] = true, copper = true, zinc = true }
     for key in pairs(AmmoQuality.DEFAULTS) do byConfig[key] = true end
     -- The tally record: its key is a constant of the carrier, and its
     -- fields are written by the carrier as a table constructor, which the
@@ -9637,7 +9675,7 @@ do
         r = AmmoInspection.inspectComponent(player, loaded)
         eq(r.kind, "round", name .. ": round kind")
         eq(r.lines[1], "Handloaded round: " .. name, name .. ": round header")
-        eq(r.lines[2], "Case quality: Average (66)", name .. ": the inherited casing quality")
+        eq(r.lines[2], "Round quality: Average (66)", name .. ": the inherited casing quality")
         eq(r.lines[3], "This record stays with the loose round; loading or boxing it keeps only a count.", name .. ": the limit is stated")
         eq(#r.lines, 3, name .. ": a round has three lines")
         for _, line in ipairs(r.lines) do
@@ -9659,8 +9697,8 @@ do
     local huge = frozen(nine.case, { [C.qualityKey] = 900 })
     eq(AmmoInspection.inspectComponent(player, huge).lines[2], "Case quality: Excellent (100)", "an out-of-range quality is clamped for display")
     eq(AmmoInspection.getComponent(frozen(nine.round, { [C.roundQualityKey] = "x" })), nil, "a round with a malformed record counts as factory")
-    eq(AmmoInspection.inspectComponent(player, frozen(nine.round, { [C.roundQualityKey] = 900 })).lines[2], "Case quality: Excellent (100)", "a round's out-of-range quality is clamped too")
-    eq(AmmoInspection.inspectComponent(player, frozen(nine.round, { [C.roundQualityKey] = -5 })).lines[2], "Case quality: Dangerous (1)", "and never reads below the minimum")
+    eq(AmmoInspection.inspectComponent(player, frozen(nine.round, { [C.roundQualityKey] = 900 })).lines[2], "Round quality: Excellent (100)", "a round's out-of-range quality is clamped too")
+    eq(AmmoInspection.inspectComponent(player, frozen(nine.round, { [C.roundQualityKey] = -5 })).lines[2], "Round quality: Dangerous (1)", "and never reads below the minimum")
     eq(AC_CaseQuality.getRoundQuality(frozen(nine.round, { [C.roundQualityKey] = 66 })), 66, "a sound round quality is returned as stored")
     eq(AmmoInspection.inspectComponent(nil, odd), nil, "no player")
     eq(AmmoInspection.inspectComponent(player, nil), nil, "no item")
@@ -9885,6 +9923,13 @@ do
     -- Consumed vanilla items that come from somewhere other than a loot list.
     local OTHERWISE = {}
     for _, id in ipairs(AC_Calibres.WAD.items) do OTHERWISE[id] = "rags, ripped from clothing" end
+    -- The mould materials are dug or cut, not looted: clay and sand with a
+    -- shovel (ISShovelGroundCursor fills Base.Claybag and Base.Sandbag; the
+    -- vanilla recipe EmptySackClay gives eight Base.Clay), a stone block
+    -- with vanilla's Make_Stone_Block_from_Stone.
+    OTHERWISE["Base.Clay"] = "dug with a shovel, emptied from a clay sack"
+    OTHERWISE["Base.Sandbag"] = "dug with a shovel"
+    OTHERWISE["Base.StoneBlock"] = "cut from stone with a chisel"
     local unchecked = {}
     -- The skill books are found, never made: every volume is loot in a list
     -- a container names (AC_Loot.BOOKS).
@@ -10169,7 +10214,7 @@ do
         if not (consumed[id] or produced[id] or handled[id] or prototype) then table.insert(unused, id) end
         if not (produced[id] or looted[id]) then table.insert(noSource, id) end
     end
-    eq(count, 55, "fifty-five items")
+    eq(count, 63, "sixty-three items")
     -- The five items of the geology stage name no world model; every item
     -- of the later stages does. (What the game draws for an item without
     -- one is engine behaviour; the sample and the dropped analyzer were
@@ -10512,8 +10557,11 @@ do
         check(taken, calibre.id .. ": a vanilla firearm or magazine takes it")
     end
     for _, recipe in ipairs(AC_Materials.RECIPES) do
-        local tag = ENGINE.benchTags[recipe.benchTag]
-        check(tag ~= nil and (tag.stations > 0 or tag.vanillaRecipes > 0), recipe.id .. ": its station tag " .. tostring(recipe.benchTag) .. " is one vanilla provides")
+        -- A line of several tags ("KilnSmall;KilnLarge") is any one of them.
+        for name in string.gmatch(recipe.benchTag, "[^;]+") do
+            local tag = ENGINE.benchTags[name]
+            check(tag ~= nil and (tag.stations > 0 or tag.vanillaRecipes > 0), recipe.id .. ": its station tag " .. name .. " is one vanilla provides")
+        end
         if recipe.timedAction then
             eq(ENGINE.timedActions[recipe.timedAction], true, recipe.id .. ": its timed action exists")
         end

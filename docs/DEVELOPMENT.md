@@ -1334,12 +1334,12 @@ files, every Lua file and the installed game's item scripts.
 | Bullets and shot | 9 | `AnySurfaceCraft` | 2 to 4 | 1 | 80 to 120 | 2 | 1 | 1 |
 | Assembly | 9 | `AnySurfaceCraft` | 3 to 5 | 2 to 5 | 40 to 80 | 1 | 4 to 5 | 1 |
 | Lead melted from vanilla junk | 2 | `PrimitiveFurnace` | 0 | 0 | 200 | 2 | 2 | 1 |
-| Bullet moulds | 2 | `Forge` | 2 to 3 | 0 | 300 | 3 | 2 | 1 |
-| Cast lead bullets and shot | 6 | `PrimitiveFurnace` | 2 to 4 | 1 | 80 | 3 | 2 | 1 |
+| Bullet moulds | 10 | `Forge`, `AnySurfaceCraft`, `KilnSmall;KilnLarge` | 2 to 3 | 0 | 20 to 300 | 0 to 3 | 1 to 3 | 1 |
+| Cast lead bullets and shot | 24 | `PrimitiveFurnace` | 2 to 4 | 1 | 80 | 2 to 3 | 2 to 3 | 1 |
 | Assembly with a cast bullet | 6 | `AnySurfaceCraft` | 3 to 5 | 2 to 4 | 40 | 1 | 4 to 5 | 1 |
 | Scrapping brass | 3 | `AnySurfaceCraft` | 0 | 0 | 100 | 1 | 1 | 1 |
 | Recasting brass scrap | 1 | `Furnace` | 0 | 0 | 200 | 3 | 2 | 1 |
-| **All** | **74** | | | | | | | |
+| **All** | **100** | | | | | | | |
 
 <!-- END RECIPE AUDIT TABLE -->
 

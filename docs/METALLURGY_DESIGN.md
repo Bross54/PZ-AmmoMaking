@@ -261,6 +261,8 @@ recipes.
 | `AmmoMaking_MeltLeadFromJigLures` | `PrimitiveFurnace` | 5 `Base.JigLure`, 1 charcoal | crucible, tongs | 1 `AmmoMaking.LeadScrap` | 0 | 0 | 200 |
 | `AmmoMaking_ForgeBulletMouldPistol`, `...Shotgun` | `Forge` | 2 `Base.IronBarQuarter`, 2 charcoal | ball-peen hammer, pliers or tongs, whetstone or file | 1 mould | 2 / 3 | 0 | 300 |
 | `AmmoMaking_CastBullets<S>` (six) | `PrimitiveFurnace` | 1 `AmmoMaking.LeadScrap`, 1 charcoal | crucible, tongs, the class's mould | `bulletsPerScrap` cast bullets | the swage's | the swage's | the swage's |
+| `AmmoMaking_CastBullets<S>In{Stone,Clay,Sand}Mould` (eighteen) | `PrimitiveFurnace` | as the iron cast; the sand mould is consumed | as the iron cast, with that material's mould | as the iron cast | the swage's | the swage's | the swage's |
+| `AmmoMaking_CarveStoneBulletMould<C>`, `ShapeClay...`, `FireClay...`, `RamSand...` (eight) | `AnySurfaceCraft`; the firing `KilnSmall;KilnLarge` | see 12.8 | see 12.8 | 1 mould (or unfired mould) | 2 / 3 | 0 | 300 / 120 / 20 / 60 |
 | `AmmoMaking_AssembleCastRound<S>` (six) | `AnySurfaceCraft` | the copper assembly's lines, the cast bullet for the copper one | die set | 1 vanilla round | the assembly's | the assembly's | the assembly's |
 
 Templates: the melt is vanilla's `ExtractIronFromSmallItem` (kept empty
@@ -333,6 +335,35 @@ generator of its own without touching the two that exist.
 The two moulds are also found (`LOOT_AND_RECYCLING.md` 1.5), scaled by the
 die-set loot option. Lead scrap and cast bullets are never loot.
 
+### 12.8 Moulds of stone, clay and sand
+
+The forged iron mould needs a Forge. Three more materials cast the same
+bullets without one, for worse quality (`AC_Casting.MOULD_MATERIALS`):
+
+| Material | Made | Lasts | Bullet quality |
+|---|---|---|---|
+| iron | forged, 2 iron bar quarters (above) | for ever | +0 |
+| stone | carved from 1 `Base.StoneBlock` with a hammer and a chisel, the lines of vanilla's `Make_Stone_Block_from_Stone` (`HammerStoneStanding`, `Masonry`) | wears: condition 10, `ConditionLowerChanceOneIn = 10`, `MayDegradeLight`; some 300 casts | -5 |
+| clay | 2 `Base.Clay` shaped with a sharp knife (`Making`, as vanilla's `PressClayBrickManually`), then fired in a kiln with a fire starter and a log or charcoal, the lines of vanilla's `FireClayIngotMold` | one cast: tagged `base:destructible;base:breakonsmithing` like `Base.ClayIngotMold`, and the engine sets a kept item so tagged to condition 0 after a `Blacksmithing` recipe | -10 |
+| sand | 1 use of a dug `Base.Sandbag` and 1 `Base.Clay` as the binder, with a sharp knife | one cast: the cast consumes it | -20 |
+
+Clay and sand are dug with a shovel (vanilla fills `Base.Claybag` and
+`Base.Sandbag`; `EmptySackClay` gives eight `Base.Clay`); a stone block is
+cut by vanilla masonry. None of them is loot, and making a mould pays no
+XP. Every cast, whatever the mould, has the iron cast's level, XP, time,
+lead and bullets: the material changes only quality and durability.
+
+**Quality.** A cast bullet now carries a quality (`bulletQuality` on the
+item), rolled like a case's (`AC_CaseQuality.roll`: level, spread) plus the
+mould's bonus. A round assembled with cast bullets takes the cases'
+average and the bullets' average, half each
+(`AC_CaseQuality.CONFIG.projectileShare`); a copper round is still its
+case's. At level 5 and an even roll: iron 70, stone 65, clay 60, sand 50;
+with a case of 70, a sand-cast round is 60. Quality has no effect at the
+shot while the effects are locked (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4); it
+is shown by *Inspect Ammunition* and carried in magazines when quality
+tracking is on.
+
 ### 12.7 REQUIRES FUTURE IN-GAME VERIFICATION
 
 - The melts and casts appear at a Primitive Furnace (and the higher
@@ -342,3 +373,7 @@ die-set loot option. Lead scrap and cast bullets are never loot.
 - The cast round is the vanilla round and stacks with factory rounds.
 - The borrowed world models (`SilverScrap`, `Pliers`, `SteelSlug`) look
   acceptable; the mould and lead icons read in the inventory.
+- The stone, clay and sand moulds (12.8): the clay mould is offered at a
+  kiln and fires, breaks after one cast; the stone mould shows and loses
+  condition; the sand mould is used up; the borrowed icons and models
+  (`RoughBlock`, the ceramic ingot cast, `Sandbag`) read sensibly.

@@ -39,7 +39,10 @@ end
 for _, recipe in ipairs(AC_Materials.RECIPES) do
     local where = "recipe " .. recipe.id
     recipeLines(recipe, where)
-    facts.benchTags[recipe.benchTag] = facts.benchTags[recipe.benchTag] or where
+    -- "KilnSmall;KilnLarge": any one of the stations, as in vanilla.
+    for tag in string.gmatch(recipe.benchTag, "[^;]+") do
+        facts.benchTags[tag] = facts.benchTags[tag] or where
+    end
     if recipe.timedAction then
         facts.timedActions[recipe.timedAction] = facts.timedActions[recipe.timedAction] or where
     end

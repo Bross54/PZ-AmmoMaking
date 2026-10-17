@@ -138,6 +138,141 @@ AC_Casting.CONFIG = {
 
 
 ------------------------------------------------
+-- MOULD MATERIALS (tunable)
+------------------------------------------------
+--
+-- What a bullet mould is made of decides how good its
+-- bullets are and how long it lasts. The forged iron
+-- mould is the reference; the other three need no forge
+-- and give worse bullets:
+--
+--   iron   forged at a Forge; kept, lasts           +0
+--   stone  carved from a vanilla stone block with a
+--          hammer and a chisel (the lines of vanilla's
+--          Make_Stone_Block_from_Stone); kept, wears
+--          like a tool (MayDegradeLight)             -5
+--   clay   shaped from dug clay with a knife, fired in
+--          a kiln (the lines of vanilla's
+--          FireClayIngotMold); kept, but tagged
+--          base:breakonsmithing like vanilla's clay
+--          ingot mould, so one cast breaks it        -10
+--   sand   rammed from one use of a sandbag with clay as
+--          the binder; consumed by its one cast      -20
+--
+-- qualityBonus is added to the cast bullet's quality
+-- roll (AC_CaseQuality.roll, the case's roll), and a
+-- round assembled from a cast bullet averages it with its
+-- case (AC_CaseQuality.CONFIG.projectileShare). XP, level,
+-- time and metal of a cast are the same in every mould:
+-- the material changes quality and durability only.
+--
+-- The one-cast break: processKeepInputItem of the class
+-- CraftRecipeData sets condition 0 on a kept item tagged
+-- base:breakonsmithing when CraftRecipe.isSmithing() is
+-- true, which is category Blacksmithing (javap, 42.20.4);
+-- the casts are Blacksmithing.
+--
+-- prefix makes the item ids: prefix .. the iron mould's
+-- name ("AmmoMaking.StoneBulletMouldPistol"); a fired clay
+-- mould has an "Unfired" twin.
+--
+-- REQUIRES FUTURE IN-GAME VERIFICATION: the kiln firing,
+-- the clay mould breaking after one cast, the stone
+-- mould's wear.
+------------------------------------------------
+
+AC_Casting.MOULD_MATERIALS = {
+
+    { id = "iron", qualityBonus = 0, keep = true },
+
+    {
+        id = "stone",
+        prefix = "Stone",
+        qualityBonus = -5,
+        keep = true,
+        flags = { "MayDegradeLight" },
+        -- The item script's two wear numbers (the tests
+        -- compare): 10 x (10 x 3 + level + Maintenance),
+        -- some 300 casts.
+        conditionMax = 10,
+        conditionLowerChanceOneIn = 10,
+    },
+
+    { id = "clay", prefix = "Clay", qualityBonus = -10, keep = true, unfired = true },
+
+    { id = "sand", prefix = "Sand", qualityBonus = -20, keep = false },
+}
+
+
+-- The material entry by id, or nil.
+function AC_Casting.getMouldMaterial(
+    materialId
+)
+
+    for _,
+        material
+    in ipairs(
+        AC_Casting.MOULD_MATERIALS
+    )
+    do
+
+        if material.id == materialId then
+            return material
+        end
+    end
+
+
+    return nil
+end
+
+
+-- The items of one class's mould in one material:
+-- { item, unfired }. iron is the class's own mould.
+function AC_Casting.getMouldItems(
+    className,
+    materialId
+)
+
+    local class =
+        AC_Calibres.CLASSES[className] or {}
+
+
+    local material =
+        AC_Casting.getMouldMaterial(materialId)
+
+
+    if not class.mould
+        or not material
+    then
+        return nil
+    end
+
+
+    if not material.prefix then
+        return { item = class.mould }
+    end
+
+
+    local module,
+          name =
+        string.match(
+            class.mould,
+            "^(.-)%.([^%.]+)$"
+        )
+
+
+    local item =
+        module .. "." .. material.prefix .. name
+
+
+    return {
+        item = item,
+        unfired = material.unfired and (item .. "Unfired") or nil,
+    }
+end
+
+
+------------------------------------------------
 -- SOURCES (tunable)
 ------------------------------------------------
 --
@@ -564,11 +699,209 @@ function AC_Casting.buildMouldRecipes()
     end
 
 
+    for _,
+        mould
+    in ipairs(
+        AC_Casting.getMoulds()
+    )
+    do
+
+        for _,
+            recipe
+        in ipairs(
+            AC_Casting.buildMaterialMouldRecipes(mould)
+        )
+        do
+
+            table.insert(
+                recipes,
+                recipe
+            )
+        end
+    end
+
+
     return recipes
 end
 
 
--- The two recipes of one castable calibre.
+-- The stone, clay and sand moulds of one class, in the
+-- order of MOULD_MATERIALS. Vanilla lines throughout:
+--
+--   stone  Make_Stone_Block_from_Stone
+--          (recipes_stonemasonry_i.txt): HammerStoneStanding,
+--          AnySurfaceCraft, the hammer and chisel lines
+--   clay   PressClayBrickManually (recipes_pottery.txt):
+--          Making, AnySurfaceCraft, Base.Clay in; the
+--          knife line of the leather recipes
+--          (recipes_leather_prep.txt); then
+--          FireClayIngotMold (craftrecipe_kiln.txt):
+--          Making_With_Kiln, KilnSmall;KilnLarge, a fire
+--          starter and a log or charcoal
+--   sand   MeltSand (recipes_blacksmith_furnace_ii.txt):
+--          one use of Base.Sandbag, with a clay binder
+--
+-- Like the forged mould, a mould pays nothing when made.
+function AC_Casting.buildMaterialMouldRecipes(
+    mould
+)
+
+    local config =
+        AC_Casting.CONFIG
+
+
+    local recipes = {}
+
+
+    local function knife()
+
+        return {
+            count = 1,
+            tags = { "base:sharpknife" },
+            keep = true,
+            flags = { "IsNotDull", "MayDegradeLight" },
+        }
+    end
+
+
+    local function add(
+        recipe
+    )
+
+        recipe.class = mould.class
+
+        recipe.xp = config.mouldXp
+
+        recipe.requiredLevel = mould.level
+
+        recipe.tool = true
+
+        table.insert(
+            recipes,
+            recipe
+        )
+    end
+
+
+    local stone =
+        AC_Casting.getMouldItems(mould.class, "stone")
+
+
+    local stoneName =
+        shortName(stone.item)
+
+
+    add({
+        id = config.idPrefix .. "Carve" .. stoneName,
+        step = "mould",
+        material = "stone",
+        time = 300,
+        timedAction = "HammerStoneStanding",
+        benchTag = "AnySurfaceCraft",
+        category = "Masonry",
+        callback = "onCarve" .. stoneName,
+        inputs = {
+            {
+                count = 1,
+                tags = { "base:hammer", "base:clubhammer" },
+                keep = true,
+                flags = { "MayDegradeLight", "Prop1" },
+            },
+            {
+                count = 1,
+                tags = { "base:crudechisel", "base:masonschisel" },
+                keep = true,
+                flags = { "MayDegradeLight", "Prop2" },
+            },
+            { count = 1, items = { "Base.StoneBlock" } },
+        },
+        outputs = {
+            { count = 1, item = stone.item },
+        },
+    })
+
+
+    local clay =
+        AC_Casting.getMouldItems(mould.class, "clay")
+
+
+    local clayName =
+        shortName(clay.item)
+
+
+    add({
+        id = config.idPrefix .. "Shape" .. clayName,
+        step = "mould",
+        material = "clay",
+        time = 120,
+        timedAction = "Making",
+        benchTag = "AnySurfaceCraft",
+        category = "Pottery",
+        callback = "onShape" .. clayName,
+        inputs = {
+            { count = 2, items = { "Base.Clay" } },
+            knife(),
+        },
+        outputs = {
+            { count = 1, item = clay.unfired },
+        },
+    })
+
+
+    add({
+        id = config.idPrefix .. "Fire" .. clayName,
+        step = "mould",
+        material = "clay",
+        time = 20,
+        timedAction = "Making_With_Kiln",
+        benchTag = "KilnSmall;KilnLarge",
+        category = "Pottery",
+        callback = "onFire" .. clayName,
+        inputs = {
+            { count = 1, items = { clay.unfired } },
+            { count = 1, tags = { "base:startfire" } },
+            { count = 1, tags = { "base:log", "base:charcoal" } },
+        },
+        outputs = {
+            { count = 1, item = clay.item },
+        },
+    })
+
+
+    local sand =
+        AC_Casting.getMouldItems(mould.class, "sand")
+
+
+    local sandName =
+        shortName(sand.item)
+
+
+    add({
+        id = config.idPrefix .. "Ram" .. sandName,
+        step = "mould",
+        material = "sand",
+        time = 60,
+        timedAction = "Making",
+        benchTag = "AnySurfaceCraft",
+        category = "Pottery",
+        callback = "onRam" .. sandName,
+        inputs = {
+            { count = 1, items = { "Base.Sandbag" } },
+            { count = 1, items = { "Base.Clay" } },
+            knife(),
+        },
+        outputs = {
+            { count = 1, item = sand.item },
+        },
+    })
+
+
+    return recipes
+end
+
+
+-- The recipes of one castable calibre: a cast per mould
+-- material, then the assembly.
 function AC_Casting.buildCalibreRecipes(
     calibre
 )
@@ -592,38 +925,76 @@ function AC_Casting.buildCalibreRecipes(
         calibre.suffix
 
 
-    local cast = {
+    -- One cast per mould material. The iron cast keeps the
+    -- id it always had; the others name their mould. Only
+    -- the mould line, the id and the quality differ.
+    local casts = {}
 
-        id = config.idPrefix .. "CastBullets" .. suffix,
 
-        calibre = calibre.id,
+    for _,
+        material
+    in ipairs(
+        AC_Casting.MOULD_MATERIALS
+    )
+    do
 
-        step = "cast",
+        local mouldItems =
+            AC_Casting.getMouldItems(calibre.class, material.id)
 
-        time = calibre.time.bullet,
 
-        benchTag = config.benchTag,
+        local tail =
+            material.prefix
+            and ("In" .. material.prefix .. "Mould")
+            or ""
 
-        category = config.category,
 
-        callback = "onCastBullets" .. suffix,
+        table.insert(
+            casts,
+            {
 
-        xp = calibre.xp.bullet,
+                id = config.idPrefix .. "CastBullets" .. suffix .. tail,
 
-        requiredLevel = calibre.levels.bullet,
+                calibre = calibre.id,
 
-        inputs = {
-            crucible(),
-            tongs(),
-            charcoal(config.castCharcoal),
-            { count = 1, items = { config.scrapItem } },
-            { count = 1, items = { class.mould }, keep = true },
-        },
+                step = "cast",
 
-        outputs = {
-            { count = calibre.bulletsPerScrap, item = calibre.castBullet },
-        },
-    }
+                material = material.id,
+
+                qualityBonus = material.qualityBonus,
+
+                effect = "castBulletQuality",
+
+                time = calibre.time.bullet,
+
+                benchTag = config.benchTag,
+
+                category = config.category,
+
+                callback = "onCastBullets" .. suffix .. tail,
+
+                xp = calibre.xp.bullet,
+
+                requiredLevel = calibre.levels.bullet,
+
+                inputs = {
+                    crucible(),
+                    tongs(),
+                    charcoal(config.castCharcoal),
+                    { count = 1, items = { config.scrapItem } },
+                    {
+                        count = 1,
+                        items = { mouldItems.item },
+                        keep = material.keep or nil,
+                        flags = material.flags,
+                    },
+                },
+
+                outputs = {
+                    { count = calibre.bulletsPerScrap, item = calibre.castBullet },
+                },
+            }
+        )
+    end
 
 
     -- The copper assembly with its bullet line swapped:
@@ -712,7 +1083,13 @@ function AC_Casting.buildCalibreRecipes(
     }
 
 
-    return { cast, assemble }
+    table.insert(
+        casts,
+        assemble
+    )
+
+
+    return casts
 end
 
 

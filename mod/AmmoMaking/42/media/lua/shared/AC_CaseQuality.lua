@@ -80,6 +80,19 @@ AC_CaseQuality.CONFIG = {
 
     qualityKey = "caseQuality",
 
+    -- ModData keys on a cast lead bullet. Its quality is
+    -- rolled like a case's, with the mould material's
+    -- bonus (AC_Casting.MOULD_MATERIALS).
+    bulletFlagKey = "AmmoMakingCastBullet",
+
+    bulletQualityKey = "bulletQuality",
+
+    -- A round assembled with a cast bullet: its quality is
+    -- the cases' average and the bullets' average, the
+    -- bullets weighing this much. A swaged copper bullet
+    -- carries no quality; its round is the case's.
+    projectileShare = 0.5,
+
     -- ModData keys on an assembled round.
     roundFlagKey = "AmmoMakingHandloaded",
 
@@ -233,6 +246,42 @@ function AC_CaseQuality.get(
             quality,
             config.minQuality,
             config.maxQuality
+        )
+end
+
+
+-- A cast bullet's quality, or nil (a debug-spawned or
+-- malformed bullet, or anything else).
+function AC_CaseQuality.getBulletQuality(
+    item
+)
+
+    -- As for a round: never create ModData by asking.
+    if not item
+        or (item.hasModData and not item:hasModData())
+    then
+        return nil
+    end
+
+
+    local data =
+        item:getModData()
+
+
+    local quality =
+        data and data[AC_CaseQuality.CONFIG.bulletQualityKey]
+
+
+    if not AC_SaveData.isFinite(quality) then
+        return nil
+    end
+
+
+    return
+        clamp(
+            quality,
+            AC_CaseQuality.CONFIG.minQuality,
+            AC_CaseQuality.CONFIG.maxQuality
         )
 end
 
@@ -448,6 +497,81 @@ end
 
 
 ------------------------------------------------
+-- EFFECT: bullets cast
+------------------------------------------------
+--
+-- Called from a cast recipe's OnCreate. Rolls a quality
+-- for each cast bullet created, with the mould
+-- material's bonus. Returns the list written.
+------------------------------------------------
+
+function AC_CaseQuality.onBulletsCast(
+    craftRecipeData,
+    character,
+    mouldBonus
+)
+
+    local level = 0
+
+
+    if character then
+
+        level =
+            AmmoMakingSkill.getLevel(
+                character
+            )
+    end
+
+
+    local config =
+        AC_CaseQuality.CONFIG
+
+
+    local written = {}
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllCreatedItems"
+        )
+    )
+    do
+
+        if AC_Calibres.identify(item:getFullType()) == "castBullet" then
+
+            local quality =
+                AC_CaseQuality.roll(
+                    level,
+                    ZombRandFloat(0.0, 1.0),
+                    mouldBonus
+                )
+
+
+            local data =
+                item:getModData()
+
+
+            data[config.bulletFlagKey] = true
+
+            data[config.bulletQualityKey] = quality
+
+
+            table.insert(
+                written,
+                quality
+            )
+        end
+    end
+
+
+    return written
+end
+
+
+------------------------------------------------
 -- EFFECT: rounds assembled
 ------------------------------------------------
 --
@@ -508,6 +632,10 @@ function AC_CaseQuality.onRoundsAssembled(
 
             local count = 0
 
+            local bulletTotal = 0
+
+            local bullets = 0
+
 
             for _,
                 item
@@ -540,13 +668,57 @@ function AC_CaseQuality.onRoundsAssembled(
                     count =
                         count + 1
                 end
+
+
+                local bulletQuality =
+                    itemKind == "castBullet"
+                    and itemCalibre == calibre
+                    and AC_CaseQuality.getBulletQuality(item)
+
+
+                if bulletQuality then
+
+                    bulletTotal =
+                        bulletTotal + bulletQuality
+
+                    bullets =
+                        bullets + 1
+                end
             end
 
 
-            if count > 0 then
+            -- The cases' average, the cast bullets' average,
+            -- or both weighted by projectileShare.
+            local average = nil
 
-                local average =
-                    math.floor(total / count + 0.5)
+
+            if count > 0
+                and bullets > 0
+            then
+
+                local share =
+                    config.projectileShare
+
+                average =
+                    (total / count) * (1 - share)
+                    + (bulletTotal / bullets) * share
+
+            elseif count > 0 then
+
+                average =
+                    total / count
+
+            elseif bullets > 0 then
+
+                average =
+                    bulletTotal / bullets
+            end
+
+
+            if average then
+
+                average =
+                    math.floor(average + 0.5)
 
 
                 local data =
@@ -570,10 +742,27 @@ end
 
 ------------------------------------------------
 -- Dispatch table for AC_Materials: recipe.effect ->
--- function(craftRecipeData, character).
+-- function(craftRecipeData, character, recipe).
 ------------------------------------------------
 
 AC_CaseQuality.EFFECTS = {
+
+    -- A cast: the bullets take the mould's bonus
+    -- (recipe.qualityBonus, AC_Casting.MOULD_MATERIALS).
+    castBulletQuality =
+        function(
+            craftRecipeData,
+            character,
+            recipe
+        )
+
+            return
+                AC_CaseQuality.onBulletsCast(
+                    craftRecipeData,
+                    character,
+                    recipe and recipe.qualityBonus or 0
+                )
+        end,
 
     caseQuality =
         function(

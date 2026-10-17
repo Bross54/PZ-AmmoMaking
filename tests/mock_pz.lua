@@ -485,6 +485,13 @@ MOCK.knownScriptItems = {
     -- items/normal.txt of 42.20.4), and the mod's own lead items.
     ["Base.LeadPipe"] = true, ["Base.JigLure"] = true, ["Base.IronBarQuarter"] = true,
     ["AmmoMaking.LeadScrap"] = true, ["AmmoMaking.BulletMouldPistol"] = true, ["AmmoMaking.BulletMouldShotgun"] = true,
+    -- Moulds of stone, clay and sand, and what they are made from (vanilla
+    -- ids confirmed in the installed 42.20.4 scripts).
+    ["Base.StoneBlock"] = true, ["Base.Clay"] = true, ["Base.Sandbag"] = true,
+    ["AmmoMaking.StoneBulletMouldPistol"] = true, ["AmmoMaking.ClayBulletMouldPistolUnfired"] = true,
+    ["AmmoMaking.ClayBulletMouldPistol"] = true, ["AmmoMaking.SandBulletMouldPistol"] = true,
+    ["AmmoMaking.StoneBulletMouldShotgun"] = true, ["AmmoMaking.ClayBulletMouldShotgunUnfired"] = true,
+    ["AmmoMaking.ClayBulletMouldShotgun"] = true, ["AmmoMaking.SandBulletMouldShotgun"] = true,
     ["AmmoMaking.CastBullet9mm"] = true, ["AmmoMaking.CastBullet38Special"] = true, ["AmmoMaking.CastBullet45ACP"] = true,
     ["AmmoMaking.CastBullet357Magnum"] = true, ["AmmoMaking.CastBullet44Magnum"] = true, ["AmmoMaking.LeadShotCharge12Gauge"] = true,
     ["Base.MortarPestle"] = true,

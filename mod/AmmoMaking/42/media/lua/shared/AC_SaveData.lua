@@ -587,6 +587,23 @@ AC_SaveData.SCHEMA = {
     },
 
     {
+        id = "castBullet",
+
+        owner = "AC_CaseQuality",
+
+        carrier = "item ModData of a cast lead bullet; its quality comes from the mould it was cast in",
+
+        version = "none",
+
+        keys = {
+
+            { key = "AmmoMakingCastBullet", type = "flag", read = false, repair = "a marker" },
+
+            { key = "bulletQuality", type = "number", min = 1, max = 100, default = "none", repair = "read as 1..100; not a finite number reads as no quality" },
+        },
+    },
+
+    {
         id = "round",
 
         owner = "AC_CaseQuality",

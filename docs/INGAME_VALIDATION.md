@@ -303,6 +303,14 @@ Expected
 - The inspection window opens and shows a case quality; in `-debug` three
   `[debug]` lines follow.
 - A recipe above your level is shown but locked.
+- Step 5 with the other moulds (take a Stone Block, Clay and a Sandbag
+  from the vanilla debug item list): *Carve Stone Pistol Bullet Mould*
+  with a hammer and chisel; *Shape Clay Pistol Bullet Mould*, then *Fire
+  Clay Pistol Bullet Mould* at a kiln; *Ram Sand Pistol Bullet Mould*.
+  Cast 9mm bullets in each: the stone mould is kept and shows a condition,
+  the clay mould is broken after its cast, the sand mould is gone.
+  *Inspect Ammunition* on a cast bullet shows "Bullet quality", lower for
+  sand than for iron at the same level.
 - Step 5: the mould is kept; two cast bullets per lead scrap; the cast
   round is the same vanilla 9mm round (it stacks with the others) and logs
   the same XP as a copper one. No cast recipe exists for the rifle

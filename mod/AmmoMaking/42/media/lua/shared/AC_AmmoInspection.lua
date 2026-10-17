@@ -414,10 +414,43 @@ end
 -- level 5 and above the number as well.
 ------------------------------------------------
 
--- kind ("case" or "round") and the calibre definition
--- for an item this inspection covers, or nil. A round
--- counts only when it carries a handloading record:
--- factory rounds have nothing to inspect.
+-- What each kind is called and how its quality is read
+-- and labelled. A round's quality is its case's, or with
+-- a cast bullet the two averaged (AC_CaseQuality), so it
+-- is the round's own.
+local KINDS = {
+
+    case = {
+        header = { "IGUI_AmmoMaking_Insp_EmptyCase", "Empty case: %1" },
+        read = function(item) return AC_CaseQuality.get(item) end,
+        label = { "IGUI_AmmoMaking_Insp_CaseQuality", "Case quality: %1" },
+        exact = { "IGUI_AmmoMaking_Insp_CaseQualityExact", "Case quality: %1 (%2)" },
+        none = { "IGUI_AmmoMaking_Insp_NoRecord", "Case quality: not recorded" },
+    },
+
+    castBullet = {
+        header = { "IGUI_AmmoMaking_Insp_CastBullet", "Cast bullet: %1" },
+        read = function(item) return AC_CaseQuality.getBulletQuality(item) end,
+        label = { "IGUI_AmmoMaking_Insp_BulletQuality", "Bullet quality: %1" },
+        exact = { "IGUI_AmmoMaking_Insp_BulletQualityExact", "Bullet quality: %1 (%2)" },
+        none = { "IGUI_AmmoMaking_Insp_NoBulletRecord", "Bullet quality: not recorded" },
+    },
+
+    round = {
+        header = { "IGUI_AmmoMaking_Insp_HandloadedRound", "Handloaded round: %1" },
+        read = function(item) return AC_CaseQuality.getRoundQuality(item) end,
+        label = { "IGUI_AmmoMaking_Insp_RoundQuality", "Round quality: %1" },
+        exact = { "IGUI_AmmoMaking_Insp_RoundQualityExact", "Round quality: %1 (%2)" },
+        none = { "IGUI_AmmoMaking_Insp_NoRoundRecord", "Round quality: not recorded" },
+    },
+}
+
+
+-- kind ("case", "castBullet" or "round") and the calibre
+-- definition for an item this inspection covers, or nil.
+-- A round counts only when it carries a handloading
+-- record, a cast bullet only when it was cast: factory
+-- rounds and spawned bullets have nothing to inspect.
 function AmmoInspection.getComponent(item)
     if not item or not item.getFullType then
         return nil, nil
@@ -426,6 +459,10 @@ function AmmoInspection.getComponent(item)
     local kind, calibre = AC_Calibres.identify(item:getFullType())
 
     if kind == "case" then
+        return kind, calibre
+    end
+
+    if kind == "castBullet" and AC_CaseQuality.getBulletQuality(item) then
         return kind, calibre
     end
 
@@ -458,17 +495,14 @@ function AmmoInspection.inspectComponent(player, item)
         lines = {}
     }
 
+    local K = KINDS[kind]
+
     table.insert(
         result.lines,
-        kind == "case"
-            and text("IGUI_AmmoMaking_Insp_EmptyCase", "Empty case: %1", calibre.id)
-            or text("IGUI_AmmoMaking_Insp_HandloadedRound", "Handloaded round: %1", calibre.id)
+        text(K.header[1], K.header[2], calibre.id)
     )
 
-    local quality =
-        kind == "case"
-        and AC_CaseQuality.get(item)
-        or AC_CaseQuality.getRoundQuality(item)
+    local quality = K.read(item)
 
     if level <= 0 then
 
@@ -484,14 +518,14 @@ function AmmoInspection.inspectComponent(player, item)
 
         table.insert(
             result.lines,
-            text("IGUI_AmmoMaking_Insp_NoRecord", "Case quality: not recorded")
+            text(K.none[1], K.none[2])
         )
 
     elseif level < 5 then
 
         table.insert(
             result.lines,
-            text("IGUI_AmmoMaking_Insp_CaseQuality", "Case quality: %1",
+            text(K.label[1], K.label[2],
                 AmmoQuality.labelFor(quality))
         )
 
@@ -499,7 +533,7 @@ function AmmoInspection.inspectComponent(player, item)
 
         table.insert(
             result.lines,
-            text("IGUI_AmmoMaking_Insp_CaseQualityExact", "Case quality: %1 (%2)",
+            text(K.exact[1], K.exact[2],
                 AmmoQuality.labelFor(quality),
                 round(quality))
         )
@@ -542,8 +576,8 @@ function AmmoInspection.inspectComponent(player, item)
         local config = AC_CaseQuality.CONFIG
 
         local key =
-            kind == "case"
-            and config.qualityKey
+            (kind == "case" and config.qualityKey)
+            or (kind == "castBullet" and config.bulletQualityKey)
             or config.roundQualityKey
 
         local data = item:getModData()
@@ -668,14 +702,14 @@ function AmmoInspection.inspectLoad(player, item)
         if level < 5 then
             table.insert(
                 result.lines,
-                text("IGUI_AmmoMaking_Insp_LoadHandloaded", "Handloaded rounds: %1, case quality %2",
+                text("IGUI_AmmoMaking_Insp_LoadHandloaded", "Handloaded rounds: %1, quality %2",
                     load.handloaded,
                     AmmoQuality.labelFor(load.meanQuality))
             )
         else
             table.insert(
                 result.lines,
-                text("IGUI_AmmoMaking_Insp_LoadHandloadedExact", "Handloaded rounds: %1, case quality %2 (%3)",
+                text("IGUI_AmmoMaking_Insp_LoadHandloadedExact", "Handloaded rounds: %1, quality %2 (%3)",
                     load.handloaded,
                     AmmoQuality.labelFor(load.meanQuality),
                     round(load.meanQuality))

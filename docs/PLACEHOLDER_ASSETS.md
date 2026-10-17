@@ -90,6 +90,14 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Lead Scrap (`AmmoMaking.LeadScrap`) | `AmmoMakingLeadScrap`, the mod's own | `SilverScrap`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `LeadScrap`: `Icon`, `WorldStaticModel` | a world model |
 | Pistol Bullet Mould (`AmmoMaking.BulletMouldPistol`) | `AmmoMakingBulletMould`, the mod's own | `Pliers`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BulletMouldPistol`: `Icon`, `WorldStaticModel` | a world model |
 | Buckshot Mould (`AmmoMaking.BulletMouldShotgun`) | `AmmoMakingShotMould`, the mod's own | `Pliers`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `BulletMouldShotgun`: `Icon`, `WorldStaticModel` | a world model |
+| Stone Pistol Bullet Mould (`AmmoMaking.StoneBulletMouldPistol`) | `RoughBlock`, vanilla | `StoneBlock`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `StoneBulletMouldPistol`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Unfired Clay Pistol Bullet Mould (`AmmoMaking.ClayBulletMouldPistolUnfired`) | `CeramicCast_Bar_Unfired`, vanilla | `CeramicIngotCastUnfired`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `ClayBulletMouldPistolUnfired`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Clay Pistol Bullet Mould (`AmmoMaking.ClayBulletMouldPistol`) | `CeramicCast_Bar_Fired`, vanilla | `CeramicIngotCast`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `ClayBulletMouldPistol`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Sand Pistol Bullet Mould (`AmmoMaking.SandBulletMouldPistol`) | `Sandbag`, vanilla | `SandBag`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `SandBulletMouldPistol`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Stone Buckshot Mould (`AmmoMaking.StoneBulletMouldShotgun`) | `RoughBlock`, vanilla | `StoneBlock`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `StoneBulletMouldShotgun`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Unfired Clay Buckshot Mould (`AmmoMaking.ClayBulletMouldShotgunUnfired`) | `CeramicCast_Bar_Unfired`, vanilla | `CeramicIngotCastUnfired`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `ClayBulletMouldShotgunUnfired`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Clay Buckshot Mould (`AmmoMaking.ClayBulletMouldShotgun`) | `CeramicCast_Bar_Fired`, vanilla | `CeramicIngotCast`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `ClayBulletMouldShotgun`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
+| Sand Buckshot Mould (`AmmoMaking.SandBulletMouldShotgun`) | `Sandbag`, vanilla | `SandBag`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `SandBulletMouldShotgun`: `Icon`, `WorldStaticModel` | a 32 x 32 icon and a world model |
 | 9mm Cast Lead Bullet (`AmmoMaking.CastBullet9mm`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet9mm`: `Icon`, `WorldStaticModel` | a world model |
 | .38 Special Cast Lead Bullet (`AmmoMaking.CastBullet38Special`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet38Special`: `Icon`, `WorldStaticModel` | a world model |
 | .45 ACP Cast Lead Bullet (`AmmoMaking.CastBullet45ACP`) | `AmmoMakingCastBullet`, the mod's own | `SteelSlug`, vanilla | `mod/AmmoMaking/42/media/scripts/AC_Items.txt`, item `CastBullet45ACP`: `Icon`, `WorldStaticModel` | a world model |
@@ -121,7 +129,7 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Spent .308 Case (`AmmoMaking.SpentCase308Win`) | `AmmoMakingSpentCaseRifle`, the mod's own | `RifleAmmo`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentCase308Win`: `Icon`, `WorldStaticModel` | a world model |
 | Spent 12 Gauge Brass Hull (`AmmoMaking.SpentHull12Gauge`) | `AmmoMakingSpentHull`, the mod's own | `ShotGunShells`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentHull12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 
-4 visuals named in Lua, 55 items of the main mod, 9 of the spent-cases add-on: 68 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
+4 visuals named in Lua, 63 items of the main mod, 9 of the spent-cases add-on: 76 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
 
 <!-- END PLACEHOLDER ASSET TABLE -->
 

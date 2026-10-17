@@ -1403,7 +1403,8 @@ function AC_Materials.onRecipeCreated(
             pcall(
                 effect,
                 craftRecipeData,
-                character
+                character,
+                recipe
             )
 
 

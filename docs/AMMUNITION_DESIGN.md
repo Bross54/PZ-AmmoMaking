@@ -249,12 +249,14 @@ numbers are `METALLURGY_DESIGN.md` 12; what changes for the round is below.
   copper round's contents with lead in place of copper. The conservation
   check and the whole-chain random crafting follow lead as a sixth
   material; a round counted as copper from a lead bullet is refused.
-- **No quality penalty for lead.** The round's record is its *case's*
-  quality (§8); a cast bullet has no record of its own, as a swaged one has
-  none. A lower record for lead would describe nothing the mod stores, and
-  the quality effects are locked (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4), so
-  it would balance nothing either: the same reason rifles carry no penalty
-  (§7).
+- **The mould sets the bullet's quality.** A cast bullet carries a quality
+  of its own, rolled like a case's plus its mould's bonus: iron +0, stone
+  -5, clay -10, sand -20 (`METALLURGY_DESIGN.md` 12.8). The round takes the
+  cases' average and the bullets' average, half each; a copper round is
+  its case's, as before. Lead itself is no penalty: an iron-cast bullet
+  rolls as a case does. The quality effects stay locked
+  (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4), so this is a record, shown by
+  *Inspect Ammunition*.
 - **Rifles keep copper.** The rifle class has no mould; the reason is in
   `METALLURGY_DESIGN.md` 12.4 and beside `AC_Calibres.CLASSES`.
 - **The press** assembles copper-bullet rounds only: its recipes are the
@@ -342,7 +344,7 @@ carries a handloading record, offers one entry, *Inspect Ammunition*
 
 ```text
 Empty case: .308                      Handloaded round: 9mm
-Case quality: Very Good (84)          Case quality: Average (66)
+Case quality: Very Good (84)          Round quality: Average (66)
                                       This record stays with the loose round;
                                       loading it keeps only a count.
 ```
@@ -406,9 +408,9 @@ from:
 |---|---|---|---|---|
 | 0 | 13 | 35, 50, 65 | 400 | – |
 | 1 | 5 | 39, 54, 69 | 384 | 80 |
-| 2 | 14 | 43, 58, 73 | 368 | 76 |
-| 3 | 22 | 47, 62, 77 | 352 | 72 |
-| 4 | 15 | 51, 66, 81 | 336 | 68 |
+| 2 | 24 | 43, 58, 73 | 368 | 76 |
+| 3 | 35 | 47, 62, 77 | 352 | 72 |
+| 4 | 18 | 51, 66, 81 | 336 | 68 |
 | 5 | 5 | 55, 70, 85 | 320 | 64 |
 | 6 | – | 59, 74, 89 | 304 | 60 |
 | 7 | – | 63, 78, 93 | 288 | 56 |

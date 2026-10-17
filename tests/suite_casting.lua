@@ -227,8 +227,11 @@ return function(T)
 
         -- Moulds: one per class that casts; forged like a die set, from iron,
         -- for nothing, and met when the first bullet it casts opens.
-        local moulds = recipesOf("mould")
-        eq(#moulds, 2, "two moulds: pistol and buckshot")
+        local moulds = {}
+        for _, recipe in ipairs(recipesOf("mould")) do
+            if recipe.material == nil then table.insert(moulds, recipe) end
+        end
+        eq(#moulds, 2, "two forged moulds: pistol and buckshot")
         for _, recipe in ipairs(moulds) do
             local mould = AC_Casting.getMould(recipe.class)
             eq(recipe.outputs[1].item, mould.item, recipe.id .. " makes its class's mould")
@@ -247,6 +250,124 @@ return function(T)
         eq(AC_Casting.getMould("pistol").level, 2, "the pistol mould at level 2, with 9mm bullets")
         eq(AC_Casting.getMould("shotgun").level, 3, "the buckshot mould at level 3, with shot charges")
         eq(AC_Casting.getMould("rifle"), nil, "no rifle mould")
+    end
+
+    section("Lead: moulds of stone, clay and sand; the mould decides the bullet's quality (pure and mocked recipe data)")
+    do
+        local M = AC_Casting.MOULD_MATERIALS
+        eq(M[1].id, "iron", "the forged iron mould comes first: it is the reference")
+        eq(M[1].qualityBonus, 0, "and has no bonus")
+        for i = 2, #M do
+            check(M[i].qualityBonus < M[i - 1].qualityBonus, M[i].id .. " makes worse bullets than " .. M[i - 1].id)
+        end
+        local byId = {}
+        for _, material in ipairs(M) do byId[material.id] = material end
+        eq(byId.sand.keep, false, "a sand mould is consumed by its cast")
+        eq(byId.clay.keep and byId.clay.flags == nil, true, "a clay mould is kept and wears by breaking, not by a flag")
+        eq(table.concat(byId.stone.flags or {}, ";"), "MayDegradeLight", "a stone mould wears like vanilla's stone tools")
+
+        for _, mould in ipairs(AC_Casting.getMoulds()) do
+            local stone = AC_Casting.getMouldItems(mould.class, "stone")
+            local clay = AC_Casting.getMouldItems(mould.class, "clay")
+            local sand = AC_Casting.getMouldItems(mould.class, "sand")
+            eq(AC_Casting.getMouldItems(mould.class, "iron").item, mould.item, mould.class .. ": iron is the forged mould")
+            for _, id in ipairs({ stone.item, clay.unfired, clay.item, sand.item }) do
+                check(T.declaredItems[id] ~= nil, id .. " is declared")
+            end
+            local s = T.declaredItems[stone.item].fields
+            eq(tonumber(s.ConditionMax), byId.stone.conditionMax, stone.item .. ": ConditionMax is MOULD_MATERIALS'")
+            eq(tonumber(s.ConditionLowerChanceOneIn), byId.stone.conditionLowerChanceOneIn, stone.item .. ": ConditionLowerChanceOneIn is MOULD_MATERIALS'")
+            -- The fired clay mould is vanilla's clay ingot mould in tags.
+            eq(T.declaredItems[clay.item].fields.Tags, "base:destructible;base:breakonsmithing", clay.item .. ": tagged like Base.ClayIngotMold, so one cast breaks it")
+
+            -- How each is made: vanilla stations, no XP, the class's level.
+            local made = {}
+            for _, recipe in ipairs(recipesOf("mould")) do
+                if recipe.class == mould.class and recipe.material then
+                    made[recipe.outputs[1].item] = recipe
+                    eq(AC_Materials.getRecipeXP(recipe), 0, recipe.id .. ": a mould pays per cast")
+                    eq(AC_Materials.getRequiredLevel(recipe), mould.level, recipe.id .. ": opens with the forged mould")
+                end
+            end
+            eq(made[stone.item].benchTag, "AnySurfaceCraft", "stone is carved on any surface")
+            eq(made[stone.item].inputs[3].items[1], "Base.StoneBlock", "from a vanilla stone block")
+            eq(made[clay.unfired].inputs[1].items[1], "Base.Clay", "clay is shaped from vanilla clay")
+            eq(made[clay.item].benchTag, "KilnSmall;KilnLarge", "and fired in vanilla's kilns")
+            eq(made[clay.item].inputs[1].items[1], clay.unfired, "the fired mould is the unfired one")
+            eq(made[sand.item].inputs[1].items[1], "Base.Sandbag", "sand from a dug sandbag")
+        end
+
+        -- Every calibre casts in every material, for the same XP, level,
+        -- time, metal and bullets; only the mould line and the quality differ.
+        for _, calibre in ipairs(AC_Casting.getCastable()) do
+            local casts = {}
+            for _, recipe in ipairs(recipesOf("cast")) do
+                if recipe.calibre == calibre.id then casts[recipe.material] = recipe end
+            end
+            local iron = casts.iron
+            eq(iron.id, "AmmoMaking_CastBullets" .. calibre.suffix, calibre.id .. ": the iron cast keeps its id")
+            for _, material in ipairs(M) do
+                local cast = casts[material.id]
+                check(cast ~= nil, calibre.id .. " casts in " .. material.id)
+                if cast then
+                    eq(cast.xp .. "/" .. cast.requiredLevel .. "/" .. cast.time .. "/" .. cast.outputs[1].count, iron.xp .. "/" .. iron.requiredLevel .. "/" .. iron.time .. "/" .. iron.outputs[1].count, cast.id .. ": XP, level, time and bullets of the iron cast")
+                    eq(cast.category, "Blacksmithing", cast.id .. " is smithing, so a clay mould breaks")
+                    eq(cast.qualityBonus, material.qualityBonus, cast.id .. ": the material's bonus")
+                    eq(cast.effect, "castBulletQuality", cast.id .. ": rolls the bullets' quality")
+                    local line = cast.inputs[#cast.inputs]
+                    eq(line.items[1], AC_Casting.getMouldItems(calibre.class, material.id).item, cast.id .. ": takes its material's mould")
+                    eq(line.keep == true, material.keep, cast.id .. ": keeps or consumes the mould as the material says")
+                end
+            end
+        end
+
+        -- The quality, through the effect, with the mock's even roll (0.5).
+        local calibre = AC_Casting.getCastable()[1]
+        local function castWith(material, level)
+            local player = MOCK.newPlayer()
+            player.perkLevel = level
+            local made = { MOCK.newItem(calibre.castBullet), MOCK.newItem(calibre.castBullet) }
+            local data = {
+                getAllCreatedItems = function() return MOCK.arrayList(made) end,
+                getAllConsumedItems = function() return MOCK.arrayList({}) end,
+            }
+            local recipe = { qualityBonus = byId[material].qualityBonus }
+            AC_CaseQuality.EFFECTS.castBulletQuality(data, player, recipe)
+            return AC_CaseQuality.getBulletQuality(made[1]), made[1]
+        end
+        eq(castWith("iron", 5), AC_CaseQuality.roll(5, 0.5, 0), "an iron-cast bullet rolls as a case does")
+        eq(castWith("iron", 5), 70, "70 at level 5")
+        eq(castWith("stone", 5), 65, "stone: 65")
+        eq(castWith("clay", 5), 60, "clay: 60")
+        eq(castWith("sand", 5), 50, "sand: 50")
+        eq(AC_CaseQuality.getBulletQuality(MOCK.newItem(calibre.castBullet)), nil, "a bullet that was not cast has none")
+
+        -- The round averages its case and its cast bullet.
+        local _, bullet = castWith("sand", 5)
+        local case = MOCK.newItem(calibre.case)
+        AC_CaseQuality.set(case, 70)
+        local round = MOCK.newItem(calibre.round)
+        local data = {
+            getAllCreatedItems = function() return MOCK.arrayList({ round }) end,
+            getAllConsumedItems = function() return MOCK.arrayList({ case, bullet }) end,
+        }
+        eq(AC_CaseQuality.CONFIG.projectileShare, 0.5, "the bullet weighs half")
+        eq(AC_CaseQuality.onRoundsAssembled(data), 60, "case 70 and a sand-cast bullet 50 make a 60 round")
+        local bare = MOCK.newItem(calibre.castBullet)
+        data = {
+            getAllCreatedItems = function() return MOCK.arrayList({ MOCK.newItem(calibre.round) }) end,
+            getAllConsumedItems = function() return MOCK.arrayList({ case, bare }) end,
+        }
+        eq(AC_CaseQuality.onRoundsAssembled(data), 70, "a bullet without a quality leaves the case's")
+
+        -- Inspection: a cast bullet shows its quality; a spawned one is not offered.
+        local inspector = MOCK.newPlayer()
+        inspector.perkLevel = 5
+        local seen = AmmoInspection.inspectComponent(inspector, bullet)
+        eq(seen.kind, "castBullet", "a cast bullet can be inspected")
+        eq(seen.lines[1], "Cast bullet: " .. calibre.id, "its header")
+        eq(seen.lines[2], "Bullet quality: " .. AmmoQuality.labelFor(50) .. " (50)", "and its quality, with the number from level 5")
+        eq(AmmoInspection.getComponent(MOCK.newItem(calibre.castBullet)), nil, "a bullet that was not cast has nothing to inspect")
     end
 
     section("Lead: the mine stays the way to rounds, and no loop pays (pure)")

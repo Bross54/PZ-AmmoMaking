@@ -494,6 +494,109 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    /* Bullet moulds of stone, clay and sand (AC_Casting.MOULD_MATERIALS),
+       for casting without a forge; worse bullets than the iron mould. The
+       stone mould wears like vanilla's stone tools (its two numbers are
+       MOULD_MATERIALS'); the clay mould copies vanilla's Base.ClayIngotMold,
+       tags and tooltip included, so one cast breaks it; the sand mould is
+       consumed by its cast. Vanilla icons and models as placeholders. */
+
+    item StoneBulletMouldPistol
+    {
+        DisplayName = Stone Pistol Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.3,
+        Icon = RoughBlock,
+        StaticModel = StoneBlock,
+        WorldStaticModel = StoneBlock,
+        ConditionLowerChanceOneIn = 10,
+        ConditionMax = 10,
+        Tags = base:showcondition,
+    }
+
+    item ClayBulletMouldPistolUnfired
+    {
+        DisplayName = Unfired Clay Pistol Bullet Mould,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = CeramicCast_Bar_Unfired,
+        StaticModel = CeramicIngotCastUnfired,
+        WorldStaticModel = CeramicIngotCastUnfired,
+    }
+
+    item ClayBulletMouldPistol
+    {
+        DisplayName = Clay Pistol Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = CeramicCast_Bar_Fired,
+        StaticModel = CeramicIngotCast,
+        WorldStaticModel = CeramicIngotCast,
+        Tags = base:destructible;base:breakonsmithing,
+        Tooltip = Tooltip_item_BreakOnSmithing,
+    }
+
+    item SandBulletMouldPistol
+    {
+        DisplayName = Sand Pistol Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.8,
+        Icon = Sandbag,
+        WorldStaticModel = SandBag,
+    }
+
+    item StoneBulletMouldShotgun
+    {
+        DisplayName = Stone Buckshot Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.3,
+        Icon = RoughBlock,
+        StaticModel = StoneBlock,
+        WorldStaticModel = StoneBlock,
+        ConditionLowerChanceOneIn = 10,
+        ConditionMax = 10,
+        Tags = base:showcondition,
+    }
+
+    item ClayBulletMouldShotgunUnfired
+    {
+        DisplayName = Unfired Clay Buckshot Mould,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = CeramicCast_Bar_Unfired,
+        StaticModel = CeramicIngotCastUnfired,
+        WorldStaticModel = CeramicIngotCastUnfired,
+    }
+
+    item ClayBulletMouldShotgun
+    {
+        DisplayName = Clay Buckshot Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = CeramicCast_Bar_Fired,
+        StaticModel = CeramicIngotCast,
+        WorldStaticModel = CeramicIngotCast,
+        Tags = base:destructible;base:breakonsmithing,
+        Tooltip = Tooltip_item_BreakOnSmithing,
+    }
+
+    item SandBulletMouldShotgun
+    {
+        DisplayName = Sand Buckshot Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.8,
+        Icon = Sandbag,
+        WorldStaticModel = SandBag,
+    }
+
     item CastBullet9mm
     {
         DisplayName = 9mm Cast Lead Bullet,

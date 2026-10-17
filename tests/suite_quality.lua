@@ -237,7 +237,7 @@ return function(T)
             check(string.find(table.concat(lines, " "), "71", 1, true) == nil and string.find(table.concat(lines, " "), "andloaded", 1, true) == nil, "level 0 learns nothing about the handloads")
             player.perkLevel = 2
             local novice = table.concat(AmmoInspection.inspectLoad(player, gun).lines, "\n")
-            check(string.find(novice, "Handloaded rounds: 2, case quality ", 1, true) ~= nil, "level 2 sees how many are handloaded and a word for their quality")
+            check(string.find(novice, "Handloaded rounds: 2, quality ", 1, true) ~= nil, "level 2 sees how many are handloaded and a word for their quality")
             check(string.find(novice, "Factory rounds: 2", 1, true) ~= nil, "and how many are factory rounds")
             check(string.find(novice, "71", 1, true) == nil, "but not the number")
             check(string.find(novice, "average of the handloaded rounds", 1, true) ~= nil, "and is told it is an average")

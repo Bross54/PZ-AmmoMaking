@@ -36,6 +36,7 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Brass recycling | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 2 |
 | Copper recycling | not built, on purpose | | `LOOT_AND_RECYCLING.md` 2.5 |
 | Lead and cast bullets (pistol calibres, buckshot; lead melted from vanilla junk; two moulds, forged or found) | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `METALLURGY_DESIGN.md` 12, `AMMUNITION_DESIGN.md` 6.1 |
+| Bullet moulds of stone, clay and sand; bullet quality from the mould | IMPLEMENTED; VISUAL PLACEHOLDER (vanilla icons and models) | | `METALLURGY_DESIGN.md` 12.8 |
 | Lead ore and geology | not built, on purpose: it would change the sampling and assays seen in game | | `METALLURGY_DESIGN.md` 12.5 |
 | 12 gauge shell variants (buckshot, birdshot, slug) | not built: not buildable without replacing vanilla firearms | | `SHOTGUN_AMMUNITION_RESEARCH.md` 5.1 |
 | Ammo boxes | nothing to build: vanilla boxes handloaded rounds | | `LOOT_AND_RECYCLING.md` 3 |
@@ -55,7 +56,7 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Release packaging (three mod folders, one archive, a Workshop item folder with `preview.png`) | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
 | Black powder and primers from raw materials | out of scope: vanilla has no sulfur, saltpetre or priming compound; gunpowder stays charcoal and fertilizer | | `AMMUNITION_DESIGN.md` 12, `VANILLA_AMMUNITION_RESEARCH.md` |
 
-Numbers: the main mod has 55 items, 74 recipes (67 manufacturing, 16 of
+Numbers: the main mod has 63 items, 100 recipes (93 manufacturing, 42 of
 them for lead; 3 for the geology equipment, 3 scrapping, 1 recast) and 55
 loot entries (22 die sets, 9 components, 20 skill books, 4 bullet moulds)
 in 10 vanilla lists. The press add-on has 27 recipes;
