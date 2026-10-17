@@ -202,7 +202,7 @@ breaking("a round no firearm takes", no_nine, "nothing fires Base.Bullets9mm")
 breaking("an ammo type that names another item", set_path("ammoTypes", "base:bullets_9mm", "Base.Bullets9mmNew"), "ammo type base:bullets_9mm is Base.Bullets9mmNew")
 breaking("an ammo type that is gone", drop("ammoTypes", "base:shotgun_shells"), "ammo type base:shotgun_shells is not registered")
 
-warning("a new game version", set_path("version", "42.21.0"), "game version 42.21.0, recorded")
+warning("a new game version", set_path("version", "42.22.0"), "game version 42.22.0, recorded")
 warning("a vanilla recipe whose body changed", set_path("recipes", "place_ammo_in_box", "000000000000"), "recipes.place_ammo_in_box changed")
 warning("a vanilla recipe that is gone", set_path("recipes", "SmeltCopperOre", False), "vanilla recipe SmeltCopperOre does not exist")
 warning("an item whose weight changed", set_path("items", "Base.CopperScrap", "weight", 9), "items.Base.CopperScrap.weight changed")
