@@ -20,8 +20,9 @@ return function(T)
             { "spentCases", F.EXPERIMENTAL, "mod", "AmmoMakingSpentCases", true },
             { "qualityTracking", F.EXPERIMENTAL, "sandbox", "QualityTracking", true },
             { "qualityEffects", F.DISABLED, "sandbox", "QualityEffects", true },
+            { "serverAuthority", F.EXPERIMENTAL, "sandbox", "ServerAuthority", false },
         }
-        eq(#F.DEFINITIONS, #expected, "four switched features")
+        eq(#F.DEFINITIONS, #expected, "five switched features")
         for index, want in ipairs(expected) do
             local definition = F.DEFINITIONS[index]
             eq(definition.id, want[1], "feature " .. index .. " is " .. want[1])

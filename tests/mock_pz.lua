@@ -188,6 +188,23 @@ function ModData.exists(key)
     return MOCK.modDataRegistry[key] ~= nil
 end
 
+-- 42.20.4 (JAR zombie.world.moddata.ModData): transmit(String) sends the
+-- table to the other side, request(String) asks the server for it,
+-- add(String, KahluaTable) stores a table under the key. The mock records
+-- what was sent (a persistable copy, as on the wire) and stores what is
+-- added; delivering it is the test's job (MOCK.network).
+function ModData.transmit(key)
+    table.insert(MOCK.network.transmitted, { key = key, data = MOCK.modDataRegistry[key] and MOCK.persistCopy(MOCK.modDataRegistry[key], key) or false, server = MOCK.server == true })
+end
+
+function ModData.request(key)
+    table.insert(MOCK.network.requested, key)
+end
+
+function ModData.add(key, value)
+    MOCK.modDataRegistry[key] = value
+end
+
 -- Deep copy allowing only what Kahlua global ModData can persist
 -- (string/number keys, string/number/boolean/table values).
 local function persistCopy(value, path)
@@ -291,6 +308,10 @@ function MOCK.nextRandom(state)
 end
 
 local rngState = 12345
+
+-- Puts the generator back to a known state, so that one scenario can be
+-- played twice and give the same rolls (tests/suite_authority.lua).
+function MOCK.seedRandom(state) rngState = state or 12345 end
 
 function ZombRand(a, b)
     MOCK.zombRandCalls = MOCK.zombRandCalls + 1
@@ -658,6 +679,14 @@ local function newInventory()
         end
         return nil
     end
+    -- ItemContainer.getItemWithIDRecursiv(int): bags included. The mock has
+    -- no bags, so it is the plain lookup.
+    function inv:getItemWithIDRecursiv(id)
+        for _, it in ipairs(self.items) do
+            if it.id == id then return it end
+        end
+        return nil
+    end
     function inv:setDrawDirty(v) self.dirty = v end
     function inv:count(fullType)
         local n = 0
@@ -694,6 +723,8 @@ local function newPlayer(opts)
     function player:setPrimaryHandItem(item) self.primary = item end
     function player:setSecondaryHandItem(item) self.secondary = item end
     function player:getPlayerNum() return opts.playerNum or 0 end
+    function player:getOnlineID() return opts.onlineID or 1 end
+    function player:getUsername() return opts.username or "Tester" end
     function player:getXp()
         local p = self
         return MOCK.strict({
@@ -840,6 +871,8 @@ local function newWorldObject(opts)
     end
     function object:getName() return self.name end
     function object:setName(n) self.name = n end
+    -- IsoObject.transmitModData(): only counted here.
+    function object:transmitModData() self.transmits = (self.transmits or 0) + 1 end
     function object:getSquare() return self.square end
     function object:getTextureName() return self.spriteName end
     function object:getObjectIndex()
@@ -929,6 +962,71 @@ end
 
 function isClient() return MOCK.client end
 function isServer() return MOCK.server == true end
+
+------------------------------------------------
+-- NETWORK (recorded, never delivered by itself)
+------------------------------------------------
+--
+-- The globals the 42.20.4 jar gives Lua for multiplayer
+-- (LuaManager.GlobalObject): what each one is called with is recorded in
+-- MOCK.network, and a test delivers it to the other side by firing
+-- OnClientCommand / OnServerCommand itself (tests/suite_authority.lua).
+-- Arguments travel as a persistable copy, as a KahluaTable on the wire
+-- would. Nothing here says the engine delivers them.
+function MOCK.resetNetwork()
+    MOCK.network = {
+        toServer = {}, toClient = {}, transmitted = {}, requested = {},
+        added = {}, removed = {}, fields = {}, modData = {}, xp = {},
+    }
+end
+MOCK.resetNetwork()
+MOCK.timestampMs = 0
+
+-- Real time in milliseconds (JAR: System.currentTimeMillis()).
+function getTimestampMs() return MOCK.timestampMs end
+
+-- On a server the engine throws (JAR: IllegalStateException); elsewhere
+-- it sends (single player: to the same machine's server Lua).
+function sendClientCommand(player, module, command, args)
+    if MOCK.server then error("sendClientCommand on a server") end
+    table.insert(MOCK.network.toServer, { player = player, module = module, command = command, args = persistCopy(args or {}, "args"), client = MOCK.client == true })
+end
+
+-- Only a server sends (JAR: the call does nothing elsewhere).
+function sendServerCommand(player, module, command, args)
+    if not MOCK.server then return end
+    table.insert(MOCK.network.toClient, { player = player, module = module, command = command, args = persistCopy(args or {}, "args") })
+end
+
+function sendAddItemToContainer(container, item)
+    table.insert(MOCK.network.added, { container = container, item = item, server = MOCK.server == true })
+end
+
+function sendRemoveItemFromContainer(container, item)
+    table.insert(MOCK.network.removed, { container = container, item = item, server = MOCK.server == true })
+end
+
+function syncItemFields(player, item)
+    table.insert(MOCK.network.fields, { player = player, item = item, server = MOCK.server == true })
+end
+
+function syncItemModData(player, item)
+    table.insert(MOCK.network.modData, { player = player, item = item, server = MOCK.server == true })
+end
+
+-- JAR: on a server GameServer.addXp (sent to the client), elsewhere the
+-- player's own AddXP. The mock books it like AddXP and notes the call.
+function addXp(player, perk, amount)
+    table.insert(MOCK.network.xp, { player = player, amount = amount, server = MOCK.server == true })
+    table.insert(player.xpLog, amount)
+end
+
+function getPlayerByOnlineID(id)
+    for _, player in ipairs(MOCK.players) do
+        if player:getOnlineID() == id then return player end
+    end
+    return nil
+end
 
 -- The engine's list of loaded mod ids, and the sandbox options of the save.
 -- Build 42 writes an id with a leading backslash; MOCK.activeMods holds
@@ -1036,7 +1134,7 @@ function require(name)
     for _, file in ipairs(MOCK.MOD_FILES) do
         if string.match(file, "([^/]+)$") == name and not MOCK.loadedFiles[file] then
             MOCK.loadedFiles[file] = true
-            dofile(MOCK.luaRoot .. file .. ".lua")
+            dofile((MOCK.replacements or {})[file] or (MOCK.luaRoot .. file .. ".lua"))
         end
     end
 end
@@ -1177,15 +1275,15 @@ end
 -- Mod Lua files the tests load, relative to media/lua/ (UI panels are
 -- mocked instead of loaded).
 MOCK.MOD_FILES = {
-    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Balance",
+    "shared/AC_AmmoInspection", "shared/AC_AmmoMakingSkill", "shared/AC_AmmoQuality", "shared/AC_Authority", "shared/AC_Balance",
     "shared/AC_Calibres", "shared/AC_CaseQuality", "shared/AC_Casting", "shared/AC_Compat",
-    "shared/AC_Deposits", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
-    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_Mining", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SkillBooks", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
+    "shared/AC_Deposits", "shared/AC_DigGeologicalSampleAction", "shared/AC_Features", "shared/AC_Geology", "shared/AC_GeologySampling",
+    "shared/AC_LaboratoryAnalyzer", "shared/AC_Loot", "shared/AC_Materials", "shared/AC_MineOreAction", "shared/AC_Mining",
+    "shared/AC_PickUpAnalyzerAction", "shared/AC_QualityCarrier", "shared/AC_QualityEffects", "shared/AC_QualityTally", "shared/AC_Recycling", "shared/AC_SaveData", "shared/AC_SkillBooks", "shared/AC_SpentCases", "shared/AC_Text", "shared/AC_Visuals",
     "shared/AC_WorldData",
-    "client/AC_AmmoContextMenu", "client/AC_DigGeologicalSampleAction",
+    "client/AC_AmmoContextMenu", "client/AC_AuthorityClient",
     "client/AC_GeologyDebug", "client/AC_GeologySamplingContextMenu",
-    "client/AC_MineOreAction", "client/AC_MiningContextMenu",
-    "client/AC_PickUpAnalyzerAction",
+    "client/AC_MiningContextMenu",
     "server/BuildingObjects/AC_LaboratoryAnalyzerObject",
     "server/AC_SkillBookRegistration",
 }
@@ -1193,14 +1291,19 @@ MOCK.MOD_FILES = {
 -- Loads every mod file: shared, then client, then server, each
 -- alphabetical, except that a file another one requires is loaded when it
 -- is required. Prints during load are captured.
-function MOCK.loadMod(luaRoot)
+--
+-- replacements (optional): file name -> path of another file to run in
+-- its place (tests/suite_authority.lua runs the frozen single-player
+-- reference this way).
+function MOCK.loadMod(luaRoot, replacements)
     MOCK.luaRoot = luaRoot
     MOCK.loadedFiles = {}
+    MOCK.replacements = replacements or {}
     MOCK.capturePrint(true)
     for _, name in ipairs(MOCK.MOD_FILES) do
         if not MOCK.loadedFiles[name] then
             MOCK.loadedFiles[name] = true
-            dofile(luaRoot .. name .. ".lua")
+            dofile(MOCK.replacements[name] or (luaRoot .. name .. ".lua"))
         end
     end
     MOCK.capturePrint(false)
@@ -1234,6 +1337,9 @@ function MOCK.resetLuaState()
     AC_SaveData = nil
     AC_MineOreAction = nil
     AC_PickUpAnalyzerAction = nil
+    AC_DigGeologicalSampleAction = nil
+    AC_Authority = nil
+    AC_AuthorityClient = nil
     AC_GeologyDebug = nil
     AmmoInspection = nil
     AmmoQuality = nil

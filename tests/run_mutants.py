@@ -273,7 +273,7 @@ MUTANTS = [
     (SHARED + "AC_QualityCarrier.lua", "    if not AC_Features.isEnabled(\"qualityTracking\") then\n        return nil\n    end\n", "", "quality tracking installs itself whatever the sandbox option says"),
     (SHARED + "AC_QualityCarrier.lua", "        if events\n            and not events[event]\n        then\n            return original(self, event, ...)\n        end\n", "", "the inventory is scanned for every animation event"),
     (SHARED + "AC_CaseQuality.lua", "        clamp(\n            math.floor(quality),\n            config.minQuality,\n            config.maxQuality\n        )\n\n\n    return true", "        clamp(\n            math.floor(quality) + 5,\n            config.minQuality,\n            config.maxQuality\n        )\n\n\n    return true", "a round gains quality every time it is unloaded"),
-    ("mod/AmmoMaking/42/media/sandbox-options.txt", "    default = false,", "    default = true,", "quality tracking is on by default"),
+    ("mod/AmmoMaking/42/media/sandbox-options.txt", "    default = false,\n    page = AmmoMaking,\n    translation = AmmoMaking_QualityTracking,", "    default = true,\n    page = AmmoMaking,\n    translation = AmmoMaking_QualityTracking,", "quality tracking is on by default"),
 
     # ---- quality effects (locked)
     (SHARED + "AC_QualityEffects.lua", "    if not AC_Features.isEnabled(\"qualityEffects\") then\n        return nil\n    end\n", "", "firing effects run although the feature is locked"),
@@ -345,6 +345,30 @@ MUTANTS = [
 
     # ---- the test harness itself
     ("tests/mock_pz.lua", "    return (state * 48271) % 2147483647", "    return (state * 1103515245 + 12345) % 2147483648", "the test generator loses bits in Lua's doubles and loops"),
+
+    # ---- multiplayer server authority: the server's checks
+    (SHARED + "AC_Authority.lua", "        math.abs(x - (square:getX() + 0.5)) <= limit\n        and math.abs(y - (square:getY() + 0.5)) <= limit", "        true", "the server accepts a request from any distance"),
+    (SHARED + "AC_Authority.lua", "    if math.floor(z) ~= square:getZ() then\n        return false\n    end\n", "", "the server accepts a request from another level"),
+    (SHARED + "AC_Authority.lua", "    return\n        AC_Authority.findOwnItem(\n            player,\n            item:getID()\n        )\n        == item", "    return true", "an item that is not the requester's counts as his"),
+    (SHARED + "AC_Authority.lua", "        or value ~= math.floor(value)\n", "", "fractional ids and coordinates pass the check"),
+    (SHARED + "AC_Authority.lua", "        and now - last < AC_Authority.CONFIG.minIntervalMs", "        and now - last < 0", "no rate limit: a flood is performed"),
+    (SHARED + "AC_Authority.lua", "    if not isServer() then\n        return false\n    end\n\n\n    return\n        AC_Authority.isEnabled()", "    if not isServer() then\n        return false\n    end\n\n\n    return\n        true", "the server performs with the switch off"),
+    (SHARED + "AC_Authority.lua", "    if not isClient() then\n        return false\n    end\n", "", "single player asks a server instead of acting"),
+    (SHARED + "AC_Authority.lua", "        or not AC_Authority.holds(player, pickaxe)\n", "", "a pickaxe in the bag mines"),
+    (SHARED + "AC_Authority.lua", "    if not square then\n        return refuse(player, \"mine\", \"no_square\")\n    end\n", "", "a mining request for a square the server does not have is not told so"),
+    (SHARED + "AC_Authority.lua", "    if not AC_Authority.isWithinReach(\n        player,\n        square\n    ) then\n        return nil, \"too_far\"\n    end\n", "", "the analyzer can be used from across the map"),
+    (SHARED + "AC_Authority.lua", "    if not AC_Authority.isWithinReach(\n        player,\n        square\n    ) then\n        return false, \"too_far\"\n    end\n", "", "the analyzer can be placed from across the map"),
+    (SHARED + "AC_Authority.lua", "    local objects =\n        square:getSpecialObjects()\n", "    do\n        return AC_LaboratoryAnalyzer.findOnSquare(square), nil\n    end\n\n\n    local objects =\n        square:getSpecialObjects()\n", "a dropped analyzer item is used on a server"),
+    (SHARED + "AC_Authority.lua", "        ModData.transmit(\n            AC_Deposits.CONFIG.modDataKey\n        )\n", "", "the depletion store is never sent to the clients"),
+    (SHARED + "AC_Authority.lua", "    if not AC_Authority.ownsItem(player, shovel)\n", "    if false\n", "another player's shovel digs"),
+    (CLIENT + "AC_AuthorityClient.lua", "    if key ~= AC_Deposits.CONFIG.modDataKey\n        or type(received) ~= \"table\"", "    if type(received) ~= \"table\"", "the client keeps any global ModData it is sent"),
+    # ---- multiplayer server authority: single player untouched
+    (SHARED + "AC_MineOreAction.lua", "    if not isServer() then\n        return true\n    end\n\n\n    AC_Authority.serverMine(", "    AC_Authority.serverMine(", "complete() mines in single player too"),
+    (SHARED + "AC_DigGeologicalSampleAction.lua", "    if AC_Authority.canRequest() then", "    if not AC_Authority.canRequest() then", "the dig action does nothing in single player"),
+    (SHARED + "AC_AmmoMakingSkill.lua", "    if AC_Authority and AC_Authority.decides() then", "    if AC_Authority then", "single-player XP goes through the server's call"),
+    (CLIENT + "AC_GeologySamplingContextMenu.lua", "        AC_GeologySampling.isAvailable()\n            or AC_Authority.canRequest(),", "        AC_Authority.canRequest(),", "the dig option follows the authority alone"),
+    (CLIENT + "AC_MiningContextMenu.lua", "    if not AC_Mining.isAvailable()\n        and not AC_Authority.canRequest()\n    then", "    if not AC_Authority.canRequest() then", "the mining menu follows the authority alone"),
+    ("mod/AmmoMaking/42/media/sandbox-options.txt", "    default = false,\n    page = AmmoMaking,\n    translation = AmmoMaking_ServerAuthority,", "    default = true,\n    page = AmmoMaking,\n    translation = AmmoMaking_ServerAuthority,", "the multiplayer server authority is on by default"),
 ]
 
 

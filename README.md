@@ -386,7 +386,7 @@ Invariants (enforced in code, asserted by the offline tests):
 Current limitations:
 
 - **the mining loop has passed a first in-game test on Build 42.20.4**; save/reload persistence of depletion is still unverified (see `docs/DEVELOPMENT.md`, *Real-game validation*)
-- multiplayer mining is intentionally disabled: a multiplayer client sees a disabled "Mine Ore" option (design in `docs/MULTIPLAYER_MINING.md`)
+- multiplayer mining is disabled by default: a multiplayer client sees a disabled "Mine Ore" option. With the experimental server authority on, the server mines for the client (`docs/MULTIPLAYER_MINING.md`)
 - the pickaxe action uses the vanilla `DigPickAxe` animation (confirmed in game) and the `Shoveling` sound as a placeholder
 
 Offline checks (no game required):
@@ -613,7 +613,7 @@ Implemented and covered by the offline tests; each still needs its in-game pass 
 - **Component loot**: a little gunpowder, primers, brass scrap and small brass sheet in gun stores, hunting stores and metalwork crates; never cases, bullets or rounds (**not yet run in game**)
 - **Skill books**: five Ammo Making volumes with the game's own levels, pages and firearm-skill multipliers, entered in the game's reading table, found in gun stores, bookstores, libraries and survivalists' things (**not yet run in game**)
 - **Feature switches**: every optional system is stable, experimental or disabled in `AC_Features.lua`; one that is off adds no recipe, no menu entry and no hook, and the game-start check says which are on and why
-- **Multiplayer guards**: sampling, assays, the analyzer and mining are refused on a multiplayer client and say so
+- **Multiplayer guards**: sampling, assays, the analyzer and mining are refused on a multiplayer client and say so, unless the experimental server authority is on (below)
 - **Depletion**: finite per-tile reserves from geology, persistent extracted counts, only worked tiles stored
 - **Ammo quality prototype**: per-cartridge component qualities, powder load, reload count, failure chances
 - **Inspection prototype**: skill-gated inspection panel for the test cartridge
@@ -634,28 +634,55 @@ them.
 | **Spent cases** | the add-on mod *Ammo Making: Spent Cases (experimental)*; sandbox option for how many are found | fired rounds leave spent brass. It scraps at a quarter of its brass, or is resized at the calibre's die set, two spent cases into one usable case with a lower casing quality, one level after forming. No XP either way. Single player. Stands down beside Hot Brass |
 | **Quality tracking** | sandbox option *Track ammunition quality in magazines and firearms* | the casing quality of handloaded rounds survives loading and unloading, and can be inspected on a magazine or firearm. Single player. No effect on firing |
 | **Quality effects at the shot** | none: locked off in this version | a small extra jam chance for poor handloads, through vanilla's own jam state. Written; waits for the tracking to be seen working |
+| **Multiplayer server authority** | sandbox option *Multiplayer: the server performs sampling, assays, the analyzer and mining* | on a server, the geology half of the mod works for the clients: they ask, the server checks and does it. No effect in single player. Never run on a server |
 
 An add-on is a mod folder of its own beside `AmmoMaking`, holding only
 scripts, translations and (for the press) a tile sheet. All logic is in the
 main mod. If a world does not load with an add-on ticked, untick it: the
 main mod has no tile sheet or entity of its own.
 
+## Multiplayer
+
+**Not supported yet; an experimental server authority exists, off by
+default and never run on a server.**
+
+- **Off (the default)**: on a multiplayer server, digging samples, the
+  assay kits, the laboratory analyzer and mining are shown disabled to the
+  players, with the reason. Recipes, the press, loot and boxes are vanilla
+  recipes and work as vanilla's do (not tried on a server either).
+- **On** (sandbox option *Multiplayer: the server performs sampling,
+  assays, the analyzer and mining (experimental)*): a player's click or
+  finished action becomes a request; the server checks that the player
+  stands next to the tile or the analyzer, holds the tool, owns the items
+  he names, and asks no more than once a second, then does the work
+  itself and sends the result back. Every player sees the same deposits
+  and the same analyzer; two players cannot both take the last ore or
+  collect the same laboratory sample.
+- **Single player is the same either way**: the offline suite replays a
+  whole sampling, assay, mining and laboratory session against the files
+  as they were seen working in game and finds no difference.
+- Spent cases and quality tracking stay single player.
+
+Design and evidence: `docs/MULTIPLAYER_DESIGN.md` (section 6 is what was
+built); the server session to run: `docs/INGAME_VALIDATION.md`, *After the
+session*.
+
 ## Current limitations
 
 - **Mining passed a first in-game test on Build 42.20.4** (start, completion, `DigPickAxe` animation, zinc ore on the ground, depletion, exhaustion, cancel by walking away). Save/reload persistence, `Base.CopperOre`, water detection, built floors and the sound are still marked *REQUIRES IN-GAME VERIFICATION* in `docs/DEVELOPMENT.md`.
-- **Multiplayer mining is intentionally disabled.** A multiplayer client gets a disabled option and no extraction. The server-authoritative design is in `docs/MULTIPLAYER_MINING.md`.
+- **Multiplayer mining is disabled by default.** A multiplayer client gets a disabled option and no extraction, unless the experimental server authority is on (`docs/MULTIPLAYER_MINING.md`).
 - **Metallurgy has not been run in game yet.** The furnace recipes are written from the installed 42.20.4 files and pass the offline tests; whether they appear at the furnace, award XP and speed up with skill is listed under *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/METALLURGY_DESIGN.md`.
 - **The ammunition chain has not been run in game yet**, and its level gates depend on a requirement attached from Lua at boot; see *REQUIRES FUTURE IN-GAME VERIFICATION* in `docs/AMMUNITION_DESIGN.md`.
 - **Round quality is stored and shown, and changes nothing at the shot.** Vanilla turns loaded rounds into a count; the experimental quality tracking carries the casing quality across that as a tally (off by default). A box of ammunition keeps no record at all.
 - **Die-set loot and brass recycling have not been run in game yet.** The loot weights are deliberately small and untuned; toy caps and fertilizer are plain vanilla loot (toy caps exist in one Wild West location, so match heads are the practical priming charge). See `docs/LOOT_AND_RECYCLING.md`.
 - **The reloading press is an experimental add-on with placeholder art.** No vanilla sprite can be borrowed safely (a sprite claimed twice stops every world from loading), so the station has a tile sheet of its own. Whether the game loads and draws it can only be checked in the game.
 - **Spent cases are an experimental add-on.** They scrap at a loss, or resize two into one usable case; half the brass is lost either way, so the mine stays the source of brass (`docs/SPENT_CASE_RESEARCH.md` 8). Not yet seen in game.
-- **Multiplayer is not supported.** Every action that changes the world or an item outside a recipe (sampling, assays, the analyzer, mining) is refused on a client; nothing is synchronised. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
+- **Multiplayer is not supported.** By default every action that changes the world or an item outside a recipe (sampling, assays, the analyzer, mining) is refused on a client. The experimental server authority (*Multiplayer* above) performs them on the server instead; it has never run on a server. The authority map and the design are in `docs/MULTIPLAYER_DESIGN.md`.
 - **Ammo quality does not affect firearms.** The effect code exists and is locked off.
 - **All visuals are placeholders**: vanilla icons and models, a vanilla tile for the analyzer, programmer art for the press (`docs/PLACEHOLDER_ASSETS.md`, `docs/ART_HANDOFF.md`).
 - **The recipes for the assay kits and the laboratory analyzer have not been crafted in game yet.** They are what makes the chain playable without the debug menu, so they are the first thing to try. They are never loot.
 - **The placed laboratory analyzer needs its in-game pass**: placement, pickup, the sprite and saving its state are engine behaviour the offline tests only mock. `-debug` has Inspect Analyzer State and Complete Analyzer Job to test it without waiting 24 hours (see `docs/DEVELOPMENT.md`).
-- **Placing and picking up the analyzer is single-player only for now.** Multiplayer clients get disabled options; the laboratory itself has no server-side synchronisation yet.
+- **Placing and picking up the analyzer is single-player only by default.** Multiplayer clients get disabled options unless the experimental server authority is on; an analyzer dropped on the floor as an item (older saves) stays single player even then.
 - Laboratory processing time is only accounted for when the analyzer is interacted with, using the power state at that moment. Analyzers dropped on the floor (the original behaviour) can still be picked up mid-assay through vanilla.
 - The pickaxe action reuses the shovel sound.
 
@@ -721,9 +748,8 @@ The code is complete as far as it can be without the game
 
 ## Optional, not planned
 
-Multiplayer authority (designed in `docs/MULTIPLAYER_DESIGN.md`), shell
-variants, further calibres,
-a mining machine, directional analyzer sprites.
+Shell variants, further calibres, a mining machine, directional analyzer
+sprites.
 
 ---
 
@@ -846,6 +872,7 @@ PZ-AmmoMaking
 │   ├── render_recipes.lua, render_balance.lua, write_recipes.lua
 │   │                                     generators of the recipe script and the documents' tables
 │   ├── snapshot_vanilla.lua              writes vanilla_snapshot.lua from an install
+│   ├── sp_reference                      frozen single-player files: the replay that proves single player unchanged
 │   ├── vanilla_snapshot.lua              generated: loot lists, ammo boxes
 │   └── engine_snapshot.lua               generated: items, tags, stations, Java signatures
 ├── tools
@@ -884,13 +911,11 @@ PZ-AmmoMaking
                     ├── client
                     │   ├── AC_AmmoContextMenu.lua
                     │   ├── AC_AmmoInspectionUI.lua
-                    │   ├── AC_DigGeologicalSampleAction.lua
+                    │   ├── AC_AuthorityClient.lua
                     │   ├── AC_GeologyAssayUI.lua
                     │   ├── AC_GeologyDebug.lua
                     │   ├── AC_GeologySamplingContextMenu.lua
-                    │   ├── AC_MineOreAction.lua
-                    │   ├── AC_MiningContextMenu.lua
-                    │   └── AC_PickUpAnalyzerAction.lua
+                    │   └── AC_MiningContextMenu.lua
                     │
                     ├── server
                     │   ├── AC_SkillBookRegistration.lua
@@ -901,19 +926,23 @@ PZ-AmmoMaking
                         ├── AC_AmmoInspection.lua
                         ├── AC_AmmoMakingSkill.lua
                         ├── AC_AmmoQuality.lua
+                        ├── AC_Authority.lua
                         ├── AC_Balance.lua
                         ├── AC_Calibres.lua
                         ├── AC_CaseQuality.lua
                         ├── AC_Casting.lua
                         ├── AC_Compat.lua
                         ├── AC_Deposits.lua
+                        ├── AC_DigGeologicalSampleAction.lua
                         ├── AC_Features.lua
                         ├── AC_Geology.lua
                         ├── AC_GeologySampling.lua
                         ├── AC_LaboratoryAnalyzer.lua
                         ├── AC_Loot.lua
                         ├── AC_Materials.lua
+                        ├── AC_MineOreAction.lua
                         ├── AC_Mining.lua
+                        ├── AC_PickUpAnalyzerAction.lua
                         ├── AC_QualityCarrier.lua
                         ├── AC_QualityEffects.lua
                         ├── AC_QualityTally.lua

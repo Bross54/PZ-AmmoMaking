@@ -328,10 +328,15 @@ local function onFillWorldObjectContextMenu(
     ------------------------------------------------
     -- Multiplayer clients get a clear message instead
     -- of a client-side extraction that would neither
-    -- persist nor be shared with other players.
+    -- persist nor be shared with other players, unless
+    -- the server performs mining (AC_Authority): then
+    -- the options are the single-player ones, and the
+    -- timed action is completed on the server.
     ------------------------------------------------
 
-    if not AC_Mining.isAvailable() then
+    if not AC_Mining.isAvailable()
+        and not AC_Authority.canRequest()
+    then
 
         addUnavailableOption(
             context,

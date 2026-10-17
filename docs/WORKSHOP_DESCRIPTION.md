@@ -63,7 +63,7 @@ Three systems are written and have [b]not been verified in game[/b]. Leave them 
 [/list]
 
 [h2]Multiplayer[/h2]
-Not supported. Sampling, assays, the laboratory analyzer and mining are switched off for multiplayer clients, and nothing is synchronised between players. The crafting recipes are ordinary vanilla recipes, but they have not been tried on a server.
+Not supported. By default, sampling, assays, the laboratory analyzer and mining are switched off for multiplayer clients, and nothing is synchronised between players. An experimental sandbox option (page Ammo Making, off by default) lets the server do that work for its players instead: it checks every request and sends the result back, so all players share the same deposits and analyzers. It has never been run on a server; try it on a test server first. It changes nothing in single player. The crafting recipes are ordinary vanilla recipes, but they have not been tried on a server.
 
 [h2]Compatibility[/h2]
 [list]

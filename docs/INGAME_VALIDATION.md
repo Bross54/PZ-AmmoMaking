@@ -63,10 +63,11 @@ Steps
 Expected / Console
 - Every line is `OK:`; the last line is
   `[AmmoMaking] Compatibility check: N ok, 0 warnings, 0 unverified`.
-- Four feature lines, all off:
+- Five feature lines, all off:
   `feature Reloading Press: off (off)`, `feature Spent Cases: off (off)`,
   `feature Ammunition Quality Tracking: off (off)`,
-  `feature Ammunition Quality Firing Effects: off (locked)`.
+  `feature Ammunition Quality Firing Effects: off (locked)`,
+  `feature Multiplayer Server Authority: off (off)`.
 - One line per calibre class (`.../... complete`).
 - `OK: die set loot (...)` and `OK: component loot (...)`.
 - `OK: skill books entered in vanilla's reading table (server Lua)` and
@@ -565,6 +566,50 @@ Result: ____
   what was seen.
 - A FAIL in sections 18 to 20 costs nothing in a normal game: those
   features are off unless switched on.
-- Multiplayer is not part of this session: every authoritative action is
-  refused on a multiplayer client by design
-  (`docs/MULTIPLAYER_DESIGN.md`).
+- Multiplayer is not part of this session: with the sandbox option
+  *Multiplayer: the server performs sampling, assays, the analyzer and
+  mining* off (the default), every authoritative action is refused on a
+  multiplayer client by design (`docs/MULTIPLAYER_DESIGN.md`).
+
+### Multiplayer server authority (a separate session, optional)
+
+Only after the single-player session has passed sections 4 to 9. Needs a
+**dedicated server** with *Ammo Making* and two clients (A and B) on it.
+Write PASS or FAIL after each step; a FAIL needs the server's and the
+client's `console.txt` around it. None of this has been run.
+
+Steps
+1. Server sandbox options: tick *Multiplayer: the server performs
+   sampling, assays, the analyzer and mining (experimental)*. Start the
+   server. Server console: `[AmmoMaking] Server authority installed`.
+   Client A joins; its console: `[AmmoMaking] Server authority: this
+   client asks the server`. ____
+2. A, shovel equipped, on outdoor grass: *Dig Geological Sample*. The
+   action runs; A gets one *Geological Sample* and the halo *Geological
+   sample collected*. Save and rejoin: the sample is still there. ____
+3. A, with a field assay kit: *Analyze with Field Assay Kit* on the
+   sample. Halo *Sample analyzed*; *View Assay Result* shows grades; the
+   kit's name shows one use less; the skill panel shows the XP. ____
+4. A, pickaxe equipped, beside the sampled tile: *Mine ... Ore*. One ore
+   on the ground (B sees it too), the halo with the XP. B, with a sample
+   of the same tile, mines it until *deposit exhausted*: A's menu then
+   shows the tile exhausted without A mining it. ____
+5. A places a *Laboratory Assay Analyzer* (powered room). B sees it.
+   A starts a lab assay; B's *Check Laboratory Progress* shows it
+   processing. Wait the 24 in-game hours (the debug tools act on a
+   client's own copy and prove nothing here). A and B click *Collect
+   Laboratory Sample* at the same moment:
+   exactly one of them gets the sample and the XP, the other is told
+   *Laboratory analyzer is empty*. ____
+6. A starts and cancels an assay: the sample comes back. A picks the
+   analyzer up: it disappears for B, and A holds the item. ____
+7. Untick the option on the server and restart it: on A every one of
+   those options is shown disabled, with the *not available in
+   multiplayer yet* reason. ____
+
+Expected
+- No `[AmmoMaking] ERROR` and no Lua stack trace on either side; on the
+  server, refusals only as `[AmmoMaking] Server refused ...` lines for
+  what was really refused.
+- Nothing is created twice: one sample per dig, one ore per extraction,
+  one result per assay, one XP grant per action.

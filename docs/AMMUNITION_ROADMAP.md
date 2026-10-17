@@ -41,8 +41,8 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Ammo boxes | nothing to build: vanilla boxes handloaded rounds | | `LOOT_AND_RECYCLING.md` 3 |
 | Inspection: case, round, magazine, firearm | IMPLEMENTED | | `AC_AmmoInspection.lua` |
 | Save data: schema, repairs, versions, upgrade runner | IMPLEMENTED | | `DEVELOPMENT.md`, `AC_SaveData.lua` |
-| Multiplayer guards | IMPLEMENTED (everything authoritative is refused on a client) | | `MULTIPLAYER_DESIGN.md` 2.1 |
-| Multiplayer authority | designed, not built; optional | | `MULTIPLAYER_DESIGN.md` |
+| Multiplayer guards | IMPLEMENTED (everything authoritative is refused on a client unless the server authority is on) | | `MULTIPLAYER_DESIGN.md` 2.1 |
+| **Multiplayer server authority** (sampling, assays, analyzer, mining performed by the server) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION (dedicated server and client), OFF BY DEFAULT; single player proven unchanged offline | sandbox option | `MULTIPLAYER_DESIGN.md` 6 |
 | **Reloading press** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT; VISUAL PLACEHOLDER | add-on mod `AmmoMakingPress` | `RELOADING_PRESS_DESIGN.md` |
 | **Spent cases** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingSpentCases` | `SPENT_CASE_RESEARCH.md` |
 | **Quality tracking through magazines and firearms** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9 |
@@ -111,6 +111,10 @@ else matters until it has been seen), then the press (new tile sheet and
 entity: the one thing that could stop a world from loading, which is why
 it is an add-on), then the two systems that touch firearm code.
 
+The multiplayer server authority needs a session of its own, on a
+dedicated server with two clients, after the single-player session: its
+steps are in *After the session*. Nothing in single player depends on it.
+
 ### 3.2 Final art
 
 The inventory icons and the press's window icon are the mod's own
@@ -147,13 +151,17 @@ Recycling yield is deliberately not an option (`BALANCE_OPTIONS.md` 1.1).
 | Spent cases | seen for one gun of each class | state to `stable`; stays an add-on (it adds items) |
 | Quality tracking | seen staying in step across save and load | state to `stable`; default stays a sandbox choice |
 | Quality effects | only on tracking seen to stay in step, and a decision that quality should matter at the shot | state `disabled` to `experimental` |
+| Multiplayer server authority | the steps of `INGAME_VALIDATION.md`, *After the session*, passed on a dedicated server with two clients | state to `stable`; the default stays off until a server owner has run it |
 
 ## 4. Optional, not planned
 
 Nothing here is needed for a first release.
 
-- Multiplayer authority (server-side sampling, assays, analyzer, mining):
-  designed in `MULTIPLAYER_DESIGN.md`.
+- ~~Multiplayer authority~~ (server-side sampling, assays, analyzer,
+  mining): **built** behind an experimental sandbox option
+  (`MULTIPLAYER_DESIGN.md` 6). Still open there: the firearm features
+  (spent cases, quality tracking) on a server, and a check on a real
+  server.
 - ~~Reloading fired brass~~: **built** in the spent-cases add-on, two
   spent cases into one usable case (`SPENT_CASE_RESEARCH.md` 8).
 - Copper recycling: low value, see `LOOT_AND_RECYCLING.md` 2.5.

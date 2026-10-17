@@ -8,6 +8,14 @@ option AmmoMaking.QualityTracking
     translation = AmmoMaking_QualityTracking,
 }
 
+option AmmoMaking.ServerAuthority
+{
+    type = boolean,
+    default = false,
+    page = AmmoMaking,
+    translation = AmmoMaking_ServerAuthority,
+}
+
 option AmmoMaking.DepositReserveMultiplier
 {
     type = double,

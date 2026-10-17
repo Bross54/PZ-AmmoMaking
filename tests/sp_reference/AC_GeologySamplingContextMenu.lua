@@ -1,0 +1,1553 @@
+-- Ammo Making - Geological sampling context menus
+-- Project Zomboid Build 42.20
+
+require "ISUI/ISInventoryPaneContextMenu"
+require "TimedActions/ISTimedActionQueue"
+require "luautils"
+
+
+------------------------------------------------
+-- GET INVENTORY ITEM
+------------------------------------------------
+
+local function getActualItem(
+    entry
+)
+
+    if not entry then
+        return nil
+    end
+
+
+    if entry.getFullType then
+        return entry
+    end
+
+
+    if entry.items
+        and entry.items[1]
+    then
+
+        return entry.items[1]
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
+-- GET CLICKED SQUARE
+------------------------------------------------
+
+local function getClickedSquare(
+    worldObjects
+)
+
+    if not worldObjects then
+        return nil
+    end
+
+
+    for _,
+        object
+    in ipairs(
+        worldObjects
+    )
+    do
+
+        if object
+            and object.getSquare
+        then
+
+            local square =
+                object:getSquare()
+
+
+            if square then
+                return square
+            end
+        end
+    end
+
+
+    return nil
+end
+
+
+------------------------------------------------
+-- VALID SAMPLING LOCATION
+------------------------------------------------
+
+local function isValidSamplingSquare(
+    square
+)
+
+    ------------------------------------------------
+    -- Terrain rules (natural ground, ground level,
+    -- not indoors, not water) live in one place so
+    -- sampling, mining and debug tools always agree.
+    ------------------------------------------------
+
+    return
+        AC_Geology.isSurveyableSquare(
+            square
+        )
+end
+
+
+------------------------------------------------
+-- FIND LAB ANALYZER
+------------------------------------------------
+--
+-- Clicked analyzer, or one on a clicked square;
+-- shared with the debug tools.
+------------------------------------------------
+
+local function getAnalyzerWorldObject(
+    worldObjects
+)
+
+    return
+        AC_LaboratoryAnalyzer.findInWorldObjects(
+            worldObjects
+        )
+end
+
+
+------------------------------------------------
+-- DISABLED OPTION WITH TOOLTIP
+------------------------------------------------
+
+local function addUnavailableOption(
+    context,
+    name,
+    description
+)
+
+    local option =
+        context:addOption(
+            name
+        )
+
+
+    option.notAvailable =
+        true
+
+
+    if description
+        and ISWorldObjectContextMenu
+        and ISWorldObjectContextMenu.addToolTip
+    then
+
+        local tooltip =
+            ISWorldObjectContextMenu.addToolTip()
+
+
+        tooltip.description =
+            description
+
+
+        option.toolTip =
+            tooltip
+    end
+
+
+    return option
+end
+
+
+-- An option that changes something only where the game is
+-- authoritative: offered normally there, and on a
+-- multiplayer client shown disabled, with the reason.
+-- unavailableText is a function: the reason is looked up
+-- only when it is shown, never in a single-player menu.
+local function addAuthoritativeOption(
+    available,
+    unavailableText,
+    context,
+    name,
+    ...
+)
+
+    if available then
+        return context:addOption(name, ...)
+    end
+
+
+    return
+        addUnavailableOption(
+            context,
+            name,
+            unavailableText()
+        )
+end
+
+
+local function getSamplingMultiplayerText()
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_Sampling_Multiplayer",
+            "Geological sampling and assays are not available in multiplayer yet"
+        )
+end
+
+
+local function getLabUseMultiplayerText()
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_LabUse_Multiplayer",
+            "Using the laboratory analyzer is not available in multiplayer yet"
+        )
+end
+
+
+local function getMultiplayerText()
+
+    return
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Multiplayer",
+            "Moving the laboratory analyzer is not available in multiplayer yet"
+        )
+end
+
+
+------------------------------------------------
+-- DIG SAMPLE
+------------------------------------------------
+
+local function digSample(
+    player,
+    square
+)
+
+    if not player
+        or not square
+    then
+
+        return
+    end
+
+
+    if not isValidSamplingSquare(
+        square
+    ) then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_RequiresNaturalGround",
+                "Requires outdoor natural ground"
+            )
+        )
+
+
+        return
+    end
+
+
+    local shovel =
+        AC_GeologySampling.getEquippedShovel(
+            player
+        )
+
+
+    if not shovel then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_EquipShovel",
+                "Equip a shovel first"
+            )
+        )
+
+
+        return
+    end
+
+
+    if not luautils.walkAdj(
+        player,
+        square
+    ) then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_CannotReachSampling",
+                "Cannot reach sampling location"
+            )
+        )
+
+
+        return
+    end
+
+
+    ISTimedActionQueue.add(
+        AC_DigGeologicalSampleAction:new(
+            player,
+            square,
+            shovel
+        )
+    )
+end
+
+
+------------------------------------------------
+-- VIEW SAMPLE RESULT
+------------------------------------------------
+
+local function viewAssay(
+    player,
+    sample
+)
+
+    if not player
+        or not sample
+    then
+
+        return
+    end
+
+
+    AC_GeologyAssayUI.open(
+        player,
+        sample
+    )
+end
+
+
+------------------------------------------------
+-- PORTABLE ASSAY
+------------------------------------------------
+
+local function analyzeSample(
+    player,
+    sample,
+    kit
+)
+
+    if not player
+        or not sample
+        or not kit
+    then
+
+        return
+    end
+
+
+    local success,
+          errorCode =
+        AC_GeologySampling.analyzeSample(
+            sample,
+            kit
+        )
+
+
+    if not success then
+
+        if errorCode == "kit_empty" then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_KitEmpty",
+                    "Assay kit is empty"
+                )
+            )
+
+        elseif errorCode
+            == "already_analyzed"
+        then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_AlreadyAnalyzed",
+                    "Sample already has an equal or better assay"
+                )
+            )
+
+        elseif errorCode
+            == "lab_processing"
+        then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_SampleProcessing",
+                    "Sample is currently being analyzed"
+                )
+            )
+
+        else
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_AnalysisFailed",
+                    "Analysis failed"
+                )
+            )
+        end
+
+
+        return
+    end
+
+
+    HaloTextHelper.addText(
+        player,
+        AC_Text.get(
+            "IGUI_AmmoMaking_SampleAnalyzed",
+            "Sample analyzed"
+        )
+    )
+
+
+    AmmoMakingSkill.addXP(
+        player,
+        AC_GeologySampling.getAssayXP(
+            kit
+        )
+    )
+
+
+    AC_GeologyAssayUI.open(
+        player,
+        sample
+    )
+end
+
+
+------------------------------------------------
+-- SHOW LAB STATUS
+------------------------------------------------
+
+local function showLaboratoryStatus(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    local info =
+        AC_LaboratoryAnalyzer.getStatusInfo(
+            analyzerWorldObject
+        )
+
+
+    if not info then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Invalid",
+                "Invalid laboratory analyzer"
+            )
+        )
+
+
+        return
+    end
+
+
+    if info.state == "idle" then
+
+        if info.powered then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Ready",
+                    "Laboratory analyzer ready"
+                )
+            )
+
+        else
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_NoPower",
+                    "Laboratory analyzer has no power"
+                )
+            )
+        end
+
+
+        return
+    end
+
+
+    if info.state == "processing" then
+
+        local hours =
+            string.format(
+                "%.1f",
+                tonumber(
+                    info.hoursRemaining
+                )
+                or 0
+            )
+
+
+        local text
+
+
+        if info.powered then
+
+            text =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Processing",
+                    "Processing - %1 hours remaining",
+                    hours
+                )
+
+        else
+
+            text =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_ProcessingPaused",
+                    "Processing paused (no power) - %1 hours remaining",
+                    hours
+                )
+        end
+
+
+        HaloTextHelper.addText(
+            player,
+            text
+        )
+
+
+        return
+    end
+
+
+    if info.state == "ready" then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Complete",
+                "Laboratory assay complete - result ready"
+            )
+        )
+    end
+end
+
+
+------------------------------------------------
+-- START LAB ASSAY
+------------------------------------------------
+
+local function startLaboratoryAssay(
+    player,
+    analyzerWorldObject,
+    sample
+)
+
+    if not player
+        or not analyzerWorldObject
+        or not sample
+    then
+
+        return
+    end
+
+
+    local success,
+          errorCode =
+        AC_LaboratoryAnalyzer.startAssay(
+            player,
+            analyzerWorldObject,
+            sample
+        )
+
+
+    if not success then
+
+        print(
+            "[AmmoMaking] Laboratory assay start refused: "
+            .. tostring(
+                errorCode
+            )
+        )
+
+
+        if errorCode == "no_power" then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_RequiresElectricity",
+                    "Laboratory analyzer requires electricity"
+                )
+            )
+
+        elseif errorCode == "busy" then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Busy",
+                    "Laboratory analyzer is already occupied"
+                )
+            )
+
+        elseif errorCode
+            == "invalid_sample"
+        then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_InvalidSample",
+                    "This sample cannot be analyzed"
+                )
+            )
+
+        else
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_StartFailed",
+                    "Could not start laboratory assay"
+                )
+            )
+        end
+
+
+        return
+    end
+
+
+    HaloTextHelper.addText(
+        player,
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Started",
+            "Laboratory assay started - %1 hours",
+            AC_LaboratoryAnalyzer.CONFIG.processingHours
+        )
+    )
+end
+
+
+------------------------------------------------
+-- COLLECT LAB SAMPLE
+------------------------------------------------
+
+local function collectLaboratorySample(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    local sample,
+          errorCode =
+        AC_LaboratoryAnalyzer.collectSample(
+            player,
+            analyzerWorldObject
+        )
+
+
+    if not sample then
+
+        print(
+            "[AmmoMaking] Laboratory sample collection refused: "
+            .. tostring(
+                errorCode
+            )
+        )
+
+
+        if errorCode == "not_ready" then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_StillProcessing",
+                    "Laboratory assay is still processing"
+                )
+            )
+
+        elseif errorCode == "empty" then
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Empty",
+                    "Laboratory analyzer is empty"
+                )
+            )
+
+        else
+
+            HaloTextHelper.addText(
+                player,
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_CollectFailed",
+                    "Could not collect laboratory sample"
+                )
+            )
+        end
+
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- The only place laboratory XP is granted: once,
+    -- after a successful collection. One message with
+    -- the gain, as for mining.
+    ------------------------------------------------
+
+    local xp =
+        AmmoMakingSkill.awardXP(
+            player,
+            AC_LaboratoryAnalyzer.CONFIG.assayXP,
+            "Laboratory"
+        )
+
+
+    local text =
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Collected",
+            "Laboratory tested sample collected"
+        )
+
+
+    if xp > 0 then
+
+        text =
+            text
+            .. " - "
+            .. AC_Text.get(
+                "IGUI_AmmoMaking_ResultXP",
+                "+%1 Ammo Making XP",
+                AmmoMakingSkill.formatXP(
+                    xp
+                )
+            )
+    end
+
+
+    HaloTextHelper.addText(
+        player,
+        text
+    )
+
+
+    AC_GeologyAssayUI.open(
+        player,
+        sample
+    )
+end
+
+
+------------------------------------------------
+-- CANCEL LAB ASSAY
+------------------------------------------------
+
+local function cancelLaboratoryAssay(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    local sample,
+          errorCode =
+        AC_LaboratoryAnalyzer.cancelAssay(
+            player,
+            analyzerWorldObject
+        )
+
+
+    if not sample then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_CancelFailed",
+                "Could not cancel the laboratory assay"
+            )
+        )
+
+
+        print(
+            "[AmmoMaking] Laboratory assay cancel refused: "
+            .. tostring(
+                errorCode
+            )
+        )
+
+
+        return
+    end
+
+
+    HaloTextHelper.addText(
+        player,
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_Cancelled",
+            "Laboratory assay cancelled - sample returned"
+        )
+    )
+end
+
+
+------------------------------------------------
+-- PLACE ANALYZER
+------------------------------------------------
+--
+-- Starts the vanilla placement cursor. The item is
+-- moved into the main inventory first if needed; the
+-- cursor only accepts a square once it is there.
+------------------------------------------------
+
+local function placeLaboratoryAnalyzer(
+    player,
+    analyzerItem
+)
+
+    if not player
+        or not AC_LaboratoryAnalyzer.isAnalyzerItem(
+            analyzerItem
+        )
+    then
+
+        return
+    end
+
+
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+        HaloTextHelper.addText(
+            player,
+            getMultiplayerText()
+        )
+
+
+        return
+    end
+
+
+    ISInventoryPaneContextMenu.transferIfNeeded(
+        player,
+        analyzerItem
+    )
+
+
+    getCell():setDrag(
+        AC_LaboratoryAnalyzerObject:new(
+            player,
+            analyzerItem
+        ),
+        player:getPlayerNum()
+    )
+end
+
+
+------------------------------------------------
+-- PICK UP ANALYZER
+------------------------------------------------
+
+local function pickUpLaboratoryAnalyzer(
+    player,
+    analyzerWorldObject
+)
+
+    if not player
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+        HaloTextHelper.addText(
+            player,
+            getMultiplayerText()
+        )
+
+
+        return
+    end
+
+
+    local allowed,
+          reason =
+        AC_LaboratoryAnalyzer.canPickUp(
+            analyzerWorldObject
+        )
+
+
+    if not allowed then
+
+        print(
+            "[AmmoMaking] Analyzer pickup refused: "
+            .. tostring(
+                reason
+            )
+        )
+
+
+        HaloTextHelper.addText(
+            player,
+            AC_PickUpAnalyzerAction.getRefusalText(
+                reason
+            )
+        )
+
+
+        return
+    end
+
+
+    if not luautils.walkAdj(
+        player,
+        analyzerWorldObject:getSquare()
+    ) then
+
+        HaloTextHelper.addText(
+            player,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_CannotReach",
+                "Cannot reach the laboratory analyzer"
+            )
+        )
+
+
+        return
+    end
+
+
+    ISTimedActionQueue.add(
+        AC_PickUpAnalyzerAction:new(
+            player,
+            analyzerWorldObject
+        )
+    )
+end
+
+
+------------------------------------------------
+-- PICK-UP OPTION
+------------------------------------------------
+--
+-- Placed analyzers only. Shown disabled, with the
+-- reason, while an assay is running or a result is
+-- waiting, and on multiplayer clients.
+------------------------------------------------
+
+local function addPickUpOption(
+    player,
+    context,
+    analyzerWorldObject
+)
+
+    if not AC_LaboratoryAnalyzer.isPlacedAnalyzerObject(
+        analyzerWorldObject
+    ) then
+
+        return
+    end
+
+
+    local name =
+        AC_Text.get(
+            "IGUI_AmmoMaking_Lab_PickUp",
+            "Pick Up Laboratory Assay Analyzer"
+        )
+
+
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+        addUnavailableOption(
+            context,
+            name,
+            getMultiplayerText()
+        )
+
+
+        return
+    end
+
+
+    local allowed,
+          reason =
+        AC_LaboratoryAnalyzer.canPickUp(
+            analyzerWorldObject
+        )
+
+
+    if not allowed then
+
+        addUnavailableOption(
+            context,
+            name,
+            AC_PickUpAnalyzerAction.getRefusalText(
+                reason
+            )
+        )
+
+
+        return
+    end
+
+
+    context:addOption(
+        name,
+        player,
+        pickUpLaboratoryAnalyzer,
+        analyzerWorldObject
+    )
+end
+
+
+------------------------------------------------
+-- ADD ANALYZER OPTIONS
+------------------------------------------------
+
+local function addLaboratoryAnalyzerOptions(
+    player,
+    context,
+    analyzerWorldObject
+)
+
+    if not player
+        or not context
+        or not analyzerWorldObject
+    then
+
+        return
+    end
+
+
+    local info =
+        AC_LaboratoryAnalyzer.getStatusInfo(
+            analyzerWorldObject
+        )
+
+
+    if not info then
+        return
+    end
+
+
+    ------------------------------------------------
+    -- IDLE
+    ------------------------------------------------
+
+    if info.state == "idle" then
+
+        context:addOption(
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Check",
+                "Check Laboratory Analyzer"
+            ),
+            player,
+            showLaboratoryStatus,
+            analyzerWorldObject
+        )
+
+
+        addPickUpOption(
+            player,
+            context,
+            analyzerWorldObject
+        )
+
+
+        if not info.powered then
+
+            local option =
+                context:addOption(
+                    AC_Text.get(
+                "IGUI_AmmoMaking_Lab_OptionNoPower",
+                "Laboratory Analyzer - Requires Electricity"
+            )
+                )
+
+
+            option.notAvailable =
+                true
+
+
+            return
+        end
+
+
+        local samples =
+            player:getInventory():
+                getItemsFromFullType(
+                    AC_LaboratoryAnalyzer.ITEMS.Sample,
+                    true
+                )
+
+
+        local foundSample =
+            false
+
+
+        if samples then
+
+            for index = 0,
+                samples:size() - 1
+            do
+
+                local sample =
+                    samples:get(
+                        index
+                    )
+
+
+                if AC_LaboratoryAnalyzer.canAnalyzeSample(
+                    sample
+                ) then
+
+                    foundSample =
+                        true
+
+
+                    local data =
+                        sample:getModData()
+
+
+                    local optionName =
+                        AC_Text.get(
+                            "IGUI_AmmoMaking_Lab_StartOption",
+                            "Start Lab Assay: Sample %1, %2",
+                            data.sampleX,
+                            data.sampleY
+                        )
+
+
+                    addAuthoritativeOption(
+                        AC_LaboratoryAnalyzer.isAvailable(),
+                        getLabUseMultiplayerText,
+                        context,
+                        optionName,
+                        player,
+                        startLaboratoryAssay,
+                        analyzerWorldObject,
+                        sample
+                    )
+                end
+            end
+        end
+
+
+        if not foundSample then
+
+            local option =
+                context:addOption(
+                    AC_Text.get(
+                "IGUI_AmmoMaking_Lab_NoSamples",
+                "No Geological Samples Available"
+            )
+                )
+
+
+            option.notAvailable =
+                true
+        end
+
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- PROCESSING
+    --
+    -- Progress, and an explicit cancel that returns
+    -- the sample; the analyzer cannot be moved until
+    -- the assay is cancelled or collected.
+    ------------------------------------------------
+
+    if info.state == "processing" then
+
+        context:addOption(
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_CheckProgress",
+                "Check Laboratory Progress"
+            ),
+            player,
+            showLaboratoryStatus,
+            analyzerWorldObject
+        )
+
+
+        addAuthoritativeOption(
+            AC_LaboratoryAnalyzer.isAvailable(),
+            getLabUseMultiplayerText,
+            context,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Cancel",
+                "Cancel Laboratory Assay"
+            ),
+            player,
+            cancelLaboratoryAssay,
+            analyzerWorldObject
+        )
+
+
+        addPickUpOption(
+            player,
+            context,
+            analyzerWorldObject
+        )
+
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- READY
+    ------------------------------------------------
+
+    if info.state == "ready" then
+
+        addAuthoritativeOption(
+            AC_LaboratoryAnalyzer.isAvailable(),
+            getLabUseMultiplayerText,
+            context,
+            AC_Text.get(
+                "IGUI_AmmoMaking_Lab_Collect",
+                "Collect Laboratory Sample"
+            ),
+            player,
+            collectLaboratorySample,
+            analyzerWorldObject
+        )
+
+
+        addPickUpOption(
+            player,
+            context,
+            analyzerWorldObject
+        )
+    end
+end
+
+
+------------------------------------------------
+-- WORLD CONTEXT MENU
+------------------------------------------------
+
+local function onFillWorldObjectContextMenu(
+    playerIndex,
+    context,
+    worldObjects,
+    test
+)
+
+    if test then
+        return
+    end
+
+
+    local player =
+        getSpecificPlayer(
+            playerIndex
+        )
+
+
+    if not player then
+        return
+    end
+
+
+    ------------------------------------------------
+    -- LAB ANALYZER
+    ------------------------------------------------
+
+    local analyzerWorldObject =
+        getAnalyzerWorldObject(
+            worldObjects
+        )
+
+
+    if analyzerWorldObject then
+
+        addLaboratoryAnalyzerOptions(
+            player,
+            context,
+            analyzerWorldObject
+        )
+    end
+
+
+    ------------------------------------------------
+    -- GEOLOGICAL SAMPLING
+    ------------------------------------------------
+
+    local shovel =
+        AC_GeologySampling.getEquippedShovel(
+            player
+        )
+
+
+    if not shovel then
+        return
+    end
+
+
+    local square =
+        getClickedSquare(
+            worldObjects
+        )
+
+
+    if not isValidSamplingSquare(
+        square
+    ) then
+
+        return
+    end
+
+
+    addAuthoritativeOption(
+        AC_GeologySampling.isAvailable(),
+        getSamplingMultiplayerText,
+        context,
+        AC_Text.get(
+                "IGUI_AmmoMaking_DigSample",
+                "Dig Geological Sample"
+            ),
+        player,
+        digSample,
+        square
+    )
+end
+
+
+------------------------------------------------
+-- INVENTORY CONTEXT MENU
+------------------------------------------------
+
+local function onFillInventoryContextMenu(
+    playerIndex,
+    context,
+    items
+)
+
+    local player =
+        getSpecificPlayer(
+            playerIndex
+        )
+
+
+    if not player then
+        return
+    end
+
+
+    for _,
+        entry
+    in ipairs(
+        items
+    )
+    do
+
+        local item =
+            getActualItem(
+                entry
+            )
+
+
+        ------------------------------------------------
+        -- LABORATORY ANALYZER
+        ------------------------------------------------
+
+        if AC_LaboratoryAnalyzer.isAnalyzerItem(
+            item
+        ) then
+
+            local placeName =
+                AC_Text.get(
+                    "IGUI_AmmoMaking_Lab_Place",
+                    "Place Laboratory Assay Analyzer"
+                )
+
+
+            if AC_LaboratoryAnalyzer.isPlacementAvailable() then
+
+                context:addOption(
+                    placeName,
+                    player,
+                    placeLaboratoryAnalyzer,
+                    item
+                )
+
+            else
+
+                addUnavailableOption(
+                    context,
+                    placeName,
+                    getMultiplayerText()
+                )
+            end
+
+
+            return
+        end
+
+
+        if AC_GeologySampling.isSample(
+            item
+        ) then
+
+            local data =
+                item:getModData()
+
+
+            local assayRank =
+                tonumber(
+                    data.assayRank
+                )
+                or 0
+
+
+            if assayRank > 0 then
+
+                context:addOption(
+                    AC_Text.get(
+                "IGUI_AmmoMaking_ViewAssay",
+                "View Assay Result"
+            ),
+                    player,
+                    viewAssay,
+                    item
+                )
+            end
+
+
+            if assayRank < 1 then
+
+                local fieldKit =
+                    AC_GeologySampling.findKit(
+                        player,
+                        AC_GeologySampling.ITEMS.FieldKit
+                    )
+
+
+                if fieldKit then
+
+                    addAuthoritativeOption(
+                        AC_GeologySampling.isAvailable(),
+                        getSamplingMultiplayerText,
+                        context,
+                        AC_Text.get(
+                "IGUI_AmmoMaking_AnalyzeField",
+                "Analyze with Field Assay Kit"
+            ),
+                        player,
+                        analyzeSample,
+                        item,
+                        fieldKit
+                    )
+                end
+            end
+
+
+            if assayRank < 2 then
+
+                local advancedKit =
+                    AC_GeologySampling.findKit(
+                        player,
+                        AC_GeologySampling.ITEMS.AdvancedFieldKit
+                    )
+
+
+                if advancedKit then
+
+                    local optionName =
+                        AC_Text.get(
+                            "IGUI_AmmoMaking_AnalyzeAdvanced",
+                            "Analyze with Advanced Field Assay Kit"
+                        )
+
+
+                    if assayRank == 1 then
+
+                        optionName =
+                            AC_Text.get(
+                                "IGUI_AmmoMaking_ReanalyzeAdvanced",
+                                "Re-analyze with Advanced Field Assay Kit"
+                            )
+                    end
+
+
+                    addAuthoritativeOption(
+                        AC_GeologySampling.isAvailable(),
+                        getSamplingMultiplayerText,
+                        context,
+                        optionName,
+                        player,
+                        analyzeSample,
+                        item,
+                        advancedKit
+                    )
+                end
+            end
+
+
+            return
+        end
+    end
+end
+
+
+------------------------------------------------
+-- EVENTS
+------------------------------------------------
+
+Events.OnFillWorldObjectContextMenu.Add(
+    onFillWorldObjectContextMenu
+)
+
+
+Events.OnFillInventoryObjectContextMenu.Add(
+    onFillInventoryContextMenu
+)
+
+
+------------------------------------------------
+-- LOAD MESSAGE
+------------------------------------------------
+
+print(
+    "[AmmoMaking] Geological sampling context menus loaded"
+)

@@ -1,13 +1,35 @@
 # Multiplayer mining: minimal server-authoritative design
 
-Status: **design only, not implemented.** Mining is intentionally disabled on
-multiplayer clients (`AC_Mining.isAvailable()` returns false when `isClient()`),
-because the current loop runs entirely on the machine that executes the timed
-action: it spawns the ore locally and records depletion in that client's global
-ModData, which is neither authoritative nor shared. Two players would each get
-the full reserve; a reconnecting player would see every tile as untouched.
+Status: **built in 0.10.0, experimental, off by default, never run on a
+server** (`MULTIPLAYER_DESIGN.md` section 6). Without the sandbox option
+`AmmoMaking.ServerAuthority`, mining stays disabled on multiplayer clients
+(`AC_Mining.isAvailable()` returns false when `isClient()`), because the
+single-player loop runs entirely on the machine that executes the timed
+action: it spawns the ore locally and records depletion in that machine's
+global ModData, which on a client is neither authoritative nor shared. Two
+players would each get the full reserve; a reconnecting player would see
+every tile as untouched. With the option on, the design below is what runs.
 
-Single-player and local split-screen are unaffected.
+Single-player and local split-screen are unaffected either way.
+
+**Built differently from the first draft below**, after reading the jar:
+
+- The client does not send `sendClientCommand(... "mine" ...)`. Build 42
+  sends a timed action that has a `complete()` to the server itself (JAR
+  `LuaTimedActionNew`, `NetTimedAction`): the server rebuilds
+  `AC_MineOreAction` from its fields `character`, `square`, `metal`,
+  `pickaxe` (the names of `new()`'s parameters; `o.pickaxe` was added for
+  that), waits the action's own duration and calls `complete()`, which
+  calls `AC_Authority.serverMine`. The file moved to `shared/`, which a
+  dedicated server loads. The client's `perform()` does nothing but end
+  the action.
+- The ore stays on the ground: `AddWorldInventoryItem(item, x, y, z)` on a
+  server sends the new world item to the clients (JAR
+  `IsoGridSquare.AddWorldInventoryItem`, `transmitCompleteItemToClients`).
+- XP goes through vanilla's `addXp` on the server (`GameServer.addXp`),
+  the pickaxe's wear through `syncItemFields`.
+- Rate limiting is built after all (one extraction per player and second),
+  although the engine already runs only one timed action per player.
 
 ## Why the current split already helps
 
@@ -94,4 +116,6 @@ and must never be written by mining code on a client.
 
 - anti-cheat beyond "the server validates every field"
 - ore in the requester's inventory instead of on the ground
-- rate limiting (a request per completed timed action is already slow)
+- transmitting one tile instead of the whole store (the store holds only
+  worked tiles; a few thousand tiles are a few tens of kilobytes per
+  extraction)

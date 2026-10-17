@@ -12,10 +12,22 @@
 --   -> ISBuildAction:perform() calls create() when the
 --      action completes (single-player / split-screen)
 --
--- In multiplayer Build 42 runs create() on the server.
--- That path is not supported yet, so the menu never
--- starts placement on a multiplayer client
--- (AC_LaboratoryAnalyzer.isPlacementAvailable).
+-- In multiplayer Build 42 runs create() on the server:
+-- ISBuildAction:start() sends the building object
+-- (createBuildAction), the server rebuilds it with
+-- AC_LaboratoryAnalyzerObject.new(...) from its fields
+-- named like new()'s parameters (JAR BuildAction.write
+-- / parse) and calls create() (FILE
+-- shared/ActionManager.lua, Actions.build). That is why
+-- new()'s first parameter is called character: the
+-- field of that name holds the IsoPlayer, while the
+-- field "player" holds the player NUMBER the cursor
+-- needs, which the server could not call a method on.
+-- The menu offers placement on a multiplayer client only
+-- with server authority on (AC_Authority), and create()
+-- on a server checks it again (AC_Authority.mayPlace).
+-- REQUIRES FUTURE IN-GAME VERIFICATION (dedicated
+-- server).
 --
 -- Every rule about the analyzer's state lives in
 -- AC_LaboratoryAnalyzer; this file only creates the
@@ -148,6 +160,35 @@ function AC_LaboratoryAnalyzerObject:create(
     end
 
 
+    ------------------------------------------------
+    -- Multiplayer server: only with server authority
+    -- on, and only next to the player. Never reached
+    -- in single player (isServer() is false there).
+    ------------------------------------------------
+
+    if isServer() then
+
+        local allowed,
+              refusal =
+            AC_Authority.mayPlace(
+                self.character,
+                square
+            )
+
+
+        if not allowed then
+
+            print(
+                "[AmmoMaking] Analyzer placement refused by the server: "
+                .. tostring(refusal)
+            )
+
+
+            return
+        end
+    end
+
+
     local analyzer =
         IsoThumpable.new(
             cell,
@@ -263,8 +304,8 @@ function AC_LaboratoryAnalyzerObject:create(
 
 
     ------------------------------------------------
-    -- Same as vanilla TrapBO; only reached if the
-    -- multiplayer path is enabled one day.
+    -- Same as vanilla TrapBO; reached on a
+    -- multiplayer server.
     ------------------------------------------------
 
     if isServer() then
@@ -301,7 +342,7 @@ end
 ------------------------------------------------
 
 function AC_LaboratoryAnalyzerObject:new(
-    player,
+    character,
     sourceItem
 )
 
@@ -345,11 +386,11 @@ function AC_LaboratoryAnalyzerObject:new(
 
 
     o.character =
-        player
+        character
 
 
     o.player =
-        player:getPlayerNum()
+        character:getPlayerNum()
 
 
     o.sourceItem =

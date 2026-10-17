@@ -77,14 +77,16 @@ never move an item into that list.
 | `server/AC_SkillBookRegistration.lua` | server | Adds that entry at load: the engine loads vanilla's server files, which create the table, before any mod's |
 | `shared/AC_AmmoQuality.lua`, `shared/AC_AmmoInspection.lua` | shared | Ammunition quality prototype (test cartridge only), and `AmmoInspection.inspectComponent`: the read-only inspection of real cases and loose handloaded rounds |
 | `client/AC_GeologySamplingContextMenu.lua` | client | Dig / assay / laboratory menus (place, start, cancel, collect, pick up) |
-| `client/AC_DigGeologicalSampleAction.lua` | client | Shovel timed action |
-| `client/AC_PickUpAnalyzerAction.lua` | client | Timed action that picks a placed analyzer up again |
+| `shared/AC_DigGeologicalSampleAction.lua` | shared | Shovel timed action (shared since 0.10.0: a multiplayer server rebuilds it and runs its `complete()`) |
+| `shared/AC_PickUpAnalyzerAction.lua` | shared | Timed action that picks a placed analyzer up again (shared, as above) |
 | `client/AC_MiningContextMenu.lua` | client | Mining options and tooltips |
-| `client/AC_MineOreAction.lua` | client | Pickaxe timed action |
+| `shared/AC_MineOreAction.lua` | shared | Pickaxe timed action (shared, as above) |
+| `shared/AC_Authority.lua` | shared | Feature `serverAuthority` (sandbox option): on a multiplayer server, the checks and the server side of digging, assays, the analyzer and mining; the client commands and their dispatcher. Returns at once in single player (`MULTIPLAYER_DESIGN.md` 6) |
+| `client/AC_AuthorityClient.lua` | client | The client side of `serverAuthority`: requests, the server's answers shown in the single-player words, the depletion store kept from the server |
 | `client/AC_GeologyAssayUI.lua`, `client/AC_AmmoInspectionUI.lua` | client | Result panels |
 | `client/AC_GeologyDebug.lua` | client | The "Ammo Making Debug" tree (`-debug` only): Geology, Analyzer, Metallurgy, Ammunition, Stations (only with the press), Diagnostics |
 | `client/AC_AmmoContextMenu.lua` | client | *Inspect Ammunition* on cases and loose handloaded rounds, *Inspect Loaded Ammunition* on magazines and firearms; the test cartridge's inspection and debug presets |
-| `media/sandbox-options.txt` | script | The feature switch `AmmoMaking.QualityTracking` (boolean, default false) and the four balance multipliers of `AC_Balance` (double, default 1): `AmmoMaking.DepositReserveMultiplier`, `AmmoMaking.DieSetLootMultiplier`, `AmmoMaking.ComponentLootMultiplier`, `MultiplierConfig.AmmoMaking` |
+| `media/sandbox-options.txt` | script | The feature switches `AmmoMaking.QualityTracking` and `AmmoMaking.ServerAuthority` (boolean, default false) and the four balance multipliers of `AC_Balance` (double, default 1): `AmmoMaking.DepositReserveMultiplier`, `AmmoMaking.DieSetLootMultiplier`, `AmmoMaking.ComponentLootMultiplier`, `MultiplierConfig.AmmoMaking` |
 | `mod/AmmoMakingPress/` | add-on mod | The reloading press: entity, skin, tile sheet, 27 generated recipes, names. **No Lua**; its logic and probes are in the main mod |
 | `mod/AmmoMakingSpentCases/` | add-on mod | Spent cases: 9 generated items, 3 generated scrapping recipes, names, the sandbox option `AmmoMaking.SpentCaseRecovery`. **No Lua** |
 
@@ -183,7 +185,16 @@ These are enforced by the code and asserted by `tests/run_tests.lua`.
 - `stop()` stops the sound, clears the job delta, then calls
   `ISBaseTimedAction.stop(self)`.
 - `perform()` clears the job delta, stops the sound, does the work, shows the
-  result, then calls `ISBaseTimedAction.perform(self)` last.
+  result, then calls `ISBaseTimedAction.perform(self)` last. On a
+  multiplayer client with the server authority on it does no work: it
+  ends the action, and the server's answer shows the result.
+- `complete()` (since 0.10.0): the engine calls it after `perform()` in
+  single player, where it returns `true` at once, and on a multiplayer
+  server, where it is the whole action (`AC_Authority.serverDig` /
+  `serverMine` / `serverPickUp`). Its presence is what makes the engine
+  send the action to the server (JAR `LuaTimedActionNew`); the fields
+  named like `new()`'s parameters are what it sends (`o.shovel`,
+  `o.pickaxe`). REQUIRES FUTURE IN-GAME VERIFICATION on a server.
 
 The pickaxe action calls `BuildingHelper.getShovelAnim` directly, as the dig
 action does; on 42.20.4 it returns `CharacterActionAnims.DigPickAxe` for a
@@ -349,10 +360,13 @@ Save/reload of a processing analyzer is part of the analyzer test when a
 save/reload is possible; until then it stays **REQUIRES IN-GAME
 VERIFICATION**.
 - **Multiplayer**: placing and picking up are disabled on clients
-  (`isPlacementAvailable()`): Build 42 runs `create()` on the server, and a
-  client-side pickup would add the item only locally. Starting, cancelling
-  and collecting also change client-local state today; sample ownership and
-  server-side validation belong to a future multiplayer design.
+  (`isPlacementAvailable()`) unless the experimental server authority is
+  on: Build 42 runs `create()` on the server, and a client-side pickup
+  would add the item only locally. With the authority on, placement goes
+  through vanilla's build action (the server checks the switch and the
+  distance in `create()`), pickup through the action's `complete()`, and
+  start, cancel and collect are server commands (`MULTIPLAYER_DESIGN.md`
+  6). REQUIRES FUTURE IN-GAME VERIFICATION on a server.
 
 Build 42 evidence, checked against the installed game's Lua and jar. That
 install is 42.20.4 (Steam update of 2026-09-03; the 42.20.4 runtime ran from the
@@ -529,11 +543,13 @@ Console lines:
 [AmmoMaking] WARNING: caseQuality failed for AmmoMaking_FormCase9mm: <error>
 ```
 
-### Multiplayer requirements (not implemented)
+### Multiplayer requirements
 
 - `OnCreate` runs on the server (`ISHandcraftAction:complete` →
-  `performRecipe`). Grant XP there with vanilla's `addXp(character, perk,
-  amount)` instead of the single-player `getXp():AddXP`.
+  `performRecipe`). With the server authority on, `AmmoMakingSkill.addXP`
+  grants through vanilla's `addXp(character, perk, amount)` on a server
+  (built, REQUIRES FUTURE IN-GAME VERIFICATION); otherwise the
+  single-player `getXp():AddXP`.
 - Run `applySkillRequirements()` on the server and on every client.
 - Case quality is written in `OnCreate`, on the server. Whether ModData set
   there reaches clients needs checking before quality is used for anything.
@@ -766,25 +782,28 @@ Not bugs, but worth knowing when adding multiplayer or a "view only" tool:
 - Inspecting the **test cartridge** fills in and recomputes its prototype
   fields. Inspecting a real case or round (`inspectComponent`) only reads.
 
-## Multiplayer hazards (review; nothing is implemented)
+## Multiplayer hazards (review)
 
-The full authority map, each known duplication and how it would be closed,
-and the order of work are in `MULTIPLAYER_DESIGN.md`. What follows is the
-summary that was written with the code.
+The full authority map, each known duplication and how it is closed, and
+what was built are in `MULTIPLAYER_DESIGN.md` (section 6: the server
+authority of 0.10.0, experimental, off by default, never run on a server).
+What follows is the summary that was written with the code.
 
-Mining and analyzer placement are disabled for multiplayer clients
-(`AC_Mining.isAvailable`, `AC_LaboratoryAnalyzer.isPlacementAvailable`, both
-`not isClient()`); the mining design is in `MULTIPLAYER_MINING.md`. The mod
-has no `sendClientCommand`, no `OnClientCommand` and no `ModData.transmit`.
-State that a server would have to own, as the code stands:
+Without the switch `serverAuthority`, mining, sampling, assays and the
+analyzer are refused on multiplayer clients (`AC_Mining.isAvailable`,
+`AC_GeologySampling.isAvailable`, `AC_LaboratoryAnalyzer.isAvailable` /
+`isPlacementAvailable`, all `not isClient()`). With it, the server does
+the work in `AC_Authority` and the client only asks
+(`sendClientCommand`, or a timed action with a `complete()`). State a
+server owns, and how it gets there:
 
-| System | Client-side state change today | Needs |
+| System | State | With the server authority |
 |---|---|---|
-| Deposits | the global depletion table, written by `extract` | server-owned store, transmitted (designed) |
-| Seeds | derived from the local world identity | the server's identity on every client |
-| Digging a sample | local `AddItem`, sample ModData, shovel wear | a server command |
-| Field and advanced assay | kit and sample ModData, XP | a server command |
-| Laboratory analyzer | object or item ModData, the sample removed and re-created, XP, and time credited by whichever client opens the menu | server-owned state and `transmitModData`; the lazy timer per client is the main hazard |
+| Deposits | the global depletion table, written by `extract` | written on the server only, `ModData.transmit` after each extraction, kept by the client with `ModData.add` |
+| Seeds | derived from the local world identity | every decision is the server's; a client's seed feeds only its debug readouts |
+| Digging a sample | `AddItem`, sample ModData, shovel wear | the dig action's `complete()` on the server; `sendAddItemToContainer`, `syncItemFields` |
+| Field and advanced assay | kit and sample ModData, XP | the command `assay`; `syncItemModData` / `syncItemFields`, `addXp` |
+| Laboratory analyzer | object ModData, the sample removed and re-created, XP, time credited at each interaction | the commands `labStart` / `labCancel` / `labCollect`, `transmitModData()`; time credited by the server at each command. A dropped analyzer item stays single player |
 | **Ammunition (this stage)** | **none of its own** | see below |
 
 **The systems added on 2026-10-02**, classified by where their state
@@ -1068,6 +1087,15 @@ helpers):
 - **loot**, **progression**, **multiplayer**, **docs**: component loot per
   room, the level table, the client guards, and the handover documents
   against the code.
+- **authority** (`serverAuthority`, `MULTIPLAYER_DESIGN.md` 6): single
+  player replayed against the frozen files of `tests/sp_reference/`
+  (commit `eaa7a3e`, the state seen working in game) with the switch off
+  and on, compared line by line and with nothing on the network; a
+  simulated client and server for every request, timed actions rebuilt
+  from their fields as the engine does; and the refusals: wrong distance
+  and level, another player's tool or item, made-up ids, malformed
+  coordinates, foreign metals, a dropped analyzer, the switch off on the
+  server, floods.
 - **balance** (the sandbox multipliers, `docs/BALANCE_OPTIONS.md`): the
   option table pinned, every default 1 and equal to today's numbers, the
   clamp at and beyond both ends of every range, the sandbox file against
@@ -1503,6 +1531,10 @@ list is the record of why each item is open.
   - component loot in gun stores and metalwork crates;
   - the disabled sampling, assay and analyzer options on a multiplayer
     client;
+  - the multiplayer server authority (switch on), on a dedicated server
+    with two clients: every request performed once, by the server, and
+    shown on the client (`docs/INGAME_VALIDATION.md`, *After the
+    session*);
   - removing an add-on from a save that used it.
 
 - **Mining depletion persistence after save/reload** (extracted counts in

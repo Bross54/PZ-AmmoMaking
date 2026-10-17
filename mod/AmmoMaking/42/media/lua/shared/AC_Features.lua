@@ -138,6 +138,20 @@ AC_Features.DEFINITIONS = {
 
         what = "poor handloads raise vanilla's own jam chance",
     },
+    {
+        id = "serverAuthority",
+        name = "Multiplayer Server Authority",
+        stability = AC_Features.EXPERIMENTAL,
+        -- Lua only (shared/AC_Authority.lua). It changes nothing
+        -- in single player: there the mod decides locally, as
+        -- it always has. On a multiplayer server it performs
+        -- sampling, assays, the analyzer and mining that
+        -- clients ask for; without it they stay refused there.
+        -- Nothing of it has run on a server yet.
+        sandbox = "ServerAuthority",
+        singlePlayerOnly = false,
+        what = "on a multiplayer server, sampling, assays, the laboratory analyzer and mining are performed by the server for the clients that ask, instead of being refused",
+    },
 }
 
 

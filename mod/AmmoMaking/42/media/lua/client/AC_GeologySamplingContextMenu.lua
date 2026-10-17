@@ -340,6 +340,25 @@ local function analyzeSample(
     end
 
 
+    ------------------------------------------------
+    -- Multiplayer client with server authority: ask;
+    -- the server decides and answers. Never taken in
+    -- single player (canRequest() is false there).
+    ------------------------------------------------
+
+    if AC_Authority.canRequest() then
+
+        AC_AuthorityClient.requestAssay(
+            player,
+            sample,
+            kit
+        )
+
+
+        return
+    end
+
+
     local success,
           errorCode =
         AC_GeologySampling.analyzeSample(
@@ -567,6 +586,26 @@ local function startLaboratoryAssay(
     end
 
 
+    ------------------------------------------------
+    -- Multiplayer client with server authority: ask;
+    -- the server decides and answers. Never taken in
+    -- single player (canRequest() is false there).
+    ------------------------------------------------
+
+    if AC_Authority.canRequest() then
+
+        AC_AuthorityClient.requestLaboratory(
+            player,
+            "labStart",
+            analyzerWorldObject,
+            sample
+        )
+
+
+        return
+    end
+
+
     local success,
           errorCode =
         AC_LaboratoryAnalyzer.startAssay(
@@ -657,6 +696,25 @@ local function collectLaboratorySample(
     if not player
         or not analyzerWorldObject
     then
+
+        return
+    end
+
+
+    ------------------------------------------------
+    -- Multiplayer client with server authority: ask;
+    -- the server decides and answers. Never taken in
+    -- single player (canRequest() is false there).
+    ------------------------------------------------
+
+    if AC_Authority.canRequest() then
+
+        AC_AuthorityClient.requestLaboratory(
+            player,
+            "labCollect",
+            analyzerWorldObject
+        )
+
 
         return
     end
@@ -782,6 +840,25 @@ local function cancelLaboratoryAssay(
     end
 
 
+    ------------------------------------------------
+    -- Multiplayer client with server authority: ask;
+    -- the server decides and answers. Never taken in
+    -- single player (canRequest() is false there).
+    ------------------------------------------------
+
+    if AC_Authority.canRequest() then
+
+        AC_AuthorityClient.requestLaboratory(
+            player,
+            "labCancel",
+            analyzerWorldObject
+        )
+
+
+        return
+    end
+
+
     local sample,
           errorCode =
         AC_LaboratoryAnalyzer.cancelAssay(
@@ -847,7 +924,9 @@ local function placeLaboratoryAnalyzer(
     end
 
 
-    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable()
+        and not AC_Authority.canRequest()
+    then
 
         HaloTextHelper.addText(
             player,
@@ -892,7 +971,9 @@ local function pickUpLaboratoryAnalyzer(
     end
 
 
-    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable()
+        and not AC_Authority.canRequest()
+    then
 
         HaloTextHelper.addText(
             player,
@@ -990,7 +1071,9 @@ local function addPickUpOption(
         )
 
 
-    if not AC_LaboratoryAnalyzer.isPlacementAvailable() then
+    if not AC_LaboratoryAnalyzer.isPlacementAvailable()
+        and not AC_Authority.canRequest()
+    then
 
         addUnavailableOption(
             context,
@@ -1153,7 +1236,8 @@ local function addLaboratoryAnalyzerOptions(
 
 
                     addAuthoritativeOption(
-                        AC_LaboratoryAnalyzer.isAvailable(),
+                        AC_LaboratoryAnalyzer.isAvailable()
+                            or AC_Authority.canRequest(),
                         getLabUseMultiplayerText,
                         context,
                         optionName,
@@ -1209,7 +1293,8 @@ local function addLaboratoryAnalyzerOptions(
 
 
         addAuthoritativeOption(
-            AC_LaboratoryAnalyzer.isAvailable(),
+            AC_LaboratoryAnalyzer.isAvailable()
+                or AC_Authority.canRequest(),
             getLabUseMultiplayerText,
             context,
             AC_Text.get(
@@ -1240,7 +1325,8 @@ local function addLaboratoryAnalyzerOptions(
     if info.state == "ready" then
 
         addAuthoritativeOption(
-            AC_LaboratoryAnalyzer.isAvailable(),
+            AC_LaboratoryAnalyzer.isAvailable()
+                or AC_Authority.canRequest(),
             getLabUseMultiplayerText,
             context,
             AC_Text.get(
@@ -1339,7 +1425,8 @@ local function onFillWorldObjectContextMenu(
 
 
     addAuthoritativeOption(
-        AC_GeologySampling.isAvailable(),
+        AC_GeologySampling.isAvailable()
+            or AC_Authority.canRequest(),
         getSamplingMultiplayerText,
         context,
         AC_Text.get(
@@ -1402,7 +1489,9 @@ local function onFillInventoryContextMenu(
                 )
 
 
-            if AC_LaboratoryAnalyzer.isPlacementAvailable() then
+            if AC_LaboratoryAnalyzer.isPlacementAvailable()
+                or AC_Authority.canRequest()
+            then
 
                 context:addOption(
                     placeName,
@@ -1466,7 +1555,8 @@ local function onFillInventoryContextMenu(
                 if fieldKit then
 
                     addAuthoritativeOption(
-                        AC_GeologySampling.isAvailable(),
+                        AC_GeologySampling.isAvailable()
+                            or AC_Authority.canRequest(),
                         getSamplingMultiplayerText,
                         context,
                         AC_Text.get(
@@ -1511,7 +1601,8 @@ local function onFillInventoryContextMenu(
 
 
                     addAuthoritativeOption(
-                        AC_GeologySampling.isAvailable(),
+                        AC_GeologySampling.isAvailable()
+                            or AC_Authority.canRequest(),
                         getSamplingMultiplayerText,
                         context,
                         optionName,

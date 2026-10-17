@@ -197,9 +197,10 @@ function M.install(MOCK)
     -- Engine globals the actions (and the mod's hooks) use.
     getDebug = function() return MOCK.debug == true end
     syncHandWeaponFields = function() end
-    syncItemFields = function() end
-    sendAddItemToContainer = function() end
-    sendRemoveItemFromContainer = function() end
+    -- The mock's own versions record their calls (MOCK.network); kept.
+    syncItemFields = syncItemFields or function() end
+    sendAddItemToContainer = sendAddItemToContainer or function() end
+    sendRemoveItemFromContainer = sendRemoveItemFromContainer or function() end
     -- The rounds and magazines the model's guns take must be items the
     -- factory knows; what was not known before is forgotten again by
     -- M.uninstall(), so the mock claims nothing it did not claim before.

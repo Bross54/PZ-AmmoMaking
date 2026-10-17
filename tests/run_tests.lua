@@ -1308,12 +1308,15 @@ end
 -- here; that mining actually starts needs the in-game check.
 section("Mining action lifecycle matches the working dig action (mocked timed-action base)")
 do
-    local LIFECYCLE = { "new", "isValid", "waitToStart", "start", "update", "stop", "perform", "getDuration" }
+    -- complete() is defined since the multiplayer server authority: the
+    -- engine sends an action that has one to the server. In single player
+    -- it does nothing (tests/suite_authority.lua).
+    local LIFECYCLE = { "new", "isValid", "waitToStart", "start", "update", "stop", "perform", "getDuration", "complete" }
     for _, name in ipairs(LIFECYCLE) do
         eq(type(rawget(AC_MineOreAction, name)), type(rawget(AC_DigGeologicalSampleAction, name)),
             "mining and dig both define " .. name)
     end
-    for _, name in ipairs({ "begin", "create", "adjustMaxTime", "complete" }) do
+    for _, name in ipairs({ "begin", "create", "adjustMaxTime" }) do
         eq(rawget(AC_MineOreAction, name), nil, "mining leaves vanilla " .. name .. " alone")
         eq(rawget(AC_DigGeologicalSampleAction, name), nil, "dig leaves vanilla " .. name .. " alone")
     end
@@ -4358,6 +4361,9 @@ do
         -- Once, when a dedicated server has loaded its Lua (the skill
         -- book entry, AC_SkillBooks).
         OnServerStarted = true,
+        -- One message per request or answer, and only with the
+        -- multiplayer server authority on (tests/suite_authority.lua).
+        OnClientCommand = true, OnServerCommand = true, OnReceiveGlobalModData = true,
     }
     local registrations = 0
     local heavy = {
@@ -6364,7 +6370,7 @@ do
             for variable, key in string.gmatch(source, "([%a_]*[dD]ata)%.([%a_][%w_]*)") do
                 -- The engine's ModData global and event are not tables of ours,
                 -- nor are the mod's own modules whose names end in "Data".
-                if variable ~= "ModData" and variable ~= "OnInitGlobalModData" and variable ~= "craftRecipeData"
+                if variable ~= "ModData" and variable ~= "OnInitGlobalModData" and variable ~= "OnReceiveGlobalModData" and variable ~= "craftRecipeData"
                     and string.sub(variable, 1, 3) ~= "AC_" then
                     if not used[key] then usedCount = usedCount + 1 end
                     used[key] = name
@@ -10246,7 +10252,7 @@ do
         makeSample = makeSample, equipShovel = equipShovel, placeAnalyzerObject = placeAnalyzerObject, poweredLabSquare = poweredLabSquare,
     }
     T.mockProceduralLists, T.mockDistribution = mockProceduralLists, mockDistribution
-    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "skillbooks", "casting", "docs" }) do
+    for _, name in ipairs({ "features", "press", "spent", "quality", "loot", "balance", "progression", "multiplayer", "authority", "skillbooks", "casting", "docs" }) do
         dofile(ROOT .. "/tests/suite_" .. name .. ".lua")(T)
     end
 end

@@ -56,6 +56,21 @@ function AmmoMakingSkill.addXP(player, amount)
         return
     end
 
+    -- A multiplayer server with server authority grants through
+    -- vanilla's addXp, which on a server is GameServer.addXp and
+    -- reaches the client (JAR LuaManager.GlobalObject.addXp; FILE
+    -- server/BuildingObjects/ISBuildUtil.lua). Never in single
+    -- player: there decides() is false and the call below is the
+    -- one that has always run. REQUIRES FUTURE IN-GAME VERIFICATION.
+    if AC_Authority and AC_Authority.decides() then
+        addXp(
+            player,
+            AmmoMakingSkill.perk,
+            amount
+        )
+        return
+    end
+
     player:getXp():AddXP(
         AmmoMakingSkill.perk,
         amount

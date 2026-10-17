@@ -92,7 +92,22 @@ session that checks it is `docs/INGAME_VALIDATION.md`.
 - **Multiplayer**: digging a sample, both portable assays and using the
   analyzer are now refused on a multiplayer client and shown as disabled
   options that say why, as mining and analyzer placement already were.
-  Nothing is synchronised; multiplayer stays unsupported.
+- **Multiplayer server authority** (sandbox option, off, experimental,
+  never run on a server; `docs/MULTIPLAYER_DESIGN.md` 6): with it on, a
+  multiplayer client asks and the server checks and performs digging,
+  both assays, the analyzer (place, start, cancel, collect, pick up) and
+  mining. The three timed actions use Build 42's own mechanism (a
+  `complete()` the engine runs on the server; the files moved from
+  `client/` to `shared/`); the menu clicks are client commands. The server
+  checks distance (2 tiles), the tool in hand, that every item named is
+  the requester's own, whole coordinates on a loaded square, the metal,
+  and one request of each kind per player and second; items, item fields,
+  XP (`addXp`), the analyzer's ModData and the depletion store are sent
+  back with vanilla's calls. Two players cannot both take the last ore or
+  collect one sample. **Single player is unchanged**: a test replays a
+  whole session against the files as they were seen working in game
+  (`tests/sp_reference/`) and compares every message, item, XP grant and
+  console line. Spent cases and quality tracking stay single player.
 - **Progression**: what each level from 0 to 10 gives, as a generated
   table. No recipe was invented to fill the upper levels.
 - **Placeholder visuals** in one place (`AC_Visuals.lua`), marked
