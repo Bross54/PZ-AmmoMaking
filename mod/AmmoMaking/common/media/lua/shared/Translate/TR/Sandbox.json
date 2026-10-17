@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Cephane Yapımı)",
+    "Sandbox_AmmoMaking_QualityTracking": "Şarjör ve ateşli silahlardaki cephane kalitesini takip et (deneysel)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "DENEYSEL, yalnızca tek oyunculu. Elle doldurulmuş mermilerin kovan kalitesi, bir şarjöre veya ateşli silaha doldurulduklarında korunur ve boşaltıldıklarında geri verilir. Atışa hiçbir etkisi yoktur. Henüz oyun içinde doğrulanmadı.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Çok oyunculu: numune alma, analizler, analiz cihazı ve kazıyı sunucu yapar (deneysel)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "DENEYSEL, yalnızca çok oyunculu, henüz bir sunucuda doğrulanmadı. Kapalı: çok oyunculu bir sunucuda numune kazma, analiz kitleri, laboratuvar analiz cihazı ve kazı reddedilmeye devam eder. Açık: istemciler istekte bulunur, sunucu mesafeyi, aletleri ve eşyaları kontrol edip işi yapar ve her oyuncu aynı yatakları görür. Tek oyunculuda etkisi yoktur.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Yatak karesi başına cevher (çarpan)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Bir bakır veya çinko yatak karesinin kaç birim cevher içerdiğini ölçekler. 1, modun dengesidir. İşlenebilir her derece en az bir birim tutar, eser miktardaki zemin ise boş kalır. Daha önce işlenmiş karelerden alınanlar geri gelmez.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Ganimet olarak bulunan matris setleri ve mermi kalıpları (çarpan)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Matris setlerinin ve mermi kalıplarının silah dükkanlarında, garajlardaki silah dolaplarında ve avcıların eşyaları arasında ne sıklıkla çıktığını ölçekler. 1, modun dengesidir; 0 onları ganimetten çıkarır (yine de dövülerek yapılabilirler). Önceden doldurulmuş kaplar içeriklerini korur. Sandbox'ın alet ganimeti ayarı da onları ölçekler.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Ganimet olarak bulunan dolum malzemeleri (çarpan)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Modun ganimete eklediği barut, tek kapsüller, pirinç hurdası ve küçük pirinç levhaların ne sıklıkla çıktığını ölçekler. 1, modun dengesidir; 0 onları çıkarır. Önceden doldurulmuş kaplar içeriklerini korur.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Cephane Yapımı TP çarpanı",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Cephane Yapımı becerisinin kendi TP çarpanı, oyunun beceri başına çarpanları gibi. Onlar gibi yalnızca genel TP çarpanı kapalıyken kullanılır; aksi halde genel çarpan geçerlidir. Geri dönüşüm hiçbir değerde tecrübe kazandırmaz."
+}

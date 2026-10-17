@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabbricazione munizioni)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Bossoli sparati trovati ogni cento colpi esplosi (sperimentale)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "SPERIMENTALE, solo giocatore singolo. Quanti colpi su cento esplosi lasciano un bossolo sparato che si può raccogliere. Un bossolo sparato si smantella per un quarto del suo ottone, oppure si ricalibra con il suo set di matrici, due per un bossolo utilizzabile. 0 non ne lascia nessuno."
+}

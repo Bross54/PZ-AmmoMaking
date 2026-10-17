@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricação de Munição)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Estojos deflagrados encontrados a cada cem disparos (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, apenas um jogador. Quantos de cada cem cartuchos disparados deixam um estojo deflagrado que pode ser recolhido. Um estojo deflagrado é reciclado por um quarto do seu latão, ou recalibrado no seu jogo de matrizes, dois para um estojo utilizável. 0 não deixa nenhum."
+}

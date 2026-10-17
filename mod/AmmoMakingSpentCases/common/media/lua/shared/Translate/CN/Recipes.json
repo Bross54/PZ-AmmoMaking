@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "拆解已击发的小型弹壳",
+    "AmmoMaking_ScrapSpentBrass10": "拆解已击发的中型弹壳",
+    "AmmoMaking_ScrapSpentBrass15": "拆解已击发的大型弹壳和霰弹壳",
+    "AmmoMaking_ResizeSpentCase9mm": "整形已击发的9mm弹壳",
+    "AmmoMaking_ResizeSpentCase38Special": "整形已击发的.38弹壳",
+    "AmmoMaking_ResizeSpentCase45ACP": "整形已击发的.45 ACP弹壳",
+    "AmmoMaking_ResizeSpentCase357Magnum": "整形已击发的.357马格南弹壳",
+    "AmmoMaking_ResizeSpentCase44Magnum": "整形已击发的.44马格南弹壳",
+    "AmmoMaking_ResizeSpentCase556NATO": "整形已击发的5.56弹壳",
+    "AmmoMaking_ResizeSpentCase3030Win": "整形已击发的.30-30弹壳",
+    "AmmoMaking_ResizeSpentCase308Win": "整形已击发的.308弹壳",
+    "AmmoMaking_ResizeSpentCase12Gauge": "整形已击发的12g黄铜霰弹壳",
+    "AmmoMaking_CleanSpentCases9mm": "用钢丝球清洁已击发的9mm弹壳",
+    "AmmoMaking_CleanSpentCases38Special": "用钢丝球清洁已击发的.38弹壳",
+    "AmmoMaking_CleanSpentCases45ACP": "用钢丝球清洁已击发的.45 ACP弹壳",
+    "AmmoMaking_CleanSpentCases357Magnum": "用钢丝球清洁已击发的.357马格南弹壳",
+    "AmmoMaking_CleanSpentCases44Magnum": "用钢丝球清洁已击发的.44马格南弹壳",
+    "AmmoMaking_CleanSpentCases556NATO": "用钢丝球清洁已击发的5.56弹壳",
+    "AmmoMaking_CleanSpentCases3030Win": "用钢丝球清洁已击发的.30-30弹壳",
+    "AmmoMaking_CleanSpentCases308Win": "用钢丝球清洁已击发的.308弹壳",
+    "AmmoMaking_CleanSpentCases12Gauge": "用钢丝球清洁已击发的12g黄铜霰弹壳"
+}

@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (wytwarzanie amunicji)",
+    "Sandbox_AmmoMaking_QualityTracking": "Śledź jakość amunicji w magazynkach i broni (eksperymentalne)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EKSPERYMENTALNE, tylko gra jednoosobowa. Jakość łusek elaborowanych nabojów jest zachowywana po załadowaniu ich do magazynka lub broni i przywracana po rozładowaniu. Nie ma wpływu na strzelanie. Jeszcze niesprawdzone w grze.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Tryb wieloosobowy: serwer wykonuje pobieranie próbek, analizy, pracę analizatora i wydobycie (eksperymentalne)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EKSPERYMENTALNE, tylko tryb wieloosobowy, jeszcze niesprawdzone na serwerze. Wyłączone: na serwerze wieloosobowym kopanie próbek, zestawy do analizy, analizator laboratoryjny i wydobycie pozostają zablokowane. Włączone: klienci wysyłają prośbę, serwer sprawdza odległość, narzędzia i przedmioty, wykonuje pracę, a wszyscy gracze widzą te same złoża. Brak wpływu w grze jednoosobowej.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Ruda na pole złoża (mnożnik)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Określa, ile jednostek rudy zawiera pole złoża miedzi lub cynku. 1 to balans moda. Każda opłacalna klasa zachowuje co najmniej jedną jednostkę, a śladowe podłoże pozostaje puste. Pola już eksploatowane zachowują to, co z nich wydobyto.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Zestawy matryc i formy do pocisków jako łup (mnożnik)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Określa, jak często zestawy matryc i formy do pocisków pojawiają się w sklepach z bronią, szafkach na broń w garażach i wśród rzeczy myśliwych. 1 to balans moda, 0 usuwa je z łupów (nadal można je wykuć). Już wypełnione pojemniki zachowują zawartość. Ustawienie łupów narzędzi w sandboksie również na nie wpływa.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Komponenty do elaboracji jako łup (mnożnik)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Określa, jak często pojawiają się dodawane przez moda proch strzelniczy, luźne spłonki, złom mosiężny i małe arkusze mosiądzu. 1 to balans moda, 0 usuwa je. Już wypełnione pojemniki zachowują zawartość.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Mnożnik PD umiejętności Wytwarzanie amunicji",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Własny mnożnik PD umiejętności Wytwarzanie amunicji, jak mnożniki poszczególnych umiejętności w grze. Tak jak one działa tylko wtedy, gdy globalny mnożnik PD jest wyłączony; w przeciwnym razie obowiązuje globalny. Recykling nie uczy niczego przy żadnej wartości."
+}

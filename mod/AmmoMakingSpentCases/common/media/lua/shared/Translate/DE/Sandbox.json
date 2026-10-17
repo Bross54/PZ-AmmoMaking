@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Munitionsherstellung)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Gefundene leere Hülsen pro hundert abgefeuerte Patronen (experimentell)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTELL, nur Einzelspieler. Wie viele von hundert abgefeuerten Patronen eine aufhebbare leere Hülse hinterlassen. Eine leere Hülse wird zu einem Viertel ihres Messings verschrottet oder mit ihrem Matrizensatz kalibriert, zwei zu einer brauchbaren Hülse. 0 hinterlässt keine."
+}

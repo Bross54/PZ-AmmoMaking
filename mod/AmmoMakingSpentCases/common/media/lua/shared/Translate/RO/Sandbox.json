@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricare Muniție)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Tuburi trase găsite la o sută de cartușe trase (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, doar pentru un singur jucător. Câte dintr-o sută de cartușe trase lasă un tub tras care poate fi ridicat. Un tub tras se transformă în resturi la un sfert din alama sa, sau se recalibrează la setul său de matrițe, două într-un tub utilizabil. 0 nu lasă niciunul."
+}

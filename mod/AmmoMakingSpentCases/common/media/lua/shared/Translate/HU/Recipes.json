@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Kilőtt kis hüvelyek hulladékká bontása",
+    "AmmoMaking_ScrapSpentBrass10": "Kilőtt közepes hüvelyek hulladékká bontása",
+    "AmmoMaking_ScrapSpentBrass15": "Kilőtt nagy hüvelyek és sörétes hüvelyek hulladékká bontása",
+    "AmmoMaking_ResizeSpentCase9mm": "Kilőtt 9mm hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase38Special": "Kilőtt .38 Special hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase45ACP": "Kilőtt .45 ACP hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Kilőtt .357 Magnum hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Kilőtt .44 Magnum hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase556NATO": "Kilőtt 5.56 hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase3030Win": "Kilőtt .30-30 hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase308Win": "Kilőtt .308 hüvely kalibrálása",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Kilőtt 12 Gauge sárgaréz sörétes hüvely kalibrálása",
+    "AmmoMaking_CleanSpentCases9mm": "Kilőtt 9mm hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases38Special": "Kilőtt .38 Special hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases45ACP": "Kilőtt .45 ACP hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases357Magnum": "Kilőtt .357 Magnum hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases44Magnum": "Kilőtt .44 Magnum hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases556NATO": "Kilőtt 5.56 hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases3030Win": "Kilőtt .30-30 hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases308Win": "Kilőtt .308 hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_CleanSpentCases12Gauge": "Kilőtt 12 Gauge sárgaréz sörétes hüvelyek tisztítása acél súrolóval"
+}

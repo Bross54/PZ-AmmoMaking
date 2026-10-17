@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Разобрать стреляные малые гильзы",
+    "AmmoMaking_ScrapSpentBrass10": "Разобрать стреляные средние гильзы",
+    "AmmoMaking_ScrapSpentBrass15": "Разобрать стреляные большие гильзы и гильзы для дробовика",
+    "AmmoMaking_ResizeSpentCase9mm": "Откалибровать стреляную гильзу 9 мм",
+    "AmmoMaking_ResizeSpentCase38Special": "Откалибровать стреляную гильзу .38 Special",
+    "AmmoMaking_ResizeSpentCase45ACP": "Откалибровать стреляную гильзу .45 ACP",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Откалибровать стреляную гильзу .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Откалибровать стреляную гильзу .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Откалибровать стреляную гильзу 5.56 мм",
+    "AmmoMaking_ResizeSpentCase3030Win": "Откалибровать стреляную гильзу .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Откалибровать стреляную гильзу .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Откалибровать стреляную латунную гильзу 12 калибра",
+    "AmmoMaking_CleanSpentCases9mm": "Очистить стреляные гильзы 9 мм стальной ватой",
+    "AmmoMaking_CleanSpentCases38Special": "Очистить стреляные гильзы .38 Special стальной ватой",
+    "AmmoMaking_CleanSpentCases45ACP": "Очистить стреляные гильзы .45 ACP стальной ватой",
+    "AmmoMaking_CleanSpentCases357Magnum": "Очистить стреляные гильзы .357 Magnum стальной ватой",
+    "AmmoMaking_CleanSpentCases44Magnum": "Очистить стреляные гильзы .44 Magnum стальной ватой",
+    "AmmoMaking_CleanSpentCases556NATO": "Очистить стреляные гильзы 5.56 мм стальной ватой",
+    "AmmoMaking_CleanSpentCases3030Win": "Очистить стреляные гильзы .30-30 стальной ватой",
+    "AmmoMaking_CleanSpentCases308Win": "Очистить стреляные гильзы .308 стальной ватой",
+    "AmmoMaking_CleanSpentCases12Gauge": "Очистить стреляные латунные гильзы 12 калибра стальной ватой"
+}

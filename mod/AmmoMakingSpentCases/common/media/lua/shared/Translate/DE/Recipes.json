@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Abgeschossene kleine Hülsen verschrotten",
+    "AmmoMaking_ScrapSpentBrass10": "Abgeschossene mittlere Hülsen verschrotten",
+    "AmmoMaking_ScrapSpentBrass15": "Abgeschossene große Hülsen und Schrothülsen verschrotten",
+    "AmmoMaking_ResizeSpentCase9mm": "Abgeschossene Hülse 9mm kalibrieren",
+    "AmmoMaking_ResizeSpentCase38Special": "Abgeschossene Hülse .38 Special kalibrieren",
+    "AmmoMaking_ResizeSpentCase45ACP": "Abgeschossene Hülse .45 ACP kalibrieren",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Abgeschossene Hülse .357 Magnum kalibrieren",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Abgeschossene Hülse .44 Magnum kalibrieren",
+    "AmmoMaking_ResizeSpentCase556NATO": "Abgeschossene Hülse 5.56 kalibrieren",
+    "AmmoMaking_ResizeSpentCase3030Win": "Abgeschossene Hülse .30-30 kalibrieren",
+    "AmmoMaking_ResizeSpentCase308Win": "Abgeschossene Hülse .308 kalibrieren",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Abgeschossene Messing-Schrothülse 12 Gauge kalibrieren",
+    "AmmoMaking_CleanSpentCases9mm": "Abgeschossene Hülsen 9mm mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases38Special": "Abgeschossene Hülsen .38 Special mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases45ACP": "Abgeschossene Hülsen .45 ACP mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases357Magnum": "Abgeschossene Hülsen .357 Magnum mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases44Magnum": "Abgeschossene Hülsen .44 Magnum mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases556NATO": "Abgeschossene Hülsen 5.56 mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases3030Win": "Abgeschossene Hülsen .30-30 mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases308Win": "Abgeschossene Hülsen .308 mit Stahlwolle reinigen",
+    "AmmoMaking_CleanSpentCases12Gauge": "Abgeschossene Messing-Schrothülsen 12 Gauge mit Stahlwolle reinigen"
+}

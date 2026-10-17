@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabrication de munitions)",
+    "Sandbox_AmmoMaking_QualityTracking": "Suivre la qualité des munitions dans les chargeurs et les armes (expérimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPÉRIMENTAL, solo uniquement. La qualité de douille des munitions rechargées est conservée lorsqu'elles sont chargées dans un chargeur ou une arme, et restituée lorsqu'elles sont déchargées. Aucun effet sur le tir. Pas encore vérifié en jeu.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multijoueur : le serveur gère les prélèvements, les analyses, l'analyseur et l'extraction minière (expérimental)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPÉRIMENTAL, multijoueur uniquement, pas encore vérifié sur un serveur. Désactivé : sur un serveur multijoueur, le prélèvement d'échantillons, les kits d'analyse, l'analyseur de laboratoire et l'extraction minière restent refusés. Activé : les clients font la demande, le serveur vérifie la distance, les outils et les objets et effectue le travail, et tous les joueurs voient les mêmes gisements. Aucun effet en solo.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minerai par case de gisement (multiplicateur)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Ajuste le nombre d'unités de minerai que contient une case de gisement de cuivre ou de zinc. 1 correspond à l'équilibrage du mod. Chaque teneur exploitable garde au moins une unité, et un sol à traces reste vide. Les cases déjà exploitées conservent ce qui en a été extrait.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Jeux de matrices et moules à balles trouvés dans le butin (multiplicateur)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Ajuste la fréquence à laquelle les jeux de matrices et les moules à balles apparaissent dans les armureries, les armoires à fusils des garages et parmi les affaires des chasseurs. 1 correspond à l'équilibrage du mod, 0 les retire du butin (ils peuvent toujours être forgés). Les conteneurs déjà remplis conservent leur contenu. Le réglage de butin d'outils du bac à sable les ajuste également.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Fournitures de rechargement trouvées dans le butin (multiplicateur)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajuste la fréquence d'apparition de la poudre à canon, des amorces en vrac, du laiton de récupération et des petites plaques de laiton que le mod ajoute au butin. 1 correspond à l'équilibrage du mod, 0 les retire. Les conteneurs déjà remplis conservent leur contenu.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Multiplicateur d'XP de Fabrication de munitions",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Le multiplicateur d'XP propre à la compétence Fabrication de munitions, comme les multiplicateurs par compétence du jeu. Comme eux, il n'est utilisé que lorsque le multiplicateur d'XP global est désactivé ; sinon, c'est le global qui s'applique. Le recyclage n'apprend rien, quelle que soit la valeur."
+}

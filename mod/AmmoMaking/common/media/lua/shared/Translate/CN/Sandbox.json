@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "弹药制造 (Ammo Making)",
+    "Sandbox_AmmoMaking_QualityTracking": "在弹匣和枪械中追踪弹药质量 (实验性)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "实验性功能，仅限单人游戏。复装子弹装入弹匣或枪械时会保留其弹壳质量，卸下时会返还。对射击没有影响。尚未在游戏中验证。",
+    "Sandbox_AmmoMaking_ServerAuthority": "联机: 由服务器执行采样、化验、分析仪和开采 (实验性)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "实验性功能，仅限联机，尚未在服务器上验证。关闭: 在联机服务器上，挖掘样本、化验套件、实验室分析仪和开采仍会被拒绝。开启: 客户端发出请求，服务器检查距离、工具和物品并执行操作，所有玩家看到相同的矿藏。在单人游戏中无效。",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "每格矿藏的矿石量 (倍率)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "调整每格铜或锌矿藏所含的矿石单位数量。1 为本模组的默认平衡。每个可开采的品位至少保留一个单位，微量地块仍然为空。已开采过的地块不会恢复已被取走的部分。",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "作为物资出现的模具组和弹头模具 (倍率)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "调整模具组和弹头模具在枪店、车库枪柜和猎人物品中出现的频率。1 为本模组的默认平衡，0 则将其从物资中移除 (仍可锻造)。已生成物品的容器保留原有物品。沙盒的工具物资设置同样会对其产生影响。",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "作为物资出现的复装材料 (倍率)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "调整本模组添加到物资中的火药、散装底火、黄铜废料和小黄铜板出现的频率。1 为本模组的默认平衡，0 则将其移除。已生成物品的容器保留原有物品。",
+    "Sandbox_AmmoMaking_XPMultiplier": "弹药制造经验倍率",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "弹药制造技能自身的经验倍率，与游戏中各技能的经验倍率相同。与它们一样，仅在关闭全局经验倍率时使用；否则采用全局倍率。无论设为何值，回收都不会获得经验。"
+}

@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "탄약 제작 (Ammo Making)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "발사 100발당 발견되는 사용한 탄피 수 (실험적)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "실험적 기능이며 싱글플레이 전용입니다. 발사한 100발 중 주울 수 있는 사용한 탄피가 남는 수입니다. 사용한 탄피는 분해하면 황동의 4분의 1이 되고, 다이 세트로 재성형하면 2개가 사용 가능한 탄피 1개가 됩니다. 0이면 남지 않습니다."
+}

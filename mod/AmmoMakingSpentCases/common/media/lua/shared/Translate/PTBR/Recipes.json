@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Reciclar Estojos Deflagrados Pequenos",
+    "AmmoMaking_ScrapSpentBrass10": "Reciclar Estojos Deflagrados Médios",
+    "AmmoMaking_ScrapSpentBrass15": "Reciclar Estojos Deflagrados Grandes e de Calibre 12",
+    "AmmoMaking_ResizeSpentCase9mm": "Recalibrar Estojo Deflagrado 9mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Recalibrar Estojo Deflagrado .38 Especial",
+    "AmmoMaking_ResizeSpentCase45ACP": "Recalibrar Estojo Deflagrado .45 ACP",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Recalibrar Estojo Deflagrado .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Recalibrar Estojo Deflagrado .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Recalibrar Estojo Deflagrado 5.56",
+    "AmmoMaking_ResizeSpentCase3030Win": "Recalibrar Estojo Deflagrado .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Recalibrar Estojo Deflagrado .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Recalibrar Estojo de Latão Deflagrado Calibre 12",
+    "AmmoMaking_CleanSpentCases9mm": "Limpar Estojos Deflagrados 9mm com Palha de Aço",
+    "AmmoMaking_CleanSpentCases38Special": "Limpar Estojos Deflagrados .38 Especial com Palha de Aço",
+    "AmmoMaking_CleanSpentCases45ACP": "Limpar Estojos Deflagrados .45 ACP com Palha de Aço",
+    "AmmoMaking_CleanSpentCases357Magnum": "Limpar Estojos Deflagrados .357 Magnum com Palha de Aço",
+    "AmmoMaking_CleanSpentCases44Magnum": "Limpar Estojos Deflagrados .44 Magnum com Palha de Aço",
+    "AmmoMaking_CleanSpentCases556NATO": "Limpar Estojos Deflagrados 5.56 com Palha de Aço",
+    "AmmoMaking_CleanSpentCases3030Win": "Limpar Estojos Deflagrados .30-30 com Palha de Aço",
+    "AmmoMaking_CleanSpentCases308Win": "Limpar Estojos Deflagrados .308 com Palha de Aço",
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpar Estojos de Latão Deflagrados Calibre 12 com Palha de Aço"
+}

@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Rozebrat vystřelené malé nábojnice",
+    "AmmoMaking_ScrapSpentBrass10": "Rozebrat vystřelené střední nábojnice",
+    "AmmoMaking_ScrapSpentBrass15": "Rozebrat vystřelené velké a brokové nábojnice",
+    "AmmoMaking_ResizeSpentCase9mm": "Kalibrovat vystřelenou nábojnici 9 mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Kalibrovat vystřelenou nábojnici .38 Special",
+    "AmmoMaking_ResizeSpentCase45ACP": "Kalibrovat vystřelenou nábojnici .45 Auto",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Kalibrovat vystřelenou nábojnici .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Kalibrovat vystřelenou nábojnici .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Kalibrovat vystřelenou nábojnici 5.56 mm",
+    "AmmoMaking_ResizeSpentCase3030Win": "Kalibrovat vystřelenou nábojnici .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Kalibrovat vystřelenou nábojnici .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Kalibrovat vystřelenou mosaznou brokovou nábojnici ráže 12",
+    "AmmoMaking_CleanSpentCases9mm": "Vyčistit vystřelené nábojnice 9 mm ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases38Special": "Vyčistit vystřelené nábojnice .38 Special ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases45ACP": "Vyčistit vystřelené nábojnice .45 Auto ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases357Magnum": "Vyčistit vystřelené nábojnice .357 Magnum ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases44Magnum": "Vyčistit vystřelené nábojnice .44 Magnum ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases556NATO": "Vyčistit vystřelené nábojnice 5.56 mm ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases3030Win": "Vyčistit vystřelené nábojnice .30-30 ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases308Win": "Vyčistit vystřelené nábojnice .308 ocelovou vlnou",
+    "AmmoMaking_CleanSpentCases12Gauge": "Vyčistit vystřelené mosazné brokové nábojnice ráže 12 ocelovou vlnou"
+}

@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Romuta ammutut pienet hylsyt",
+    "AmmoMaking_ScrapSpentBrass10": "Romuta ammutut keskikokoiset hylsyt",
+    "AmmoMaking_ScrapSpentBrass15": "Romuta ammutut suuret hylsyt ja haulikon hylsyt",
+    "AmmoMaking_ResizeSpentCase9mm": "Kalibroi ammuttu 9mm hylsy",
+    "AmmoMaking_ResizeSpentCase38Special": "Kalibroi ammuttu .38 Special hylsy",
+    "AmmoMaking_ResizeSpentCase45ACP": "Kalibroi ammuttu .45 ACP hylsy",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Kalibroi ammuttu .357 Magnum hylsy",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Kalibroi ammuttu .44 Magnum hylsy",
+    "AmmoMaking_ResizeSpentCase556NATO": "Kalibroi ammuttu 5,56 hylsy",
+    "AmmoMaking_ResizeSpentCase3030Win": "Kalibroi ammuttu .30-30 hylsy",
+    "AmmoMaking_ResizeSpentCase308Win": "Kalibroi ammuttu .308 hylsy",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Kalibroi ammuttu 12 Gauge messinkihylsy",
+    "AmmoMaking_CleanSpentCases9mm": "Puhdista ammutut 9mm hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases38Special": "Puhdista ammutut .38 Special hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases45ACP": "Puhdista ammutut .45 ACP hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases357Magnum": "Puhdista ammutut .357 Magnum hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases44Magnum": "Puhdista ammutut .44 Magnum hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases556NATO": "Puhdista ammutut 5,56 hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases3030Win": "Puhdista ammutut .30-30 hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases308Win": "Puhdista ammutut .308 hylsyt teräsvillalla",
+    "AmmoMaking_CleanSpentCases12Gauge": "Puhdista ammutut 12 Gauge messinkihylsyt teräsvillalla"
+}

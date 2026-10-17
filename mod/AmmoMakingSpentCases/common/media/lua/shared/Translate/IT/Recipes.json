@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Smantella bossoli sparati piccoli",
+    "AmmoMaking_ScrapSpentBrass10": "Smantella bossoli sparati medi",
+    "AmmoMaking_ScrapSpentBrass15": "Smantella bossoli sparati grandi e bossoli per cartucce",
+    "AmmoMaking_ResizeSpentCase9mm": "Ricalibra bossolo sparato 9mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Ricalibra bossolo sparato .38 Special",
+    "AmmoMaking_ResizeSpentCase45ACP": "Ricalibra bossolo sparato .45 automatica",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Ricalibra bossolo sparato .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Ricalibra bossolo sparato .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Ricalibra bossolo sparato 5.56",
+    "AmmoMaking_ResizeSpentCase3030Win": "Ricalibra bossolo sparato .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Ricalibra bossolo sparato .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Ricalibra bossolo in ottone sparato per cartucce 12 Gauge",
+    "AmmoMaking_CleanSpentCases9mm": "Pulisci bossoli sparati 9mm con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases38Special": "Pulisci bossoli sparati .38 Special con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases45ACP": "Pulisci bossoli sparati .45 automatica con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases357Magnum": "Pulisci bossoli sparati .357 Magnum con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases44Magnum": "Pulisci bossoli sparati .44 Magnum con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases556NATO": "Pulisci bossoli sparati 5.56 con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases3030Win": "Pulisci bossoli sparati .30-30 con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases308Win": "Pulisci bossoli sparati .308 con lana d'acciaio",
+    "AmmoMaking_CleanSpentCases12Gauge": "Pulisci bossoli in ottone sparati per cartucce 12 Gauge con lana d'acciaio"
+}

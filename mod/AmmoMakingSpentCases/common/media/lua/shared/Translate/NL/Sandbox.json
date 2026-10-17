@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Munitie maken)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Gevonden afgevuurde hulzen per honderd afgevuurde patronen (experimenteel)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTEEL, alleen singleplayer. Hoeveel van de honderd afgevuurde patronen een afgevuurde huls achterlaten die je kunt oprapen. Een afgevuurde huls levert als schroot een kwart van het messing op, of wordt met de bijbehorende matrijzenset gekalibreerd, twee tot één bruikbare huls. 0 laat er geen achter."
+}

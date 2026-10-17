@@ -22,6 +22,13 @@ add-on or behind an experimental switch that is off. Nothing in this entry
 has been seen in game; the session that checks it is
 `docs/INGAME_VALIDATION.md`.
 
+- **Machine translations** of all three mods into 27 of the game's
+  languages (AR, CA, CH, CN, CS, DA, DE, ES, ES_CL, ES_MX, FI, FR, HU, ID,
+  IT, JP, KO, NL, NO, PL, PT, PTBR, RO, RU, TH, TR, UA; AR, ES_CL and ES_MX
+  share one Latin American Spanish text). Vanilla's own words are reused
+  for vanilla things. Machine-made, for native speakers to correct; the
+  generated English files (the add-ons' recipe names) are not regenerated
+  into them.
 - **Rifles cast lead, with a gas check**: a rifle bullet mould (forged, or
   of stone, clay or sand), cast bullets for the 5.56, .30-30 and .308, and
   *Punch Copper Gas Checks* (ten from a copper scrap). The rifle's cast

@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Reciclar casquillos percutidos pequeños",
+    "AmmoMaking_ScrapSpentBrass10": "Reciclar casquillos percutidos medianos",
+    "AmmoMaking_ScrapSpentBrass15": "Reciclar casquillos percutidos grandes y de escopeta",
+    "AmmoMaking_ResizeSpentCase9mm": "Recalibrar casquillo percutido de 9mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Recalibrar casquillo percutido de .38 Especial",
+    "AmmoMaking_ResizeSpentCase45ACP": "Recalibrar casquillo percutido de .45 ACP",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Recalibrar casquillo percutido de .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Recalibrar casquillo percutido de .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Recalibrar casquillo percutido de 5.56",
+    "AmmoMaking_ResizeSpentCase3030Win": "Recalibrar casquillo percutido de .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Recalibrar casquillo percutido de .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Recalibrar casquillo de latón percutido de calibre 12",
+    "AmmoMaking_CleanSpentCases9mm": "Limpiar casquillos percutidos de 9mm con lana de acero",
+    "AmmoMaking_CleanSpentCases38Special": "Limpiar casquillos percutidos de .38 Especial con lana de acero",
+    "AmmoMaking_CleanSpentCases45ACP": "Limpiar casquillos percutidos de .45 ACP con lana de acero",
+    "AmmoMaking_CleanSpentCases357Magnum": "Limpiar casquillos percutidos de .357 Magnum con lana de acero",
+    "AmmoMaking_CleanSpentCases44Magnum": "Limpiar casquillos percutidos de .44 Magnum con lana de acero",
+    "AmmoMaking_CleanSpentCases556NATO": "Limpiar casquillos percutidos de 5.56 con lana de acero",
+    "AmmoMaking_CleanSpentCases3030Win": "Limpiar casquillos percutidos de .30-30 con lana de acero",
+    "AmmoMaking_CleanSpentCases308Win": "Limpiar casquillos percutidos de .308 con lana de acero",
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpiar casquillos de latón percutidos de calibre 12 con lana de acero"
+}

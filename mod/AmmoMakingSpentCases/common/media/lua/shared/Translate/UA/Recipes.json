@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Розібрати стріляні малі гільзи",
+    "AmmoMaking_ScrapSpentBrass10": "Розібрати стріляні середні гільзи",
+    "AmmoMaking_ScrapSpentBrass15": "Розібрати стріляні великі гільзи та гільзи для дробовика",
+    "AmmoMaking_ResizeSpentCase9mm": "Відкалібрувати стріляну гільзу 9мм",
+    "AmmoMaking_ResizeSpentCase38Special": "Відкалібрувати стріляну гільзу .38 спец",
+    "AmmoMaking_ResizeSpentCase45ACP": "Відкалібрувати стріляну гільзу .45 авт",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Відкалібрувати стріляну гільзу .357 магнум",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Відкалібрувати стріляну гільзу .44 магнум",
+    "AmmoMaking_ResizeSpentCase556NATO": "Відкалібрувати стріляну гільзу 5.56мм",
+    "AmmoMaking_ResizeSpentCase3030Win": "Відкалібрувати стріляну гільзу .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Відкалібрувати стріляну гільзу .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Відкалібрувати стріляну латунну гільзу 12 калібру",
+    "AmmoMaking_CleanSpentCases9mm": "Очистити стріляні гільзи 9мм сталевою ватою",
+    "AmmoMaking_CleanSpentCases38Special": "Очистити стріляні гільзи .38 спец сталевою ватою",
+    "AmmoMaking_CleanSpentCases45ACP": "Очистити стріляні гільзи .45 авт сталевою ватою",
+    "AmmoMaking_CleanSpentCases357Magnum": "Очистити стріляні гільзи .357 магнум сталевою ватою",
+    "AmmoMaking_CleanSpentCases44Magnum": "Очистити стріляні гільзи .44 магнум сталевою ватою",
+    "AmmoMaking_CleanSpentCases556NATO": "Очистити стріляні гільзи 5.56мм сталевою ватою",
+    "AmmoMaking_CleanSpentCases3030Win": "Очистити стріляні гільзи .30-30 сталевою ватою",
+    "AmmoMaking_CleanSpentCases308Win": "Очистити стріляні гільзи .308 сталевою ватою",
+    "AmmoMaking_CleanSpentCases12Gauge": "Очистити стріляні латунні гільзи 12 калібру сталевою ватою"
+}

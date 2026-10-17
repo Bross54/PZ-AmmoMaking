@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Skrot brugte små hylstre",
+    "AmmoMaking_ScrapSpentBrass10": "Skrot brugte mellemstore hylstre",
+    "AmmoMaking_ScrapSpentBrass15": "Skrot brugte store hylstre og haglhylstre",
+    "AmmoMaking_ResizeSpentCase9mm": "Kalibrér brugt 9 mm-hylster",
+    "AmmoMaking_ResizeSpentCase38Special": "Kalibrér brugt .38 Special-hylster",
+    "AmmoMaking_ResizeSpentCase45ACP": "Kalibrér brugt .45 Auto-hylster",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Kalibrér brugt .357 Magnum-hylster",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Kalibrér brugt .44 Magnum-hylster",
+    "AmmoMaking_ResizeSpentCase556NATO": "Kalibrér brugt 5,56 mm-hylster",
+    "AmmoMaking_ResizeSpentCase3030Win": "Kalibrér brugt .30-30-hylster",
+    "AmmoMaking_ResizeSpentCase308Win": "Kalibrér brugt .308-hylster",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Kalibrér brugt 12 Gauge-messinghylster",
+    "AmmoMaking_CleanSpentCases9mm": "Rens brugte 9 mm-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases38Special": "Rens brugte .38 Special-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases45ACP": "Rens brugte .45 Auto-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases357Magnum": "Rens brugte .357 Magnum-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases44Magnum": "Rens brugte .44 Magnum-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases556NATO": "Rens brugte 5,56 mm-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases3030Win": "Rens brugte .30-30-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases308Win": "Rens brugte .308-hylstre med ståluld",
+    "AmmoMaking_CleanSpentCases12Gauge": "Rens brugte 12 Gauge-messinghylstre med ståluld"
+}

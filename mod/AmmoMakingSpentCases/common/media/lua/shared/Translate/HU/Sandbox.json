@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Lőszerkészítés)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Talált kilőtt hüvelyek száz kilőtt töltényenként (kísérleti)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "KÍSÉRLETI, csak egyjátékos módban. Száz kilőtt töltényből hány hagy hátra felvehető kilőtt hüvelyt. Egy kilőtt hüvely hulladékká bontva a sárgaréz negyedét adja, vagy a matricakészletén kalibrálva kettőből egy használható hüvely lesz. 0 esetén egy sem marad."
+}

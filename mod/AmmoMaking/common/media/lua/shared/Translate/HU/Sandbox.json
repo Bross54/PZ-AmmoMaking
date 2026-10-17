@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Lőszerkészítés)",
+    "Sandbox_AmmoMaking_QualityTracking": "Lőszerminőség követése tárakban és lőfegyverekben (kísérleti)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "KÍSÉRLETI, csak egyjátékos módban. A kézzel töltött töltények hüvelyminősége megmarad, amikor tárba vagy lőfegyverbe töltöd őket, és visszakapod, amikor kiveszed őket. A lövésre nincs hatása. Játékban még nem ellenőrzött.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Többjátékos: a mintavételt, az elemzéseket, az elemzőkészüléket és a bányászatot a szerver végzi (kísérleti)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "KÍSÉRLETI, csak többjátékos módban, szerveren még nem ellenőrzött. Ki: többjátékos szerveren a mintaásás, az elemzőkészletek, a laboratóriumi elemzőkészülék és a bányászat tiltva marad. Be: a kliensek kérést küldenek, a szerver ellenőrzi a távolságot, az eszközöket és a tárgyakat, elvégzi a munkát, és minden játékos ugyanazokat a lelőhelyeket látja. Egyjátékos módban nincs hatása.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Érc lelőhelycellánként (szorzó)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Meghatározza, hány egységnyi ércet tartalmaz egy réz- vagy cinklelőhely-cella. Az 1 a mod alapegyensúlya. Minden kitermelhető minőségben legalább egy egység marad, a csak nyomokban tartalmazó talaj pedig üres marad. A már megművelt cellák megtartják, amit kivettek belőlük.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Zsákmányként talált matricakészletek és lövedéköntő formák (szorzó)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Meghatározza, milyen gyakran bukkannak fel matricakészletek és lövedéköntő formák fegyverboltokban, garázsbeli fegyverszekrényekben és a vadászok holmijai között. Az 1 a mod alapegyensúlya, a 0 kiveszi őket a zsákmányból (kovácsolni továbbra is lehet őket). A már feltöltött tárolók megtartják a tartalmukat. A homokozó szerszámzsákmány-beállítása is hat rájuk.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Zsákmányként talált újratöltési alapanyagok (szorzó)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Meghatározza, milyen gyakran bukkan fel a mod által a zsákmányhoz adott lőpor, különálló gyutacs, sárgaréz hulladék és kis sárgarézlemez. Az 1 a mod alapegyensúlya, a 0 kiveszi őket. A már feltöltött tárolók megtartják a tartalmukat.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Lőszerkészítés TP szorzó",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "A Lőszerkészítés készség saját TP szorzója, a játék készségenkénti szorzóihoz hasonlóan. Azokhoz hasonlóan csak akkor érvényes, ha a globális TP szorzó ki van kapcsolva; egyébként a globális érvényes. Az újrahasznosítás semmilyen értéknél nem ad tapasztalatot."
+}

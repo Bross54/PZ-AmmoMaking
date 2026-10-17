@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "彈藥製造 (Ammo Making)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "每發射一百發子彈可找到的彈殼數 (實驗性)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "實驗性功能，僅限單人遊戲。每發射一百發子彈中，有多少會留下可拾取的彈殼。已擊發的彈殼可拆解為其黃銅量的四分之一，或用對應的模具組整形，兩個合成一個可用彈殼。0 則不留下彈殼。"
+}

@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (wytwarzanie amunicji)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Znalezione łuski na sto wystrzelonych naboi (eksperymentalne)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EKSPERYMENTALNE, tylko gra jednoosobowa. Ile ze stu wystrzelonych naboi zostawia łuskę, którą można podnieść. Wystrzeloną łuskę można zezłomować, odzyskując ćwierć jej mosiądzu, lub skalibrować w zestawie matryc – dwie dają jedną użyteczną łuskę. 0 nie zostawia żadnych."
+}

@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabrication de munitions)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Douilles tirées trouvées, pour cent munitions tirées (expérimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPÉRIMENTAL, solo uniquement. Sur cent munitions tirées, combien laissent une douille tirée que l'on peut ramasser. Une douille tirée est recyclée pour un quart de son laiton, ou recalibrée avec son jeu de matrices, deux pour une douille utilisable. 0 n'en laisse aucune."
+}

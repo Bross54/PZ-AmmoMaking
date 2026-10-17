@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabrico de Munições)",
+    "Sandbox_AmmoMaking_QualityTracking": "Registar a qualidade das munições em carregadores e armas de fogo (experimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, apenas um jogador. A qualidade do invólucro dos cartuchos recarregados à mão mantém-se quando são carregados num carregador ou numa arma de fogo, e é devolvida quando são descarregados. Não tem efeito no disparo. Ainda não verificado no jogo.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multijogador: o servidor trata da amostragem, dos ensaios, do analisador e da mineração (experimental)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, apenas multijogador, ainda não verificado num servidor. Desligado: num servidor multijogador, escavar amostras, os kits de ensaio, o analisador de laboratório e a mineração continuam recusados. Ligado: os clientes pedem, o servidor verifica a distância, as ferramentas e os itens e faz o trabalho, e todos os jogadores veem as mesmas jazidas. Sem efeito no modo de um jogador.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minério por quadrado de jazida (multiplicador)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Ajusta quantas unidades de minério contém um quadrado de jazida de cobre ou zinco. 1 é o equilíbrio do mod. Cada grau explorável mantém pelo menos uma unidade, e o terreno com vestígios continua vazio. Os quadrados já explorados mantêm o que já lhes foi retirado.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Conjuntos de matrizes e moldes de projéteis encontrados como saque (multiplicador)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Ajusta a frequência com que conjuntos de matrizes e moldes de projéteis aparecem em lojas de armas, armários de armas de garagens e entre as coisas de caçadores. 1 é o equilíbrio do mod, 0 retira-os do saque (continuam a poder ser forjados). Os contentores já preenchidos mantêm o que têm. A opção de saque de ferramentas do sandbox também os ajusta.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Material de recarga encontrado como saque (multiplicador)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajusta a frequência com que aparecem a pólvora, as escorvas soltas, a sucata de latão e as folhas pequenas de latão que o mod adiciona ao saque. 1 é o equilíbrio do mod, 0 retira-os. Os contentores já preenchidos mantêm o que têm.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Multiplicador de XP de Fabrico de Munições",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "O multiplicador de XP próprio da perícia Fabrico de Munições, como os multiplicadores por perícia do jogo. Tal como eles, só é usado quando o multiplicador de XP global está desligado; caso contrário, aplica-se o global. A reciclagem não ensina nada, seja qual for o valor."
+}

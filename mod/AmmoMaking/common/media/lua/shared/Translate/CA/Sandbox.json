@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricació de munició)",
+    "Sandbox_AmmoMaking_QualityTracking": "Registrar la qualitat de la munició als carregadors i a les armes de foc (experimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, només per a un jugador. La qualitat de la beina dels cartutxos recarregats a mà es conserva quan es carreguen en un carregador o una arma de foc, i es recupera quan es descarreguen. No afecta el tret. Encara no s'ha verificat al joc.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multijugador: el servidor s'encarrega del mostreig, els assajos, l'analitzador i la mineria (experimental)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, només multijugador, encara no verificat en un servidor. Desactivat: en un servidor multijugador, extreure mostres, els kits d'assaig, l'analitzador de laboratori i la mineria continuen bloquejats. Activat: els clients ho demanen, el servidor comprova la distància, les eines i els objectes i fa la feina, i tots els jugadors veuen els mateixos jaciments. Sense efecte en un sol jugador.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Mineral per casella de jaciment (multiplicador)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Ajusta quantes unitats de mineral conté una casella de jaciment de coure o zinc. 1 és l'equilibri del mod. Cada grau explotable conserva almenys una unitat, i el terreny amb indicis continua buit. Les caselles ja explotades mantenen el que ja se n'ha extret.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Jocs de matrius i motlles de projectils com a botí (multiplicador)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Ajusta la freqüència amb què apareixen jocs de matrius i motlles de projectils a les armeries, als armaris d'armes dels garatges i entre les coses dels caçadors. 1 és l'equilibri del mod; 0 els treu del botí (encara es poden forjar). Els contenidors ja plens conserven el que contenen. L'opció de botí d'eines del sandbox també els afecta.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Material de recàrrega com a botí (multiplicador)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajusta la freqüència amb què apareixen la pólvora, els fulminants solts, la ferralla de llautó i les làmines petites de llautó que el mod afegeix al botí. 1 és l'equilibri del mod; 0 els treu. Els contenidors ja plens conserven el que contenen.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Multiplicador d'XP de Fabricació de munició",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "El multiplicador d'XP propi de l'habilitat Fabricació de munició, com els multiplicadors per habilitat del joc. Com ells, només s'utilitza quan el multiplicador d'XP global està desactivat; altrament s'aplica el global. El reciclatge no ensenya res amb cap valor."
+}

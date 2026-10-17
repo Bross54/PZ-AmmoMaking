@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "แยกเศษปลอกกระสุนขนาดเล็กที่ยิงแล้ว",
+    "AmmoMaking_ScrapSpentBrass10": "แยกเศษปลอกกระสุนขนาดกลางที่ยิงแล้ว",
+    "AmmoMaking_ScrapSpentBrass15": "แยกเศษปลอกกระสุนขนาดใหญ่และปลอกลูกซองที่ยิงแล้ว",
+    "AmmoMaking_ResizeSpentCase9mm": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว 9 มม.",
+    "AmmoMaking_ResizeSpentCase38Special": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว .38 Special",
+    "AmmoMaking_ResizeSpentCase45ACP": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว .45 ACP",
+    "AmmoMaking_ResizeSpentCase357Magnum": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว 5.56",
+    "AmmoMaking_ResizeSpentCase3030Win": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "ปรับขนาดปลอกกระสุนที่ยิงแล้ว .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "ปรับขนาดปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ",
+    "AmmoMaking_CleanSpentCases9mm": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว 9 มม. ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases38Special": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .38 Special ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases45ACP": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .45 ACP ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases357Magnum": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .357 Magnum ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases44Magnum": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .44 Magnum ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases556NATO": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว 5.56 ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases3030Win": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .30-30 ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases308Win": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .308 ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_CleanSpentCases12Gauge": "ทำความสะอาดปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ ด้วยฝอยขัดหม้อ"
+}

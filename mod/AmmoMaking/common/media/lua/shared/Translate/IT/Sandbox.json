@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabbricazione munizioni)",
+    "Sandbox_AmmoMaking_QualityTracking": "Traccia la qualità delle munizioni in caricatori e armi (sperimentale)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "SPERIMENTALE, solo giocatore singolo. La qualità del bossolo delle munizioni ricaricate viene conservata quando vengono inserite in un caricatore o in un'arma, e restituita quando vengono scaricate. Non ha effetto sullo sparo. Non ancora verificato in gioco.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multigiocatore: il server esegue campionamenti, analisi, analizzatore ed estrazione (sperimentale)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "SPERIMENTALE, solo multigiocatore, non ancora verificato su un server. Disattivato: su un server multigiocatore, il prelievo di campioni, i kit di analisi, l'analizzatore da laboratorio e l'estrazione restano rifiutati. Attivato: i client fanno richiesta, il server controlla distanza, attrezzi e oggetti ed esegue il lavoro, e tutti i giocatori vedono gli stessi giacimenti. Nessun effetto in giocatore singolo.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minerale per casella di giacimento (moltiplicatore)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Regola quante unità di minerale contiene una casella di giacimento di rame o zinco. 1 è il bilanciamento della mod. Ogni tenore sfruttabile mantiene almeno un'unità, e il terreno con tracce resta vuoto. Le caselle già sfruttate mantengono ciò che ne è stato estratto.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Set di matrici e stampi per proiettili trovati come bottino (moltiplicatore)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Regola quanto spesso set di matrici e stampi per proiettili compaiono nelle armerie, negli armadietti per armi dei garage e tra gli oggetti dei cacciatori. 1 è il bilanciamento della mod, 0 li rimuove dal bottino (possono comunque essere forgiati). I contenitori già riempiti mantengono il loro contenuto. Anche l'impostazione sandbox del bottino di attrezzi li regola.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Materiale da ricarica trovato come bottino (moltiplicatore)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Regola quanto spesso compaiono la polvere da sparo, gli inneschi sfusi, gli scarti d'ottone e le lamiere d'ottone piccole che la mod aggiunge al bottino. 1 è il bilanciamento della mod, 0 li rimuove. I contenitori già riempiti mantengono il loro contenuto.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Moltiplicatore PE di Fabbricazione munizioni",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Il moltiplicatore PE proprio dell'abilità Fabbricazione munizioni, come i moltiplicatori per abilità del gioco. Come quelli, viene usato solo quando il moltiplicatore PE globale è disattivato; altrimenti si applica quello globale. Il riciclo non insegna nulla, a qualsiasi valore."
+}

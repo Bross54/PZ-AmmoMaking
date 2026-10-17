@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "弹药制造 (Ammo Making)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "每发射一百发子弹可找到的弹壳数 (实验性)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "实验性功能，仅限单人游戏。每发射一百发子弹中，有多少会留下可拾取的弹壳。已击发的弹壳可拆解为其黄铜量的四分之一，或用对应的模具组整形，两个合成一个可用弹壳。0 则不留下弹壳。"
+}

@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (ammunitionsfremstilling)",
+    "Sandbox_AmmoMaking_QualityTracking": "Spor ammunitionskvalitet i magasiner og skydevåben (eksperimentel)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EKSPERIMENTEL, kun singleplayer. Hylsterkvaliteten af hjemmeladede patroner bevares, når de lades i et magasin eller skydevåben, og gives tilbage, når de tages ud. Det har ingen effekt på affyring. Endnu ikke bekræftet i spillet.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: serveren udfører prøvetagning, analyser, analysatoren og minedrift (eksperimentel)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EKSPERIMENTEL, kun multiplayer, endnu ikke bekræftet på en server. Fra: på en multiplayer-server forbliver gravning af prøver, analysesættene, laboratorieanalysatoren og minedrift afvist. Til: klienterne spørger, serveren kontrollerer afstand, værktøj og genstande og udfører arbejdet, og alle spillere ser de samme forekomster. Ingen effekt i singleplayer.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Malm pr. forekomstfelt (multiplikator)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Skalerer, hvor mange malmenheder et felt med kobber- eller zinkforekomst indeholder. 1 er moddens balance. Hver brydbar kvalitet beholder mindst én enhed, og jord med spor forbliver tom. Felter, der allerede er brudt, beholder det, der er taget fra dem.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Matricesæt og kugleforme fundet som bytte (multiplikator)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Skalerer, hvor ofte matricesæt og kugleforme dukker op i våbenbutikker, våbenskabe i garager og blandt en jægers ting. 1 er moddens balance, 0 fjerner dem fra bytte (de kan stadig smedes). Beholdere, der allerede er fyldt, beholder deres indhold. Sandkassens indstilling for værktøjsbytte skalerer dem også.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Genladningsmaterialer fundet som bytte (multiplikator)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Skalerer, hvor ofte det krudt, de løse tændhætter, messingstumper og små messingplader, som modden tilføjer til bytte, dukker op. 1 er moddens balance, 0 fjerner dem. Beholdere, der allerede er fyldt, beholder deres indhold.",
+    "Sandbox_AmmoMaking_XPMultiplier": "XP-multiplikator for Ammunitionsfremstilling",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Færdigheden Ammunitionsfremstillings egen XP-multiplikator, ligesom spillets multiplikatorer pr. færdighed. Ligesom dem bruges den kun, når den globale XP-multiplikator er slået fra; ellers gælder den globale. Genbrug giver ingen XP, uanset værdien."
+}

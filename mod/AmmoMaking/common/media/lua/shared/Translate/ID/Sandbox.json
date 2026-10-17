@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Pembuatan Amunisi)",
+    "Sandbox_AmmoMaking_QualityTracking": "Lacak kualitas amunisi di magasin dan senjata api (eksperimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EKSPERIMENTAL, khusus single player. Kualitas selongsong peluru isi ulang buatan tangan tetap tersimpan saat diisikan ke magasin atau senjata api, dan dikembalikan saat dikeluarkan. Tidak berpengaruh pada tembakan. Belum diverifikasi di dalam game.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: server menjalankan pengambilan sampel, uji kadar, alat analisis, dan penambangan (eksperimental)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EKSPERIMENTAL, khusus multiplayer, belum diverifikasi di server. Mati: di server multiplayer, menggali sampel, kit uji kadar, alat analisis laboratorium, dan penambangan tetap ditolak. Nyala: klien mengajukan permintaan, server memeriksa jarak, alat, dan item lalu mengerjakannya, dan semua pemain melihat endapan yang sama. Tidak berpengaruh di single player.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Bijih per petak endapan (multiplier)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Mengatur berapa banyak unit bijih yang ada di satu petak endapan tembaga atau seng. 1 adalah keseimbangan bawaan mod. Setiap kadar yang bisa ditambang tetap memiliki minimal satu unit, dan tanah berkadar jejak tetap kosong. Petak yang sudah ditambang tetap kehilangan apa yang sudah diambil darinya.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Set die dan cetakan proyektil sebagai loot (multiplier)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Mengatur seberapa sering set die dan cetakan proyektil muncul di toko senjata, lemari senjata garasi, dan di antara barang-barang pemburu. 1 adalah keseimbangan bawaan mod, 0 menghapusnya dari loot (masih bisa ditempa). Kontainer yang sudah terisi tetap menyimpan isinya. Pengaturan loot alat di sandbox juga ikut memengaruhinya.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Bahan reloading sebagai loot (multiplier)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Mengatur seberapa sering bubuk mesiu, primer lepasan, brass bekas, dan lembaran brass kecil yang ditambahkan mod ke loot muncul. 1 adalah keseimbangan bawaan mod, 0 menghapusnya. Kontainer yang sudah terisi tetap menyimpan isinya.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Multiplier XP Pembuatan Amunisi",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplier XP khusus skill Pembuatan Amunisi, seperti multiplier per skill bawaan game. Sama seperti itu, nilai ini hanya dipakai jika multiplier XP global dimatikan; jika tidak, multiplier global yang berlaku. Daur ulang tidak memberikan XP pada nilai berapa pun."
+}

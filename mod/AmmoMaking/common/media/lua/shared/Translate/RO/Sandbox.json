@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricare Muniție)",
+    "Sandbox_AmmoMaking_QualityTracking": "Urmărește calitatea muniției în încărcătoare și arme de foc (experimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, doar pentru un singur jucător. Calitatea tubului cartușelor reîncărcate manual se păstrează când sunt încărcate într-un încărcător sau într-o armă de foc și este redată când sunt descărcate. Nu are niciun efect asupra tragerii. Încă neverificat în joc.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: serverul efectuează prelevarea, analizele, analizorul și mineritul (experimental)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, doar pentru multiplayer, încă neverificat pe un server. Oprit: pe un server multiplayer, săparea probelor, trusele de analiză, analizorul de laborator și mineritul rămân refuzate. Pornit: clienții cer, serverul verifică distanța, uneltele și obiectele și face munca, iar toți jucătorii văd aceleași zăcăminte. Niciun efect în modul pentru un singur jucător.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Minereu per pătrat de zăcământ (multiplicator)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Stabilește câte unități de minereu conține un pătrat de zăcământ de cupru sau zinc. 1 este echilibrul modului. Fiecare grad exploatabil păstrează cel puțin o unitate, iar terenul cu urme rămâne gol. Pătratele deja exploatate păstrează ce s-a luat din ele.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Seturi de matrițe și matrițe pentru gloanțe găsite ca pradă (multiplicator)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Stabilește cât de des apar seturi de matrițe și matrițe pentru gloanțe în magazinele de arme, dulapurile de arme din garaje și printre lucrurile vânătorilor. 1 este echilibrul modului, 0 le scoate din pradă (pot fi totuși forjate). Containerele deja umplute păstrează ce conțin. Setarea sandbox pentru unelte le influențează și pe ele.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Materiale de reîncărcare găsite ca pradă (multiplicator)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Stabilește cât de des apar praful de pușcă, capsele separate, resturile de alamă și tablele mici din alamă pe care modul le adaugă în pradă. 1 este echilibrul modului, 0 le scoate. Containerele deja umplute păstrează ce conțin.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Multiplicator XP Fabricare Muniție",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplicatorul XP propriu al abilității Fabricare Muniție, ca multiplicatorii pe abilitate ai jocului. Ca și aceștia, se folosește doar când multiplicatorul XP global este dezactivat; altfel se aplică cel global. Reciclarea nu oferă experiență la nicio valoare."
+}

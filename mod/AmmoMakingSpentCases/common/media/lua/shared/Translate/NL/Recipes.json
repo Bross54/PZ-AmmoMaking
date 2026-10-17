@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Kleine afgevuurde hulzen tot schroot verwerken",
+    "AmmoMaking_ScrapSpentBrass10": "Middelgrote afgevuurde hulzen tot schroot verwerken",
+    "AmmoMaking_ScrapSpentBrass15": "Grote afgevuurde hulzen en hagelhulzen tot schroot verwerken",
+    "AmmoMaking_ResizeSpentCase9mm": "Afgevuurde huls 9mm kalibreren",
+    "AmmoMaking_ResizeSpentCase38Special": "Afgevuurde huls .38 Special kalibreren",
+    "AmmoMaking_ResizeSpentCase45ACP": "Afgevuurde huls .45 ACP kalibreren",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Afgevuurde huls .357 Magnum kalibreren",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Afgevuurde huls .44 Magnum kalibreren",
+    "AmmoMaking_ResizeSpentCase556NATO": "Afgevuurde huls 5.56 kalibreren",
+    "AmmoMaking_ResizeSpentCase3030Win": "Afgevuurde huls .30-30 kalibreren",
+    "AmmoMaking_ResizeSpentCase308Win": "Afgevuurde huls .308 kalibreren",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Afgevuurde messing hagelhuls 12 Gauge kalibreren",
+    "AmmoMaking_CleanSpentCases9mm": "Afgevuurde hulzen 9mm reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases38Special": "Afgevuurde hulzen .38 Special reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases45ACP": "Afgevuurde hulzen .45 ACP reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases357Magnum": "Afgevuurde hulzen .357 Magnum reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases44Magnum": "Afgevuurde hulzen .44 Magnum reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases556NATO": "Afgevuurde hulzen 5.56 reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases3030Win": "Afgevuurde hulzen .30-30 reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases308Win": "Afgevuurde hulzen .308 reinigen met staalwol",
+    "AmmoMaking_CleanSpentCases12Gauge": "Afgevuurde messing hagelhulzen 12 Gauge reinigen met staalwol"
+}

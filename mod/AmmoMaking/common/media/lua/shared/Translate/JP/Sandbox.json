@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "弾薬製造 (Ammo Making)",
+    "Sandbox_AmmoMaking_QualityTracking": "マガジンと銃の中の弾薬品質を記録する(実験的)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "実験的機能、シングルプレイ専用。ハンドロード弾の薬莢の品質は、マガジンや銃に装填しても保持され、取り出したときに戻ります。射撃には影響しません。ゲーム内ではまだ検証されていません。",
+    "Sandbox_AmmoMaking_ServerAuthority": "マルチプレイ: サンプル採取、分析、分析装置、採掘をサーバーが処理する(実験的)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "実験的機能、マルチプレイ専用、サーバーではまだ検証されていません。オフ: マルチプレイサーバーでは、サンプルの採取、分析キット、実験室用分析装置、採掘は引き続き拒否されます。オン: クライアントが要求し、サーバーが距離、道具、アイテムを確認して処理を行い、全プレイヤーが同じ鉱床を見ます。シングルプレイでは効果がありません。",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "鉱床タイル1つあたりの鉱石量(倍率)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "銅または亜鉛の鉱床タイル1つに含まれる鉱石の量を調整します。1がこのMODの標準バランスです。採掘可能な品位には最低1単位が残り、痕跡程度の地面は空のままです。すでに採掘したタイルでは、取り出した分は戻りません。",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "戦利品として見つかるダイセットと弾頭鋳型(倍率)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "ダイセットと弾頭鋳型が銃砲店、ガレージのガンロッカー、ハンターの持ち物から見つかる頻度を調整します。1がこのMODの標準バランスで、0にすると戦利品から除外されます(鍛造は可能)。すでに中身が生成されたコンテナはそのままです。サンドボックスの道具の戦利品設定も影響します。",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "戦利品として見つかるハンドロード用資材(倍率)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "このMODが戦利品に追加する火薬、バラの雷管、真鍮のくず、真鍮板(小)が見つかる頻度を調整します。1がこのMODの標準バランスで、0にすると除外されます。すでに中身が生成されたコンテナはそのままです。",
+    "Sandbox_AmmoMaking_XPMultiplier": "弾薬製造のXP倍率",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "弾薬製造スキル専用のXP倍率で、ゲームのスキルごとの倍率と同じものです。それらと同様、全体のXP倍率がオフのときにのみ使われ、それ以外は全体の倍率が適用されます。どの値でも、リサイクルではXPを得られません。"
+}

@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Reciclar Invólucros Deflagrados Pequenos",
+    "AmmoMaking_ScrapSpentBrass10": "Reciclar Invólucros Deflagrados Médios",
+    "AmmoMaking_ScrapSpentBrass15": "Reciclar Invólucros Deflagrados Grandes e de Caçadeira",
+    "AmmoMaking_ResizeSpentCase9mm": "Recalibrar Invólucro Deflagrado de 9mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Recalibrar Invólucro Deflagrado de .38 Especial",
+    "AmmoMaking_ResizeSpentCase45ACP": "Recalibrar Invólucro Deflagrado de .45 ACP",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Recalibrar Invólucro Deflagrado de .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Recalibrar Invólucro Deflagrado de .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Recalibrar Invólucro Deflagrado de 5,56",
+    "AmmoMaking_ResizeSpentCase3030Win": "Recalibrar Invólucro Deflagrado de .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Recalibrar Invólucro Deflagrado de .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Recalibrar Invólucro de Latão Deflagrado de Calibre 12",
+    "AmmoMaking_CleanSpentCases9mm": "Limpar Invólucros Deflagrados de 9mm com Lã de Aço",
+    "AmmoMaking_CleanSpentCases38Special": "Limpar Invólucros Deflagrados de .38 Especial com Lã de Aço",
+    "AmmoMaking_CleanSpentCases45ACP": "Limpar Invólucros Deflagrados de .45 ACP com Lã de Aço",
+    "AmmoMaking_CleanSpentCases357Magnum": "Limpar Invólucros Deflagrados de .357 Magnum com Lã de Aço",
+    "AmmoMaking_CleanSpentCases44Magnum": "Limpar Invólucros Deflagrados de .44 Magnum com Lã de Aço",
+    "AmmoMaking_CleanSpentCases556NATO": "Limpar Invólucros Deflagrados de 5,56 com Lã de Aço",
+    "AmmoMaking_CleanSpentCases3030Win": "Limpar Invólucros Deflagrados de .30-30 com Lã de Aço",
+    "AmmoMaking_CleanSpentCases308Win": "Limpar Invólucros Deflagrados de .308 com Lã de Aço",
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpar Invólucros de Latão Deflagrados de Calibre 12 com Lã de Aço"
+}

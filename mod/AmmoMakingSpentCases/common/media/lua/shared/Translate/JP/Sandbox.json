@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "弾薬製造 (Ammo Making)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "発射100発あたりに見つかる使用済み薬莢(実験的)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "実験的機能、シングルプレイ専用。発射した100発のうち、拾える使用済み薬莢が残る数です。使用済み薬莢はスクラップにすると真鍮の4分の1になり、ダイセットでリサイズすると2つで使える薬莢1つになります。0にすると残りません。"
+}

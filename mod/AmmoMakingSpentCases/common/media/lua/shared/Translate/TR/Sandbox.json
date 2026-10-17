@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Cephane Yapımı)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Atılan her yüz mermide bulunan boş kovan (deneysel)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "DENEYSEL, yalnızca tek oyunculu. Atılan yüz mermiden kaç tanesinin yerden alınabilecek bir boş kovan bıraktığı. Atılmış bir kovan, pirincinin dörtte biri karşılığında hurdaya ayrılır ya da matris setinde yeniden boyutlandırılarak ikisi bir kullanılabilir kovana dönüşür. 0 hiç bırakmaz."
+}

@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricació de munició)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Beines percudides trobades per cada cent trets (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, només per a un jugador. Quants de cada cent cartutxos disparats deixen una beina percudida que es pot recollir. Una beina percudida es recicla per una quarta part del seu llautó, o es recalibra amb el seu joc de matrius, dues per obtenir una beina utilitzable. 0 no en deixa cap."
+}

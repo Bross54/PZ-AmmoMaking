@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Ammusten valmistus)",
+    "Sandbox_AmmoMaking_QualityTracking": "Seuraa ammusten laatua lippaissa ja tuliaseissa (kokeellinen)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "KOKEELLINEN, vain yksinpeli. Itse ladattujen patruunoiden hylsyn laatu säilyy, kun ne ladataan lippaaseen tai tuliaseeseen, ja palautetaan, kun ne puretaan. Ei vaikutusta ampumiseen. Ei vielä varmistettu pelissä.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Moninpeli: palvelin hoitaa näytteenoton, analyysit, analysaattorin ja louhinnan (kokeellinen)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "KOKEELLINEN, vain moninpeli, ei vielä varmistettu palvelimella. Pois: moninpelipalvelimella näytteiden kaivaminen, analyysipakkaukset, laboratorioanalysaattori ja louhinta pysyvät estettyinä. Päällä: asiakkaat pyytävät, palvelin tarkistaa etäisyyden, työkalut ja esineet ja tekee työn, ja kaikki pelaajat näkevät samat esiintymät. Ei vaikutusta yksinpelissä.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Malmia esiintymäruutua kohden (kerroin)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Säätää, montako malmiyksikköä kupari- tai sinkkiesiintymän ruutu sisältää. 1 on modin tasapaino. Jokaisessa louhittavassa laadussa on vähintään yksi yksikkö, ja pelkkiä jäämiä sisältävä maa pysyy tyhjänä. Jo louhituista ruuduista otettu ei palaa.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Saaliina löytyvät matriisisarjat ja luotien valumuotit (kerroin)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Säätää, kuinka usein matriisisarjoja ja luotien valumuotteja löytyy asekaupoista, autotallien asekaapeista ja metsästäjien tavaroista. 1 on modin tasapaino, 0 poistaa ne saaliista (niitä voi silti takoa). Jo täytetyt säiliöt säilyttävät sisältönsä. Myös hiekkalaatikon työkalusaaliin asetus vaikuttaa niihin.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Saaliina löytyvät jälleenlatausmateriaalit (kerroin)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Säätää, kuinka usein modin saaliiseen lisäämää ruutia, irtonalleja, messinkiromua ja pieniä messinkilevyjä löytyy. 1 on modin tasapaino, 0 poistaa ne. Jo täytetyt säiliöt säilyttävät sisältönsä.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Ammusten valmistuksen XP-kerroin",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Ammusten valmistus -taidon oma XP-kerroin, kuten pelin taitokohtaiset kertoimet. Niiden tapaan sitä käytetään vain, kun yleinen XP-kerroin on pois päältä; muuten yleinen kerroin on voimassa. Kierrätys ei opeta mitään millään arvolla."
+}

@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Ammusten valmistus)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Löydetyt ammutut hylsyt sataa ammuttua patruunaa kohden (kokeellinen)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "KOKEELLINEN, vain yksinpeli. Kuinka moni sadasta ammutusta patruunasta jättää poimittavan ammutun hylsyn. Ammuttu hylsy romutetaan neljännekseen messingistään tai kalibroidaan sen matriisisarjalla, kaksi yhdeksi käyttökelpoiseksi hylsyksi. 0 ei jätä yhtään."
+}

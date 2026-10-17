@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (výroba střeliva)",
+    "Sandbox_AmmoMaking_QualityTracking": "Sledovat kvalitu střeliva v zásobnících a zbraních (experimentální)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTÁLNÍ, pouze pro jednoho hráče. Kvalita nábojnic přebíjených nábojů se zachová při nabití do zásobníku nebo zbraně a vrátí se při vybití. Nemá vliv na střelbu. Zatím neověřeno ve hře.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: odběr vzorků, rozbory, analyzátor a těžbu provádí server (experimentální)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTÁLNÍ, pouze multiplayer, zatím neověřeno na serveru. Vypnuto: na multiplayerovém serveru zůstává kopání vzorků, sady pro rozbor, laboratorní analyzátor i těžba zakázána. Zapnuto: klienti žádají, server ověří vzdálenost, nástroje a předměty a provede práci, a všichni hráči vidí stejná ložiska. Ve hře pro jednoho hráče bez vlivu.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Ruda na pole ložiska (násobitel)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Určuje, kolik jednotek rudy obsahuje pole měděného nebo zinkového ložiska. 1 je vyvážení modu. Každá těžitelná třída si ponechá alespoň jednu jednotku a stopová půda zůstává prázdná. Již těžená pole si ponechají to, co z nich bylo vytěženo.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Sady matric a formy na střely jako kořist (násobitel)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Určuje, jak často se sady matric a formy na střely objevují v obchodech se zbraněmi, ve skříních na zbraně v garážích a mezi věcmi lovců. 1 je vyvážení modu, 0 je odstraní z kořisti (stále je lze vykovat). Již naplněné kontejnery si ponechají obsah. Ovlivňuje je i nastavení kořisti nástrojů v sandboxu.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Komponenty pro přebíjení jako kořist (násobitel)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Určuje, jak často se objevuje střelný prach, volné zápalky, mosazný šrot a malé mosazné plechy, které mod přidává do kořisti. 1 je vyvážení modu, 0 je odstraní. Již naplněné kontejnery si ponechají obsah.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Násobitel zkušeností dovednosti Výroba střeliva",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Vlastní násobitel zkušeností dovednosti Výroba střeliva, podobně jako násobitele jednotlivých dovedností ve hře. Stejně jako ony se použije jen tehdy, když je globální násobitel zkušeností vypnutý; jinak platí globální. Recyklace nic nenaučí při žádné hodnotě."
+}

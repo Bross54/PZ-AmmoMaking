@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "使用済みの小型薬莢をスクラップにする",
+    "AmmoMaking_ScrapSpentBrass10": "使用済みの中型薬莢をスクラップにする",
+    "AmmoMaking_ScrapSpentBrass15": "使用済みの大型薬莢とシェルをスクラップにする",
+    "AmmoMaking_ResizeSpentCase9mm": "使用済みの9mm薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase38Special": "使用済みの.38スペシャル薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase45ACP": "使用済みの.45ACP薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase357Magnum": "使用済みの.357マグナム薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase44Magnum": "使用済みの.44マグナム薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase556NATO": "使用済みの5.56薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase3030Win": "使用済みの.30-30薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase308Win": "使用済みの.308薬莢をリサイズする",
+    "AmmoMaking_ResizeSpentCase12Gauge": "使用済みの12ゲージ真鍮製シェルをリサイズする",
+    "AmmoMaking_CleanSpentCases9mm": "使用済みの9mm薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases38Special": "使用済みの.38スペシャル薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases45ACP": "使用済みの.45ACP薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases357Magnum": "使用済みの.357マグナム薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases44Magnum": "使用済みの.44マグナム薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases556NATO": "使用済みの5.56薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases3030Win": "使用済みの.30-30薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases308Win": "使用済みの.308薬莢をスチールウールで磨く",
+    "AmmoMaking_CleanSpentCases12Gauge": "使用済みの12ゲージ真鍮製シェルをスチールウールで磨く"
+}

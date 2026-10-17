@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricación de munición)",
+    "Sandbox_AmmoMaking_QualityTracking": "Registrar la calidad de la munición en cargadores y armas de fuego (experimental)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTAL, solo para un jugador. La calidad del casquillo de los cartuchos recargados a mano se conserva al cargarlos en un cargador o un arma de fuego, y se recupera al descargarlos. No afecta al disparo. Todavía no se verificó en el juego.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multijugador: el servidor se encarga del muestreo, los ensayos, el analizador y la minería (experimental)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTAL, solo multijugador, todavía no verificado en un servidor. Desactivado: en un servidor multijugador, extraer muestras, los kits de ensayo, el analizador de laboratorio y la minería siguen bloqueados. Activado: los clientes lo solicitan, el servidor comprueba la distancia, las herramientas y los objetos y hace el trabajo, y todos los jugadores ven los mismos yacimientos. Sin efecto en un jugador.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Mineral por casilla de yacimiento (multiplicador)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Ajusta cuántas unidades de mineral contiene una casilla de yacimiento de cobre o zinc. 1 es el balance del mod. Cada grado explotable conserva al menos una unidad, y el terreno con indicios sigue vacío. Las casillas ya explotadas mantienen lo que ya se extrajo de ellas.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Juegos de matrices y moldes de proyectiles como botín (multiplicador)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Ajusta la frecuencia con la que aparecen juegos de matrices y moldes de proyectiles en armerías, en gabinetes de armas de garajes y entre las cosas de los cazadores. 1 es el balance del mod; 0 los quita del botín (se pueden seguir forjando). Los contenedores ya llenos conservan su contenido. La opción de botín de herramientas del sandbox también los afecta.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Material de recarga como botín (multiplicador)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Ajusta la frecuencia con la que aparecen la pólvora, los fulminantes sueltos, la chatarra de latón y las láminas de latón pequeñas que el mod agrega al botín. 1 es el balance del mod; 0 los quita. Los contenedores ya llenos conservan su contenido.",
+    "Sandbox_AmmoMaking_XPMultiplier": "Multiplicador de XP de Fabricación de munición",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "Multiplicador de XP propio de la habilidad Fabricación de munición, como los multiplicadores por habilidad del juego. Al igual que ellos, solo se usa cuando el multiplicador de XP global está desactivado; si no, se aplica el global. El reciclaje no enseña nada con ningún valor."
+}

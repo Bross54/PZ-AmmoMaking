@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricación de munición)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Vainas percutidas encontradas por cada cien disparos (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, solo para un jugador. Cuántos de cada cien cartuchos disparados dejan una vaina percutida que se puede recoger. Una vaina percutida se recicla por una cuarta parte de su latón, o se recalibra con su juego de matrices, dos para obtener una vaina utilizable. 0 no deja ninguna."
+}

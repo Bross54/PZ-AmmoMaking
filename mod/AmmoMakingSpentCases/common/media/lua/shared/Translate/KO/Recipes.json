@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "사용한 소형 탄피 분해하기",
+    "AmmoMaking_ScrapSpentBrass10": "사용한 중형 탄피 분해하기",
+    "AmmoMaking_ScrapSpentBrass15": "사용한 대형 탄피와 산탄 탄피 분해하기",
+    "AmmoMaking_ResizeSpentCase9mm": "사용한 9mm 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase38Special": "사용한 .38 스페셜 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase45ACP": "사용한 .45 ACP 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase357Magnum": "사용한 .357 매그넘 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase44Magnum": "사용한 .44 매그넘 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase556NATO": "사용한 5.56 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase3030Win": "사용한 .30-30 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase308Win": "사용한 .308 탄피 재성형하기",
+    "AmmoMaking_ResizeSpentCase12Gauge": "사용한 12게이지 황동 산탄 탄피 재성형하기",
+    "AmmoMaking_CleanSpentCases9mm": "강철 솜으로 사용한 9mm 탄피 닦기",
+    "AmmoMaking_CleanSpentCases38Special": "강철 솜으로 사용한 .38 스페셜 탄피 닦기",
+    "AmmoMaking_CleanSpentCases45ACP": "강철 솜으로 사용한 .45 ACP 탄피 닦기",
+    "AmmoMaking_CleanSpentCases357Magnum": "강철 솜으로 사용한 .357 매그넘 탄피 닦기",
+    "AmmoMaking_CleanSpentCases44Magnum": "강철 솜으로 사용한 .44 매그넘 탄피 닦기",
+    "AmmoMaking_CleanSpentCases556NATO": "강철 솜으로 사용한 5.56 탄피 닦기",
+    "AmmoMaking_CleanSpentCases3030Win": "강철 솜으로 사용한 .30-30 탄피 닦기",
+    "AmmoMaking_CleanSpentCases308Win": "강철 솜으로 사용한 .308 탄피 닦기",
+    "AmmoMaking_CleanSpentCases12Gauge": "강철 솜으로 사용한 12게이지 황동 산탄 탄피 닦기"
+}

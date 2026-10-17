@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Recycler de petites douilles tirées",
+    "AmmoMaking_ScrapSpentBrass10": "Recycler des douilles tirées moyennes",
+    "AmmoMaking_ScrapSpentBrass15": "Recycler de grandes douilles tirées et des douilles de cartouche",
+    "AmmoMaking_ResizeSpentCase9mm": "Recalibrer une douille tirée 9mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Recalibrer une douille tirée .38 Special",
+    "AmmoMaking_ResizeSpentCase45ACP": "Recalibrer une douille tirée .45 Auto",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Recalibrer une douille tirée .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Recalibrer une douille tirée .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Recalibrer une douille tirée 5.56",
+    "AmmoMaking_ResizeSpentCase3030Win": "Recalibrer une douille tirée .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Recalibrer une douille tirée .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Recalibrer une douille de cartouche en laiton tirée cal.12",
+    "AmmoMaking_CleanSpentCases9mm": "Nettoyer des douilles tirées 9mm à la paille de fer",
+    "AmmoMaking_CleanSpentCases38Special": "Nettoyer des douilles tirées .38 Special à la paille de fer",
+    "AmmoMaking_CleanSpentCases45ACP": "Nettoyer des douilles tirées .45 Auto à la paille de fer",
+    "AmmoMaking_CleanSpentCases357Magnum": "Nettoyer des douilles tirées .357 Magnum à la paille de fer",
+    "AmmoMaking_CleanSpentCases44Magnum": "Nettoyer des douilles tirées .44 Magnum à la paille de fer",
+    "AmmoMaking_CleanSpentCases556NATO": "Nettoyer des douilles tirées 5.56 à la paille de fer",
+    "AmmoMaking_CleanSpentCases3030Win": "Nettoyer des douilles tirées .30-30 à la paille de fer",
+    "AmmoMaking_CleanSpentCases308Win": "Nettoyer des douilles tirées .308 à la paille de fer",
+    "AmmoMaking_CleanSpentCases12Gauge": "Nettoyer des douilles de cartouche en laiton tirées cal.12 à la paille de fer"
+}

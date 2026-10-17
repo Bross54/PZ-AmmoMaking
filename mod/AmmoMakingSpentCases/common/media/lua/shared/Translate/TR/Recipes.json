@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Atılmış Küçük Kovanları Hurdaya Ayır",
+    "AmmoMaking_ScrapSpentBrass10": "Atılmış Orta Kovanları Hurdaya Ayır",
+    "AmmoMaking_ScrapSpentBrass15": "Atılmış Büyük Kovanları ve Fişek Kovanlarını Hurdaya Ayır",
+    "AmmoMaking_ResizeSpentCase9mm": "Atılmış 9mm Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase38Special": "Atılmış .38 Special Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase45ACP": "Atılmış .45 ACP Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Atılmış .357 Magnum Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Atılmış .44 Magnum Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase556NATO": "Atılmış 5.56 Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase3030Win": "Atılmış .30-30 Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase308Win": "Atılmış .308 Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Atılmış 12 Gauge Pirinç Kovanı Yeniden Boyutlandır",
+    "AmmoMaking_CleanSpentCases9mm": "Atılmış 9mm Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases38Special": "Atılmış .38 Special Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases45ACP": "Atılmış .45 ACP Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases357Magnum": "Atılmış .357 Magnum Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases44Magnum": "Atılmış .44 Magnum Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases556NATO": "Atılmış 5.56 Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases3030Win": "Atılmış .30-30 Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases308Win": "Atılmış .308 Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_CleanSpentCases12Gauge": "Atılmış 12 Gauge Pirinç Kovanları Çelik Yünle Temizle"
+}

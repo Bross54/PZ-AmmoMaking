@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (ammunisjonslaging)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Brukte hylser funnet per hundre avfyrte skudd (eksperimentelt)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EKSPERIMENTELT, kun enspiller. Hvor mange av hundre avfyrte skudd som etterlater en brukt hylse som kan plukkes opp. En brukt hylse skrotes til en fjerdedel av messingen sin, eller kalibreres med matrisesettet sitt, to til én brukbar hylse. 0 gir ingen."
+}

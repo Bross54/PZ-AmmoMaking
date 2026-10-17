@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabrico de Munições)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Invólucros deflagrados encontrados por cada cem disparos (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, apenas um jogador. Quantos de cada cem cartuchos disparados deixam um invólucro deflagrado que pode ser apanhado. Um invólucro deflagrado é reciclado por um quarto do seu latão, ou recalibrado no seu conjunto de matrizes, dois para um invólucro utilizável. 0 não deixa nenhum."
+}

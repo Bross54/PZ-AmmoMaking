@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Fabricación de munición)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Casquillos percutidos encontrados por cada cien disparos (experimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTAL, solo para un jugador. Cuántos de cada cien cartuchos disparados dejan un casquillo percutido que se puede recoger. Un casquillo percutido se recicla por una cuarta parte de su latón, o se recalibra con su juego de matrices, dos para obtener un casquillo utilizable. 0 no deja ninguno."
+}

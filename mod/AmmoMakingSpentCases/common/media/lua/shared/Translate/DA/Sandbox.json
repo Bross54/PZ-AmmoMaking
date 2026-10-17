@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (ammunitionsfremstilling)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Brugte hylstre fundet pr. hundrede affyrede skud (eksperimentel)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EKSPERIMENTEL, kun singleplayer. Hvor mange af hundrede affyrede skud efterlader et brugt hylster, der kan samles op. Et brugt hylster skrottes til en fjerdedel af dets messing eller kalibreres ved sit matricesæt, to til ét brugbart hylster. 0 efterlader ingen."
+}

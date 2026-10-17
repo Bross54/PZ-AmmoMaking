@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Pembuatan Amunisi)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Selongsong bekas yang ditemukan, per seratus peluru ditembakkan (eksperimental)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EKSPERIMENTAL, khusus single player. Berapa banyak dari seratus peluru yang ditembakkan meninggalkan selongsong bekas yang bisa dipungut. Selongsong bekas bisa didaur ulang menjadi seperempat brass-nya, atau dikalibrasi ulang dengan set die-nya, dua menjadi satu selongsong yang bisa dipakai. 0 berarti tidak ada."
+}

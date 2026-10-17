@@ -1,0 +1,23 @@
+{
+    "AmmoMaking_ScrapSpentBrass5": "Zezłomuj wystrzelone małe łuski",
+    "AmmoMaking_ScrapSpentBrass10": "Zezłomuj wystrzelone średnie łuski",
+    "AmmoMaking_ScrapSpentBrass15": "Zezłomuj wystrzelone duże łuski i łuski śrutowe",
+    "AmmoMaking_ResizeSpentCase9mm": "Kalibruj wystrzeloną łuskę 9 mm",
+    "AmmoMaking_ResizeSpentCase38Special": "Kalibruj wystrzeloną łuskę .38 Special",
+    "AmmoMaking_ResizeSpentCase45ACP": "Kalibruj wystrzeloną łuskę .45 ACP",
+    "AmmoMaking_ResizeSpentCase357Magnum": "Kalibruj wystrzeloną łuskę .357 Magnum",
+    "AmmoMaking_ResizeSpentCase44Magnum": "Kalibruj wystrzeloną łuskę .44 Magnum",
+    "AmmoMaking_ResizeSpentCase556NATO": "Kalibruj wystrzeloną łuskę 5,56 mm",
+    "AmmoMaking_ResizeSpentCase3030Win": "Kalibruj wystrzeloną łuskę .30-30",
+    "AmmoMaking_ResizeSpentCase308Win": "Kalibruj wystrzeloną łuskę .308",
+    "AmmoMaking_ResizeSpentCase12Gauge": "Kalibruj wystrzeloną mosiężną łuskę śrutową kal. 12",
+    "AmmoMaking_CleanSpentCases9mm": "Wyczyść wystrzelone łuski 9 mm wełną stalową",
+    "AmmoMaking_CleanSpentCases38Special": "Wyczyść wystrzelone łuski .38 Special wełną stalową",
+    "AmmoMaking_CleanSpentCases45ACP": "Wyczyść wystrzelone łuski .45 ACP wełną stalową",
+    "AmmoMaking_CleanSpentCases357Magnum": "Wyczyść wystrzelone łuski .357 Magnum wełną stalową",
+    "AmmoMaking_CleanSpentCases44Magnum": "Wyczyść wystrzelone łuski .44 Magnum wełną stalową",
+    "AmmoMaking_CleanSpentCases556NATO": "Wyczyść wystrzelone łuski 5,56 mm wełną stalową",
+    "AmmoMaking_CleanSpentCases3030Win": "Wyczyść wystrzelone łuski .30-30 wełną stalową",
+    "AmmoMaking_CleanSpentCases308Win": "Wyczyść wystrzelone łuski .308 wełną stalową",
+    "AmmoMaking_CleanSpentCases12Gauge": "Wyczyść wystrzelone mosiężne łuski śrutowe kal. 12 wełną stalową"
+}

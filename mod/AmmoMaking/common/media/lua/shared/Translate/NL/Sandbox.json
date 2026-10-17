@@ -1,0 +1,15 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (Munitie maken)",
+    "Sandbox_AmmoMaking_QualityTracking": "Munitiekwaliteit bijhouden in magazijnen en vuurwapens (experimenteel)",
+    "Sandbox_AmmoMaking_QualityTracking_tooltip": "EXPERIMENTEEL, alleen singleplayer. De hulskwaliteit van herladen patronen blijft behouden wanneer ze in een magazijn of vuurwapen worden geladen, en wordt teruggegeven wanneer ze worden ontladen. Heeft geen effect op het schieten. Nog niet in het spel geverifieerd.",
+    "Sandbox_AmmoMaking_ServerAuthority": "Multiplayer: de server voert monstername, analyses, de analysator en mijnbouw uit (experimenteel)",
+    "Sandbox_AmmoMaking_ServerAuthority_tooltip": "EXPERIMENTEEL, alleen multiplayer, nog niet op een server geverifieerd. Uit: op een multiplayerserver blijven monsters graven, de analysesets, de laboratoriumanalysator en mijnbouw geweigerd. Aan: clients vragen het aan, de server controleert afstand, gereedschap en voorwerpen en doet het werk, en alle spelers zien dezelfde afzettingen. Geen effect in singleplayer.",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier": "Erts per afzettingsvak (vermenigvuldiger)",
+    "Sandbox_AmmoMaking_DepositReserveMultiplier_tooltip": "Bepaalt hoeveel ertseenheden een koper- of zinkafzettingsvak bevat. 1 is de balans van de mod. Elk winbaar gehalte houdt minstens één eenheid, en grond met sporen blijft leeg. Reeds bewerkte vakken houden wat er al uit gehaald is.",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier": "Matrijzensets en kogelmallen als buit (vermenigvuldiger)",
+    "Sandbox_AmmoMaking_DieSetLootMultiplier_tooltip": "Bepaalt hoe vaak matrijzensets en kogelmallen opduiken in wapenwinkels, wapenkasten in garages en tussen de spullen van jagers. 1 is de balans van de mod, 0 haalt ze uit de buit (ze kunnen nog steeds gesmeed worden). Reeds gevulde containers houden hun inhoud. De sandboxinstelling voor gereedschapsbuit beïnvloedt ze ook.",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier": "Herlaadmateriaal als buit (vermenigvuldiger)",
+    "Sandbox_AmmoMaking_ComponentLootMultiplier_tooltip": "Bepaalt hoe vaak het buskruid, de losse slaghoedjes, de messingrestjes en de kleine messingplaten die de mod aan de buit toevoegt opduiken. 1 is de balans van de mod, 0 haalt ze weg. Reeds gevulde containers houden hun inhoud.",
+    "Sandbox_AmmoMaking_XPMultiplier": "XP-vermenigvuldiger voor Munitie maken",
+    "Sandbox_AmmoMaking_XPMultiplier_tooltip": "De eigen XP-vermenigvuldiger van de vaardigheid Munitie maken, zoals de vermenigvuldigers per vaardigheid van het spel. Net als die wordt hij alleen gebruikt als de globale XP-vermenigvuldiger uitgeschakeld is; anders geldt de globale. Recyclen leert je bij geen enkele waarde iets."
+}

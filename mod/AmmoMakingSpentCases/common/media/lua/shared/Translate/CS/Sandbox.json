@@ -1,0 +1,5 @@
+{
+    "Sandbox_AmmoMaking": "Ammo Making (výroba střeliva)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery": "Nalezené nábojnice na sto vystřelených nábojů (experimentální)",
+    "Sandbox_AmmoMaking_SpentCaseRecovery_tooltip": "EXPERIMENTÁLNÍ, pouze pro jednoho hráče. Kolik ze sta vystřelených nábojů zanechá nábojnici, kterou lze sebrat. Vystřelenou nábojnici lze rozebrat na čtvrtinu její mosazi, nebo kalibrovat v její sadě matric, ze dvou vznikne jedna použitelná nábojnice. 0 nezanechá žádné."
+}
