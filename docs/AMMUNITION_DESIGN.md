@@ -257,8 +257,12 @@ numbers are `METALLURGY_DESIGN.md` 12; what changes for the round is below.
   rolls as a case does. The quality effects stay locked
   (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4), so this is a record, shown by
   *Inspect Ammunition*.
-- **Rifles keep copper.** The rifle class has no mould; the reason is in
-  `METALLURGY_DESIGN.md` 12.4 and beside `AC_Calibres.CLASSES`.
+- **Rifles cast only with a gas check.** The rifle class has a mould and its
+  cast assembly takes a copper gas check; its cast bullets roll 10 lower.
+  The reason is in `METALLURGY_DESIGN.md` 12.4 and beside
+  `AC_Calibres.CLASSES`.
+- **Wax.** Cast bullets can be lubed with candle wax once, +5
+  (`METALLURGY_DESIGN.md` 12.10).
 - **The press** assembles copper-bullet rounds only: its recipes are the
   hand steps of `PRESS.steps` (`buildPressRecipes`), and the cast
   assembly is not one of them. A cast round is assembled by hand.
@@ -309,6 +313,16 @@ set is forged or found again. A die set from a save made before die sets wore
 has the engine's default condition, 10 of 10. REQUIRES FUTURE IN-GAME
 VERIFICATION: the condition shown, the wear while crafting, the refusal at 0,
 and the condition of a die set found as loot.
+
+**A worn die set can be reground** (`AC_Calibres.REGRIND`): *Regrind Worn
+<calibre> Handloading Die Set* consumes the die set, broken or not
+(`AllowDestroyedItem`), with a file or whetstone kept, and makes it again;
+`OnCreate` sets the made one's condition. Each regrind leaves the die more
+open: the condition it can be brought back to falls by 2 every time (8, 6,
+4, 2, then nothing), so a die set still ends. The count is in its ModData
+(`dieSetRegrinds`). A treatment: no XP, the die set's level. REQUIRES FUTURE
+IN-GAME VERIFICATION: that a broken die set is offered and the made one
+takes the condition set from Lua.
 
 **Future press**, designed and not built
 (`docs/RELOADING_PRESS_DESIGN.md`):
@@ -407,11 +421,11 @@ from:
 | Ammo Making level | Recipes it opens | A formed case's quality (worst, typical, best) | Mining one ore takes | Forming a 9mm case takes |
 |---|---|---|---|---|
 | 0 | 13 | 35, 50, 65 | 400 | – |
-| 1 | 5 | 39, 54, 69 | 384 | 80 |
-| 2 | 24 | 43, 58, 73 | 368 | 76 |
-| 3 | 35 | 47, 62, 77 | 352 | 72 |
-| 4 | 18 | 51, 66, 81 | 336 | 68 |
-| 5 | 5 | 55, 70, 85 | 320 | 64 |
+| 1 | 7 | 39, 54, 69 | 384 | 80 |
+| 2 | 29 | 43, 58, 73 | 368 | 76 |
+| 3 | 42 | 47, 62, 77 | 352 | 72 |
+| 4 | 40 | 51, 66, 81 | 336 | 68 |
+| 5 | 8 | 55, 70, 85 | 320 | 64 |
 | 6 | – | 59, 74, 89 | 304 | 60 |
 | 7 | – | 63, 78, 93 | 288 | 56 |
 | 8 | – | 67, 82, 97 | 272 | 52 |

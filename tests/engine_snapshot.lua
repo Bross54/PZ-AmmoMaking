@@ -26,11 +26,7 @@ return {
             Tool = true,
         },
         icons = {
-            CeramicCast_Bar_Fired = true,
-            CeramicCast_Bar_Unfired = true,
             RifleAmmo308loose = true,
-            RoughBlock = true,
-            Sandbag = true,
         },
         models = {
             ["38SpecialBullets"] = true,
@@ -42,6 +38,7 @@ return {
             CapGunCap = true,
             CeramicIngotCast = true,
             CeramicIngotCastUnfired = true,
+            CopperScrap = true,
             IronOre = true,
             MetalworkingPunch = true,
             Pliers = true,
@@ -152,6 +149,8 @@ return {
             class = "zombie.entity.components.crafting.recipe.CraftRecipeData",
             exposed = "zombie.entity.components.crafting.recipe.CraftRecipeData",
             methods = {
+                getAllConsumedItems = { "", "ArrayList", "ArrayList,boolean", "ArrayList,boolean,boolean" },
+                getAllCreatedItems = { "", "ArrayList" },
                 getModData = { "" },
                 perform = { "IsoGameCharacter,List,List,ArrayList" },
             },
@@ -974,6 +973,11 @@ return {
             tags = "base:hasmetal;base:miscelectronic",
             type = "base:normal",
             weight = 0.3,
+        },
+        ["Base.Candle"] = {
+            type = "base:drainable",
+            uses = 333,
+            weight = 0.2,
         },
         ["Base.CapGunCap"] = {
             type = "base:normal",

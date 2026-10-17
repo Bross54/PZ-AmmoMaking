@@ -1334,12 +1334,15 @@ files, every Lua file and the installed game's item scripts.
 | Bullets and shot | 9 | `AnySurfaceCraft` | 2 to 4 | 1 | 80 to 120 | 2 | 1 | 1 |
 | Assembly | 9 | `AnySurfaceCraft` | 3 to 5 | 2 to 5 | 40 to 80 | 1 | 4 to 5 | 1 |
 | Lead melted from vanilla junk | 2 | `PrimitiveFurnace` | 0 | 0 | 200 | 2 | 2 | 1 |
-| Bullet moulds | 10 | `Forge`, `AnySurfaceCraft`, `KilnSmall;KilnLarge` | 2 to 3 | 0 | 20 to 300 | 0 to 3 | 1 to 3 | 1 |
-| Cast lead bullets and shot | 24 | `PrimitiveFurnace` | 2 to 4 | 1 | 80 | 2 to 3 | 2 to 3 | 1 |
-| Assembly with a cast bullet | 6 | `AnySurfaceCraft` | 3 to 5 | 2 to 4 | 40 | 1 | 4 to 5 | 1 |
+| Bullet moulds | 15 | `Forge`, `AnySurfaceCraft`, `KilnSmall;KilnLarge` | 2 to 4 | 0 | 20 to 300 | 0 to 3 | 1 to 3 | 1 |
+| Cast lead bullets and shot | 36 | `PrimitiveFurnace` | 2 to 4 | 1 | 80 to 120 | 2 to 3 | 2 to 3 | 1 |
+| Assembly with a cast bullet | 9 | `AnySurfaceCraft` | 3 to 5 | 2 to 5 | 40 to 80 | 1 | 4 to 5 | 1 |
+| Gas checks (copper, for rifle cast bullets) | 1 | `AnySurfaceCraft` | 4 | 0 | 80 | 2 | 1 | 1 |
+| Lubing cast bullets (candle wax) | 9 | `AnySurfaceCraft` | 2 to 4 | 0 | 60 | 0 | 2 | 1 |
+| Regrinding worn die sets | 9 | `AnySurfaceCraft` | 1 to 3 | 0 | 150 | 1 | 1 | 1 |
 | Scrapping brass | 3 | `AnySurfaceCraft` | 0 | 0 | 100 | 1 | 1 | 1 |
 | Recasting brass scrap | 1 | `Furnace` | 0 | 0 | 200 | 3 | 2 | 1 |
-| **All** | **100** | | | | | | | |
+| **All** | **139** | | | | | | | |
 
 <!-- END RECIPE AUDIT TABLE -->
 

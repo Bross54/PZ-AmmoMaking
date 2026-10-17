@@ -613,3 +613,14 @@ case's brass is simply lost.
 Listed in section 6 and `INGAME_VALIDATION.md` 19: the recipes appear
 and craft with the level attached; two spent cases go in and the die set
 and hammer are kept; the case assembles; no XP; a lower casing quality.
+
+## Cleaning before resizing
+
+*Clean Spent <calibre> Cases with Steel Wool* (`AC_SpentCases.CLEAN`): five
+spent cases and one use of vanilla steel wool (`Base.SteelWool`, five uses)
+give the same five back, marked clean (`spentCaseCleaned`). A case resized
+from clean spent cases rolls `AC_CaseQuality.CONFIG.cleanedBonus` (+5) back
+of the resizing malus (-10), in proportion to the clean share; it stays
+below a newly formed case (`validateResize` refuses a bonus that would reach
+it). No XP, no brass in or out: a treatment. REQUIRES FUTURE IN-GAME
+VERIFICATION, with the rest of the add-on.

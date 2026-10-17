@@ -29,7 +29,7 @@ return function(T)
         return nil
     end
 
-    section("Lead: which calibres cast, and why rifles do not (pure)")
+    section("Lead: which calibres cast, and rifles only with a gas check (pure)")
     do
         local C = AC_Casting.CONFIG
         eq(#AC_Casting.validate(), 0, "the casting model is sound: " .. table.concat(AC_Casting.validate(), "; "))
@@ -40,7 +40,8 @@ return function(T)
         local castable = {}
         for _, calibre in ipairs(AC_Calibres.LIST) do
             local class = AC_Calibres.CLASSES[calibre.class]
-            eq(calibre.castBullet ~= nil, calibre.class ~= "rifle", calibre.id .. (calibre.class == "rifle" and ": a rifle keeps its copper bullet" or ": casts a lead bullet"))
+            eq(calibre.castBullet ~= nil, true, calibre.id .. ": casts a lead bullet")
+            eq(class.gasCheck == true, calibre.class == "rifle", calibre.id .. (calibre.class == "rifle" and ": a rifle's cast bullet needs a gas check" or ": needs no gas check"))
             eq(calibre.castBullet ~= nil, class.mould ~= nil, calibre.id .. ": cast exactly when its class has a mould")
             if calibre.castBullet then
                 castable[#castable + 1] = calibre.id
@@ -55,8 +56,19 @@ return function(T)
                 eq(castItem and castItem.fields.Weight, copperItem and copperItem.fields.Weight, calibre.id .. ": the same weight as its copper bullet")
             end
         end
-        eq(table.concat(castable, ", "), "9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 12 Gauge", "the five pistol calibres and the shell cast; the three rifles do not")
-        eq(AC_Calibres.CLASSES.rifle.mould, nil, "the rifle class has no mould")
+        eq(table.concat(castable, ", "), "9mm, .38 Special, .45 ACP, .357 Magnum, .44 Magnum, 5.56, .30-30, .308, 12 Gauge", "every calibre casts")
+        eq(AC_Calibres.CLASSES.rifle.mould, "AmmoMaking.BulletMouldRifle", "the rifle class has its mould")
+        check(AC_Calibres.CLASSES.rifle.castQualityBonus < 0, "and its cast bullets roll lower than a pistol's")
+        -- The gas check: copper from the mine, a tenth of a jacketed bullet.
+        local G = AC_Casting.GAS_CHECK
+        eq(G.scrapItem, "Base.CopperScrap", "a gas check is punched from copper scrap")
+        eq(AC_Casting.gasCheckUnits() * G.perScrap, C.scrapUnits, "one scrap's copper, shared among its gas checks")
+        eq(AC_Materials.UNITS[G.item].metal, "copper", "a gas check is copper")
+        local gasRecipe = AC_Materials.getRecipe(G.id)
+        check(gasRecipe ~= nil, "the gas check recipe is listed")
+        eq(gasRecipe.outputs[1].count, G.perScrap, "ten from a scrap")
+        check(AC_Materials.checkConservation(gasRecipe), "and it conserves copper")
+        eq(gasRecipe.requiredLevel, AC_Casting.getMould("rifle").level, "at the level of the first rifle bullet")
         eq(AC_Calibres.get("12 Gauge").castBullet, "AmmoMaking.LeadShotCharge12Gauge", "the shell's cast projectile is a charge of lead shot")
 
         -- The validators refuse what they are there to refuse.
@@ -72,7 +84,10 @@ return function(T)
         end
         local rifle, nine, shell = 6, 1, 9
         eq(AC_Calibres.LIST[rifle].class, "rifle", "the sixth definition is a rifle")
-        check(string.find(calibreProblems(function(l) l[rifle].castBullet = "AmmoMaking.CastBulletX" end), "has no cast bullet: its class has no mould", 1, true) ~= nil, "a rifle with a cast bullet is refused")
+        local savedRifle = AC_Calibres.CLASSES.rifle.mould
+        AC_Calibres.CLASSES.rifle.mould = nil
+        check(string.find(calibreProblems(function(l) l[rifle].castBullet = "AmmoMaking.CastBulletX" end), "has no cast bullet: its class has no mould", 1, true) ~= nil, "a cast bullet for a class without a mould is refused")
+        AC_Calibres.CLASSES.rifle.mould = savedRifle
         check(string.find(calibreProblems(function(l) l[nine].castBullet = nil end), "has a mould but it has no cast bullet", 1, true) ~= nil, "a pistol without one is refused")
         check(string.find(calibreProblems(function(l) l[shell].castBullet = l[nine].castBullet end), "is already used by", 1, true) ~= nil, "two calibres sharing a cast bullet are refused")
         check(string.find(calibreProblems(function(l) l[nine].castBullet = l[nine].bullet end), "is already used by", 1, true) ~= nil, "a cast bullet that is the copper bullet is refused")
@@ -152,14 +167,14 @@ return function(T)
             for _, output in ipairs(recipe.outputs) do
                 if output.item == C.scrapItem then eq(recipe.step, "leadSource", recipe.id .. " makes lead scrap: only a melt may") end
                 local kind = AC_Calibres.identify(output.item)
-                if kind == "castBullet" then eq(recipe.step, "cast", recipe.id .. " makes cast bullets: only a cast may") end
+                if kind == "castBullet" and not recipe.treatment then eq(recipe.step, "cast", recipe.id .. " makes cast bullets: only a cast may") end
             end
             for _, input in ipairs(recipe.inputs) do
                 for _, id in ipairs(input.items or {}) do
                     if id == C.scrapItem and not input.keep then eq(recipe.step, "cast", recipe.id .. " consumes lead scrap: only a cast may") end
                     local kind, calibre = AC_Calibres.identify(id)
                     if kind == "castBullet" then
-                        eq(recipe.step, "assembleCast", recipe.id .. " consumes a cast bullet: only its assembly may")
+                        eq(recipe.treatment and "assembleCast" or recipe.step, "assembleCast", recipe.id .. " consumes a cast bullet: only its assembly (or lubing, which gives it back) may")
                         eq(recipe.calibre, calibre.id, recipe.id .. " consumes its own calibre's cast bullet")
                     end
                     check(kind ~= "round", recipe.id .. " consumes no finished round")
@@ -184,17 +199,20 @@ return function(T)
             local mould = AC_Calibres.CLASSES[calibre.class].mould
             local keptMould, crucible = false, false
             for _, input in ipairs(cast.inputs) do
-                if input.items and input.items[1] == mould then keptMould = input.keep == true and #input.items == 1 and input.flags == nil end
+                if input.items and input.items[1] == mould then keptMould = input.keep == true and #input.items == 1 and table.concat(input.flags or {}, ";") == "MayDegradeVeryLight" end
                 if input.items and input.items[1] == "Base.CeramicCrucible" then crucible = input.keep == true end
             end
-            check(keptMould, name .. ": keeps its class's mould, by item type alone")
+            check(keptMould, name .. ": keeps its class's mould, by item type alone, and wears it")
             check(crucible, name .. ": keeps the empty crucible")
             check(AC_Materials.checkConservation(cast), name .. ": casting conserves lead")
             check(not AC_Materials.checkConservation({ id = "x", inputs = cast.inputs, outputs = { { count = cast.outputs[1].count + 1, item = calibre.castBullet } } }), name .. ": one bullet more is refused")
             check(not AC_Materials.checkConservation({ id = "x", inputs = cast.inputs, outputs = { { count = 1, item = calibre.bullet } } }), name .. ": lead cannot become a copper bullet")
 
-            -- The assembly is the copper one with its bullet line swapped.
-            eq(#assemble.inputs, #hand.inputs, name .. ": the assembly has the copper assembly's lines")
+            -- The assembly is the copper one with its bullet line swapped, and
+            -- for a rifle a gas check added last.
+            local gas = AC_Calibres.CLASSES[calibre.class].gasCheck == true
+            eq(#assemble.inputs, #hand.inputs + (gas and 1 or 0), name .. ": the assembly has the copper assembly's lines" .. (gas and " and a gas check" or ""))
+            if gas then eq(assemble.inputs[#assemble.inputs].items[1], AC_Casting.GAS_CHECK.item, name .. ": the gas check line") end
             for index, input in ipairs(hand.inputs) do
                 local mine = assemble.inputs[index]
                 if input.items and input.items[1] == calibre.bullet then
@@ -212,7 +230,7 @@ return function(T)
             -- What the round holds: lead where the copper round has copper.
             local inCast, outCast = AC_Materials.getRecipeUnits(assemble)
             local inHand, outHand = AC_Materials.getRecipeUnits(hand)
-            eq(outCast.copper, nil, name .. ": a cast round holds no copper")
+            eq(outCast.copper, gas and AC_Casting.gasCheckUnits() or nil, name .. (gas and ": a cast rifle round holds its gas check's copper" or ": a cast round holds no copper"))
             eq(outCast.lead, outHand.copper, name .. ": its lead is the copper round's copper, unit for unit")
             eq(inCast.brass, inHand.brass, name .. ": the same brass, so the same zinc from the mine")
             eq(outCast.brass, outHand.brass, name .. ": and the same brass in the round")
@@ -231,7 +249,7 @@ return function(T)
         for _, recipe in ipairs(recipesOf("mould")) do
             if recipe.material == nil then table.insert(moulds, recipe) end
         end
-        eq(#moulds, 2, "two forged moulds: pistol and buckshot")
+        eq(#moulds, 3, "three forged moulds: pistol, buckshot and rifle")
         for _, recipe in ipairs(moulds) do
             local mould = AC_Casting.getMould(recipe.class)
             eq(recipe.outputs[1].item, mould.item, recipe.id .. " makes its class's mould")
@@ -249,7 +267,7 @@ return function(T)
         end
         eq(AC_Casting.getMould("pistol").level, 2, "the pistol mould at level 2, with 9mm bullets")
         eq(AC_Casting.getMould("shotgun").level, 3, "the buckshot mould at level 3, with shot charges")
-        eq(AC_Casting.getMould("rifle"), nil, "no rifle mould")
+        eq(AC_Casting.getMould("rifle").item, "AmmoMaking.BulletMouldRifle", "the rifle mould")
     end
 
     section("Lead: moulds of stone, clay and sand; the mould decides the bullet's quality (pure and mocked recipe data)")
@@ -265,6 +283,7 @@ return function(T)
         eq(byId.sand.keep, false, "a sand mould is consumed by its cast")
         eq(byId.clay.keep and byId.clay.flags == nil, true, "a clay mould is kept and wears by breaking, not by a flag")
         eq(table.concat(byId.stone.flags or {}, ";"), "MayDegradeLight", "a stone mould wears like vanilla's stone tools")
+        eq(table.concat(byId.iron.flags or {}, ";"), "MayDegradeVeryLight", "an iron mould wears as slowly as a die set")
 
         for _, mould in ipairs(AC_Casting.getMoulds()) do
             local stone = AC_Casting.getMouldItems(mould.class, "stone")
@@ -274,9 +293,15 @@ return function(T)
             for _, id in ipairs({ stone.item, clay.unfired, clay.item, sand.item }) do
                 check(T.declaredItems[id] ~= nil, id .. " is declared")
             end
-            local s = T.declaredItems[stone.item].fields
-            eq(tonumber(s.ConditionMax), byId.stone.conditionMax, stone.item .. ": ConditionMax is MOULD_MATERIALS'")
-            eq(tonumber(s.ConditionLowerChanceOneIn), byId.stone.conditionLowerChanceOneIn, stone.item .. ": ConditionLowerChanceOneIn is MOULD_MATERIALS'")
+            for _, material in ipairs(M) do
+                if material.conditionMax then
+                    local id = AC_Casting.getMouldItems(mould.class, material.id).item
+                    local s = T.declaredItems[id].fields
+                    eq(tonumber(s.ConditionMax), material.conditionMax, id .. ": ConditionMax is MOULD_MATERIALS'")
+                    eq(tonumber(s.ConditionLowerChanceOneIn), material.conditionLowerChanceOneIn, id .. ": ConditionLowerChanceOneIn is MOULD_MATERIALS'")
+                    check(string.find(s.Tags or "", "base:showcondition", 1, true) ~= nil, id .. " shows its condition")
+                end
+            end
             -- The fired clay mould is vanilla's clay ingot mould in tags.
             eq(T.declaredItems[clay.item].fields.Tags, "base:destructible;base:breakonsmithing", clay.item .. ": tagged like Base.ClayIngotMold, so one cast breaks it")
 
@@ -312,7 +337,7 @@ return function(T)
                 if cast then
                     eq(cast.xp .. "/" .. cast.requiredLevel .. "/" .. cast.time .. "/" .. cast.outputs[1].count, iron.xp .. "/" .. iron.requiredLevel .. "/" .. iron.time .. "/" .. iron.outputs[1].count, cast.id .. ": XP, level, time and bullets of the iron cast")
                     eq(cast.category, "Blacksmithing", cast.id .. " is smithing, so a clay mould breaks")
-                    eq(cast.qualityBonus, material.qualityBonus, cast.id .. ": the material's bonus")
+                    eq(cast.qualityBonus, material.qualityBonus + (AC_Calibres.CLASSES[calibre.class].castQualityBonus or 0), cast.id .. ": the material's bonus and the class's")
                     eq(cast.effect, "castBulletQuality", cast.id .. ": rolls the bullets' quality")
                     local line = cast.inputs[#cast.inputs]
                     eq(line.items[1], AC_Casting.getMouldItems(calibre.class, material.id).item, cast.id .. ": takes its material's mould")
@@ -360,8 +385,41 @@ return function(T)
         }
         eq(AC_CaseQuality.onRoundsAssembled(data), 70, "a bullet without a quality leaves the case's")
 
+        local inspector = nil
+        -- Lubing: the same bullets back, once better by LUBE.qualityBonus.
+        local LUBE = AC_Casting.LUBE
+        eq(LUBE.item, "Base.Candle", "the wax is a vanilla candle")
+        local fresh = MOCK.newItem(calibre.castBullet)
+        AC_CaseQuality.EFFECTS.castBulletQuality({
+            getAllCreatedItems = function() return MOCK.arrayList({ fresh }) end,
+            getAllConsumedItems = function() return MOCK.arrayList({}) end,
+        }, inspector or MOCK.newPlayer(), { qualityBonus = -20 })
+        local before = AC_CaseQuality.getBulletQuality(fresh)
+        local lubed = MOCK.newItem(calibre.castBullet)
+        local spawned = MOCK.newItem(calibre.castBullet)
+        local spawnedOut = MOCK.newItem(calibre.castBullet)
+        local function lube(inputs, outputs)
+            return AC_CaseQuality.EFFECTS.lubeCastBullets({
+                getAllCreatedItems = function() return MOCK.arrayList(outputs) end,
+                getAllConsumedItems = function() return MOCK.arrayList(inputs) end,
+            })
+        end
+        lube({ fresh, spawned }, { lubed, spawnedOut })
+        eq(AC_CaseQuality.getBulletQuality(lubed), before + LUBE.qualityBonus, "a lubed bullet gains the bonus")
+        eq(AC_CaseQuality.getBulletQuality(spawnedOut), nil, "a bullet without a quality stays without one")
+        local again = MOCK.newItem(calibre.castBullet)
+        lube({ lubed }, { again })
+        eq(AC_CaseQuality.getBulletQuality(again), before + LUBE.qualityBonus, "lubing twice adds nothing")
+        for _, recipe in ipairs(recipesOf("lube")) do
+            eq(recipe.treatment, true, recipe.id .. " is a treatment")
+            eq(AC_Materials.getRecipeXP(recipe), 0, recipe.id .. " pays no XP")
+            eq(recipe.inputs[1].count, recipe.outputs[1].count, recipe.id .. ": as many bullets out as in")
+            eq(recipe.inputs[1].items[1], recipe.outputs[1].item, recipe.id .. ": the same bullets")
+        end
+        eq(#recipesOf("lube"), #AC_Casting.getCastable(), "one lubing per castable calibre")
+
         -- Inspection: a cast bullet shows its quality; a spawned one is not offered.
-        local inspector = MOCK.newPlayer()
+        inspector = MOCK.newPlayer()
         inspector.perkLevel = 5
         local seen = AmmoInspection.inspectComponent(inspector, bullet)
         eq(seen.kind, "castBullet", "a cast bullet can be inspected")
@@ -380,7 +438,8 @@ return function(T)
             local brass = calibre.cupsPerCase * AC_Calibres.CONFIG.cupUnits + primer.brassUnits
             local castIn = AC_Materials.getRecipeUnits(castRecipe(calibre, "assembleCast"))
             eq(castIn.brass, brass, calibre.id .. ": a cast round takes all of its brass")
-            eq(castIn.copper, nil, calibre.id .. ": and no copper at all")
+            local gas = AC_Calibres.CLASSES[calibre.class].gasCheck == true
+            eq(castIn.copper, gas and AC_Casting.gasCheckUnits() or nil, calibre.id .. (gas and ": and only its gas check's copper" or ": and no copper at all"))
             eq(castIn.lead, AC_Calibres.CONFIG.scrapUnits / calibre.bulletsPerScrap, calibre.id .. ": lead in place of the bullet's copper, and nothing else")
         end
         -- XP per round is the copper round's, whichever bullet: lead opens no
@@ -419,7 +478,7 @@ return function(T)
         eq(#L.validateMoulds(), 0, "the mould loot table is sound: " .. table.concat(L.validateMoulds(), "; "))
         eq(L.MOULDS.weight, 0.5, "a mould weighs 0.5 before the list's scale")
         local entries = L.buildMouldEntries()
-        eq(#entries, 4, "both moulds in a gun store, the pistol mould in a garage gun locker, the buckshot mould among a hunter's things")
+        eq(#entries, 5, "the pistol and buckshot moulds in a gun store, the pistol mould in a garage gun locker, the buckshot and rifle moulds among a hunter's things")
         local perList, seen = {}, {}
         for _, entry in ipairs(entries) do
             local facts = VANILLA.loot.lists[entry.list]
@@ -432,9 +491,10 @@ return function(T)
         end
         eq(perList.GunStoreMagsAmmo, 1, "a gun store's ammunition case: both moulds, 1 in all")
         eq(perList.GarageFirearms, 0.25, "a garage gun locker: the pistol mould, 0.25")
-        eq(perList.Hunter, 0.25, "a hunter's things: the buckshot mould, 0.25")
+        eq(perList.Hunter, 0.5, "a hunter's things: the buckshot and rifle moulds, 0.25 each")
         check(seen["GarageFirearms|" .. AC_Calibres.CLASSES.pistol.mould] and not seen["GarageFirearms|" .. AC_Calibres.CLASSES.shotgun.mould], "the handgun locker holds the pistol mould only")
-        check(seen["Hunter|" .. AC_Calibres.CLASSES.shotgun.mould] and not seen["Hunter|" .. AC_Calibres.CLASSES.pistol.mould], "the hunter holds the buckshot mould only")
+        check(seen["Hunter|" .. AC_Calibres.CLASSES.shotgun.mould] and not seen["Hunter|" .. AC_Calibres.CLASSES.pistol.mould], "the hunter holds the buckshot mould, not the pistol one")
+        check(seen["Hunter|" .. AC_Calibres.CLASSES.rifle.mould] and not seen["GunStoreMagsAmmo|" .. AC_Calibres.CLASSES.rifle.mould], "the rifle mould is a hunter's, kept out of the full gun store case")
 
         -- Per ROOM, at the default and at the die-set multiplier's maximum:
         -- twelve containers filled from a list hold under one mould.
@@ -509,7 +569,7 @@ return function(T)
         refused("a list over the cap", function(c) c.weight = 0.8 end, "above 1")
         refused("a scale above 1", function(c) c.lists[1].scale = 2 end, "at most 1")
         refused("the same list twice", function(c) c.lists[3].list = c.lists[2].list end, "named twice")
-        refused("a rifle mould", function(c) c.lists[3].classes = { "rifle" } end, "a class without a mould")
+        refused("a class that casts nothing", function(c) c.lists[3].classes = { "musket" } end, "a class without a mould")
         refused("a mould in no list", function(c) table.remove(c.lists, 3) table.remove(c.lists, 1) end, "is in no list")
 
         -- The loot document names every list.
@@ -563,7 +623,7 @@ return function(T)
         local found = labels()
         local castLine = "lead casting (" .. #AC_Casting.getCastable() .. " castable calibres, " .. #AC_Casting.getMoulds() .. " moulds, no XP for melting)"
         eq(found[castLine], "OK", "the game-start check reports the casting model")
-        eq(found["bullet mould loot (4 entries)"], "OK", "and the registered moulds")
+        eq(found["bullet mould loot (5 entries)"], "OK", "and the registered moulds")
         for _, id in ipairs(AC_Casting.getItems()) do
             eq(found[id], "OK", id .. " is probed at game start")
         end
@@ -578,9 +638,9 @@ return function(T)
         -- The documents quote what the code says.
         local checklist = string.gsub(readFile(ROOT .. "/docs/INGAME_VALIDATION.md"), "\n%s*", " ")
         for _, line in ipairs({
-            "[AmmoMaking] Bullet mould loot: 4 entries added",
+            "[AmmoMaking] Bullet mould loot: 5 entries added",
             "OK: " .. castLine,
-            "OK: bullet mould loot (4 entries)",
+            "OK: bullet mould loot (5 entries)",
         }) do
             check(string.find(checklist, line, 1, true) ~= nil, "docs/INGAME_VALIDATION.md quotes: " .. line)
         end

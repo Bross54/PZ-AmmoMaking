@@ -573,6 +573,137 @@ function AC_SpentCases.getResizeName(
 end
 
 
+------------------------------------------------
+-- CLEANING (tunable)
+------------------------------------------------
+--
+-- Spent cases scrubbed with vanilla steel wool
+-- (Base.SteelWool, items/normal.txt: a drainable of five
+-- uses, UseDelta 0.2) before they are resized. The same
+-- cases come back, marked clean; a resized case made from
+-- clean ones rolls AC_CaseQuality.CONFIG.cleanedBonus
+-- better, still below a newly formed case (validate). A
+-- treatment: no XP, the resizing level.
+------------------------------------------------
+
+AC_SpentCases.CLEAN = {
+
+    item = "Base.SteelWool",
+
+    uses = 1,
+
+    cases = 5,
+
+    time = 60,
+
+    timedAction = "Making",
+
+    benchTag = "AnySurfaceCraft",
+
+    category = "Metalworking",
+
+    idPrefix = "AmmoMaking_CleanSpentCases",
+
+    callbackPrefix = "onCleanSpentCases",
+
+    -- "Form <calibre> Case" -> "Clean Spent <calibre> Cases
+    -- with Steel Wool"
+    namePrefix = "Clean Spent ",
+
+    nameSuffix = "s with Steel Wool",
+}
+
+
+-- Every calibre's cleaning recipe, in calibre order. Like
+-- the resizing, listed by AC_Materials only with the
+-- add-on's content.
+function AC_SpentCases.buildCleanRecipes()
+
+    local clean =
+        AC_SpentCases.CLEAN
+
+
+    local recipes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        local form =
+            AC_SpentCases.getFormingRecipe(calibre)
+
+
+        if form
+            and calibre.spentCase
+        then
+
+            table.insert(
+                recipes,
+                {
+                    id = clean.idPrefix .. calibre.suffix,
+                    calibre = calibre.id,
+                    step = "clean",
+                    clean = true,
+                    formRecipe = form.id,
+                    treatment = true,
+                    effect = "cleanSpentCases",
+                    time = clean.time,
+                    timedAction = clean.timedAction,
+                    benchTag = clean.benchTag,
+                    category = clean.category,
+                    callback = clean.callbackPrefix .. calibre.suffix,
+                    xp = 0,
+                    requiredLevel = AC_SpentCases.getResizeLevel(calibre),
+                    inputs = {
+                        { count = clean.cases, items = { calibre.spentCase } },
+                        { count = clean.uses, items = { clean.item } },
+                    },
+                    outputs = {
+                        { count = clean.cases, item = calibre.spentCase },
+                    },
+                }
+            )
+        end
+    end
+
+
+    return recipes
+end
+
+
+-- What a cleaning recipe is called, from its forming
+-- recipe's name.
+function AC_SpentCases.getCleanName(
+    formName
+)
+
+    local clean =
+        AC_SpentCases.CLEAN
+
+
+    formName =
+        tostring(formName or "")
+
+
+    local prefix =
+        AC_SpentCases.RESIZE.formPrefix
+
+
+    if string.sub(formName, 1, #prefix) == prefix then
+
+        formName =
+            string.sub(formName, #prefix + 1)
+    end
+
+
+    return clean.namePrefix .. formName .. clean.nameSuffix
+end
+
+
 -- Cases that come back from fired rounds, per round fired,
 -- when percent of a hundred are found: the reuse share of
 -- one cycle. 1 / (1 - share) rounds are made from one new
@@ -1304,6 +1435,20 @@ function AC_SpentCases.validateResize()
         or bonus >= 0
     then
         problem("must give a lower casing quality than forming (resizedBonus below 0)")
+    end
+
+
+    local cleaned =
+        AC_CaseQuality
+        and AC_CaseQuality.CONFIG
+        and AC_CaseQuality.CONFIG.cleanedBonus
+
+
+    if type(cleaned) ~= "number"
+        or cleaned < 0
+        or (type(bonus) == "number" and bonus + cleaned >= 0)
+    then
+        problem("cleaning may help, never up to a new case (cleanedBonus of at least 0, and resizedBonus + cleanedBonus below 0)")
     end
 
 

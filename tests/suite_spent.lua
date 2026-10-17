@@ -224,7 +224,7 @@ return function(T)
             eq(AC_Features.isEnabled("spentCases"), false, where .. ": the feature is off")
             eq(AC_Features.hasContent("spentCases"), true, where .. ": its content is in the game")
             local script = T.parseScript(ROOT .. "/" .. ADDONS.SPENT_SCRIPT)
-            check(#script.blocks == #ADDONS.spentRecipes() and #script.blocks == 3 + #AC_Calibres.LIST, where .. ": the add-on's recipes (three scrapping, one resizing per calibre) are loaded by the engine regardless")
+            check(#script.blocks == #ADDONS.spentRecipes() and #script.blocks == 3 + 2 * #AC_Calibres.LIST, where .. ": the add-on's recipes (three scrapping, one resizing and one cleaning per calibre) are loaded by the engine regardless")
             for _, block in ipairs(script.blocks) do
                 local callback = string.match(block.fields.OnCreate or "", "AC_Materials%.([%w_]+)")
                 check(callback ~= nil and type(AC_Materials[callback]) == "function", where .. ": " .. block.name .. " finds its OnCreate callback " .. tostring(callback))
@@ -1020,5 +1020,46 @@ return function(T)
         for label in pairs(found) do
             check(string.find(label, "spent case", 1, true) == nil, "off: nothing of the spent cases is probed (" .. label .. ")")
         end
+    end
+
+    section("Spent cases: steel wool cleans them, and a clean case resizes a little better (pure and mocked recipe data)")
+    do
+        local CLEAN, Q = AC_SpentCases.CLEAN, AC_CaseQuality.CONFIG
+        eq(CLEAN.item, "Base.SteelWool", "vanilla steel wool")
+        eq(#AC_SpentCases.validateResize(), 0, "the resizing and cleaning numbers are sound: " .. table.concat(AC_SpentCases.validateResize(), "; "))
+        check(Q.resizedBonus + Q.cleanedBonus < 0, "a clean resized case is still below a newly formed one")
+        local recipes = AC_SpentCases.buildCleanRecipes()
+        eq(#recipes, #AC_Calibres.LIST, "one cleaning per calibre")
+        for _, recipe in ipairs(recipes) do
+            eq(recipe.treatment, true, recipe.id .. " is a treatment")
+            eq(recipe.xp, 0, recipe.id .. " pays no XP")
+            eq(recipe.inputs[1].items[1], recipe.outputs[1].item, recipe.id .. ": the same cases back")
+            eq(recipe.inputs[1].count, recipe.outputs[1].count, recipe.id .. ": as many")
+        end
+        eq(AC_SpentCases.getCleanName("Form 9mm Case"), "Clean Spent 9mm Cases with Steel Wool", "named after the forming recipe")
+
+        local calibre = AC_Calibres.LIST[1]
+        local function data(created, consumed)
+            return {
+                getAllCreatedItems = function() return MOCK.arrayList(created or {}) end,
+                getAllConsumedItems = function() return MOCK.arrayList(consumed or {}) end,
+            }
+        end
+        local a, b = MOCK.newItem(calibre.spentCase), MOCK.newItem(calibre.spentCase)
+        eq(AC_CaseQuality.EFFECTS.cleanSpentCases(data({ a })), 1, "the cleaning marks the cases it makes")
+        eq(AC_CaseQuality.cleanedShare(data({}, { a, b })), 0.5, "one clean case of two is half")
+        eq(AC_CaseQuality.cleanedShare(data({}, { b })), 0, "an unclean case is none")
+        eq(next(b.modData or {}), nil, "and asking created no ModData on it")
+        eq(AC_CaseQuality.cleanedShare(nil), 0, "no recipe data")
+
+        local player = MOCK.newPlayer()
+        player.perkLevel = 5
+        local c1, c2 = MOCK.newItem(calibre.spentCase), MOCK.newItem(calibre.spentCase)
+        AC_CaseQuality.EFFECTS.cleanSpentCases(data({ c1, c2 }))
+        local clean, dirty = MOCK.newItem(calibre.case), MOCK.newItem(calibre.case)
+        AC_CaseQuality.EFFECTS.resizedCaseQuality(data({ clean }, { c1, c2 }), player)
+        AC_CaseQuality.EFFECTS.resizedCaseQuality(data({ dirty }, { MOCK.newItem(calibre.spentCase), MOCK.newItem(calibre.spentCase) }), player)
+        eq(AC_CaseQuality.get(clean) - AC_CaseQuality.get(dirty), Q.cleanedBonus, "two clean spent cases give the whole cleaned bonus")
+        eq(AC_CaseQuality.get(dirty), AC_CaseQuality.roll(5, 0.5, Q.resizedBonus), "uncleaned: the resizing malus as before")
     end
 end

@@ -260,4 +260,166 @@ module Base
             item 1 AmmoMaking.Hull12Gauge,
         }
     }
+
+    craftRecipe AmmoMaking_CleanSpentCases9mm
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases9mm,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase9mm],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases38Special
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases38Special,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase38Special],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases45ACP
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases45ACP,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase45ACP],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases357Magnum
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases357Magnum,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase357Magnum],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases44Magnum
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases44Magnum,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase44Magnum],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases556NATO
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases556NATO,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase556NATO],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases3030Win
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases3030Win,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase3030Win],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases308Win
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases308Win,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase308Win],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases12Gauge
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases12Gauge,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentHull12Gauge],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentHull12Gauge,
+        }
+    }
 }

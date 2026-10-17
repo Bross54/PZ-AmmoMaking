@@ -79,6 +79,13 @@ drop that entry from the script so `--check` does not overwrite it.
 | `Item_AmmoMakingLeadShot` | AmmoMaking | 12 Gauge Lead Shot Charge |
 | `Item_AmmoMakingBulletMould` | AmmoMaking | Pistol Bullet Mould |
 | `Item_AmmoMakingShotMould` | AmmoMaking | Buckshot Mould |
+| `Item_AmmoMakingRifleMould` | AmmoMaking | Rifle Bullet Mould |
+| `Item_AmmoMakingStoneMould` | AmmoMaking | Stone moulds (pistol, buckshot, rifle) |
+| `Item_AmmoMakingClayMouldUnfired` | AmmoMaking | Unfired clay moulds |
+| `Item_AmmoMakingClayMould` | AmmoMaking | Clay moulds (fired) |
+| `Item_AmmoMakingSandMould` | AmmoMaking | Sand moulds |
+| `Item_AmmoMakingGasCheck` | AmmoMaking | Copper Gas Check |
+| `Item_AmmoMakingCastBulletRifle` | AmmoMaking | Cast rifle bullets (with gas check) |
 | `Item_AmmoMakingSample` | AmmoMaking | Geological Sample |
 | `Item_AmmoMakingFieldKit` | AmmoMaking | Field Assay Kit |
 | `Item_AmmoMakingAdvancedKit` | AmmoMaking | Advanced Field Assay Kit |

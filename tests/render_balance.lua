@@ -804,6 +804,9 @@ local FAMILIES = {
     { "mould", "Bullet moulds" },
     { "cast", "Cast lead bullets and shot" },
     { "assembleCast", "Assembly with a cast bullet" },
+    { "gasCheck", "Gas checks (copper, for rifle cast bullets)" },
+    { "lube", "Lubing cast bullets (candle wax)" },
+    { "regrind", "Regrinding worn die sets" },
     { "scrap", "Scrapping brass" },
     { "recast", "Recasting brass scrap" },
 }

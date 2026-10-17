@@ -49,6 +49,10 @@ WOOD = [(190, 146, 96), (156, 114, 70), (122, 86, 52), (90, 62, 38), (62, 42, 28
 # Lead: a dull blue-grey, darker and bluer than zinc or steel.
 LEAD = [(176, 182, 196), (134, 140, 158), (100, 106, 124), (72, 76, 92), (48, 50, 62)]
 IRON = [(150, 150, 150), (112, 112, 114), (82, 82, 86), (58, 58, 62), (38, 38, 42)]
+# Raw clay, fired clay (terracotta) and rammed moulding sand.
+CLAY = [(204, 190, 170), (178, 160, 138), (146, 128, 108), (110, 94, 78), (76, 64, 54)]
+TERRACOTTA = [(232, 150, 108), (200, 112, 74), (164, 84, 54), (122, 60, 40), (84, 40, 28)]
+SAND = [(236, 214, 160), (212, 186, 128), (182, 154, 100), (140, 116, 74), (98, 80, 52)]
 SOOT = (44, 38, 34)
 HOLE = (52, 38, 24)
 
@@ -359,6 +363,104 @@ def icon_shot_mould():
     for cx in (13, 17, 21, 25):
         draw.ellipse([cx - 1, 11, cx + 1, 13], fill=rgba(HOLE))
     return outline(image)
+
+
+def block_mould(ramp, seed, cavity="bullet", frame=None):
+    """A mould block of one material, seen from the front, its cavity cut into the face.
+
+    cavity: "bullet" (one pistol bullet), "rifle" (one long bullet) or "shot" (a row of balls).
+    frame: a ramp for a flask around the block (the sand mould's wooden box), or None.
+    """
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    x0, y0, x1, y1 = 5, 7, 27, 26
+    if frame:
+        draw.rectangle([x0 - 2, y0 - 2, x1 + 2, y1 + 2], fill=rgba(frame[2]))
+        draw.line([(x0 - 2, y0 - 2), (x1 + 2, y0 - 2)], fill=rgba(frame[0]))
+        draw.line([(x0 - 2, y1 + 2), (x1 + 2, y1 + 2)], fill=rgba(frame[4]))
+    draw.rectangle([x0, y0, x1, y1], fill=rgba(ramp[2]))
+    draw.rectangle([x0, y0, x1, y0 + 1], fill=rgba(ramp[1]))
+    draw.line([(x0, y0), (x1, y0)], fill=rgba(ramp[0]))
+    draw.line([(x0, y0), (x0, y1)], fill=rgba(ramp[1]))
+    draw.line([(x1, y0), (x1, y1)], fill=rgba(ramp[3]))
+    draw.line([(x0, y1), (x1, y1)], fill=rgba(ramp[4]))
+    speckle(image, 2, ramp, seed, 0.18)
+    draw = ImageDraw.Draw(image)
+    cx = (x0 + x1) // 2
+    if cavity == "shot":
+        for x in range(9, 25, 4):
+            draw.ellipse([x - 1, 15, x + 1, 17], fill=rgba(HOLE))
+            draw.point((x - 1, 15), fill=rgba(ramp[4]))
+    else:
+        top = 11 if cavity == "bullet" else 9
+        bottom = 22 if cavity == "bullet" else 24
+        draw.ellipse([cx - 2, top, cx + 2, top + 5], fill=rgba(HOLE))
+        draw.rectangle([cx - 2, top + 3, cx + 2, bottom], fill=rgba(HOLE))
+        draw.line([(cx - 2, top + 3), (cx - 2, bottom)], fill=rgba(ramp[4]))
+    # The pouring gate: a notch from the top edge into the cavity.
+    draw.line([(cx, y0), (cx, y0 + 3)], fill=rgba(HOLE))
+    return outline(image)
+
+
+def icon_stone_mould():
+    """A bullet mould carved into a block of stone."""
+    return block_mould(ROCK, 41)
+
+
+def icon_clay_mould_unfired():
+    """The same, pressed in grey-brown raw clay."""
+    return block_mould(CLAY, 43)
+
+
+def icon_clay_mould():
+    """Fired: the clay gone terracotta."""
+    return block_mould(TERRACOTTA, 47)
+
+
+def icon_sand_mould():
+    """Moulding sand rammed into a wooden flask."""
+    return block_mould(SAND, 53, frame=WOOD)
+
+
+def icon_rifle_mould():
+    """An iron mould for a long rifle bullet, on wooden handles."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    mould_handles(draw, 16, 17)
+    middle = mould_block(draw, 12, 3, 28, 17)
+    draw.rectangle([middle - 2, 7, middle + 2, 15], fill=rgba(HOLE))
+    draw.ellipse([middle - 2, 4, middle + 2, 10], fill=rgba(HOLE))
+    draw.line([(middle - 1, 8), (middle - 1, 14)], fill=rgba(LEAD[1]))
+    return outline(image)
+
+
+def gas_check_shape(draw, cx, cy):
+    """One gas check: a shallow copper cup seen from above and a little to the side."""
+    draw.ellipse([cx - 4, cy - 2, cx + 4, cy + 3], fill=rgba(COPPER[3]))
+    draw.ellipse([cx - 4, cy - 3, cx + 4, cy + 2], fill=rgba(COPPER[1]))
+    draw.ellipse([cx - 2, cy - 2, cx + 2, cy + 1], fill=rgba(COPPER[2]))
+    draw.point((cx - 3, cy - 2), fill=rgba(COPPER[0]))
+
+
+def icon_gas_check():
+    """A few copper gas checks."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    for cx, cy in ((11, 12), (21, 11), (16, 20), (24, 22), (8, 22)):
+        gas_check_shape(draw, cx, cy)
+    return outline(image)
+
+
+def icon_cast_bullet_rifle():
+    """Long cast lead bullets, each with its copper gas check on the base."""
+    image = bullet_shape(6, 18, 6, LEAD)
+    draw = ImageDraw.Draw(image)
+    left, right, bottom = 13, 18, 27
+    draw.rectangle([left, bottom - 2, right, bottom], fill=rgba(COPPER[1]))
+    draw.line([(left, bottom), (right, bottom)], fill=rgba(COPPER[3]))
+    for row in (bottom - 6, bottom - 4):
+        draw.line([(left, row), (right, row)], fill=rgba(LEAD[4]))
+    return row_of(image, [(-8, -4), (8, -2), (0, 3)])
 
 
 # ---------------------------------------------------------------- primers
@@ -771,6 +873,13 @@ ICONS = [
     ("AmmoMakingLeadShot", MAIN, "Item_", icon_lead_shot),
     ("AmmoMakingBulletMould", MAIN, "Item_", icon_bullet_mould),
     ("AmmoMakingShotMould", MAIN, "Item_", icon_shot_mould),
+    ("AmmoMakingRifleMould", MAIN, "Item_", icon_rifle_mould),
+    ("AmmoMakingStoneMould", MAIN, "Item_", icon_stone_mould),
+    ("AmmoMakingClayMouldUnfired", MAIN, "Item_", icon_clay_mould_unfired),
+    ("AmmoMakingClayMould", MAIN, "Item_", icon_clay_mould),
+    ("AmmoMakingSandMould", MAIN, "Item_", icon_sand_mould),
+    ("AmmoMakingGasCheck", MAIN, "Item_", icon_gas_check),
+    ("AmmoMakingCastBulletRifle", MAIN, "Item_", icon_cast_bullet_rifle),
     ("AmmoMakingSample", MAIN, "Item_", icon_sample),
     ("AmmoMakingFieldKit", MAIN, "Item_", icon_field_kit),
     ("AmmoMakingAdvancedKit", MAIN, "Item_", icon_advanced_kit),

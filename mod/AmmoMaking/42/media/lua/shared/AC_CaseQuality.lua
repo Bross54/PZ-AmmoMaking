@@ -75,6 +75,15 @@ AC_CaseQuality.CONFIG = {
     -- (AC_SpentCases.validateResize).
     resizedBonus = -10,
 
+    -- Added back, in proportion, when the spent cases
+    -- resized were cleaned with steel wool first
+    -- (AC_SpentCases.CLEAN). resizedBonus + cleanedBonus
+    -- must stay below 0 (AC_SpentCases.validateResize).
+    cleanedBonus = 5,
+
+    -- ModData key on a cleaned spent case.
+    spentCleanedKey = "spentCaseCleaned",
+
     -- ModData keys on a case.
     flagKey = "AmmoMakingCase",
 
@@ -86,6 +95,10 @@ AC_CaseQuality.CONFIG = {
     bulletFlagKey = "AmmoMakingCastBullet",
 
     bulletQualityKey = "bulletQuality",
+
+    -- Set on a cast bullet once it has been lubed: a
+    -- second lubing adds nothing.
+    bulletLubedKey = "bulletLubed",
 
     -- A round assembled with a cast bullet: its quality is
     -- the cases' average and the bullets' average, the
@@ -572,6 +585,233 @@ end
 
 
 ------------------------------------------------
+-- EFFECT: cast bullets lubed
+------------------------------------------------
+--
+-- The lube recipe consumes cast bullets and makes as many
+-- of the same type. Each created bullet takes one
+-- consumed bullet's quality, in order, plus the bonus if
+-- that bullet was not lubed yet; a bullet without a
+-- quality stays without one. Returns the list written.
+------------------------------------------------
+
+function AC_CaseQuality.onBulletsLubed(
+    craftRecipeData,
+    bonus
+)
+
+    local config =
+        AC_CaseQuality.CONFIG
+
+
+    local sources = {}
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllConsumedItems"
+        )
+    )
+    do
+
+        if AC_Calibres.identify(item:getFullType()) == "castBullet" then
+
+            local quality =
+                AC_CaseQuality.getBulletQuality(item)
+
+
+            local lubed =
+                quality ~= nil
+                and item:getModData()[config.bulletLubedKey] == true
+
+
+            table.insert(
+                sources,
+                { quality = quality, lubed = lubed }
+            )
+        end
+    end
+
+
+    local written = {}
+
+    local index = 0
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllCreatedItems"
+        )
+    )
+    do
+
+        if AC_Calibres.identify(item:getFullType()) == "castBullet" then
+
+            index = index + 1
+
+
+            local source =
+                sources[index]
+
+
+            if source
+                and source.quality
+            then
+
+                local quality =
+                    source.quality
+
+
+                if not source.lubed then
+
+                    quality =
+                        clamp(
+                            quality + (tonumber(bonus) or 0),
+                            config.minQuality,
+                            config.maxQuality
+                        )
+                end
+
+
+                local data =
+                    item:getModData()
+
+
+                data[config.bulletFlagKey] = true
+
+                data[config.bulletQualityKey] = quality
+
+                data[config.bulletLubedKey] = true
+
+
+                table.insert(
+                    written,
+                    quality
+                )
+            end
+        end
+    end
+
+
+    return written
+end
+
+
+------------------------------------------------
+-- EFFECT: spent cases cleaned, and what it is worth
+------------------------------------------------
+
+-- Is this the spent case of a calibre the mod makes?
+local function isSpentCase(
+    fullType
+)
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        if calibre.spentCase == fullType then
+            return true
+        end
+    end
+
+
+    return false
+end
+
+
+-- Marks every spent case the cleaning made. Returns how
+-- many.
+function AC_CaseQuality.onSpentCasesCleaned(
+    craftRecipeData
+)
+
+    local marked = 0
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllCreatedItems"
+        )
+    )
+    do
+
+        if isSpentCase(item:getFullType()) then
+
+            item:getModData()[AC_CaseQuality.CONFIG.spentCleanedKey] = true
+
+            marked = marked + 1
+        end
+    end
+
+
+    return marked
+end
+
+
+-- The share (0 to 1) of the spent cases a resizing
+-- consumed that had been cleaned. Asks before reading, so
+-- no ModData is made on a case that has none.
+function AC_CaseQuality.cleanedShare(
+    craftRecipeData
+)
+
+    local spent = 0
+
+    local cleaned = 0
+
+
+    for _,
+        item
+    in ipairs(
+        listItems(
+            craftRecipeData,
+            "getAllConsumedItems"
+        )
+    )
+    do
+
+        if isSpentCase(item:getFullType()) then
+
+            spent = spent + 1
+
+
+            local hasData =
+                not item.hasModData
+                or item:hasModData()
+
+
+            if hasData
+                and item:getModData()[AC_CaseQuality.CONFIG.spentCleanedKey] == true
+            then
+                cleaned = cleaned + 1
+            end
+        end
+    end
+
+
+    if spent == 0 then
+        return 0
+    end
+
+
+    return cleaned / spent
+end
+
+
+------------------------------------------------
 -- EFFECT: rounds assembled
 ------------------------------------------------
 --
@@ -747,6 +987,36 @@ end
 
 AC_CaseQuality.EFFECTS = {
 
+    -- A worn die set filed true again
+    -- (AC_Calibres.REGRIND).
+    regrindDieSet =
+        function(
+            craftRecipeData
+        )
+
+            return
+                AC_Calibres.onDieSetReground(
+                    craftRecipeData
+                )
+        end,
+
+    -- Lubing cast bullets with candle wax
+    -- (AC_Casting.LUBE).
+    lubeCastBullets =
+        function(
+            craftRecipeData
+        )
+
+            return
+                AC_CaseQuality.onBulletsLubed(
+                    craftRecipeData,
+                    AC_Casting
+                    and AC_Casting.LUBE
+                    and AC_Casting.LUBE.qualityBonus
+                    or 0
+                )
+        end,
+
     -- A cast: the bullets take the mould's bonus
     -- (recipe.qualityBonus, AC_Casting.MOULD_MATERIALS).
     castBulletQuality =
@@ -779,18 +1049,38 @@ AC_CaseQuality.EFFECTS = {
         end,
 
     -- A case resized from a spent one (the spent-cases
-    -- add-on's resizing recipes).
+    -- add-on's resizing recipes); cleaned spent cases
+    -- give part of the malus back.
     resizedCaseQuality =
         function(
             craftRecipeData,
             character
         )
 
+            local config =
+                AC_CaseQuality.CONFIG
+
+
             return
                 AC_CaseQuality.onCasesFormed(
                     craftRecipeData,
                     character,
-                    AC_CaseQuality.CONFIG.resizedBonus
+                    config.resizedBonus
+                    + config.cleanedBonus
+                    * AC_CaseQuality.cleanedShare(craftRecipeData)
+                )
+        end,
+
+    -- Steel wool on spent cases: the same cases back,
+    -- marked clean.
+    cleanSpentCases =
+        function(
+            craftRecipeData
+        )
+
+            return
+                AC_CaseQuality.onSpentCasesCleaned(
+                    craftRecipeData
                 )
         end,
 

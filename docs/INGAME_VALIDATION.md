@@ -47,7 +47,7 @@ Console
 - `[AmmoMaking] Die set loot: 22 entries added, ...`,
   `[AmmoMaking] Component loot: ... entries added, ...`,
   `[AmmoMaking] Skill book loot: 20 entries added, ...` and
-  `[AmmoMaking] Bullet mould loot: 4 entries added, ...` with
+  `[AmmoMaking] Bullet mould loot: 5 entries added, ...` with
   `lists missing: 0`.
 - `[AmmoMaking] Lead casting loaded (6 castable calibres)`.
 - `[AmmoMaking] Skill books: Ammo Making entered in vanilla's reading table (server Lua)`
@@ -78,8 +78,8 @@ Expected / Console
 - `OK: skill books entered in vanilla's reading table (server Lua)` and
   `OK: skill book loot (20 entries)`; the five book items
   (`OK: AmmoMaking.BookAmmoMaking1` ...) among the item lines.
-- `OK: lead casting (6 castable calibres, 2 moulds, no XP for melting)`
-  and `OK: bullet mould loot (4 entries)`; `OK: Base.LeadPipe`,
+- `OK: lead casting (9 castable calibres, 3 moulds, no XP for melting)`
+  and `OK: bullet mould loot (5 entries)`; `OK: Base.LeadPipe`,
   `OK: Base.JigLure` and `OK: AmmoMaking.LeadScrap` among the item lines.
 
 Any `WARNING` or `UNVERIFIED` line is a finding: copy it whole.

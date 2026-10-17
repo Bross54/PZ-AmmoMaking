@@ -674,6 +674,22 @@ do
 end
 
 
+-- Regrinding worn die sets (AC_Calibres.REGRIND): a
+-- treatment, no XP.
+for _,
+    recipe
+in ipairs(
+    AC_Calibres.buildRegrindRecipes()
+)
+do
+
+    table.insert(
+        AC_Materials.RECIPES,
+        recipe
+    )
+end
+
+
 -- Lead: melted from vanilla junk (no XP), the bullet
 -- moulds, and per pistol calibre and the shell the cast
 -- bullet and its assembly (docs/METALLURGY_DESIGN.md 12).
@@ -719,6 +735,21 @@ if AC_Features.hasContent("spentCases") then
         recipe
     in ipairs(
         AC_SpentCases.buildResizeRecipes()
+    )
+    do
+
+        table.insert(
+            AC_Materials.RECIPES,
+            recipe
+        )
+    end
+
+
+    -- And the steel-wool cleaning before it.
+    for _,
+        recipe
+    in ipairs(
+        AC_SpentCases.buildCleanRecipes()
     )
     do
 

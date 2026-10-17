@@ -749,11 +749,11 @@ AC_Loot.MOULDS = {
 
     lists = {
 
-        { list = "GunStoreMagsAmmo", scale = 1, where = "at most one display case of a gun store" },
+        { list = "GunStoreMagsAmmo", scale = 1, classes = { "pistol", "shotgun" }, where = "at most one display case of a gun store" },
 
         { list = "GarageFirearms", scale = 0.5, classes = { "pistol" }, where = "the gun locker of a garage storage room; military lockers" },
 
-        { list = "Hunter", scale = 0.5, classes = { "shotgun" }, where = "a hunter's things in an attic, closet, hall, living room, storage unit or garage" },
+        { list = "Hunter", scale = 0.5, classes = { "shotgun", "rifle" }, where = "a hunter's things in an attic, closet, hall, living room, storage unit or garage" },
     },
 }
 

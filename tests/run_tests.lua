@@ -2716,7 +2716,12 @@ do
     -- Base.ClayIngotMold's tags and tooltip.
     local stoneMoulds, clayMoulds = {}, {}
     for _, mould in ipairs(AC_Casting.getMoulds()) do
-        stoneMoulds[string.match(AC_Casting.getMouldItems(mould.class, "stone").item, "%.(.+)$")] = true
+        -- Every mould material that wears (iron and stone) has the fields.
+        for _, material in ipairs(AC_Casting.MOULD_MATERIALS) do
+            if material.conditionMax then
+                stoneMoulds[string.match(AC_Casting.getMouldItems(mould.class, material.id).item, "%.(.+)$")] = true
+            end
+        end
         clayMoulds[string.match(AC_Casting.getMouldItems(mould.class, "clay").item, "%.(.+)$")] = true
     end
     local clayTags = { ["base:destructible"] = true, ["base:breakonsmithing"] = true }
@@ -2849,6 +2854,48 @@ do
         local rounds = AC_Calibres.dieSetExpectedUses(0, 0) / craftsPerRound
         check(rounds >= 250 and rounds <= 500, calibre.id .. " die set lasts " .. math.floor(rounds) .. " rounds at level 0 (250 to 500)")
     end
+end
+
+section("Die set regrinding: a worn die set filed true again, each time to a lower ceiling (pure and mocked recipe data)")
+do
+    local G = AC_Calibres.REGRIND
+    eq(G.lossPerRegrind, 2, "each regrind takes two points off the ceiling")
+    eq(AC_Calibres.regroundCondition(0, 1), 8, "a broken die set, first regrind: 8")
+    eq(AC_Calibres.regroundCondition(9, 1), 9, "never lower than it was")
+    eq(AC_Calibres.regroundCondition(0, 4), 2, "fourth regrind: 2")
+    eq(AC_Calibres.regroundCondition(0, 5), 0, "fifth: nothing left to gain")
+    eq(AC_Calibres.regroundCondition(3, 5), 3, "and nothing lost")
+    local recipes = AC_Calibres.buildRegrindRecipes()
+    eq(#recipes, #AC_Calibres.LIST, "one regrinding per calibre")
+    for _, recipe in ipairs(recipes) do
+        local calibre = AC_Calibres.get(recipe.calibre)
+        eq(recipe.treatment, true, recipe.id .. " is a treatment")
+        eq(recipe.xp, 0, recipe.id .. " pays no XP")
+        eq(recipe.inputs[1].items[1], calibre.dieSet, recipe.id .. " consumes its die set")
+        eq(table.concat(recipe.inputs[1].flags, ";"), "AllowDestroyedItem", recipe.id .. ": a broken one too")
+        eq(recipe.outputs[1].item, calibre.dieSet, recipe.id .. " and makes it again")
+        eq(recipe.requiredLevel, calibre.levels.dieSet, recipe.id .. " at the die set's level")
+    end
+
+    local first = AC_Calibres.LIST[1]
+    local function regrind(old)
+        local new = MOCK.newItem(first.dieSet)
+        local data = {
+            getAllCreatedItems = function() return MOCK.arrayList({ new }) end,
+            getAllConsumedItems = function() return MOCK.arrayList({ old }) end,
+        }
+        return AC_CaseQuality.EFFECTS.regrindDieSet(data), new
+    end
+    local worn = MOCK.newItem(first.dieSet, { condition = 0 })
+    local condition, once = regrind(worn)
+    eq(condition, 8, "the effect sets 8 on a broken die set")
+    eq(once:getCondition(), 8, "on the die set made")
+    eq(once.modData[G.regrindKey], 1, "and counts the regrind")
+    once:setCondition(1)
+    local _, twice = regrind(once)
+    eq(twice:getCondition(), 6, "the second regrind reaches 6")
+    eq(twice.modData[G.regrindKey], 2, "counted twice")
+    eq(AC_CaseQuality.EFFECTS.regrindDieSet(nil), nil, "no recipe data")
 end
 
 section("Station recipes: AC_Recipes.txt equals AC_Materials.RECIPES")
@@ -2990,10 +3037,10 @@ do
     eq(AC_Materials.getRecipe("nope"), nil, "unknown recipe id")
     eq(AC_Materials.getRecipe("AmmoMaking_ForgeSmallBrassSheets").benchTag, "PrimitiveForge", "brass sheets are forged where copper sheets are")
     eq(AC_Materials.getRecipe("AmmoMaking_PunchBrassCaseCups").benchTag, "AnySurfaceCraft", "cups are punched cold on a surface")
-    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 4 * #AC_Calibres.LIST
-        + #AC_Casting.SOURCES + 5 * #AC_Casting.getMoulds() + (#AC_Casting.MOULD_MATERIALS + 1) * #AC_Casting.getCastable() + #AC_Recycling.buildGroups() + 1,
-        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre, one melt per lead source, five mould recipes per casting class, a cast per mould material and an assembly per castable calibre, one scrapping recipe per brass size and the recast")
-    eq(#AC_Materials.RECIPES, 100, "a hundred recipes")
+    eq(#AC_Materials.RECIPES, 6 + #AC_Materials.EQUIPMENT_RECIPES + 1 + #AC_Calibres.PRIMERS * #AC_Calibres.COMPOUND_SOURCES + 5 * #AC_Calibres.LIST
+        + #AC_Casting.SOURCES + 5 * #AC_Casting.getMoulds() + (#AC_Casting.MOULD_MATERIALS + 2) * #AC_Casting.getCastable() + 1 + #AC_Recycling.buildGroups() + 1,
+        "metallurgy 4, case stock 2, geology equipment, gunpowder 1, primers per family and source, four per calibre and a regrinding, one melt per lead source, five mould recipes per casting class, a cast per mould material, an assembly and a lubing per castable calibre, the gas checks, one scrapping recipe per brass size and the recast")
+    eq(#AC_Materials.RECIPES, 139, "a hundred and thirty-nine recipes")
 
     -- The script body is exactly what tests/render_recipes.lua makes of the
     -- mirror: the file is generated, never typed.
@@ -3039,6 +3086,9 @@ do
             local clay = AC_Casting.getMouldItems(recipe.class, "clay")
             untracked[clay.unfired] = true
         end
+        if recipe.step == "lube" then untracked[AC_Casting.LUBE.item] = true end
+        -- A die set is a tool, not tracked material: only its regrinding consumes one.
+        if recipe.step == "regrind" then untracked[AC_Calibres.get(recipe.calibre).dieSet] = true end
         if recipe.step == "cast" and recipe.material == "sand" then
             untracked[AC_Casting.getMouldItems(AC_Calibres.get(recipe.calibre).class, "sand").item] = true
         end
@@ -3100,12 +3150,13 @@ do
     eq(families.leadSource, 2, "two lead melts")
     -- Per casting class: the forged mould, then stone, clay (shaped and
     -- fired) and sand.
-    eq(families.mould, 2 * 5, "five mould recipes per casting class")
+    eq(families.mould, #AC_Casting.getMoulds() * 5, "five mould recipes per casting class")
+    eq(families.gasCheck, 1, "one gas check recipe")
     eq(families.cast, #AC_Casting.getCastable() * #AC_Casting.MOULD_MATERIALS, "one cast per castable calibre and mould material")
     eq(families.assembleCast, #AC_Casting.getCastable(), "one cast assembly per castable calibre")
     eq(families.scrap, 3, "three scrapping recipes")
     eq(families.recast, 1, "one recast")
-    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **100** |", 1, true) ~= nil, "the audit table counts 100 recipes")
+    check(string.find(BALANCE.renderRecipeAudit(), "| **All** | **139** |", 1, true) ~= nil, "the audit table counts 139 recipes")
 end
 
 section("Material conservation: no recipe or chain creates metal")
@@ -3194,7 +3245,7 @@ do
                 check(input.keep == true, recipe.id .. " keeps its tool " .. input.tags[1])
             end
             for _, id in ipairs(input.items or {}) do
-                if AC_Calibres.identify(id) == "dieSet" then
+                if AC_Calibres.identify(id) == "dieSet" and not recipe.treatment then
                     check(input.keep == true, recipe.id .. " keeps the die set")
                 end
             end
@@ -3475,7 +3526,8 @@ do
         -- Four families award nothing: recycling, the geology equipment (a
         -- kit pays its XP per assay, not when it is put together), melting
         -- junk for lead, and the bullet moulds (a mould pays per cast).
-        local unpaid = recipe.recycling == true or recipe.step == "equipment" or recipe.step == "leadSource" or recipe.step == "mould"
+        -- A treatment (lubing, cleaning, regrinding) makes nothing new.
+        local unpaid = recipe.recycling == true or recipe.step == "equipment" or recipe.step == "leadSource" or recipe.step == "mould" or recipe.step == "gasCheck" or recipe.treatment == true
         eq(xp > 0, not unpaid, recipe.id .. (unpaid and " awards no XP" or " awards XP"))
         local player = MOCK.newPlayer()
         MOCK.clearPrintLog()
@@ -4627,7 +4679,7 @@ do
         local built = 0
         local realBuild = AC_Recycling.buildRecipes
         reloadMod()
-        eq(#AC_Materials.RECIPES, 100, "the reloaded mod has its 100 recipes")
+        eq(#AC_Materials.RECIPES, 139, "the reloaded mod has its 139 recipes")
         eq(type(AC_Loot.lastSummary), "nil", "loading the mod registers no loot by itself")
         check(realBuild ~= nil and built == 0, "the counters above were removed before the reload")
     end
@@ -5047,10 +5099,14 @@ do
         if recipe.effect then
             effects = effects + 1
             check(type(AC_CaseQuality.EFFECTS[recipe.effect]) == "function", recipe.id .. " effect exists")
-            check(recipe.step == "case" or recipe.step == "assemble" or recipe.step == "assembleCast" or recipe.step == "cast", recipe.id .. " is a case, cast or assembly step")
+            check(recipe.step == "case" or recipe.step == "assemble" or recipe.step == "assembleCast" or recipe.step == "cast" or recipe.treatment == true, recipe.id .. " is a case, cast, assembly or treatment step")
         end
     end
-    eq(effects, 2 * #AC_Calibres.LIST + #AC_Casting.getCastable() * (1 + #AC_Casting.MOULD_MATERIALS), "nothing upstream of the case or the cast bullet carries quality")
+    local treatments = 0
+    for _, recipe in ipairs(AC_Materials.RECIPES) do
+        if recipe.treatment then treatments = treatments + 1 end
+    end
+    eq(effects, 2 * #AC_Calibres.LIST + #AC_Casting.getCastable() * (1 + #AC_Casting.MOULD_MATERIALS) + treatments, "nothing upstream of the case or the cast bullet carries quality")
 
     -- A broken effect must not break the craft or the XP.
     local form = calibreRecipe(first, "case")
@@ -5118,7 +5174,7 @@ do
         local level = AC_Materials.getRequiredLevel(recipe)
         check(level >= 0 and level <= 10 and level == math.floor(level), recipe.id .. " has a valid level")
         if level > highest then highest = level end
-        if recipe.calibre then
+        if recipe.calibre and not recipe.treatment then
             local calibre = AC_Calibres.get(recipe.calibre)
             -- A cast step takes its copper step's values.
             local step = AC_Casting.STEP_OF[recipe.step] or recipe.step
@@ -5416,7 +5472,8 @@ do
             if not input.keep then
                 consumes = true
                 for _, from in ipairs(input.items or {}) do
-                    if not recipe.loss then
+                    -- A treatment gives the same item back: no cycle of the chain.
+                    if not recipe.loss and not recipe.treatment then
                         edges[from] = edges[from] or {}
                         for _, output in ipairs(recipe.outputs) do edges[from][output.item] = recipe end
                     end
@@ -5983,6 +6040,8 @@ do
             -- and fire and fuel for the kiln.
             ["Base.StoneBlock"] = 6, ["Base.Clay"] = 60, ["Base.Sandbag"] = 20,
             ["base:crudechisel"] = 1, ["base:sharpknife"] = 1, ["base:startfire"] = 40, ["base:log"] = 40,
+            -- Wax for lubing cast bullets.
+            ["Base.Candle"] = 2000,
         }
         leadRounds = {}
         local tools = {}
@@ -6477,7 +6536,7 @@ do
     end
     -- And nothing is declared that the code no longer uses.
     local Q = AC_CaseQuality.CONFIG
-    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, [Q.bulletFlagKey] = true, [Q.bulletQualityKey] = true, copper = true, zinc = true }
+    local byConfig = { [Q.flagKey] = true, [Q.qualityKey] = true, [Q.roundFlagKey] = true, [Q.roundQualityKey] = true, [Q.bulletFlagKey] = true, [Q.bulletQualityKey] = true, [Q.bulletLubedKey] = true, [Q.spentCleanedKey] = true, [AC_Calibres.REGRIND.regrindKey] = true, copper = true, zinc = true }
     for key in pairs(AmmoQuality.DEFAULTS) do byConfig[key] = true end
     -- The tally record: its key is a constant of the carrier, and its
     -- fields are written by the carrier as a table constructor, which the
@@ -8644,7 +8703,7 @@ do
         end
         for _, recipe in ipairs(AC_Materials.RECIPES) do
             for _, input in ipairs(recipe.inputs) do
-                if input.items and input.items[1] == calibre.dieSet then
+                if input.items and input.items[1] == calibre.dieSet and not recipe.treatment then
                     eq(#input.items, 1, recipe.id .. " names the die set by item type alone")
                     eq(input.keep, true, recipe.id .. " keeps the die set")
                     eq(table.concat(input.flags or {}, ";"), AC_Calibres.DIE_WEAR.flag, recipe.id .. " wears the die set and asks nothing else of it: found, forged or spawned all work")
@@ -9930,6 +9989,8 @@ do
     OTHERWISE["Base.Clay"] = "dug with a shovel, emptied from a clay sack"
     OTHERWISE["Base.Sandbag"] = "dug with a shovel"
     OTHERWISE["Base.StoneBlock"] = "cut from stone with a chisel"
+    -- Candles: household loot in 24 entries of vanilla's ProceduralDistributions.lua.
+    OTHERWISE["Base.Candle"] = "household loot"
     local unchecked = {}
     -- The skill books are found, never made: every volume is loot in a list
     -- a container names (AC_Loot.BOOKS).
@@ -10214,7 +10275,7 @@ do
         if not (consumed[id] or produced[id] or handled[id] or prototype) then table.insert(unused, id) end
         if not (produced[id] or looted[id]) then table.insert(noSource, id) end
     end
-    eq(count, 63, "sixty-three items")
+    eq(count, 72, "seventy-two items")
     -- The five items of the geology stage name no world model; every item
     -- of the later stages does. (What the game draws for an item without
     -- one is engine behaviour; the sample and the dropped analyzer were

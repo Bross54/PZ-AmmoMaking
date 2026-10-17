@@ -10,5 +10,14 @@
     "AmmoMaking_ResizeSpentCase556NATO": "Resize Spent 5.56 Case",
     "AmmoMaking_ResizeSpentCase3030Win": "Resize Spent .30-30 Case",
     "AmmoMaking_ResizeSpentCase308Win": "Resize Spent .308 Case",
-    "AmmoMaking_ResizeSpentCase12Gauge": "Resize Spent 12 Gauge Brass Hull"
+    "AmmoMaking_ResizeSpentCase12Gauge": "Resize Spent 12 Gauge Brass Hull",
+    "AmmoMaking_CleanSpentCases9mm": "Clean Spent 9mm Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases38Special": "Clean Spent .38 Special Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases45ACP": "Clean Spent .45 ACP Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases357Magnum": "Clean Spent .357 Magnum Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases44Magnum": "Clean Spent .44 Magnum Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases556NATO": "Clean Spent 5.56 Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases3030Win": "Clean Spent .30-30 Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases308Win": "Clean Spent .308 Cases with Steel Wool",
+    "AmmoMaking_CleanSpentCases12Gauge": "Clean Spent 12 Gauge Brass Hulls with Steel Wool"
 }

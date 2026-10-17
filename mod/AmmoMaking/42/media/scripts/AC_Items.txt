@@ -480,7 +480,9 @@ module AmmoMaking
         Weight = 0.8,
         Icon = AmmoMakingBulletMould,
         WorldStaticModel = Pliers,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     item BulletMouldShotgun
@@ -491,7 +493,22 @@ module AmmoMaking
         Weight = 0.8,
         Icon = AmmoMakingShotMould,
         WorldStaticModel = Pliers,
-        Tags = base:hasmetal,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
+    }
+
+    item BulletMouldRifle
+    {
+        DisplayName = Rifle Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.8,
+        Icon = AmmoMakingRifleMould,
+        WorldStaticModel = Pliers,
+        ConditionLowerChanceOneIn = 15,
+        ConditionMax = 10,
+        Tags = base:hasmetal;base:showcondition,
     }
 
     /* Bullet moulds of stone, clay and sand (AC_Casting.MOULD_MATERIALS),
@@ -499,7 +516,7 @@ module AmmoMaking
        stone mould wears like vanilla's stone tools (its two numbers are
        MOULD_MATERIALS'); the clay mould copies vanilla's Base.ClayIngotMold,
        tags and tooltip included, so one cast breaks it; the sand mould is
-       consumed by its cast. Vanilla icons and models as placeholders. */
+       consumed by its cast. Own icons; vanilla models on the ground as placeholders. */
 
     item StoneBulletMouldPistol
     {
@@ -507,7 +524,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 0.3,
-        Icon = RoughBlock,
+        Icon = AmmoMakingStoneMould,
         StaticModel = StoneBlock,
         WorldStaticModel = StoneBlock,
         ConditionLowerChanceOneIn = 10,
@@ -521,7 +538,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 0.5,
-        Icon = CeramicCast_Bar_Unfired,
+        Icon = AmmoMakingClayMouldUnfired,
         StaticModel = CeramicIngotCastUnfired,
         WorldStaticModel = CeramicIngotCastUnfired,
     }
@@ -532,7 +549,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 0.5,
-        Icon = CeramicCast_Bar_Fired,
+        Icon = AmmoMakingClayMould,
         StaticModel = CeramicIngotCast,
         WorldStaticModel = CeramicIngotCast,
         Tags = base:destructible;base:breakonsmithing,
@@ -545,7 +562,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 0.8,
-        Icon = Sandbag,
+        Icon = AmmoMakingSandMould,
         WorldStaticModel = SandBag,
     }
 
@@ -555,7 +572,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 0.3,
-        Icon = RoughBlock,
+        Icon = AmmoMakingStoneMould,
         StaticModel = StoneBlock,
         WorldStaticModel = StoneBlock,
         ConditionLowerChanceOneIn = 10,
@@ -569,7 +586,7 @@ module AmmoMaking
         DisplayCategory = Material,
         ItemType = base:normal,
         Weight = 0.5,
-        Icon = CeramicCast_Bar_Unfired,
+        Icon = AmmoMakingClayMouldUnfired,
         StaticModel = CeramicIngotCastUnfired,
         WorldStaticModel = CeramicIngotCastUnfired,
     }
@@ -580,7 +597,7 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 0.5,
-        Icon = CeramicCast_Bar_Fired,
+        Icon = AmmoMakingClayMould,
         StaticModel = CeramicIngotCast,
         WorldStaticModel = CeramicIngotCast,
         Tags = base:destructible;base:breakonsmithing,
@@ -593,7 +610,55 @@ module AmmoMaking
         DisplayCategory = Tool,
         ItemType = base:normal,
         Weight = 0.8,
-        Icon = Sandbag,
+        Icon = AmmoMakingSandMould,
+        WorldStaticModel = SandBag,
+    }
+
+    item StoneBulletMouldRifle
+    {
+        DisplayName = Stone Rifle Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.3,
+        Icon = AmmoMakingStoneMould,
+        StaticModel = StoneBlock,
+        WorldStaticModel = StoneBlock,
+        ConditionLowerChanceOneIn = 10,
+        ConditionMax = 10,
+        Tags = base:showcondition,
+    }
+
+    item ClayBulletMouldRifleUnfired
+    {
+        DisplayName = Unfired Clay Rifle Bullet Mould,
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = AmmoMakingClayMouldUnfired,
+        StaticModel = CeramicIngotCastUnfired,
+        WorldStaticModel = CeramicIngotCastUnfired,
+    }
+
+    item ClayBulletMouldRifle
+    {
+        DisplayName = Clay Rifle Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.5,
+        Icon = AmmoMakingClayMould,
+        StaticModel = CeramicIngotCast,
+        WorldStaticModel = CeramicIngotCast,
+        Tags = base:destructible;base:breakonsmithing,
+        Tooltip = Tooltip_item_BreakOnSmithing,
+    }
+
+    item SandBulletMouldRifle
+    {
+        DisplayName = Sand Rifle Bullet Mould,
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 0.8,
+        Icon = AmmoMakingSandMould,
         WorldStaticModel = SandBag,
     }
 
@@ -649,6 +714,54 @@ module AmmoMaking
         Weight = 0.016,
         Icon = AmmoMakingCastBullet,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet556NATO
+    {
+        DisplayName = 5.56 Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingCastBulletRifle,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet3030Win
+    {
+        DisplayName = .30-30 Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = AmmoMakingCastBulletRifle,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item CastBullet308Win
+    {
+        DisplayName = .308 Cast Lead Bullet,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.01,
+        Icon = AmmoMakingCastBulletRifle,
+        WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    /* A gas check (AC_Casting.GAS_CHECK): the copper cup on the base of a
+       rifle's cast bullet, a tenth of a copper scrap. Own icon; vanilla's
+       copper scrap model on the ground as a placeholder. */
+
+    item GasCheck
+    {
+        DisplayName = Copper Gas Check,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingGasCheck,
+        WorldStaticModel = CopperScrap,
         Tags = base:hasmetal,
     }
 

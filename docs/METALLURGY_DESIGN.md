@@ -311,14 +311,28 @@ borrowed (`docs/PLACEHOLDER_ASSETS.md`).
   (vanilla's Gather Gunpowder returns powder only), so lead recycling has
   nothing to recover: `AC_Recycling.getSources()` is unchanged.
 
-### 12.4 Rifles keep copper
+### 12.4 Rifles cast only with a gas check
 
-No mould for the rifle class (`AC_Calibres.CLASSES`): a plain cast bullet
-strips in the rifling and leads the bore at the 2,200 to 3,000 ft/s of the
-5.56, .30-30 and .308; the fixes (gas check, hardened alloy, jacket) are
-another item and a chemistry the mod does not model. Pistol rounds and
-buckshot stay under about 1,400 ft/s, where plain lead was the usual load.
-The validator refuses a cast bullet on a class without a mould.
+A plain cast bullet strips in the rifling and leads the bore at the 2,200
+to 3,000 ft/s of the 5.56, .30-30 and .308. What made cast rifle loads work
+was a gas check, a small copper cup crimped on the bullet's base, so the
+rifle class has a mould (`AmmoMaking.BulletMouldRifle`) and `gasCheck`:
+
+- *Punch Copper Gas Checks* (`AC_Casting.GAS_CHECK`): 1 `Base.CopperScrap`
+  gives 10 `AmmoMaking.GasCheck` cold on a surface, punch and hammer kept,
+  no XP, at the level of the first rifle bullet.
+- The rifle's cast assembly takes the copper assembly's lines, the cast
+  bullet for the copper one, and one gas check. The round holds the lead of
+  the bullet and the gas check's copper: one unit, a tenth of a jacketed
+  bullet's, still from the mine.
+- Even checked, a cast bullet at rifle speed shoots worse than a jacketed
+  one: the rifle class rolls its cast bullets `castQualityBonus` (-10) lower,
+  on top of the mould's bonus.
+- The rifle mould is found only among a hunter's things (the gun store's
+  case would be over its mould cap with three).
+
+Pistol rounds and buckshot stay under about 1,400 ft/s, where plain lead
+was the usual load, and need no gas check.
 
 ### 12.5 Lead geology: not built
 
@@ -342,7 +356,7 @@ bullets without one, for worse quality (`AC_Casting.MOULD_MATERIALS`):
 
 | Material | Made | Lasts | Bullet quality |
 |---|---|---|---|
-| iron | forged, 2 iron bar quarters (above) | for ever | +0 |
+| iron | forged, 2 iron bar quarters (above) | wears very slowly, as a die set: condition 10, `ConditionLowerChanceOneIn = 15`, `MayDegradeVeryLight`; some 900 casts | +0 |
 | stone | carved from 1 `Base.StoneBlock` with a hammer and a chisel, the lines of vanilla's `Make_Stone_Block_from_Stone` (`HammerStoneStanding`, `Masonry`) | wears: condition 10, `ConditionLowerChanceOneIn = 10`, `MayDegradeLight`; some 300 casts | -5 |
 | clay | 2 `Base.Clay` shaped with a sharp knife (`Making`, as vanilla's `PressClayBrickManually`), then fired in a kiln with a fire starter and a log or charcoal, the lines of vanilla's `FireClayIngotMold` | one cast: tagged `base:destructible;base:breakonsmithing` like `Base.ClayIngotMold`, and the engine sets a kept item so tagged to condition 0 after a `Blacksmithing` recipe | -10 |
 | sand | 1 use of a dug `Base.Sandbag` and 1 `Base.Clay` as the binder, with a sharp knife | one cast: the cast consumes it | -20 |
@@ -364,6 +378,15 @@ shot while the effects are locked (`AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4); it
 is shown by *Inspect Ammunition* and carried in magazines when quality
 tracking is on.
 
+### 12.10 Lubing cast bullets with candle wax
+
+*Lube <calibre> Lead Bullets with Candle Wax* (`AC_Casting.LUBE`): 5 cast
+bullets and 10 uses of a vanilla candle (`Base.Candle`, a drainable of 333
+uses) give the same 5 bullets back, each `qualityBonus` (+5) better, once:
+the bullet is marked (`bulletLubed`) and lubing it again adds nothing. A
+*treatment*: no XP, the calibre's bullet level, and no step of the chain
+(the tests leave treatments out of the progression and the cycle check).
+
 ### 12.7 REQUIRES FUTURE IN-GAME VERIFICATION
 
 - The melts and casts appear at a Primitive Furnace (and the higher
@@ -373,6 +396,10 @@ tracking is on.
 - The cast round is the vanilla round and stacks with factory rounds.
 - The borrowed world models (`SilverScrap`, `Pliers`, `SteelSlug`) look
   acceptable; the mould and lead icons read in the inventory.
+- Rifle casting (12.4): the gas check recipe, the rifle mould, and that
+  the cast rifle round is the vanilla round.
+- Lubing (12.10): the candle loses ten uses, the bullets come back with
+  their quality raised.
 - The stone, clay and sand moulds (12.8): the clay mould is offered at a
   kiln and fires, breaks after one cast; the stone mould shows and loses
   condition; the sand mould is used up; the borrowed icons and models

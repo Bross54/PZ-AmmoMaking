@@ -487,11 +487,16 @@ MOCK.knownScriptItems = {
     ["AmmoMaking.LeadScrap"] = true, ["AmmoMaking.BulletMouldPistol"] = true, ["AmmoMaking.BulletMouldShotgun"] = true,
     -- Moulds of stone, clay and sand, and what they are made from (vanilla
     -- ids confirmed in the installed 42.20.4 scripts).
-    ["Base.StoneBlock"] = true, ["Base.Clay"] = true, ["Base.Sandbag"] = true,
+    ["Base.StoneBlock"] = true, ["Base.Clay"] = true, ["Base.Sandbag"] = true, ["Base.Candle"] = true,
     ["AmmoMaking.StoneBulletMouldPistol"] = true, ["AmmoMaking.ClayBulletMouldPistolUnfired"] = true,
     ["AmmoMaking.ClayBulletMouldPistol"] = true, ["AmmoMaking.SandBulletMouldPistol"] = true,
     ["AmmoMaking.StoneBulletMouldShotgun"] = true, ["AmmoMaking.ClayBulletMouldShotgunUnfired"] = true,
     ["AmmoMaking.ClayBulletMouldShotgun"] = true, ["AmmoMaking.SandBulletMouldShotgun"] = true,
+    -- Rifles cast with a gas check.
+    ["AmmoMaking.BulletMouldRifle"] = true, ["AmmoMaking.StoneBulletMouldRifle"] = true,
+    ["AmmoMaking.ClayBulletMouldRifleUnfired"] = true, ["AmmoMaking.ClayBulletMouldRifle"] = true,
+    ["AmmoMaking.SandBulletMouldRifle"] = true, ["AmmoMaking.GasCheck"] = true,
+    ["AmmoMaking.CastBullet556NATO"] = true, ["AmmoMaking.CastBullet3030Win"] = true, ["AmmoMaking.CastBullet308Win"] = true,
     ["AmmoMaking.CastBullet9mm"] = true, ["AmmoMaking.CastBullet38Special"] = true, ["AmmoMaking.CastBullet45ACP"] = true,
     ["AmmoMaking.CastBullet357Magnum"] = true, ["AmmoMaking.CastBullet44Magnum"] = true, ["AmmoMaking.LeadShotCharge12Gauge"] = true,
     ["Base.MortarPestle"] = true,

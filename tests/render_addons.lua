@@ -164,6 +164,7 @@ end
 function A.spentRecipes()
     local recipes = A.spentScrapRecipes()
     for _, recipe in ipairs(AC_SpentCases.buildResizeRecipes()) do table.insert(recipes, recipe) end
+    for _, recipe in ipairs(AC_SpentCases.buildCleanRecipes()) do table.insert(recipes, recipe) end
     return recipes
 end
 
@@ -180,6 +181,10 @@ function A.spentNames(handNames)
             local form = handNames[recipe.formRecipe]
             assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
             table.insert(list, { recipe.id, AC_SpentCases.getResizeName(form) })
+        elseif recipe.clean then
+            local form = handNames[recipe.formRecipe]
+            assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
+            table.insert(list, { recipe.id, AC_SpentCases.getCleanName(form) })
         else
             table.insert(list, { recipe.id, AC_Recycling.getSpentRecipeName(recipe) })
         end

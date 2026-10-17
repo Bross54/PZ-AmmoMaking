@@ -31,12 +31,14 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Metallurgy, case stock | IMPLEMENTED | | `METALLURGY_DESIGN.md` |
 | Nine calibres: die sets, cases, bullets, primers, powder, assembly | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `AMMUNITION_DESIGN.md` |
 | Die sets as loot | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 1 |
-| Die set wear (condition, worn by the engine while crafting) | IMPLEMENTED | | `AMMUNITION_DESIGN.md` 7 |
+| Die set wear (condition, worn by the engine while crafting) and regrinding a worn die set | IMPLEMENTED | | `AMMUNITION_DESIGN.md` 7 |
 | Component loot (powder, primers, brass) | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 4 |
 | Brass recycling | IMPLEMENTED | | `LOOT_AND_RECYCLING.md` 2 |
 | Copper recycling | not built, on purpose | | `LOOT_AND_RECYCLING.md` 2.5 |
 | Lead and cast bullets (pistol calibres, buckshot; lead melted from vanilla junk; two moulds, forged or found) | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `METALLURGY_DESIGN.md` 12, `AMMUNITION_DESIGN.md` 6.1 |
-| Bullet moulds of stone, clay and sand; bullet quality from the mould | IMPLEMENTED; VISUAL PLACEHOLDER (vanilla icons and models) | | `METALLURGY_DESIGN.md` 12.8 |
+| Bullet moulds of stone, clay and sand (iron moulds wear too); bullet quality from the mould; candle-wax lube | IMPLEMENTED; own icons, VISUAL PLACEHOLDER (vanilla world models) | | `METALLURGY_DESIGN.md` 12.8, 12.10 |
+| Rifle cast bullets with a copper gas check | IMPLEMENTED; own icons | | `METALLURGY_DESIGN.md` 12.4 |
+| Cleaning spent cases with steel wool before resizing | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT (in the Spent Cases add-on) | add-on mod `AmmoMakingSpentCases` | `SPENT_CASE_RESEARCH.md` |
 | Lead ore and geology | not built, on purpose: it would change the sampling and assays seen in game | | `METALLURGY_DESIGN.md` 12.5 |
 | 12 gauge shell variants (buckshot, birdshot, slug) | not built: not buildable without replacing vanilla firearms | | `SHOTGUN_AMMUNITION_RESEARCH.md` 5.1 |
 | Ammo boxes | nothing to build: vanilla boxes handloaded rounds | | `LOOT_AND_RECYCLING.md` 3 |
@@ -56,11 +58,12 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | Release packaging (three mod folders, one archive, a Workshop item folder with `preview.png`) | IMPLEMENTED; nothing published | | `tools/build_release.py`, `WORKSHOP_DESCRIPTION.md` |
 | Black powder and primers from raw materials | out of scope: vanilla has no sulfur, saltpetre or priming compound; gunpowder stays charcoal and fertilizer | | `AMMUNITION_DESIGN.md` 12, `VANILLA_AMMUNITION_RESEARCH.md` |
 
-Numbers: the main mod has 63 items, 100 recipes (93 manufacturing, 42 of
-them for lead; 3 for the geology equipment, 3 scrapping, 1 recast) and 55
-loot entries (22 die sets, 9 components, 20 skill books, 4 bullet moulds)
+Numbers: the main mod has 72 items, 139 recipes (97 manufacturing, 61 of
+them for lead; 3 for the geology equipment, 3 scrapping, 1 recast; 18
+treatments: 9 lubings and 9 regrindings) and 56
+loot entries (22 die sets, 9 components, 20 skill books, 5 bullet moulds)
 in 10 vanilla lists. The press add-on has 27 recipes;
-the spent-cases add-on 9 items and 12 recipes (3 scrapping, 9 resizing).
+the spent-cases add-on 9 items and 21 recipes (3 scrapping, 9 resizing, 9 cleaning).
 
 ## 2. What the research settled
 
@@ -191,7 +194,7 @@ Nothing here is needed for a first release.
   caps or match heads.
 - Better presses as further bench tags; batch recipes.
 - Component depth (match-grade cases, case trimming). Tooling wear is
-  built for die sets; the bullet moulds still last for ever.
+  built for die sets and every mould; worn die sets can be reground.
 - Recipe magazines: would need the recipes rewritten from Lua, which
   `REFERENCE_IMPLEMENTATIONS.md` 7 already declines (`AMMUNITION_DESIGN.md`
   9.2).

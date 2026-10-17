@@ -587,6 +587,36 @@ AC_SaveData.SCHEMA = {
     },
 
     {
+        id = "dieSet",
+
+        owner = "AC_Calibres",
+
+        carrier = "item ModData of a die set, once reground",
+
+        version = "none",
+
+        keys = {
+
+            { key = "dieSetRegrinds", type = "number", min = 1, max = 100, default = "none", repair = "read as a whole number; anything else counts as never reground" },
+        },
+    },
+
+    {
+        id = "spentCase",
+
+        owner = "AC_CaseQuality",
+
+        carrier = "item ModData of a spent case of the spent-cases add-on, once cleaned with steel wool",
+
+        version = "none",
+
+        keys = {
+
+            { key = "spentCaseCleaned", type = "flag", read = false, repair = "a marker: the case was cleaned" },
+        },
+    },
+
+    {
         id = "castBullet",
 
         owner = "AC_CaseQuality",
@@ -600,6 +630,8 @@ AC_SaveData.SCHEMA = {
             { key = "AmmoMakingCastBullet", type = "flag", read = false, repair = "a marker" },
 
             { key = "bulletQuality", type = "number", min = 1, max = 100, default = "none", repair = "read as 1..100; not a finite number reads as no quality" },
+
+            { key = "bulletLubed", type = "flag", read = false, repair = "a marker: lubing again adds nothing" },
         },
     },
 

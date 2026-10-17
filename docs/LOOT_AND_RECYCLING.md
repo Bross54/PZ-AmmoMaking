@@ -546,8 +546,8 @@ section 1.2):
   unexplored ones can hold a die set (INFERRED from loot being rolled when a
   container is first filled).
 - That the bullet moulds appear in the three lists of 1.5 (log line
-  `[AmmoMaking] Bullet mould loot: 4 entries added, ...`, check line
-  `OK: bullet mould loot (4 entries)`), and how rare they feel.
+  `[AmmoMaking] Bullet mould loot: 5 entries added, ...`, check line
+  `OK: bullet mould loot (5 entries)`), and how rare they feel.
 - That the skill books appear in the four lists of 1.4 (log line
   `[AmmoMaking] Skill book loot: 20 entries added, ...`, check line
   `OK: skill book loot (20 entries)`), and that the sandbox's skill book

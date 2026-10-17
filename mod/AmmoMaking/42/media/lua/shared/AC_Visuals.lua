@@ -194,6 +194,20 @@ AC_Visuals.ICONS = {
 
     { name = "AmmoMakingShotMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
 
+    { name = "AmmoMakingRifleMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingStoneMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingClayMouldUnfired", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingClayMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingSandMould", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingGasCheck", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingCastBulletRifle", mod = "AmmoMaking", prefix = "Item_", size = 32 },
+
     { name = "AmmoMakingSample", mod = "AmmoMaking", prefix = "Item_", size = 32 },
 
     { name = "AmmoMakingFieldKit", mod = "AmmoMaking", prefix = "Item_", size = 32 },

@@ -1,8 +1,9 @@
 -- Ammo Making - Lead: recovered from vanilla junk, cast into bullets
 -- Project Zomboid Build 42.20
 --
--- A second projectile metal, cheaper than copper, for the
--- pistol calibres and buckshot (docs/METALLURGY_DESIGN.md
+-- A second projectile metal, cheaper than copper, for every
+-- calibre; a rifle's cast bullet takes a copper gas check
+-- (docs/METALLURGY_DESIGN.md
 -- 12, docs/AMMUNITION_DESIGN.md 6.1):
 --
 --   Base.LeadPipe, Base.JigLure
@@ -48,8 +49,8 @@
 --
 -- Every calibre fact comes from AC_Calibres: which classes
 -- have a mould (CLASSES[class].mould) and each calibre's
--- castBullet. Nothing here names a calibre. Rifles have no
--- mould and keep copper (the reason is beside CLASSES).
+-- castBullet. Nothing here names a calibre. A rifle's cast
+-- round takes a gas check (the reason is beside CLASSES).
 --
 -- The balance rules, enforced by validate() and the tests:
 --
@@ -146,7 +147,9 @@ AC_Casting.CONFIG = {
 -- mould is the reference; the other three need no forge
 -- and give worse bullets:
 --
---   iron   forged at a Forge; kept, lasts           +0
+--   iron   forged at a Forge; kept, wears very
+--          slowly like a die set (MayDegradeVeryLight,
+--          some 900 casts)                           +0
 --   stone  carved from a vanilla stone block with a
 --          hammer and a chisel (the lines of vanilla's
 --          Make_Stone_Block_from_Stone); kept, wears
@@ -183,7 +186,16 @@ AC_Casting.CONFIG = {
 
 AC_Casting.MOULD_MATERIALS = {
 
-    { id = "iron", qualityBonus = 0, keep = true },
+    {
+        id = "iron",
+        qualityBonus = 0,
+        keep = true,
+        flags = { "MayDegradeVeryLight" },
+        -- 10 x (15 x 6 + level + Maintenance): some 900
+        -- casts, the die set's numbers (AC_Calibres.DIE_WEAR).
+        conditionMax = 10,
+        conditionLowerChanceOneIn = 15,
+    },
 
     {
         id = "stone",
@@ -201,6 +213,172 @@ AC_Casting.MOULD_MATERIALS = {
     { id = "clay", prefix = "Clay", qualityBonus = -10, keep = true, unfired = true },
 
     { id = "sand", prefix = "Sand", qualityBonus = -20, keep = false },
+}
+
+
+------------------------------------------------
+-- GAS CHECKS (tunable)
+------------------------------------------------
+--
+-- A rifle's cast bullet (a class with gasCheck) takes a
+-- gas check at assembly: a copper cup punched from scrap
+-- cold on a surface, the cup-punching lines of the brass
+-- case cups (punch and hammer kept). perScrap of them
+-- from one copper scrap; each holds scrapUnits /
+-- perScrap of copper, which the cast round's contents
+-- carry. No XP: it is a part of the rifle's cast round,
+-- whose assembly pays.
+------------------------------------------------
+
+AC_Casting.GAS_CHECK = {
+
+    item = "AmmoMaking.GasCheck",
+
+    scrapItem = "Base.CopperScrap",
+
+    perScrap = 10,
+
+    time = 80,
+
+    timedAction = "MakingHammer_Surface",
+
+    benchTag = "AnySurfaceCraft",
+
+    category = "Metalworking",
+
+    id = "AmmoMaking_PunchGasChecks",
+
+    callback = "onPunchGasChecks",
+}
+
+
+-- The copper in one gas check.
+function AC_Casting.gasCheckUnits()
+
+    return
+        AC_Casting.CONFIG.scrapUnits
+        / AC_Casting.GAS_CHECK.perScrap
+end
+
+
+-- Does any castable calibre need a gas check?
+function AC_Casting.needsGasChecks()
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Casting.getCastable()
+    )
+    do
+
+        if (AC_Calibres.CLASSES[calibre.class] or {}).gasCheck then
+            return true
+        end
+    end
+
+
+    return false
+end
+
+
+-- The gas check recipe, at the level of the first
+-- calibre that needs one; nil when none does.
+function AC_Casting.buildGasCheckRecipe()
+
+    local gas =
+        AC_Casting.GAS_CHECK
+
+
+    local level = nil
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Casting.getCastable()
+    )
+    do
+
+        if (AC_Calibres.CLASSES[calibre.class] or {}).gasCheck then
+
+            level =
+                math.min(
+                    level or 10,
+                    calibre.levels.bullet
+                )
+        end
+    end
+
+
+    if not level then
+        return nil
+    end
+
+
+    return {
+        id = gas.id,
+        step = "gasCheck",
+        time = gas.time,
+        timedAction = gas.timedAction,
+        benchTag = gas.benchTag,
+        category = gas.category,
+        callback = gas.callback,
+        xp = 0,
+        requiredLevel = level,
+        inputs = {
+            { count = 1, items = { gas.scrapItem } },
+            {
+                count = 1,
+                tags = { "base:metalworkingpunch", "base:smallpunch" },
+                keep = true,
+                flags = { "MayDegradeLight" },
+            },
+            {
+                count = 1,
+                tags = { "base:hammer" },
+                keep = true,
+                flags = { "MayDegradeVeryLight" },
+            },
+        },
+        outputs = {
+            { count = gas.perScrap, item = gas.item },
+        },
+    }
+end
+
+
+------------------------------------------------
+-- BULLET LUBE (tunable)
+------------------------------------------------
+--
+-- A cast lead bullet is sized and lubed before it is
+-- loaded: wax in its grooves keeps the lead from smearing
+-- in the bore. Here: a few cast bullets and some uses of
+-- a vanilla candle (Base.Candle, items/normal.txt: a
+-- drainable of 333 uses, UseDelta 0.003; vanilla's
+-- LightCandle takes it by id) give the same bullets back,
+-- each qualityBonus better, once: a lubed bullet is
+-- marked and lubing it again changes nothing. No XP
+-- (nothing new is made), the calibre's bullet level.
+------------------------------------------------
+
+AC_Casting.LUBE = {
+
+    item = "Base.Candle",
+
+    uses = 10,
+
+    bullets = 5,
+
+    qualityBonus = 5,
+
+    time = 60,
+
+    timedAction = "Making",
+
+    benchTag = "AnySurfaceCraft",
+
+    category = "Weaponry",
 }
 
 
@@ -541,6 +719,15 @@ function AC_Casting.castRoundContents(
 
 
     contents.copper = nil
+
+
+    -- A rifle's cast round keeps a little copper: its
+    -- gas check.
+    if (AC_Calibres.CLASSES[calibre.class] or {}).gasCheck then
+
+        contents.copper =
+            AC_Casting.gasCheckUnits()
+    end
 
 
     return contents
@@ -960,7 +1147,7 @@ function AC_Casting.buildCalibreRecipes(
 
                 material = material.id,
 
-                qualityBonus = material.qualityBonus,
+                qualityBonus = material.qualityBonus + (class.castQualityBonus or 0),
 
                 effect = "castBulletQuality",
 
@@ -1045,8 +1232,16 @@ function AC_Casting.buildCalibreRecipes(
     end
 
 
-    local assemble = {
+    if class.gasCheck then
 
+        table.insert(
+            inputs,
+            { count = 1, items = { AC_Casting.GAS_CHECK.item } }
+        )
+    end
+
+
+    local assemble = {
         id = config.idPrefix .. "AssembleCastRound" .. suffix,
 
         calibre = calibre.id,
@@ -1093,6 +1288,60 @@ function AC_Casting.buildCalibreRecipes(
 end
 
 
+-- One lube recipe per castable calibre.
+function AC_Casting.buildLubeRecipes()
+
+    local config =
+        AC_Casting.CONFIG
+
+
+    local lube =
+        AC_Casting.LUBE
+
+
+    local recipes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Casting.getCastable()
+    )
+    do
+
+        table.insert(
+            recipes,
+            {
+                id = config.idPrefix .. "LubeCastBullets" .. calibre.suffix,
+                calibre = calibre.id,
+                step = "lube",
+                -- A treatment: the same item back, better, for
+                -- no XP; not a step of the chain.
+                treatment = true,
+                effect = "lubeCastBullets",
+                time = lube.time,
+                timedAction = lube.timedAction,
+                benchTag = lube.benchTag,
+                category = lube.category,
+                callback = "onLubeCastBullets" .. calibre.suffix,
+                xp = 0,
+                requiredLevel = calibre.levels.bullet,
+                inputs = {
+                    { count = lube.bullets, items = { calibre.castBullet } },
+                    { count = lube.uses, items = { lube.item } },
+                },
+                outputs = {
+                    { count = lube.bullets, item = calibre.castBullet },
+                },
+            }
+        )
+    end
+
+
+    return recipes
+end
+
+
 function AC_Casting.buildRecipes()
 
     local recipes =
@@ -1135,6 +1384,33 @@ function AC_Casting.buildRecipes()
     end
 
 
+    local gasCheck =
+        AC_Casting.buildGasCheckRecipe()
+
+
+    if gasCheck then
+
+        table.insert(
+            recipes,
+            gasCheck
+        )
+    end
+
+
+    for _,
+        recipe
+    in ipairs(
+        AC_Casting.buildLubeRecipes()
+    )
+    do
+
+        table.insert(
+            recipes,
+            recipe
+        )
+    end
+
+
     return recipes
 end
 
@@ -1174,6 +1450,15 @@ function AC_Casting.buildUnits()
         units[calibre.castBullet] = {
             metal = config.metal,
             units = config.scrapUnits / calibre.bulletsPerScrap,
+        }
+    end
+
+
+    if AC_Casting.needsGasChecks() then
+
+        units[AC_Casting.GAS_CHECK.item] = {
+            metal = "copper",
+            units = AC_Casting.gasCheckUnits(),
         }
     end
 

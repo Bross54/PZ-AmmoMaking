@@ -22,6 +22,22 @@ add-on or behind an experimental switch that is off. Nothing in this entry
 has been seen in game; the session that checks it is
 `docs/INGAME_VALIDATION.md`.
 
+- **Rifles cast lead, with a gas check**: a rifle bullet mould (forged, or
+  of stone, clay or sand), cast bullets for the 5.56, .30-30 and .308, and
+  *Punch Copper Gas Checks* (ten from a copper scrap). The rifle's cast
+  assembly takes a gas check; its cast bullets roll 10 lower than a
+  pistol's. The rifle mould is found among a hunter's things.
+- **Candle-wax lube** for cast bullets: five bullets and ten uses of a
+  candle, +5 quality once, no XP.
+- **Regrinding a worn die set** with a file or whetstone, broken ones too:
+  each regrind lowers the condition it can reach by 2 (8, 6, 4, 2), so a
+  die set still wears out. No XP.
+- **Iron bullet moulds wear** as slowly as die sets (some 900 casts).
+- **Spent cases cleaned with steel wool** (Spent Cases add-on): five cases
+  and one use of steel wool; a case resized from clean ones rolls -5
+  instead of -10.
+- **Seven more own icons**: the stone, clay, fired-clay and sand moulds,
+  the rifle mould, the gas check and the cast rifle bullet.
 - **Die sets wear out**, as vanilla's small punch set does: condition 10,
   shown on the item, and each completed case, swaging or assembly (by hand,
   at the press or resizing) has a small chance of costing a point; Ammo
@@ -71,8 +87,7 @@ has been seen in game; the session that checks it is
   mould are forged from iron bar quarters or found beside the die sets;
   cast bullets and lead shot for the five pistol calibres and the shell
   are cast at a Primitive Furnace and assembled into the same vanilla
-  rounds, at the copper recipes' levels, XP and times. Rifles keep
-  copper. Lead replaces only the bullet's copper; the brass, and so the
+  rounds, at the copper recipes' levels, XP and times. Lead replaces only the bullet's copper; the brass, and so the
   zinc, still comes from the mine. 16 recipes, 9 items; no lead ore
   (geology is unchanged).
 - **Resizing fired brass** (in the Spent Cases add-on): *Resize Spent

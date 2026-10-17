@@ -20,7 +20,8 @@
 -- Cast lead bullets (AC_Casting) read two things from
 -- here and nothing else: which classes have a bullet mould
 -- (CLASSES[class].mould) and each such calibre's cast
--- bullet item (calibre.castBullet). Rifles have neither.
+-- bullet item (calibre.castBullet); a rifle's also needs a
+-- gas check (CLASSES.rifle.gasCheck).
 --
 -- Adding a calibre is a new entry in AC_Calibres.LIST, its
 -- three items in AC_Items.txt, their names, and a
@@ -497,6 +498,223 @@ AC_Calibres.DIE_WEAR = {
 }
 
 
+------------------------------------------------
+-- REGRINDING A WORN DIE SET
+------------------------------------------------
+--
+-- A worn or broken die set is filed true again instead
+-- of forged anew, at the price of metal: each regrind
+-- leaves the die a little more open, so the condition it
+-- can be brought back to falls by lossPerRegrind every
+-- time (10, 8, 6, 4, 2). After the last one nothing is
+-- gained and a new die set is forged or found.
+--
+-- The recipe consumes the die set (AllowDestroyedItem,
+-- vanilla's flag for a broken item in a recipe line) and
+-- makes the same die set; OnCreate sets the new one's
+-- condition (InventoryItem.setCondition) and carries the
+-- count in its ModData (regrindKey). A treatment: no XP,
+-- the die set's level, a file or whetstone kept.
+--
+-- REQUIRES FUTURE IN-GAME VERIFICATION: that a broken die
+-- set is offered to the recipe and the made one takes the
+-- condition set in OnCreate.
+------------------------------------------------
+
+AC_Calibres.REGRIND = {
+
+    lossPerRegrind = 2,
+
+    time = 150,
+
+    timedAction = "Making",
+
+    benchTag = "AnySurfaceCraft",
+
+    category = "Tools",
+
+    idPrefix = "AmmoMaking_RegrindDieSet",
+
+    callbackPrefix = "onRegrindDieSet",
+
+    -- ModData key on a die set: how often it was reground.
+    regrindKey = "dieSetRegrinds",
+}
+
+
+-- The condition a die set reground for the n-th time
+-- (n >= 1) is brought back to, from the condition it had:
+-- never lower than before, never above what n regrinds
+-- leave.
+function AC_Calibres.regroundCondition(
+    condition,
+    regrinds
+)
+
+    local wear =
+        AC_Calibres.DIE_WEAR
+
+
+    local cap =
+        wear.conditionMax
+        - AC_Calibres.REGRIND.lossPerRegrind * (tonumber(regrinds) or 1)
+
+
+    condition =
+        math.max(0, math.floor(tonumber(condition) or 0))
+
+
+    return
+        math.min(
+            wear.conditionMax,
+            math.max(condition, cap)
+        )
+end
+
+
+-- One regrinding recipe per calibre.
+function AC_Calibres.buildRegrindRecipes()
+
+    local regrind =
+        AC_Calibres.REGRIND
+
+
+    local recipes = {}
+
+
+    for _,
+        calibre
+    in ipairs(
+        AC_Calibres.LIST
+    )
+    do
+
+        table.insert(
+            recipes,
+            {
+                id = regrind.idPrefix .. calibre.suffix,
+                calibre = calibre.id,
+                step = "regrind",
+                treatment = true,
+                tool = true,
+                effect = "regrindDieSet",
+                time = regrind.time,
+                timedAction = regrind.timedAction,
+                benchTag = regrind.benchTag,
+                category = regrind.category,
+                callback = regrind.callbackPrefix .. calibre.suffix,
+                xp = 0,
+                requiredLevel = calibre.levels.dieSet,
+                inputs = {
+                    { count = 1, items = { calibre.dieSet }, flags = { "AllowDestroyedItem" } },
+                    {
+                        count = 1,
+                        tags = { "base:whetstone", "base:file" },
+                        keep = true,
+                        flags = { "MayDegradeLight" },
+                    },
+                },
+                outputs = {
+                    { count = 1, item = calibre.dieSet },
+                },
+            }
+        )
+    end
+
+
+    return recipes
+end
+
+
+-- OnCreate of a regrind: the made die set takes the
+-- consumed one's count plus one and the condition that
+-- allows. Returns the condition set, or nil.
+function AC_Calibres.onDieSetReground(
+    craftRecipeData
+)
+
+    if not craftRecipeData
+        or not craftRecipeData.getAllConsumedItems
+        or not craftRecipeData.getAllCreatedItems
+    then
+        return nil
+    end
+
+
+    local key =
+        AC_Calibres.REGRIND.regrindKey
+
+
+    local consumed =
+        craftRecipeData:getAllConsumedItems()
+
+
+    local created =
+        craftRecipeData:getAllCreatedItems()
+
+
+    local old = nil
+
+
+    for index = 0, (consumed and consumed:size() or 0) - 1 do
+
+        local item = consumed:get(index)
+
+        if AC_Calibres.identify(item:getFullType()) == "dieSet" then
+            old = item
+        end
+    end
+
+
+    if not old then
+        return nil
+    end
+
+
+    local regrinds = 0
+
+
+    if not old.hasModData
+        or old:hasModData()
+    then
+
+        regrinds =
+            AC_SaveData.whole(
+                old:getModData()[key],
+                0
+            ) or 0
+    end
+
+
+    regrinds = regrinds + 1
+
+
+    local condition =
+        AC_Calibres.regroundCondition(
+            old:getCondition(),
+            regrinds
+        )
+
+
+    for index = 0, (created and created:size() or 0) - 1 do
+
+        local item = created:get(index)
+
+        if AC_Calibres.identify(item:getFullType()) == "dieSet" then
+
+            item:setCondition(condition)
+
+            item:getModData()[key] = regrinds
+
+            return condition
+        end
+    end
+
+
+    return nil
+end
+
+
 -- Crafts a die set is expected to last: condition points
 -- times the mean number of crafts per point.
 function AC_Calibres.dieSetExpectedUses(
@@ -611,16 +829,15 @@ AC_Calibres.CLASSES = {
     },
 
     ------------------------------------------------
-    -- No mould for rifles, on purpose: a rifle bullet
-    -- keeps its copper. A plain cast lead bullet leaves
-    -- lead in the bore and strips in the rifling at the
-    -- 2,200 to 3,000 ft/s of the three rifle rounds; the
-    -- real fixes (a gas check, a hardened alloy, a jacket)
-    -- are a second item and a chemistry the mod does not
-    -- model. Pistol rounds and buckshot stay below about
-    -- 1,400 ft/s, where plain lead is what was loaded for
-    -- a century. And the top tier stays on the mine
-    -- (docs/METALLURGY_DESIGN.md 12).
+    -- Rifles cast too, but only with a gas check: a
+    -- plain lead bullet strips in the rifling and leads
+    -- the bore at the 2,200 to 3,000 ft/s of the three
+    -- rifle rounds. A small copper cup crimped on its base
+    -- (AC_Casting.GAS_CHECK) is what made cast rifle loads
+    -- work; even so they shoot worse than jacketed ones
+    -- (castQualityBonus), and the copper still comes from
+    -- the mine, a tenth of a jacketed bullet's
+    -- (docs/METALLURGY_DESIGN.md 12.9).
     ------------------------------------------------
 
     rifle = {
@@ -638,6 +855,14 @@ AC_Calibres.CLASSES = {
         lootTier = "rare",
 
         assembleLevel = 5,
+
+        -- The rifle bullet mould; its cast bullets need a
+        -- gas check at assembly, and roll this much lower.
+        mould = "AmmoMaking.BulletMouldRifle",
+
+        gasCheck = true,
+
+        castQualityBonus = -10,
 
         xp = {
             case = 2,
