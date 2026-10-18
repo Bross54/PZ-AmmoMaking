@@ -681,6 +681,14 @@ local function newInventory()
         end
         return arrayList(found)
     end
+    -- ItemContainer.containsTypeRecurse(String): "Module.Type" as vanilla
+    -- passes it; the mock has no bags, so it looks at its own items.
+    function inv:containsTypeRecurse(fullType)
+        for _, it in ipairs(self.items) do
+            if it.fullType == fullType then return true end
+        end
+        return false
+    end
     function inv:containsID(id)
         for _, it in ipairs(self.items) do
             if it.id == id then return true end

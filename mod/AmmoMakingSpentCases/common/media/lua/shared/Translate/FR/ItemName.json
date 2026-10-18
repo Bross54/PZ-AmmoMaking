@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Douille tirée 5.56",
     "AmmoMaking.SpentCase3030Win": "Douille tirée .30-30",
     "AmmoMaking.SpentCase308Win": "Douille tirée .308",
-    "AmmoMaking.SpentHull12Gauge": "Douille de cartouche en laiton tirée cal.12"
+    "AmmoMaking.SpentHull12Gauge": "Douille de cartouche en laiton tirée cal.12",
+    "AmmoMaking.BrassCatcher": "Récupérateur de douilles",
+    "AmmoMaking.CaseTumbler": "Tonneau de polissage"
 }

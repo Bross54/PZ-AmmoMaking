@@ -140,8 +140,10 @@ table-field assignment, which is what makes the approach credible in Build
 - Every wrapper calls the original exactly once, hands its result on, and
   guards its own steps so that a failure never reaches vanilla's action.
 
-**Standing down**: with Hot Brass's framework active (`HBVCEFb42`), the
-spent-cases feature is off: both would leave a casing for the same shot.
+**Standing down**: with Hot Brass's framework active (`HBVCEFb42`) or
+Modern Firearms System (`ModernFirearmsSystem`, whose MFSEject leaves its own
+casings), the spent-cases feature is off: both would leave a casing for the
+same shot.
 Gunworks replaces more of the reload actions than this mod has been checked
 against; quality tracking is not switched off beside it, and a record it
 cannot follow resolves to factory rounds.
@@ -175,6 +177,7 @@ For whoever tests the mod beside others:
 | Mod | What it does to firearms | With Ammo Making |
 |---|---|---|
 | Hot Brass framework (`HBVCEFb42`) | leaves casings; wraps `ejectSpentRounds`; re-registers `onShoot` and the attack hook | spent cases stand down. Quality tracking is untested beside it |
+| Modern Firearms System (`ModernFirearmsSystem`) | MFSEject leaves a casing per shot for the vanilla rounds and its own; replaces `ISRackFirearm:ejectSpentRounds` and `ISReloadWeaponAction:ejectSpentRounds` at `OnInitGlobalModData` **without calling the original** (`MFSEject/TimedActionsHooks.lua`, read 2026-10-18) | spent cases stand down (conflict). Its casings are resized at the die set by the MFS calibre add-on (`AC_SpentCases.CASING_BRIDGES.mfs`). Quality tracking is untested beside it |
 | Hot Brass Ammo Crafting (`HBAmmoCraft`) | its own casings, primers, projectiles and reloading bench | separate items and recipes; nothing shared |
 | Gunworks (`SWMG`), Marz Vanilla Guns | per-round ammunition lists; wraps the seven reload functions and `onShoot` | untested. Both mods' wrappers call the function they found, so the order of loading decides who wraps whom |
 | Auto Reload (`AutoReload`) | wraps `stop` and `perform` of the reload actions | no overlap with what this mod wraps |

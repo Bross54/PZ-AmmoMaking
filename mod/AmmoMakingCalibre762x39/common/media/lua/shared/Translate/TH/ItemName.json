@@ -2,5 +2,6 @@
     "AmmoMaking.DieSet762x39": "ชุดดายบรรจุกระสุน 7.62x39",
     "AmmoMaking.Case762x39": "ปลอกกระสุนเปล่า 7.62x39",
     "AmmoMaking.Bullet762x39": "หัวกระสุนทองแดง 7.62x39",
-    "AmmoMaking.CastBullet762x39": "หัวกระสุนตะกั่วหล่อ 7.62x39"
+    "AmmoMaking.CastBullet762x39": "หัวกระสุนตะกั่วหล่อ 7.62x39",
+    "AmmoMaking.SpentCase762x39": "ปลอกกระสุนที่ยิงแล้ว 7.62x39"
 }

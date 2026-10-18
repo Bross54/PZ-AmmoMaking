@@ -2748,6 +2748,80 @@ AC_Compat.checkRoundOverrides =
     checkRoundOverrides
 
 
+------------------------------------------------
+-- OTHER AMMUNITION-MAKING MODS
+------------------------------------------------
+--
+-- Mods that make the same vanilla rounds, or leave and
+-- reload casings, by recipes and items of their own.
+-- Nothing is shared and nothing is switched off: the
+-- player gets two ways to the same round, and two
+-- casings per shot if both leave them. A WARNING says
+-- which. Mod ids as their Workshop pages give them,
+-- read on 2026-10-18 (HBAmmoCraft from the installed
+-- Hot Brass); the ids are case-sensitive and two of them
+-- differ only in case.
+------------------------------------------------
+
+AC_Compat.OVERLAPPING_MODS = {
+
+    { mod = "ammomaker", name = "Ammo Maker", workshop = "2788256295", what = "its own gunpowder, casings, bullets and reloading for the same rounds; it also leaves casings when firing" },
+
+    { mod = "ammocraft", name = "Ammocraft", workshop = "2245813444", what = "its own casings, tips, powder and reloading press" },
+
+    { mod = "ammobench", name = "Ammo Reloading Bench", workshop = "3766525060", what = "its own reloading bench and brass recycling for every vanilla calibre" },
+
+    { mod = "LoadIt", name = "Load It!", workshop = "3814823133", what = "its own presses and components for the vanilla rounds" },
+
+    { mod = "DeonReloadingBench", name = "Ammo Reloading Toolset", workshop = "3397215647", what = "its own reloading toolset and bullet cores" },
+
+    { mod = "vac", name = "Vanilla Ammo Crafting", workshop = "2917021415", what = "gunpowder, a hand press and bullet moulds of its own" },
+
+    { mod = "MakeBullets", name = "Crafting Ammo", workshop = "2557708236", what = "gunpowder, moulds, casings and bullets of its own" },
+
+    { mod = "AmmoCraft", name = "Ammo Craft", workshop = "3779321284", what = "boxes of any calibre from gunpowder" },
+
+    { mod = "RAC", name = "Rat's Ammo Crafting", workshop = "3775276135", what = "boxes of rounds from gunpowder and iron" },
+
+    { mod = "HBAmmoCraft", name = "Hot Brass Ammo Crafting", workshop = "3610677934", what = "its own primers, projectiles and reloading bench" },
+
+    { mod = "Guns93SurplusAmmoAddon", name = "Guns of 93: Surplus, Reloading and Crafting", workshop = "3785360152", what = "reloading built on Guns of 93's own brass" },
+
+    -- Read from the installed mod: it replaces the vanilla
+    -- rounds with graded rounds of its own and casts
+    -- bullets at the forges (Gunsmith_casting.txt).
+    { mod = "Gunsmith1993", name = "Gunsmith: The 1993 Arsenal", workshop = "3813655486", what = "rounds of its own in place of the vanilla ones, its own bullet casting and crafted rounds" },
+}
+
+
+local function checkOverlappingMods(
+    results
+)
+
+    for _,
+        other
+    in ipairs(
+        AC_Compat.OVERLAPPING_MODS
+    )
+    do
+
+        if AC_Features.isModActive(other.mod) then
+
+            addResult(
+                results,
+                "WARNING",
+                other.name .. " is active: " .. other.what .. "; Ammo Making shares nothing with it, so both ways to the same rounds are open",
+                other.mod
+            )
+        end
+    end
+end
+
+
+AC_Compat.checkOverlappingMods =
+    checkOverlappingMods
+
+
 local function checkFeatures(
     results
 )
@@ -3050,6 +3124,8 @@ function AC_Compat.run(
     checkSkillBooks(results)
     checkFeatures(results)
     checkRoundOverrides(results)
+
+    checkOverlappingMods(results)
 
 
     local summary =

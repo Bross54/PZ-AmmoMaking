@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Очистить стреляные гильзы 5.56 мм стальной ватой",
     "AmmoMaking_CleanSpentCases3030Win": "Очистить стреляные гильзы .30-30 стальной ватой",
     "AmmoMaking_CleanSpentCases308Win": "Очистить стреляные гильзы .308 стальной ватой",
-    "AmmoMaking_CleanSpentCases12Gauge": "Очистить стреляные латунные гильзы 12 калибра стальной ватой"
+    "AmmoMaking_CleanSpentCases12Gauge": "Очистить стреляные латунные гильзы 12 калибра стальной ватой",
+    "AmmoMaking_MakeBrassCatcher": "Сделать гильзоулавливатель",
+    "AmmoMaking_MakeCaseTumbler": "Сделать галтовочный барабан",
+    "AmmoMaking_TumbleSpentCases9mm": "Очистить стреляные гильзы 9 мм в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases38Special": "Очистить стреляные гильзы .38 Special в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases45ACP": "Очистить стреляные гильзы .45 ACP в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Очистить стреляные гильзы .357 Magnum в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Очистить стреляные гильзы .44 Magnum в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases556NATO": "Очистить стреляные гильзы 5.56 мм в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases3030Win": "Очистить стреляные гильзы .30-30 в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases308Win": "Очистить стреляные гильзы .308 в галтовочном барабане",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Очистить стреляные латунные гильзы 12 калибра в галтовочном барабане"
 }

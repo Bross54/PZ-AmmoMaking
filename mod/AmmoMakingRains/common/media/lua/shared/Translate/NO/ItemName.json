@@ -3,12 +3,15 @@
     "AmmoMaking.Case223Rem": "Tom .223 hylse",
     "AmmoMaking.Bullet223Rem": ".223 kobberkule",
     "AmmoMaking.CastBullet223Rem": ".223 støpt blykule",
+    "AmmoMaking.SpentCase223Rem": "Brukt .223 hylse",
     "AmmoMaking.DieSet762x51": "Matrisesett for håndlading 7.62x51",
     "AmmoMaking.Case762x51": "Tom 7.62x51 hylse",
     "AmmoMaking.Bullet762x51": "7.62x51 kobberkule",
     "AmmoMaking.CastBullet762x51": "7.62x51 støpt blykule",
+    "AmmoMaking.SpentCase762x51": "Brukt 7.62x51 hylse",
     "AmmoMaking.DieSet762x39M43": "Matrisesett for håndlading 7.62x39 M43",
     "AmmoMaking.Case762x39M43": "Tom 7.62x39 M43 hylse",
     "AmmoMaking.Bullet762x39M43": "7.62x39 M43 kobberkule",
-    "AmmoMaking.CastBullet762x39M43": "7.62x39 M43 støpt blykule"
+    "AmmoMaking.CastBullet762x39M43": "7.62x39 M43 støpt blykule",
+    "AmmoMaking.SpentCase762x39M43": "Brukt 7.62x39 M43 hylse"
 }

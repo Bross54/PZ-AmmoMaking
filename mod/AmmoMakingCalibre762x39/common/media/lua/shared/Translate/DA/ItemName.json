@@ -2,5 +2,6 @@
     "AmmoMaking.DieSet762x39": "Genladningsmatricesæt til 7.62x39",
     "AmmoMaking.Case762x39": "Tomt 7.62x39-hylster",
     "AmmoMaking.Bullet762x39": "7.62x39-kobberprojektil",
-    "AmmoMaking.CastBullet762x39": "Støbt 7.62x39-blyprojektil"
+    "AmmoMaking.CastBullet762x39": "Støbt 7.62x39-blyprojektil",
+    "AmmoMaking.SpentCase762x39": "Brugt 7.62x39-hylster"
 }

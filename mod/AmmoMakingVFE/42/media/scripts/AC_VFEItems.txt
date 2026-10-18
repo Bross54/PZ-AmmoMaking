@@ -55,6 +55,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase762x39
+    {
+        DisplayName = Spent 7.62x39 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSet223Rem
     {
         DisplayName = .223 Handloading Die Set,
@@ -99,6 +110,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCase223Rem
+    {
+        DisplayName = Spent .223 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 }

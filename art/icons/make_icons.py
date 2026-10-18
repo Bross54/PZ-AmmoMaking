@@ -801,6 +801,53 @@ def icon_book(volume):
 
 # ---------------------------------------------------------------- the press
 
+def icon_brass_catcher():
+    """A canvas bag hanging from a wire hoop, two spent cases in its mouth."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    # The bag, widening downwards, with a seam and a shaded side.
+    draw.polygon([(8, 12), (24, 12), (27, 26), (22, 29), (10, 29), (5, 26)], fill=rgba(CANVAS[2]))
+    draw.polygon([(16, 12), (24, 12), (27, 26), (22, 29), (16, 29)], fill=rgba(CANVAS[3]))
+    draw.line([(16, 13), (16, 28)], fill=rgba(CANVAS[4]))
+    draw.line([(9, 14), (6, 25)], fill=rgba(CANVAS[1]))
+    # Two spent cases caught in the mouth.
+    draw.polygon([(11, 9), (14, 8), (15, 13), (12, 14)], fill=rgba(TARNISH[1]))
+    draw.line([(11, 9), (14, 8)], fill=rgba(TARNISH[0]))
+    draw.polygon([(17, 8), (20, 9), (19, 14), (16, 13)], fill=rgba(BRASS[2]))
+    draw.line([(17, 8), (20, 9)], fill=rgba(BRASS[0]))
+    # The wire hoop round the mouth and the clip that holds it to the gun.
+    draw.ellipse([6, 9, 26, 15], outline=rgba(STEEL[1]))
+    draw.line([(7, 12), (25, 12)], fill=rgba(STEEL[2]))
+    draw.line([(25, 10), (29, 5)], fill=rgba(STEEL[1]))
+    draw.line([(28, 4), (30, 6)], fill=rgba(STEEL[2]))
+    return outline(image)
+
+
+def icon_case_tumbler():
+    """A steel drum on a wooden stand, with a crank."""
+    image = blank()
+    draw = ImageDraw.Draw(image)
+    # The stand: two legs and a rail.
+    draw.polygon([(6, 20), (9, 20), (8, 29), (5, 29)], fill=rgba(WOOD[2]))
+    draw.polygon([(23, 20), (26, 20), (27, 29), (24, 29)], fill=rgba(WOOD[2]))
+    draw.line([(6, 26), (26, 26)], fill=rgba(WOOD[3]))
+    # The drum, lying on its side: body, lit top, dark end.
+    draw.rectangle([7, 10, 25, 21], fill=rgba(STEEL[2]))
+    draw.line([(7, 11), (25, 11)], fill=rgba(STEEL[0]))
+    draw.line([(7, 20), (25, 20)], fill=rgba(STEEL[3]))
+    for x in (11, 16, 21):
+        draw.line([(x, 10), (x, 21)], fill=rgba(STEEL[3]))
+    draw.ellipse([22, 9, 28, 22], fill=rgba(STEEL[1]))
+    draw.ellipse([24, 13, 26, 18], fill=rgba(STEEL[3]))
+    # A few cases at the open end, and the crank.
+    draw.line([(4, 13), (6, 12)], fill=rgba(BRASS[1]))
+    draw.line([(4, 16), (6, 15)], fill=rgba(TARNISH[1]))
+    draw.line([(27, 15), (30, 15)], fill=rgba(IRON[1]))
+    draw.line([(30, 15), (30, 9)], fill=rgba(IRON[1]))
+    draw.line([(29, 9), (31, 9)], fill=rgba(WOOD[1]))
+    return outline(image)
+
+
 def icon_press():
     """The reloading press, small: base, column, ram, die and the long lever.
 
@@ -893,6 +940,8 @@ ICONS = [
     ("AmmoMakingSpentCaseMagnum", SPENT, "Item_", lambda: icon_case_magnum(True)),
     ("AmmoMakingSpentCaseRifle", SPENT, "Item_", lambda: icon_case_rifle(True)),
     ("AmmoMakingSpentHull", SPENT, "Item_", lambda: icon_hull(True)),
+    ("AmmoMakingBrassCatcher", SPENT, "Item_", icon_brass_catcher),
+    ("AmmoMakingCaseTumbler", SPENT, "Item_", icon_case_tumbler),
     ("AmmoMakingReloadingPress", PRESS, "Build_", icon_press),
 ]
 

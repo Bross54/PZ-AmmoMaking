@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Puhdista ammutut 5,56 hylsyt teräsvillalla",
     "AmmoMaking_CleanSpentCases3030Win": "Puhdista ammutut .30-30 hylsyt teräsvillalla",
     "AmmoMaking_CleanSpentCases308Win": "Puhdista ammutut .308 hylsyt teräsvillalla",
-    "AmmoMaking_CleanSpentCases12Gauge": "Puhdista ammutut 12 Gauge messinkihylsyt teräsvillalla"
+    "AmmoMaking_CleanSpentCases12Gauge": "Puhdista ammutut 12 Gauge messinkihylsyt teräsvillalla",
+    "AmmoMaking_MakeBrassCatcher": "Valmista hylsynkerääjä",
+    "AmmoMaking_MakeCaseTumbler": "Valmista rumpukiillotin",
+    "AmmoMaking_TumbleSpentCases9mm": "Puhdista ammutut 9mm hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases38Special": "Puhdista ammutut .38 Special hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases45ACP": "Puhdista ammutut .45 ACP hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Puhdista ammutut .357 Magnum hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Puhdista ammutut .44 Magnum hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases556NATO": "Puhdista ammutut 5,56 hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases3030Win": "Puhdista ammutut .30-30 hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases308Win": "Puhdista ammutut .308 hylsyt rumpukiillottimessa",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Puhdista ammutut 12 Gauge messinkihylsyt rumpukiillottimessa"
 }

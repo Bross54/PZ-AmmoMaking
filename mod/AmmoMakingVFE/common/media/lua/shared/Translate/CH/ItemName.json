@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "空7.62x39彈殼",
     "AmmoMaking.Bullet762x39": "7.62x39銅彈頭",
     "AmmoMaking.CastBullet762x39": "7.62x39鑄鉛彈頭",
+    "AmmoMaking.SpentCase762x39": "已擊發的7.62x39彈殼",
     "AmmoMaking.DieSet223Rem": ".223復裝模具組",
     "AmmoMaking.Case223Rem": "空.223彈殼",
     "AmmoMaking.Bullet223Rem": ".223銅彈頭",
-    "AmmoMaking.CastBullet223Rem": ".223鑄鉛彈頭"
+    "AmmoMaking.CastBullet223Rem": ".223鑄鉛彈頭",
+    "AmmoMaking.SpentCase223Rem": "已擊發的.223彈殼"
 }

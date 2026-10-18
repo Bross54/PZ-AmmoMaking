@@ -3,12 +3,15 @@
     "AmmoMaking.Case223Rem": "Beina buida de .223",
     "AmmoMaking.Bullet223Rem": "Projectil de coure de .223",
     "AmmoMaking.CastBullet223Rem": "Projectil de plom fos de .223",
+    "AmmoMaking.SpentCase223Rem": "Beina percudida de .223",
     "AmmoMaking.DieSet762x51": "Joc de matrius de recàrrega de 7.62x51",
     "AmmoMaking.Case762x51": "Beina buida de 7.62x51",
     "AmmoMaking.Bullet762x51": "Projectil de coure de 7.62x51",
     "AmmoMaking.CastBullet762x51": "Projectil de plom fos de 7.62x51",
+    "AmmoMaking.SpentCase762x51": "Beina percudida de 7.62x51",
     "AmmoMaking.DieSet762x39M43": "Joc de matrius de recàrrega de 7.62x39 M43",
     "AmmoMaking.Case762x39M43": "Beina buida de 7.62x39 M43",
     "AmmoMaking.Bullet762x39M43": "Projectil de coure de 7.62x39 M43",
-    "AmmoMaking.CastBullet762x39M43": "Projectil de plom fos de 7.62x39 M43"
+    "AmmoMaking.CastBullet762x39M43": "Projectil de plom fos de 7.62x39 M43",
+    "AmmoMaking.SpentCase762x39M43": "Beina percudida de 7.62x39 M43"
 }

@@ -313,6 +313,8 @@ IMAGES = [
     ("mod/AmmoMakingGaelGunStore/42/poster.png", lambda: calibre_scene("GAELGUNSTORE", 3616)),
     ("mod/AmmoMakingRealFirearms/42/poster.png", lambda: calibre_scene("REAL FIREARMS", 3238)),
     ("mod/AmmoMakingMFS/42/poster.png", lambda: calibre_scene("MFS", 3633)),
+    ("mod/AmmoMakingGuns93/42/poster.png", lambda: calibre_scene("GUNS OF 93", 3183)),
+    ("mod/AmmoMakingPSA/42/poster.png", lambda: calibre_scene("PSA", 3722)),
     ("mod/AmmoMakingHotBrass/42/poster.png", lambda: spent_scene("HOT BRASS")),
     ("art/workshop/preview.png", lambda: main_scene("FROM ORE TO ROUND")),
 ]

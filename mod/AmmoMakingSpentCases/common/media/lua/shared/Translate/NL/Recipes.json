@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Afgevuurde hulzen 5.56 reinigen met staalwol",
     "AmmoMaking_CleanSpentCases3030Win": "Afgevuurde hulzen .30-30 reinigen met staalwol",
     "AmmoMaking_CleanSpentCases308Win": "Afgevuurde hulzen .308 reinigen met staalwol",
-    "AmmoMaking_CleanSpentCases12Gauge": "Afgevuurde messing hagelhulzen 12 Gauge reinigen met staalwol"
+    "AmmoMaking_CleanSpentCases12Gauge": "Afgevuurde messing hagelhulzen 12 Gauge reinigen met staalwol",
+    "AmmoMaking_MakeBrassCatcher": "Hulzenvanger maken",
+    "AmmoMaking_MakeCaseTumbler": "Trommelpolijster maken",
+    "AmmoMaking_TumbleSpentCases9mm": "Afgevuurde hulzen 9mm reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases38Special": "Afgevuurde hulzen .38 Special reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases45ACP": "Afgevuurde hulzen .45 ACP reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Afgevuurde hulzen .357 Magnum reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Afgevuurde hulzen .44 Magnum reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases556NATO": "Afgevuurde hulzen 5.56 reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases3030Win": "Afgevuurde hulzen .30-30 reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases308Win": "Afgevuurde hulzen .308 reinigen in een trommelpolijster",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Afgevuurde messing hagelhulzen 12 Gauge reinigen in een trommelpolijster"
 }

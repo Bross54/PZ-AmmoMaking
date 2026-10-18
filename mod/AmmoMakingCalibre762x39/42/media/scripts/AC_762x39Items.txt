@@ -56,4 +56,15 @@ module AmmoMaking
         WorldStaticModel = SteelSlug,
         Tags = base:hasmetal,
     }
+
+    item SpentCase762x39
+    {
+        DisplayName = Spent 7.62x39 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
 }

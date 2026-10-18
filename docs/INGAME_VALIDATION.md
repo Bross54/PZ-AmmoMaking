@@ -80,9 +80,13 @@ Expected / Console
   `feature Handloading for Rain's Firearms Expanded: off (off)`,
   `feature Handloading for GaelGunStore: off (off)`,
   `feature Handloading for Real Firearms: off (off)`,
-  `feature Handloading for Modern Firearms System: off (off)` (each on with
+  `feature Handloading for Modern Firearms System: off (off)`,
+  `feature Handloading for Guns of 93: off (off)`,
+  `feature Handloading for Post Soviet Armory: off (off)` (each on with
   its add-on and its gun mod ticked; with Modern Firearms System also a
-  WARNING that its Base.Bullets38 is a 6.8mm round).
+  WARNING that its Base.Bullets38 is a 6.8mm round). With another
+  ammunition-making mod ticked (Ammo Maker, Load It!, Ammocraft, ...): one
+  WARNING `<name> is active: ...` each (`AC_Compat.OVERLAPPING_MODS`).
 - One line per calibre class (`.../... complete`).
 - `OK: die set loot (...)` and `OK: component loot (...)`.
 - `OK: skill books entered in vanilla's reading table (server Lua)` and
@@ -482,7 +486,9 @@ Expected
   sprite facing south, east, west or north.
 - A press recipe looked at elsewhere says "Requires a Reloading Press"
   (not a raw `IGUI_...` key); the placed object is named Reloading Press.
-- Its window lists 27 recipes, all `(Press)`. They use the **same** die
+- Its window lists 36 recipes, all `(Press)`: the 27, and the cast
+  assembly of the nine calibres that cast (*Assemble 9mm Round (Cast
+  Bullet, Press)*). They use the **same** die
   sets and inputs as the hand recipes, give the same output and the same
   XP, and take less time. The hand recipes still work without it.
 - The press survives save and reload.
@@ -508,6 +514,11 @@ Steps
    compare. Assemble a
    9mm round on the resized case.
 6. Set the option to 0 and to 100 in two short tries.
+7. Craft *Make Brass Catcher* (three ripped sheets, one use of wire) and
+   fire ten more rounds with it in a bag.
+8. Craft *Make Case Tumbler* (sheet metal, two planks, four nails, a
+   hammer kept), then *Tumble Spent 9mm Cases* with twenty spent 9mm
+   cases.
 
 Expected
 - `feature Spent Cases: ON (on)`; console
@@ -528,8 +539,17 @@ Expected
   9mm round.
 - Firing, racking, reloading and jamming feel exactly as without the
   add-on.
+- With the **Brass Catcher** carried (main inventory or a bag), the found
+  cases go into the inventory, none onto the ground; as many as without
+  it. Making it gives no XP.
+- The **Case Tumbler** keeps; tumbling takes the twenty cases and gives
+  twenty back marked clean, as steel wool does, with no steel wool and no
+  XP.
 - With Hot Brass enabled as well: `feature Spent Cases: off (conflict
-  with HBVCEFb42)` and no case from this mod.
+  with HBVCEFb42)` and no case from this mod. Likewise with Modern
+  Firearms System (`conflict with ModernFirearmsSystem`): its MFSEject
+  casings are the only ones; with the MFS calibre add-on ticked they are
+  resized at the die set (*Resize Spent 9mm Case (MFS)*).
 
 Result: ____
 

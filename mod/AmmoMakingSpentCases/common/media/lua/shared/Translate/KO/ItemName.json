@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "사용한 5.56 탄피",
     "AmmoMaking.SpentCase3030Win": "사용한 .30-30 탄피",
     "AmmoMaking.SpentCase308Win": "사용한 .308 탄피",
-    "AmmoMaking.SpentHull12Gauge": "사용한 12게이지 황동 산탄 탄피"
+    "AmmoMaking.SpentHull12Gauge": "사용한 12게이지 황동 산탄 탄피",
+    "AmmoMaking.BrassCatcher": "탄피 받이",
+    "AmmoMaking.CaseTumbler": "탄피 텀블러"
 }

@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "5.56薬莢(使用済み)",
     "AmmoMaking.SpentCase3030Win": ".30-30薬莢(使用済み)",
     "AmmoMaking.SpentCase308Win": ".308薬莢(使用済み)",
-    "AmmoMaking.SpentHull12Gauge": "12ゲージ真鍮製シェル(使用済み)"
+    "AmmoMaking.SpentHull12Gauge": "12ゲージ真鍮製シェル(使用済み)",
+    "AmmoMaking.BrassCatcher": "薬莢キャッチャー",
+    "AmmoMaking.CaseTumbler": "薬莢タンブラー"
 }

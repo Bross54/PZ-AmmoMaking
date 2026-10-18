@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Limpar Invólucros Deflagrados de 5,56 com Lã de Aço",
     "AmmoMaking_CleanSpentCases3030Win": "Limpar Invólucros Deflagrados de .30-30 com Lã de Aço",
     "AmmoMaking_CleanSpentCases308Win": "Limpar Invólucros Deflagrados de .308 com Lã de Aço",
-    "AmmoMaking_CleanSpentCases12Gauge": "Limpar Invólucros de Latão Deflagrados de Calibre 12 com Lã de Aço"
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpar Invólucros de Latão Deflagrados de Calibre 12 com Lã de Aço",
+    "AmmoMaking_MakeBrassCatcher": "Fazer apanhador de cápsulas",
+    "AmmoMaking_MakeCaseTumbler": "Fazer polidor de tambor",
+    "AmmoMaking_TumbleSpentCases9mm": "Limpar Invólucros Deflagrados de 9mm num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases38Special": "Limpar Invólucros Deflagrados de .38 Especial num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases45ACP": "Limpar Invólucros Deflagrados de .45 Auto num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Limpar Invólucros Deflagrados de .357 Magnum num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Limpar Invólucros Deflagrados de .44 Magnum num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases556NATO": "Limpar Invólucros Deflagrados de 5,56 num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases3030Win": "Limpar Invólucros Deflagrados de .30-30 num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases308Win": "Limpar Invólucros Deflagrados de .308 num Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Limpar Invólucros de Latão Deflagrados de Calibre 12 num Polidor de Tambor"
 }

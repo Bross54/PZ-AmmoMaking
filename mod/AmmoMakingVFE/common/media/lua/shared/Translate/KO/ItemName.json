@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "빈 7.62x39 탄피",
     "AmmoMaking.Bullet762x39": "7.62x39 구리 탄두",
     "AmmoMaking.CastBullet762x39": "7.62x39 주조 납 탄두",
+    "AmmoMaking.SpentCase762x39": "사용한 7.62x39 탄피",
     "AmmoMaking.DieSet223Rem": ".223 핸드로딩 다이 세트",
     "AmmoMaking.Case223Rem": "빈 .223 탄피",
     "AmmoMaking.Bullet223Rem": ".223 구리 탄두",
-    "AmmoMaking.CastBullet223Rem": ".223 주조 납 탄두"
+    "AmmoMaking.CastBullet223Rem": ".223 주조 납 탄두",
+    "AmmoMaking.SpentCase223Rem": "사용한 .223 탄피"
 }

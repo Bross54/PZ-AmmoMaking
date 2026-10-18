@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Lege huls 7.62x39",
     "AmmoMaking.Bullet762x39": "Koperen kogel 7.62x39",
     "AmmoMaking.CastBullet762x39": "Gegoten loden kogel 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Afgevuurde huls 7.62x39",
     "AmmoMaking.DieSet223Rem": "Herlaadmatrijzenset .223",
     "AmmoMaking.Case223Rem": "Lege huls .223",
     "AmmoMaking.Bullet223Rem": "Koperen kogel .223",
-    "AmmoMaking.CastBullet223Rem": "Gegoten loden kogel .223"
+    "AmmoMaking.CastBullet223Rem": "Gegoten loden kogel .223",
+    "AmmoMaking.SpentCase223Rem": "Afgevuurde huls .223"
 }

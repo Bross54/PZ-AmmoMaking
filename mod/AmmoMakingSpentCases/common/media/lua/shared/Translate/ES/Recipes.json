@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Limpiar vainas percutidas de 5.56 con lana de acero",
     "AmmoMaking_CleanSpentCases3030Win": "Limpiar vainas percutidas de .30-30 con lana de acero",
     "AmmoMaking_CleanSpentCases308Win": "Limpiar vainas percutidas de .308 con lana de acero",
-    "AmmoMaking_CleanSpentCases12Gauge": "Limpiar vainas de latón percutidas de calibre 12 con lana de acero"
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpiar vainas de latón percutidas de calibre 12 con lana de acero",
+    "AmmoMaking_MakeBrassCatcher": "Fabricar recogevainas",
+    "AmmoMaking_MakeCaseTumbler": "Fabricar pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases9mm": "Limpiar vainas percutidas de 9mm en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases38Special": "Limpiar vainas percutidas de .38 Special en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases45ACP": "Limpiar vainas percutidas de .45 Auto en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Limpiar vainas percutidas de .357 Magnum en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Limpiar vainas percutidas de .44 Magnum en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases556NATO": "Limpiar vainas percutidas de 5.56 en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases3030Win": "Limpiar vainas percutidas de .30-30 en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases308Win": "Limpiar vainas percutidas de .308 en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Limpiar vainas de latón percutidas de calibre 12 en un pulidor de tambor"
 }

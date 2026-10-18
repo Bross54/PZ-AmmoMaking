@@ -146,10 +146,13 @@ function AC_SpentCases.getSpentCaseForRound(
         spentByRound = {}
 
 
+        -- ALL: the vanilla calibres and those of the
+        -- calibre add-ons in the game, which carry their
+        -- spent cases.
         for _,
             calibre
         in ipairs(
-            AC_Calibres.LIST
+            AC_Calibres.ALL
         )
         do
 
@@ -214,8 +217,11 @@ AC_SpentCases.ITEM_FIELDS = {
 }
 
 
+-- list: the calibres (AC_Calibres.LIST when left out; a
+-- calibre add-on passes its own).
 function AC_SpentCases.buildItems(
-    cleanFields
+    cleanFields,
+    list
 )
 
     local config =
@@ -228,7 +234,7 @@ function AC_SpentCases.buildItems(
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.LIST
     )
     do
 
@@ -517,7 +523,9 @@ end
 -- Every calibre's resizing recipe, in calibre order. Built
 -- whether or not the add-on is there; AC_Materials adds
 -- them to its list only when it is (hasContent).
-function AC_SpentCases.buildResizeRecipes()
+function AC_SpentCases.buildResizeRecipes(
+    list
+)
 
     local recipes = {}
 
@@ -525,7 +533,7 @@ function AC_SpentCases.buildResizeRecipes()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.LIST
     )
     do
 
@@ -561,22 +569,69 @@ end
 -- so the brass bound of RESIZE holds for them too.
 ------------------------------------------------
 
-AC_SpentCases.HOT_BRASS = {
+--
+-- Modern Firearms System (Workshop 3633421539,
+-- ModernFirearmsSystem) does the same with its MFSEject
+-- casings, replacing vanilla's two eject functions
+-- without calling them (MFSEject/TimedActionsHooks.lua):
+-- the spent cases stand down beside it too, and the
+-- add-on of its calibres (AmmoMakingMFS) carries the
+-- resizing of its casings.
+--
+-- One bridge per such mod:
+--   field           the calibre field naming its casing
+--   feature         the feature whose add-on carries the
+--                   recipes (AC_Features.hasContent)
+--   idPrefix, callbackPrefix, nameSuffix  as the spent
+--                   cases' own resizing has them
+------------------------------------------------
 
-    idPrefix = "AmmoMaking_ResizeHotBrassCase",
+AC_SpentCases.CASING_BRIDGES = {
 
-    callbackPrefix = "onResizeHotBrassCase",
+    hotBrass = {
 
-    -- "Resize Spent <calibre> Case" -> "... (Hot Brass)"
-    nameSuffix = " (Hot Brass)",
+        field = "hotBrassCasing",
+
+        feature = "hotBrass",
+
+        idPrefix = "AmmoMaking_ResizeHotBrassCase",
+
+        callbackPrefix = "onResizeHotBrassCase",
+
+        -- "Resize Spent <calibre> Case" -> "... (Hot Brass)"
+        nameSuffix = " (Hot Brass)",
+    },
+
+    mfs = {
+
+        field = "mfsCasing",
+
+        feature = "packMFS",
+
+        idPrefix = "AmmoMaking_ResizeMFSCase",
+
+        callbackPrefix = "onResizeMFSCase",
+
+        nameSuffix = " (MFS)",
+    },
 }
 
 
--- One resizing per calibre that has a Hot Brass casing.
-function AC_SpentCases.buildHotBrassRecipes()
+AC_SpentCases.HOT_BRASS =
+    AC_SpentCases.CASING_BRIDGES.hotBrass
 
-    local hot =
-        AC_SpentCases.HOT_BRASS
+
+-- One resizing per calibre that has a casing of the
+-- bridge's mod.
+function AC_SpentCases.buildCasingBridgeRecipes(
+    key
+)
+
+    local bridge =
+        assert(
+            AC_SpentCases.CASING_BRIDGES[key],
+            "no casing bridge " .. tostring(key)
+        )
 
 
     local recipes = {}
@@ -589,8 +644,12 @@ function AC_SpentCases.buildHotBrassRecipes()
     )
     do
 
+        local casing =
+            calibre[bridge.field]
+
+
         local resize =
-            calibre.hotBrassCasing
+            casing
             and AC_SpentCases.buildResizeRecipe(calibre)
 
 
@@ -598,14 +657,16 @@ function AC_SpentCases.buildHotBrassRecipes()
 
             resize.inputs[1] = {
                 count = resize.inputs[1].count,
-                items = { calibre.hotBrassCasing },
+                items = { casing },
             }
 
-            resize.id = hot.idPrefix .. calibre.suffix
+            resize.id = bridge.idPrefix .. calibre.suffix
 
-            resize.callback = hot.callbackPrefix .. calibre.suffix
+            resize.callback = bridge.callbackPrefix .. calibre.suffix
 
-            resize.hotBrass = true
+            resize.casingBridge = key
+
+            resize.hotBrass = key == "hotBrass" or nil
 
             table.insert(
                 recipes,
@@ -616,6 +677,15 @@ function AC_SpentCases.buildHotBrassRecipes()
 
 
     return recipes
+end
+
+
+function AC_SpentCases.buildHotBrassRecipes()
+
+    return
+        AC_SpentCases.buildCasingBridgeRecipes(
+            "hotBrass"
+        )
 end
 
 
@@ -689,7 +759,9 @@ AC_SpentCases.CLEAN = {
 -- Every calibre's cleaning recipe, in calibre order. Like
 -- the resizing, listed by AC_Materials only with the
 -- add-on's content.
-function AC_SpentCases.buildCleanRecipes()
+function AC_SpentCases.buildCleanRecipes(
+    list
+)
 
     local clean =
         AC_SpentCases.CLEAN
@@ -701,7 +773,7 @@ function AC_SpentCases.buildCleanRecipes()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.LIST
     )
     do
 
@@ -1015,6 +1087,347 @@ local function createItem(
 end
 
 
+------------------------------------------------
+-- BRASS CATCHER (tunable)
+------------------------------------------------
+--
+-- A cloth bag on a wire frame, made from vanilla rags
+-- and wire. Carried anywhere in the inventory (bags
+-- included), it catches the found cases: they go into
+-- the inventory instead of onto the ground, as the
+-- "inventory" placement does for everyone. It changes
+-- where cases land, never how many are found. An item
+-- and recipe of the spent cases add-on; made for no XP
+-- like the geology kits (a tool, not a product).
+--
+-- containsTypeRecurse("Module.Type"): vanilla calls it so
+-- with a full type (ISInventoryPaneContextMenu,
+-- "Base.Eraser"); 42.20.4 jar ItemContainer has the
+-- String overload.
+------------------------------------------------
+
+AC_SpentCases.CATCHER = {
+
+    item = "AmmoMaking.BrassCatcher",
+
+    displayName = "Brass Catcher",
+
+    category = "Tool",
+
+    weight = 0.3,
+
+    icon = "AmmoMakingBrassCatcher",
+
+    recipeId = "AmmoMaking_MakeBrassCatcher",
+
+    recipeName = "Make Brass Catcher",
+
+    callback = "onMakeBrassCatcher",
+
+    time = 120,
+
+    timedAction = "Making",
+
+    benchTag = "AnySurfaceCraft",
+
+    recipeCategory = "Miscellaneous",
+
+    -- Vanilla, by id (items/normal.txt, drainable.txt):
+    -- rags weigh 0.1 each; one use of wire, as vanilla's
+    -- recipes take it ("item 1 [Base.Wire]").
+    inputs = {
+        { count = 3, items = { "Base.RippedSheets" } },
+        { count = 1, items = { "Base.Wire" } },
+    },
+}
+
+
+function AC_SpentCases.buildCatcherRecipe()
+
+    local catcher =
+        AC_SpentCases.CATCHER
+
+
+    local inputs = {}
+
+
+    for _,
+        input
+    in ipairs(
+        catcher.inputs
+    )
+    do
+
+        table.insert(
+            inputs,
+            {
+                count = input.count,
+                items = { input.items[1] },
+            }
+        )
+    end
+
+
+    return {
+        id = catcher.recipeId,
+        step = "equipment",
+        catcher = true,
+        tool = true,
+        time = catcher.time,
+        timedAction = catcher.timedAction,
+        benchTag = catcher.benchTag,
+        category = catcher.recipeCategory,
+        callback = catcher.callback,
+        xp = 0,
+        requiredLevel = 0,
+        inputs = inputs,
+        outputs = {
+            { count = 1, item = catcher.item },
+        },
+    }
+end
+
+
+------------------------------------------------
+-- CASE TUMBLER (tunable)
+------------------------------------------------
+--
+-- A hand-cranked drum on a wooden stand: twenty spent
+-- cases of one calibre come out clean at once, with no
+-- steel wool, for a long crank. Kept like a die set, so
+-- it is a tool; made from vanilla sheet metal, planks
+-- and nails with a hammer, for no XP. The cases get
+-- exactly what steel wool gives them (the same treatment
+-- effect, AC_CaseQuality.CONFIG.cleanedBonus), so it
+-- trades the consumable for time, never quality. The
+-- vanilla calibres only: a calibre add-on cleans its
+-- spent cases with steel wool.
+------------------------------------------------
+
+AC_SpentCases.TUMBLER = {
+
+    item = "AmmoMaking.CaseTumbler",
+
+    displayName = "Case Tumbler",
+
+    category = "Tool",
+
+    weight = 3,
+
+    icon = "AmmoMakingCaseTumbler",
+
+    recipeId = "AmmoMaking_MakeCaseTumbler",
+
+    recipeName = "Make Case Tumbler",
+
+    callback = "onMakeCaseTumbler",
+
+    buildTime = 150,
+
+    -- Vanilla, by id (items/normal.txt, weapon.txt): 8.2
+    -- in all for a 3 kg tumbler.
+    inputs = {
+        { count = 1, items = { "Base.SheetMetal" } },
+        { count = 2, items = { "Base.Plank" } },
+        { count = 4, items = { "Base.Nails" } },
+    },
+
+    -- Twenty cases a turn: four steel-wool batches.
+    cases = 20,
+
+    time = 300,
+
+    timedAction = "Making",
+
+    benchTag = "AnySurfaceCraft",
+
+    recipeCategory = "Metalworking",
+
+    idPrefix = "AmmoMaking_TumbleSpentCases",
+
+    callbackPrefix = "onTumbleSpentCases",
+
+    -- "Tumble Spent " .. "<calibre> Case" .. "s"
+    namePrefix = "Tumble Spent ",
+
+    nameSuffix = "s",
+}
+
+
+function AC_SpentCases.buildTumblerRecipe()
+
+    local tumbler =
+        AC_SpentCases.TUMBLER
+
+
+    local inputs = {}
+
+
+    for _,
+        input
+    in ipairs(
+        tumbler.inputs
+    )
+    do
+
+        table.insert(
+            inputs,
+            {
+                count = input.count,
+                items = { input.items[1] },
+            }
+        )
+    end
+
+
+    table.insert(
+        inputs,
+        {
+            count = 1,
+            tags = { "base:hammer" },
+            keep = true,
+            flags = { "MayDegradeVeryLight" },
+        }
+    )
+
+
+    return {
+        id = tumbler.recipeId,
+        step = "equipment",
+        tumbler = true,
+        tool = true,
+        time = tumbler.buildTime,
+        timedAction = tumbler.timedAction,
+        benchTag = tumbler.benchTag,
+        category = "Miscellaneous",
+        callback = tumbler.callback,
+        xp = 0,
+        requiredLevel = 0,
+        inputs = inputs,
+        outputs = {
+            { count = 1, item = tumbler.item },
+        },
+    }
+end
+
+
+-- One tumbling recipe per vanilla calibre: the steel-wool
+-- cleaning with twenty cases and the tumbler kept.
+function AC_SpentCases.buildTumbleRecipes()
+
+    local tumbler =
+        AC_SpentCases.TUMBLER
+
+
+    local recipes = {}
+
+
+    for _,
+        clean
+    in ipairs(
+        AC_SpentCases.buildCleanRecipes()
+    )
+    do
+
+        local calibre =
+            AC_Calibres.get(clean.calibre)
+
+
+        table.insert(
+            recipes,
+            {
+                id = tumbler.idPrefix .. calibre.suffix,
+                calibre = calibre.id,
+                step = "clean",
+                clean = true,
+                tumble = true,
+                formRecipe = clean.formRecipe,
+                treatment = true,
+                effect = clean.effect,
+                time = tumbler.time,
+                timedAction = tumbler.timedAction,
+                benchTag = tumbler.benchTag,
+                category = tumbler.recipeCategory,
+                callback = tumbler.callbackPrefix .. calibre.suffix,
+                xp = 0,
+                requiredLevel = clean.requiredLevel,
+                inputs = {
+                    { count = tumbler.cases, items = { calibre.spentCase } },
+                    { count = 1, items = { tumbler.item }, keep = true },
+                },
+                outputs = {
+                    { count = tumbler.cases, item = calibre.spentCase },
+                },
+            }
+        )
+    end
+
+
+    return recipes
+end
+
+
+-- What a tumbling recipe is called, from its forming
+-- recipe's name ("Form <calibre> Case" -> "Tumble Spent
+-- <calibre> Cases").
+function AC_SpentCases.getTumbleName(
+    formName
+)
+
+    local tumbler =
+        AC_SpentCases.TUMBLER
+
+
+    formName =
+        tostring(formName or "")
+
+
+    local prefix =
+        AC_SpentCases.RESIZE.formPrefix
+
+
+    if string.sub(formName, 1, #prefix) == prefix then
+
+        formName =
+            string.sub(formName, #prefix + 1)
+    end
+
+
+    return tumbler.namePrefix .. formName .. tumbler.nameSuffix
+end
+
+
+-- Does the character carry a brass catcher.
+function AC_SpentCases.hasCatcher(
+    character
+)
+
+    local inventory =
+        character
+        and character.getInventory
+        and character:getInventory()
+
+
+    if not inventory
+        or not inventory.containsTypeRecurse
+    then
+        return false
+    end
+
+
+    local ok,
+          found =
+        pcall(
+            inventory.containsTypeRecurse,
+            inventory,
+            AC_SpentCases.CATCHER.item
+        )
+
+
+    return ok and found == true
+end
+
+
 function AC_SpentCases.leave(
     character,
     fullType,
@@ -1031,6 +1444,7 @@ function AC_SpentCases.leave(
 
     local toGround =
         AC_SpentCases.CONFIG.placement ~= "inventory"
+        and not AC_SpentCases.hasCatcher(character)
 
 
     local square =

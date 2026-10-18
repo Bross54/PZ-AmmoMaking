@@ -3,12 +3,15 @@
     "AmmoMaking.Case223Rem": "Bossolo vuoto .223",
     "AmmoMaking.Bullet223Rem": "Proiettile di rame .223",
     "AmmoMaking.CastBullet223Rem": "Proiettile di piombo fuso .223",
+    "AmmoMaking.SpentCase223Rem": "Bossolo sparato .223",
     "AmmoMaking.DieSet762x51": "Set di matrici da ricarica 7.62x51",
     "AmmoMaking.Case762x51": "Bossolo vuoto 7.62x51",
     "AmmoMaking.Bullet762x51": "Proiettile di rame 7.62x51",
     "AmmoMaking.CastBullet762x51": "Proiettile di piombo fuso 7.62x51",
+    "AmmoMaking.SpentCase762x51": "Bossolo sparato 7.62x51",
     "AmmoMaking.DieSet762x39M43": "Set di matrici da ricarica 7.62x39 M43",
     "AmmoMaking.Case762x39M43": "Bossolo vuoto 7.62x39 M43",
     "AmmoMaking.Bullet762x39M43": "Proiettile di rame 7.62x39 M43",
-    "AmmoMaking.CastBullet762x39M43": "Proiettile di piombo fuso 7.62x39 M43"
+    "AmmoMaking.CastBullet762x39M43": "Proiettile di piombo fuso 7.62x39 M43",
+    "AmmoMaking.SpentCase762x39M43": "Bossolo sparato 7.62x39 M43"
 }

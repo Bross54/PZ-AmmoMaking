@@ -1,0 +1,7 @@
+name=Ammo Making: Guns of 93 (experimental)
+id=AmmoMakingGuns93
+require=\AmmoMaking,\guns93
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and Guns of 93: handload its 10mm Auto, .25 ACP, .30-06 (G93), .30 Carbine, .380 ACP, .40 S&W, .45 Colt (G93), 7.62x39 (G93), 7.92x57 (G93), 12 Gauge Slug like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

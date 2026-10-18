@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Netejar beines percudides de 5.56 amb llana d'acer",
     "AmmoMaking_CleanSpentCases3030Win": "Netejar beines percudides de .30-30 amb llana d'acer",
     "AmmoMaking_CleanSpentCases308Win": "Netejar beines percudides de .308 amb llana d'acer",
-    "AmmoMaking_CleanSpentCases12Gauge": "Netejar beines de llautó percudides de calibre 12 amb llana d'acer"
+    "AmmoMaking_CleanSpentCases12Gauge": "Netejar beines de llautó percudides de calibre 12 amb llana d'acer",
+    "AmmoMaking_MakeBrassCatcher": "Fer un recollidor de beines",
+    "AmmoMaking_MakeCaseTumbler": "Fer un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases9mm": "Netejar beines percudides de 9mm en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases38Special": "Netejar beines percudides de .38 Especial en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases45ACP": "Netejar beines percudides de .45 ACP en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Netejar beines percudides de .357 Magnum en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Netejar beines percudides de .44 Magnum en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases556NATO": "Netejar beines percudides de 5.56 en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases3030Win": "Netejar beines percudides de .30-30 en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases308Win": "Netejar beines percudides de .308 en un polidor de tambor",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Netejar beines de llautó percudides de calibre 12 en un polidor de tambor"
 }

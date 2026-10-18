@@ -52,8 +52,13 @@ with a shovel, mining with a pickaxe, depletion, exhaustion and cancelling.
 | **Spent cases** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingSpentCases` | `SPENT_CASE_RESEARCH.md` |
 | **Quality tracking through magazines and firearms** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9 |
 | **Quality effects at the shot** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT (needs quality tracking on too) | sandbox option | `AMMO_QUALITY_RUNTIME_DESIGN.md` 9.4 |
-| **Gun mod compatibility**: 38 extension calibres in seven add-ons (Vanilla Weapons Plus, VFE, Rain's, Rain's Expanded, GaelGunStore, Real Firearms, MFS), each requiring its gun mod | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mods `AmmoMakingCalibre762x39`, `AmmoMakingVFE`, `AmmoMakingRains`, `AmmoMakingRainsExpanded`, `AmmoMakingGaelGunStore`, `AmmoMakingRealFirearms`, `AmmoMakingMFS` | `GUN_MOD_COMPATIBILITY.md` |
+| **Gun mod compatibility**: 58 extension calibres in nine add-ons (Vanilla Weapons Plus, VFE, Rain's, Rain's Expanded, GaelGunStore, Real Firearms, MFS, Guns of 93, Post Soviet Armory), each requiring its gun mod; with press recipes, spent cases and die-set loot of their own | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mods `AmmoMakingCalibre762x39`, `AmmoMakingVFE`, `AmmoMakingRains`, `AmmoMakingRainsExpanded`, `AmmoMakingGaelGunStore`, `AmmoMakingRealFirearms`, `AmmoMakingMFS`, `AmmoMakingGuns93`, `AmmoMakingPSA` | `GUN_MOD_COMPATIBILITY.md` |
 | **Hot Brass bridge** (its casings resized at the die set) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingHotBrass` | `GUN_MOD_COMPATIBILITY.md` 4 |
+| **Modern Firearms System casings** (spent cases stand down beside MFS; its casings resized at the die set) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingMFS` | `GUN_MOD_COMPATIBILITY.md` 4.2 |
+| **Brass catcher** (found cases into the inventory) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingSpentCases` | `AC_SpentCases.CATCHER` |
+| **Case tumbler** (twenty spent cases cleaned at once, no steel wool) | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingSpentCases` | `AC_SpentCases.TUMBLER` |
+| **Cast assembly at the press** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION, OFF BY DEFAULT | add-on mod `AmmoMakingPress` | `AC_Calibres.PRESS.steps` |
+| **Warning beside other ammunition-making mods** | IMPLEMENTED, REQUIRES IN-GAME VERIFICATION | game-start check | `GUN_MOD_COMPATIBILITY.md` 5 |
 | Feature switches, placeholder registry | IMPLEMENTED | | `AC_Features.lua`, `AC_Visuals.lua` |
 | Balance options for server owners (ore per tile, die-set and component loot, Ammo Making XP) | IMPLEMENTED (multipliers, default 1: nothing changes unless set) | sandbox options | `BALANCE_OPTIONS.md` |
 | Debug tree, compatibility check | IMPLEMENTED | `-debug` | `DEVELOPMENT.md` |
@@ -66,8 +71,10 @@ Numbers: the main mod has 72 items, 148 recipes (97 manufacturing, 61 of
 them for lead; 3 for the geology equipment, 3 scrapping, 1 recast; 27
 treatments: 9 lubings, 9 regrindings, 9 annealings) and 56
 loot entries (22 die sets, 9 components, 20 skill books, 5 bullet moulds)
-in 10 vanilla lists. The press add-on has 27 recipes;
-the spent-cases add-on 9 items and 21 recipes (3 scrapping, 9 resizing, 9 cleaning).
+in 10 vanilla lists. The press add-on has 36 recipes (27, and the cast
+assembly of the nine calibres that cast); the spent-cases add-on 11 items
+(9 spent cases, the brass catcher, the case tumbler) and 32 recipes (3
+scrapping, 9 resizing, 9 cleaning, 9 tumbling, the catcher, the tumbler).
 
 ## 2. What the research settled
 
@@ -184,8 +191,12 @@ Nothing here is needed for a first release.
 - More calibres: every vanilla round with a firearm is covered. A new one
   is a `define{}` entry and three items.
 - Lead ore and its geology (lead comes from vanilla junk instead,
-  `METALLURGY_DESIGN.md` 12.5); cast rifle bullets (gas checks, hardened
-  alloy); a press version of the cast assembly.
+  `METALLURGY_DESIGN.md` 12.5). (Cast rifle bullets with gas checks and
+  the press version of the cast assembly are built.)
+- A "damaged brass" scrapping source (`AC_Recycling`): left out, nothing
+  in the game makes damaged brass, and inventing a failure that does would
+  change the spent-case economy. A recipe that mixes cases of several
+  qualities needs nothing: `AC_CaseQuality` already averages them.
 - Shell variants (buckshot, birdshot, slug): **not buildable without
   replacing vanilla firearms**. Vanilla has one 12 gauge item, each gun
   names one `AmmoType`, a loaded shell is only a count, and pellets,

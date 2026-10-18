@@ -89,6 +89,27 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_AssembleCastRound9mmAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound9mmAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case9mm],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet9mm],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet9mm] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets9mm,
+        }
+    }
+
     craftRecipe AmmoMaking_FormCase38SpecialAtPress
     {
         time = 48,
@@ -137,6 +158,27 @@ module Base
             item 1 [AmmoMaking.Case38Special],
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.Bullet38Special],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet38Special] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets38,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound38SpecialAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound38SpecialAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case38Special],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet38Special],
             item 1 [Base.GunPowder],
             item 1 [AmmoMaking.DieSet38Special] mode:keep flags[MayDegradeVeryLight],
         }
@@ -203,6 +245,27 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_AssembleCastRound45ACPAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound45ACPAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case45ACP],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.CastBullet45ACP],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet45ACP] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets45,
+        }
+    }
+
     craftRecipe AmmoMaking_FormCase357MagnumAtPress
     {
         time = 48,
@@ -251,6 +314,27 @@ module Base
             item 1 [AmmoMaking.Case357Magnum],
             item 1 [AmmoMaking.SmallPistolPrimer],
             item 1 [AmmoMaking.Bullet357Magnum],
+            item 2 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet357Magnum] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets357,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound357MagnumAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound357MagnumAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case357Magnum],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet357Magnum],
             item 2 [Base.GunPowder],
             item 1 [AmmoMaking.DieSet357Magnum] mode:keep flags[MayDegradeVeryLight],
         }
@@ -317,6 +401,27 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_AssembleCastRound44MagnumAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound44MagnumAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case44Magnum],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.CastBullet44Magnum],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet44Magnum] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets44,
+        }
+    }
+
     craftRecipe AmmoMaking_FormCase556NATOAtPress
     {
         time = 96,
@@ -367,6 +472,28 @@ module Base
             item 1 [AmmoMaking.Bullet556NATO],
             item 3 [Base.GunPowder],
             item 1 [AmmoMaking.DieSet556NATO] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.556Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound556NATOAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound556NATOAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case556NATO],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.CastBullet556NATO],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet556NATO] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
         }
         outputs
         {
@@ -431,6 +558,28 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_AssembleCastRound3030WinAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound3030WinAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case3030Win],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet3030Win],
+            item 4 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet3030Win] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.3030Bullets,
+        }
+    }
+
     craftRecipe AmmoMaking_FormCase308WinAtPress
     {
         time = 96,
@@ -488,6 +637,28 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_AssembleCastRound308WinAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound308WinAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case308Win],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet308Win],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet308Win] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.308Bullets,
+        }
+    }
+
     craftRecipe AmmoMaking_FormCase12GaugeAtPress
     {
         time = 48,
@@ -536,6 +707,28 @@ module Base
             item 1 [AmmoMaking.Hull12Gauge],
             item 1 [AmmoMaking.LargePistolPrimer],
             item 1 [AmmoMaking.ShotCharge12Gauge],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet12Gauge] mode:keep flags[MayDegradeVeryLight],
+            item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,
+        }
+        outputs
+        {
+            item 1 Base.ShotgunShells,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound12GaugeAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound12GaugeAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Hull12Gauge],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.LeadShotCharge12Gauge],
             item 3 [Base.GunPowder],
             item 1 [AmmoMaking.DieSet12Gauge] mode:keep flags[MayDegradeVeryLight],
             item 1 [Base.RippedSheets;Base.CottonBalls] mode:destroy,

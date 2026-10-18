@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Rens brukte 5,56 mm hylser med stålull",
     "AmmoMaking_CleanSpentCases3030Win": "Rens brukte .30-30 hylser med stålull",
     "AmmoMaking_CleanSpentCases308Win": "Rens brukte .308 hylser med stålull",
-    "AmmoMaking_CleanSpentCases12Gauge": "Rens brukte 12 Gauge messinghylser med stålull"
+    "AmmoMaking_CleanSpentCases12Gauge": "Rens brukte 12 Gauge messinghylser med stålull",
+    "AmmoMaking_MakeBrassCatcher": "Lag hylsefanger",
+    "AmmoMaking_MakeCaseTumbler": "Lag trommelpolerer",
+    "AmmoMaking_TumbleSpentCases9mm": "Rens brukte 9mm hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases38Special": "Rens brukte .38 Special hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases45ACP": "Rens brukte .45 Auto hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Rens brukte .357 Magnum hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Rens brukte .44 Magnum hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases556NATO": "Rens brukte 5,56 mm hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases3030Win": "Rens brukte .30-30 hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases308Win": "Rens brukte .308 hylser i en trommelpolerer",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Rens brukte 12 Gauge messinghylser i en trommelpolerer"
 }

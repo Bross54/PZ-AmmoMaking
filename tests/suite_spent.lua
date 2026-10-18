@@ -224,7 +224,7 @@ return function(T)
             eq(AC_Features.isEnabled("spentCases"), false, where .. ": the feature is off")
             eq(AC_Features.hasContent("spentCases"), true, where .. ": its content is in the game")
             local script = T.parseScript(ROOT .. "/" .. ADDONS.SPENT_SCRIPT)
-            check(#script.blocks == #ADDONS.spentRecipes() and #script.blocks == 3 + 2 * #AC_Calibres.LIST, where .. ": the add-on's recipes (three scrapping, one resizing and one cleaning per calibre) are loaded by the engine regardless")
+            check(#script.blocks == #ADDONS.spentRecipes() and #script.blocks == 3 + 3 * #AC_Calibres.LIST + 2, where .. ": the add-on's recipes (three scrapping; one resizing, one cleaning and one tumbling per calibre; the brass catcher and the case tumbler) are loaded by the engine regardless")
             for _, block in ipairs(script.blocks) do
                 local callback = string.match(block.fields.OnCreate or "", "AC_Materials%.([%w_]+)")
                 check(callback ~= nil and type(AC_Materials[callback]) == "function", where .. ": " .. block.name .. " finds its OnCreate callback " .. tostring(callback))
@@ -493,6 +493,74 @@ return function(T)
             eq(#square.worldItems, 0, "placement inventory: nothing on the ground")
             eq(spentItemCount(player.inventory.items, spentType), 4, "placement inventory: the cases are carried")
             S.CONFIG.placement = "ground"
+        end
+
+        -- A brass catcher carried: the found cases go into the inventory,
+        -- never more of them.
+        do
+            local square, player, gun, spec, spentType = setup("pistol", 4)
+            local knew = MOCK.knownScriptItems[S.CATCHER.item]
+            MOCK.knownScriptItems[S.CATCHER.item] = true
+            player.inventory:AddItem(S.CATCHER.item)
+            eq(S.hasCatcher(player), true, "a carried brass catcher is found")
+            load(player, gun, spec, 4)
+            for _ = 1, 4 do MODEL.fire(player, gun) end
+            eq(#square.worldItems, 0, "with a brass catcher: nothing on the ground")
+            eq(spentItemCount(player.inventory.items, spentType), 4, "with a brass catcher: the cases are caught")
+            MOCK.knownScriptItems[S.CATCHER.item] = knew
+            eq(S.hasCatcher(nil), false, "no character, no catcher")
+            eq(S.hasCatcher(MOCK.newPlayer({})), false, "an empty inventory holds none")
+        end
+
+        -- The case tumbler: vanilla parts, a tool, no XP; its tumbling is
+        -- the steel-wool cleaning for twenty cases, no consumable, same effect.
+        do
+            local T_ = S.TUMBLER
+            local build = S.buildTumblerRecipe()
+            eq(build.xp, 0, "making the tumbler pays no XP")
+            eq(build.tool, true, "the tumbler is a tool")
+            eq(build.outputs[1].item, T_.item, "it makes the tumbler")
+            local partsWeight = 0
+            for _, input in ipairs(build.inputs) do
+                if input.items then
+                    check(string.sub(input.items[1], 1, 5) == "Base.", "its input " .. input.items[1] .. " is vanilla")
+                    local recorded = ENGINE.items[input.items[1]]
+                    check(recorded ~= nil, input.items[1] .. " exists in the recorded build")
+                    partsWeight = partsWeight + input.count * ((recorded and recorded.weight) or 0)
+                else
+                    eq(input.keep, true, "the hammer is kept")
+                end
+            end
+            check(partsWeight >= T_.weight, "what goes in weighs at least the tumbler (" .. partsWeight .. " >= " .. T_.weight .. ")")
+            local tumbles, cleans = S.buildTumbleRecipes(), S.buildCleanRecipes()
+            eq(#tumbles, #cleans, "one tumbling per steel-wool cleaning")
+            for i, tumble in ipairs(tumbles) do
+                local clean = cleans[i]
+                eq(tumble.xp, 0, tumble.id .. ": no XP")
+                eq(tumble.treatment, true, tumble.id .. ": a treatment")
+                eq(tumble.effect, clean.effect, tumble.id .. ": the same effect as steel wool, so the same quality")
+                eq(tumble.requiredLevel, clean.requiredLevel, tumble.id .. ": the same level")
+                eq(tumble.inputs[1].count, T_.cases, tumble.id .. ": twenty cases")
+                eq(tumble.outputs[1].count, T_.cases, tumble.id .. ": and twenty back")
+                eq(tumble.inputs[2].items[1] == T_.item and tumble.inputs[2].keep, true, tumble.id .. ": the tumbler kept")
+                eq(#tumble.inputs, 2, tumble.id .. ": no steel wool")
+                check(AC_Materials.checkConservation(tumble), tumble.id .. " conserves material")
+            end
+        end
+
+        -- The catcher's recipe: vanilla rags and wire, a tool, no XP.
+        do
+            local recipe = S.buildCatcherRecipe()
+            eq(recipe.xp, 0, "making a brass catcher pays no XP")
+            eq(recipe.tool, true, "it is a tool, not a product the metal accounting follows")
+            eq(recipe.outputs[1].item, S.CATCHER.item, "it makes the catcher")
+            for _, input in ipairs(recipe.inputs) do
+                check(string.sub(input.items[1], 1, 5) == "Base.", "its input " .. input.items[1] .. " is vanilla")
+                check(ENGINE.items[input.items[1]] ~= nil, input.items[1] .. " exists in the recorded build")
+            end
+            local found = false
+            for _, r in ipairs(AC_Materials.RECIPES) do if r.id == recipe.id then found = true end end
+            eq(found, AC_Features.hasContent("spentCases"), "it is listed exactly when the add-on's content is in the game")
         end
 
         -- Recovery: none, all, and about half.

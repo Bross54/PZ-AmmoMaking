@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Pulisci bossoli sparati 5.56 con lana d'acciaio",
     "AmmoMaking_CleanSpentCases3030Win": "Pulisci bossoli sparati .30-30 con lana d'acciaio",
     "AmmoMaking_CleanSpentCases308Win": "Pulisci bossoli sparati .308 con lana d'acciaio",
-    "AmmoMaking_CleanSpentCases12Gauge": "Pulisci bossoli in ottone sparati per cartucce 12 Gauge con lana d'acciaio"
+    "AmmoMaking_CleanSpentCases12Gauge": "Pulisci bossoli in ottone sparati per cartucce 12 Gauge con lana d'acciaio",
+    "AmmoMaking_MakeBrassCatcher": "Fabbrica raccoglibossoli",
+    "AmmoMaking_MakeCaseTumbler": "Costruisci burattatrice",
+    "AmmoMaking_TumbleSpentCases9mm": "Pulisci bossoli sparati 9mm nella burattatrice",
+    "AmmoMaking_TumbleSpentCases38Special": "Pulisci bossoli sparati .38 Special nella burattatrice",
+    "AmmoMaking_TumbleSpentCases45ACP": "Pulisci bossoli sparati .45 automatica nella burattatrice",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Pulisci bossoli sparati .357 Magnum nella burattatrice",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Pulisci bossoli sparati .44 Magnum nella burattatrice",
+    "AmmoMaking_TumbleSpentCases556NATO": "Pulisci bossoli sparati 5.56 nella burattatrice",
+    "AmmoMaking_TumbleSpentCases3030Win": "Pulisci bossoli sparati .30-30 nella burattatrice",
+    "AmmoMaking_TumbleSpentCases308Win": "Pulisci bossoli sparati .308 nella burattatrice",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Pulisci bossoli in ottone sparati per cartucce 12 Gauge nella burattatrice"
 }

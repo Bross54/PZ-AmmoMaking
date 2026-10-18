@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Brugt 5,56 mm-hylster",
     "AmmoMaking.SpentCase3030Win": "Brugt .30-30-hylster",
     "AmmoMaking.SpentCase308Win": "Brugt .308-hylster",
-    "AmmoMaking.SpentHull12Gauge": "Brugt 12 Gauge-messinghylster"
+    "AmmoMaking.SpentHull12Gauge": "Brugt 12 Gauge-messinghylster",
+    "AmmoMaking.BrassCatcher": "Hylsterfanger",
+    "AmmoMaking.CaseTumbler": "Tromlepolerer"
 }

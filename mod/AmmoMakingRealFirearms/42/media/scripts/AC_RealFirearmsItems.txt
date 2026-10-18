@@ -55,6 +55,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF9x19
+    {
+        DisplayName = Spent 9x19 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF9x18
     {
         DisplayName = 9x18 (RF) Handloading Die Set,
@@ -99,6 +110,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBullet,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF9x18
+    {
+        DisplayName = Spent 9x18 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
 
@@ -149,6 +171,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF45ACP
+    {
+        DisplayName = Spent .45 ACP (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF357Mag
     {
         DisplayName = .357 Magnum (RF) Handloading Die Set,
@@ -193,6 +226,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBullet,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF357Mag
+    {
+        DisplayName = Spent .357 Magnum (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
 
@@ -243,6 +287,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF380ACP
+    {
+        DisplayName = Spent .380 ACP (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF500Mag
     {
         DisplayName = .500 Magnum (RF) Handloading Die Set,
@@ -287,6 +342,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBullet,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF500Mag
+    {
+        DisplayName = Spent .500 Magnum (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
 
@@ -337,6 +403,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF762x25
+    {
+        DisplayName = Spent 7.62x25 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF30Carb
     {
         DisplayName = .30 Carbine (RF) Handloading Die Set,
@@ -381,6 +458,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF30Carb
+    {
+        DisplayName = Spent .30 Carbine (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -431,6 +519,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF545x39
+    {
+        DisplayName = Spent 5.45x39 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF556x45
     {
         DisplayName = 5.56x45 (RF) Handloading Die Set,
@@ -475,6 +574,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF556x45
+    {
+        DisplayName = Spent 5.56x45 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -525,6 +635,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF762x39
+    {
+        DisplayName = Spent 7.62x39 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF762x51
     {
         DisplayName = 7.62x51 (RF) Handloading Die Set,
@@ -569,6 +690,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF762x51
+    {
+        DisplayName = Spent 7.62x51 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -619,6 +751,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF762x54R
+    {
+        DisplayName = Spent 7.62x54R (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF792x33
     {
         DisplayName = 7.92x33 (RF) Handloading Die Set,
@@ -663,6 +806,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF792x33
+    {
+        DisplayName = Spent 7.92x33 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -713,6 +867,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF792x57
+    {
+        DisplayName = Spent 7.92x57 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF3006
     {
         DisplayName = .30-06 (RF) Handloading Die Set,
@@ -757,6 +922,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF3006
+    {
+        DisplayName = Spent .30-06 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -807,6 +983,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCaseRF127x55
+    {
+        DisplayName = Spent 12.7x55 (RF) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSetRF12Ga
     {
         DisplayName = 12 Gauge (RF) Handloading Die Set,
@@ -851,6 +1038,17 @@ module AmmoMaking
         Weight = 0.03,
         Icon = AmmoMakingLeadShot,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCaseRF12Ga
+    {
+        DisplayName = Spent 12 Gauge (RF) Brass Hull,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.015,
+        Icon = AmmoMakingSpentHull,
+        WorldStaticModel = ShotGunShells,
         Tags = base:hasmetal,
     }
 }

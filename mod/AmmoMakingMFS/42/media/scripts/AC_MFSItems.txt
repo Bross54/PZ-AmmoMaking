@@ -55,6 +55,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase50BMG
+    {
+        DisplayName = Spent .50 BMG Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSet58x42
     {
         DisplayName = 5.8x42 Handloading Die Set,
@@ -99,6 +110,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCase58x42
+    {
+        DisplayName = Spent 5.8x42 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -149,6 +171,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase545MFS
+    {
+        DisplayName = Spent 5.45x39 (MFS) Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSet86mm
     {
         DisplayName = 8.6mm Handloading Die Set,
@@ -196,6 +229,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase86mm
+    {
+        DisplayName = Spent 8.6mm Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSet145mm
     {
         DisplayName = 14.5mm Handloading Die Set,
@@ -240,6 +284,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCase145mm
+    {
+        DisplayName = Spent 14.5mm Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 }

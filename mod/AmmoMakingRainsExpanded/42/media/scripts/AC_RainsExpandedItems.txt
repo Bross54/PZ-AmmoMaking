@@ -55,6 +55,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase223Rem
+    {
+        DisplayName = Spent .223 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSet762x51
     {
         DisplayName = 7.62x51 Handloading Die Set,
@@ -99,6 +110,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCase762x51
+    {
+        DisplayName = Spent 7.62x51 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -149,6 +171,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase762x39M43
+    {
+        DisplayName = Spent 7.62x39 M43 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
+        Tags = base:hasmetal,
+    }
+
     item DieSet4570Gov
     {
         DisplayName = .45-70 Handloading Die Set,
@@ -193,6 +226,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBulletRifle,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCase4570Gov
+    {
+        DisplayName = Spent .45-70 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.012,
+        Icon = AmmoMakingSpentCaseRifle,
+        WorldStaticModel = RifleAmmo,
         Tags = base:hasmetal,
     }
 
@@ -243,6 +287,17 @@ module AmmoMaking
         Tags = base:hasmetal,
     }
 
+    item SpentCase45Colt
+    {
+        DisplayName = Spent .45 Colt Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
+        Tags = base:hasmetal,
+    }
+
     item DieSet763x25
     {
         DisplayName = 7.63x25 Handloading Die Set,
@@ -287,6 +342,17 @@ module AmmoMaking
         Weight = 0.01,
         Icon = AmmoMakingCastBullet,
         WorldStaticModel = SteelSlug,
+        Tags = base:hasmetal,
+    }
+
+    item SpentCase763x25
+    {
+        DisplayName = Spent 7.63x25 Case,
+        DisplayCategory = Ammo,
+        ItemType = base:normal,
+        Weight = 0.005,
+        Icon = AmmoMakingSpentCaseMagnum,
+        WorldStaticModel = 38SpecialBullets,
         Tags = base:hasmetal,
     }
 }

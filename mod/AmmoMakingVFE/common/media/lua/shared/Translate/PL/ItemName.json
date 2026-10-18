@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Pusta łuska 7.62x39",
     "AmmoMaking.Bullet762x39": "Miedziany pocisk 7.62x39",
     "AmmoMaking.CastBullet762x39": "Odlewany ołowiany pocisk 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Wystrzelona łuska 7.62x39",
     "AmmoMaking.DieSet223Rem": "Zestaw matryc do elaboracji .223",
     "AmmoMaking.Case223Rem": "Pusta łuska .223",
     "AmmoMaking.Bullet223Rem": "Miedziany pocisk .223",
-    "AmmoMaking.CastBullet223Rem": "Odlewany ołowiany pocisk .223"
+    "AmmoMaking.CastBullet223Rem": "Odlewany ołowiany pocisk .223",
+    "AmmoMaking.SpentCase223Rem": "Wystrzelona łuska .223"
 }

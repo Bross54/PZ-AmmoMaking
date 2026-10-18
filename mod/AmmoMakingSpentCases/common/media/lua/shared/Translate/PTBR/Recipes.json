@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Limpar Estojos Deflagrados 5.56 com Palha de Aço",
     "AmmoMaking_CleanSpentCases3030Win": "Limpar Estojos Deflagrados .30-30 com Palha de Aço",
     "AmmoMaking_CleanSpentCases308Win": "Limpar Estojos Deflagrados .308 com Palha de Aço",
-    "AmmoMaking_CleanSpentCases12Gauge": "Limpar Estojos de Latão Deflagrados Calibre 12 com Palha de Aço"
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpar Estojos de Latão Deflagrados Calibre 12 com Palha de Aço",
+    "AmmoMaking_MakeBrassCatcher": "Fazer coletor de cápsulas",
+    "AmmoMaking_MakeCaseTumbler": "Fazer polidor de tambor",
+    "AmmoMaking_TumbleSpentCases9mm": "Limpar Estojos Deflagrados 9mm no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases38Special": "Limpar Estojos Deflagrados .38 Especial no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases45ACP": "Limpar Estojos Deflagrados .45 ACP no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Limpar Estojos Deflagrados .357 Magnum no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Limpar Estojos Deflagrados .44 Magnum no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases556NATO": "Limpar Estojos Deflagrados 5.56 no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases3030Win": "Limpar Estojos Deflagrados .30-30 no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases308Win": "Limpar Estojos Deflagrados .308 no Polidor de Tambor",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Limpar Estojos de Latão Deflagrados Calibre 12 no Polidor de Tambor"
 }

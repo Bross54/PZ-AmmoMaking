@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Rens brugte 5,56 mm-hylstre med ståluld",
     "AmmoMaking_CleanSpentCases3030Win": "Rens brugte .30-30-hylstre med ståluld",
     "AmmoMaking_CleanSpentCases308Win": "Rens brugte .308-hylstre med ståluld",
-    "AmmoMaking_CleanSpentCases12Gauge": "Rens brugte 12 Gauge-messinghylstre med ståluld"
+    "AmmoMaking_CleanSpentCases12Gauge": "Rens brugte 12 Gauge-messinghylstre med ståluld",
+    "AmmoMaking_MakeBrassCatcher": "Lav hylsterfanger",
+    "AmmoMaking_MakeCaseTumbler": "Lav tromlepolerer",
+    "AmmoMaking_TumbleSpentCases9mm": "Rens brugte 9 mm-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases38Special": "Rens brugte .38 Special-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases45ACP": "Rens brugte .45 Auto-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Rens brugte .357 Magnum-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Rens brugte .44 Magnum-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases556NATO": "Rens brugte 5,56 mm-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases3030Win": "Rens brugte .30-30-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases308Win": "Rens brugte .308-hylstre i en tromlepolerer",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Rens brugte 12 Gauge-messinghylstre i en tromlepolerer"
 }

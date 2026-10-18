@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Abgeschossene Hülse 5.56",
     "AmmoMaking.SpentCase3030Win": "Abgeschossene Hülse .30-30",
     "AmmoMaking.SpentCase308Win": "Abgeschossene Hülse .308",
-    "AmmoMaking.SpentHull12Gauge": "Abgeschossene Messing-Schrothülse 12 Gauge"
+    "AmmoMaking.SpentHull12Gauge": "Abgeschossene Messing-Schrothülse 12 Gauge",
+    "AmmoMaking.BrassCatcher": "Hülsenfänger",
+    "AmmoMaking.CaseTumbler": "Trommelpolierer"
 }

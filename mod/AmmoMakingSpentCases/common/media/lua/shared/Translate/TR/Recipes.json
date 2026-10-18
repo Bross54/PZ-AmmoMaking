@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Atılmış 5.56 Kovanları Çelik Yünle Temizle",
     "AmmoMaking_CleanSpentCases3030Win": "Atılmış .30-30 Kovanları Çelik Yünle Temizle",
     "AmmoMaking_CleanSpentCases308Win": "Atılmış .308 Kovanları Çelik Yünle Temizle",
-    "AmmoMaking_CleanSpentCases12Gauge": "Atılmış 12 Gauge Pirinç Kovanları Çelik Yünle Temizle"
+    "AmmoMaking_CleanSpentCases12Gauge": "Atılmış 12 Gauge Pirinç Kovanları Çelik Yünle Temizle",
+    "AmmoMaking_MakeBrassCatcher": "Kovan Toplayıcı Yap",
+    "AmmoMaking_MakeCaseTumbler": "Kovan Tamburu Yap",
+    "AmmoMaking_TumbleSpentCases9mm": "Atılmış 9mm Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases38Special": "Atılmış .38 Special Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases45ACP": "Atılmış .45 ACP Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Atılmış .357 Magnum Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Atılmış .44 Magnum Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases556NATO": "Atılmış 5.56 Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases3030Win": "Atılmış .30-30 Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases308Win": "Atılmış .308 Kovanları Tamburda Temizle",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Atılmış 12 Gauge Pirinç Kovanları Tamburda Temizle"
 }

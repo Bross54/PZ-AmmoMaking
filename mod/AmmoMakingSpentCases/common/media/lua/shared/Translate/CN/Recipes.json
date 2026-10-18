@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "用钢丝球清洁已击发的5.56弹壳",
     "AmmoMaking_CleanSpentCases3030Win": "用钢丝球清洁已击发的.30-30弹壳",
     "AmmoMaking_CleanSpentCases308Win": "用钢丝球清洁已击发的.308弹壳",
-    "AmmoMaking_CleanSpentCases12Gauge": "用钢丝球清洁已击发的12g黄铜霰弹壳"
+    "AmmoMaking_CleanSpentCases12Gauge": "用钢丝球清洁已击发的12g黄铜霰弹壳",
+    "AmmoMaking_MakeBrassCatcher": "制作弹壳收集袋",
+    "AmmoMaking_MakeCaseTumbler": "制作滚筒抛光机",
+    "AmmoMaking_TumbleSpentCases9mm": "用滚筒抛光机清洁已击发的9mm弹壳",
+    "AmmoMaking_TumbleSpentCases38Special": "用滚筒抛光机清洁已击发的.38弹壳",
+    "AmmoMaking_TumbleSpentCases45ACP": "用滚筒抛光机清洁已击发的.45 ACP弹壳",
+    "AmmoMaking_TumbleSpentCases357Magnum": "用滚筒抛光机清洁已击发的.357马格南弹壳",
+    "AmmoMaking_TumbleSpentCases44Magnum": "用滚筒抛光机清洁已击发的.44马格南弹壳",
+    "AmmoMaking_TumbleSpentCases556NATO": "用滚筒抛光机清洁已击发的5.56弹壳",
+    "AmmoMaking_TumbleSpentCases3030Win": "用滚筒抛光机清洁已击发的.30-30弹壳",
+    "AmmoMaking_TumbleSpentCases308Win": "用滚筒抛光机清洁已击发的.308弹壳",
+    "AmmoMaking_TumbleSpentCases12Gauge": "用滚筒抛光机清洁已击发的12g黄铜霰弹壳"
 }

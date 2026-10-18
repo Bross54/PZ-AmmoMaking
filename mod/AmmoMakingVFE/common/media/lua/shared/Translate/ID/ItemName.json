@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Selongsong 7.62x39 Kosong",
     "AmmoMaking.Bullet762x39": "Proyektil Tembaga 7.62x39",
     "AmmoMaking.CastBullet762x39": "Proyektil Timbal Cor 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Selongsong 7.62x39 Bekas Pakai",
     "AmmoMaking.DieSet223Rem": "Set Die Reloading .223",
     "AmmoMaking.Case223Rem": "Selongsong .223 Kosong",
     "AmmoMaking.Bullet223Rem": "Proyektil Tembaga .223",
-    "AmmoMaking.CastBullet223Rem": "Proyektil Timbal Cor .223"
+    "AmmoMaking.CastBullet223Rem": "Proyektil Timbal Cor .223",
+    "AmmoMaking.SpentCase223Rem": "Selongsong .223 Bekas Pakai"
 }

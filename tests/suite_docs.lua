@@ -30,7 +30,7 @@ return function(T)
         end
         local main, spent = ADDONS.readItemsInOrder(mainItems), ADDONS.readItemsInOrder(spentItems)
         check(#main > 0, "the main mod's items are read")
-        eq(#spent, #AC_Calibres.LIST, "one spent item per calibre")
+        eq(#spent, #AC_Calibres.LIST + 2, "one spent item per calibre, the brass catcher and the case tumbler")
         for _, list in ipairs({ main, spent }) do
             for _, item in ipairs(list) do
                 check(string.find(rendered, "(`" .. item.fullType .. "`)", 1, true) ~= nil, item.fullType .. " has a row")
@@ -132,12 +132,14 @@ return function(T)
         check(string.find(flat, "Calibre definitions loaded (" .. #AC_Calibres.LIST .. ")", 1, true) ~= nil, "the calibre count")
         check(string.find(flat, AC_Visuals.get("analyzerWorldSprite"), 1, true) ~= nil, "the analyzer's placeholder sprite is named")
 
-        -- Recipe names in italics are names of the three Recipes.json.
+        -- Recipe names in italics are names of the three Recipes.json, or
+        -- of the MFS calibre add-on's (its casings resized).
         local names = {}
         for _, path in ipairs({
             T.TRANSLATE .. "Recipes.json",
             ROOT .. "/" .. ADDONS.PRESS_NAMES,
             ROOT .. "/mod/AmmoMakingSpentCases/common/media/lua/shared/Translate/EN/Recipes.json",
+            ROOT .. "/" .. ADDONS.packPaths(ADDONS.getPack("packMFS")).names,
         }) do
             for _, value in string.gmatch(readFile(path), '"([^"]+)"%s*:%s*"([^"]*)"') do names[value] = true end
         end

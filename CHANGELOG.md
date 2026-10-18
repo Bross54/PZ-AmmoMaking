@@ -37,6 +37,38 @@ has been seen in game; the session that checks it is
   (`tools/derive_addon_translations.py`).
 - **Hot Brass bridge** (*Ammo Making: Hot Brass Casings*): the casings Hot
   Brass ejects are resized at the die set like the mod's spent cases.
+- **Modern Firearms System casings** (2026-10-18): MFS leaves casings of
+  its own (MFSEject) and replaces vanilla's two eject functions without
+  calling them, so the spent cases stand down beside it as beside Hot
+  Brass. The MFS calibre add-on resizes its casings at the die set (six
+  vanilla calibres; not the .38, which MFS makes a 6.8mm).
+- **Gun mods checked as installed**: `tools/pz_compat.py` reads each
+  pack's gun mod and records its rounds, the AmmoType its firearms give
+  them and the casings a bridge resizes (`gunMods`); the suite fails when
+  a pack expects what its gun mod does not have. It found four shared
+  rounds whose AmmoType was another mod's (VFE 7.62x39, Rain's .223,
+  GaelGunStore 7.62x39, MFS .50): each pack now has its mod's own key
+  (`AC_Calibres.ammoTypeOf`). The game never read the wrong key: the hooks
+  take the round from the firearm.
+- **A warning beside other ammunition-making mods** (Ammo Maker, Load It!,
+  Ammocraft, Ammo Reloading Bench and six more, mod ids from their Workshop
+  pages): both ways to the same rounds stay open, nothing is switched off.
+- **Brass catcher** (spent cases add-on): rags and wire, no XP; carried,
+  the found cases go into the inventory instead of onto the ground.
+- **Two more gun mods**: *Ammo Making: Guns of 93* (10 calibres, its slugs
+  among them) and *Ammo Making: Post Soviet Armory* (10 calibres, the
+  KS-23's 23x75 among them), round ids and AmmoType keys read from the
+  installed mods. Gunsmith: The 1993 Arsenal gets the overlap warning
+  instead: it has its own rounds and casting.
+- **Gun-mod packs get the rest of the chain**: press recipes, spent cases
+  (resizing, cleaning, scrapping) and die-set loot for every extension
+  calibre, the loot on a budget of its own so a room stays under one die
+  set.
+- **Cast assembly at the press**: the nine calibres that cast get a press
+  version of it (*... (Cast Bullet, Press)*).
+- **Case tumbler** (spent cases add-on): sheet metal, planks and nails;
+  twenty spent cases cleaned at once, no steel wool, the same quality as
+  steel wool.
 - **A warning beside Modern Firearms System**, whose `Base.Bullets38` is a
   6.8mm round: the .38 Special recipes make it.
 - **Debug calibre kits** list the calibres of the add-ons in the game.

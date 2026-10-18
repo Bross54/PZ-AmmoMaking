@@ -99,6 +99,8 @@ drop that entry from the script so `--check` does not overwrite it.
 | `Item_AmmoMakingSpentCaseMagnum` | AmmoMakingSpentCases | spent .38 Special, .357 and .44 Magnum cases |
 | `Item_AmmoMakingSpentCaseRifle` | AmmoMakingSpentCases | spent 5.56, .30-30 and .308 cases |
 | `Item_AmmoMakingSpentHull` | AmmoMakingSpentCases | Spent 12 Gauge Brass Hull |
+| `Item_AmmoMakingBrassCatcher` | AmmoMakingSpentCases | Brass Catcher |
+| `Item_AmmoMakingCaseTumbler` | AmmoMakingSpentCases | Case Tumbler |
 | `Build_AmmoMakingReloadingPress` | AmmoMakingPress | the press's crafting window and build menu, 48 x 48 (`Icon = Build_AmmoMakingReloadingPress` in `AC_ReloadingPress_xuiSkin.txt`, twice; `AC_Visuals` key `pressWindowIcon`) |
 
 A spent case is the same drawing tarnished and sooted at the mouth;

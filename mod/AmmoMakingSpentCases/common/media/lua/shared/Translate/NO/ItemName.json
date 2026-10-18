@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Brukt 5,56 mm hylse",
     "AmmoMaking.SpentCase3030Win": "Brukt .30-30 hylse",
     "AmmoMaking.SpentCase308Win": "Brukt .308 hylse",
-    "AmmoMaking.SpentHull12Gauge": "Brukt 12 Gauge messinghylse"
+    "AmmoMaking.SpentHull12Gauge": "Brukt 12 Gauge messinghylse",
+    "AmmoMaking.BrassCatcher": "Hylsefanger",
+    "AmmoMaking.CaseTumbler": "Trommelpolerer"
 }

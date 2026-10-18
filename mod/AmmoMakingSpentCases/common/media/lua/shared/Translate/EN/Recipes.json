@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Clean Spent 5.56 Cases with Steel Wool",
     "AmmoMaking_CleanSpentCases3030Win": "Clean Spent .30-30 Cases with Steel Wool",
     "AmmoMaking_CleanSpentCases308Win": "Clean Spent .308 Cases with Steel Wool",
-    "AmmoMaking_CleanSpentCases12Gauge": "Clean Spent 12 Gauge Brass Hulls with Steel Wool"
+    "AmmoMaking_CleanSpentCases12Gauge": "Clean Spent 12 Gauge Brass Hulls with Steel Wool",
+    "AmmoMaking_MakeBrassCatcher": "Make Brass Catcher",
+    "AmmoMaking_MakeCaseTumbler": "Make Case Tumbler",
+    "AmmoMaking_TumbleSpentCases9mm": "Tumble Spent 9mm Cases",
+    "AmmoMaking_TumbleSpentCases38Special": "Tumble Spent .38 Special Cases",
+    "AmmoMaking_TumbleSpentCases45ACP": "Tumble Spent .45 ACP Cases",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Tumble Spent .357 Magnum Cases",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Tumble Spent .44 Magnum Cases",
+    "AmmoMaking_TumbleSpentCases556NATO": "Tumble Spent 5.56 Cases",
+    "AmmoMaking_TumbleSpentCases3030Win": "Tumble Spent .30-30 Cases",
+    "AmmoMaking_TumbleSpentCases308Win": "Tumble Spent .308 Cases",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Tumble Spent 12 Gauge Brass Hulls"
 }

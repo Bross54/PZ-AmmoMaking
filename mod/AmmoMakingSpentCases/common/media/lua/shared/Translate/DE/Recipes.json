@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Abgeschossene Hülsen 5.56 mit Stahlwolle reinigen",
     "AmmoMaking_CleanSpentCases3030Win": "Abgeschossene Hülsen .30-30 mit Stahlwolle reinigen",
     "AmmoMaking_CleanSpentCases308Win": "Abgeschossene Hülsen .308 mit Stahlwolle reinigen",
-    "AmmoMaking_CleanSpentCases12Gauge": "Abgeschossene Messing-Schrothülsen 12 Gauge mit Stahlwolle reinigen"
+    "AmmoMaking_CleanSpentCases12Gauge": "Abgeschossene Messing-Schrothülsen 12 Gauge mit Stahlwolle reinigen",
+    "AmmoMaking_MakeBrassCatcher": "Hülsenfänger herstellen",
+    "AmmoMaking_MakeCaseTumbler": "Trommelpolierer bauen",
+    "AmmoMaking_TumbleSpentCases9mm": "Abgeschossene Hülsen 9mm im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases38Special": "Abgeschossene Hülsen .38 Special im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases45ACP": "Abgeschossene Hülsen .45 ACP im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Abgeschossene Hülsen .357 Magnum im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Abgeschossene Hülsen .44 Magnum im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases556NATO": "Abgeschossene Hülsen 5.56 im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases3030Win": "Abgeschossene Hülsen .30-30 im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases308Win": "Abgeschossene Hülsen .308 im Trommelpolierer reinigen",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Abgeschossene Messing-Schrothülsen 12 Gauge im Trommelpolierer reinigen"
 }

@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "강철 솜으로 사용한 5.56 탄피 닦기",
     "AmmoMaking_CleanSpentCases3030Win": "강철 솜으로 사용한 .30-30 탄피 닦기",
     "AmmoMaking_CleanSpentCases308Win": "강철 솜으로 사용한 .308 탄피 닦기",
-    "AmmoMaking_CleanSpentCases12Gauge": "강철 솜으로 사용한 12게이지 황동 산탄 탄피 닦기"
+    "AmmoMaking_CleanSpentCases12Gauge": "강철 솜으로 사용한 12게이지 황동 산탄 탄피 닦기",
+    "AmmoMaking_MakeBrassCatcher": "탄피 받이 만들기",
+    "AmmoMaking_MakeCaseTumbler": "탄피 텀블러 만들기",
+    "AmmoMaking_TumbleSpentCases9mm": "텀블러로 사용한 9mm 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases38Special": "텀블러로 사용한 .38 스페셜 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases45ACP": "텀블러로 사용한 .45 ACP 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases357Magnum": "텀블러로 사용한 .357 매그넘 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases44Magnum": "텀블러로 사용한 .44 매그넘 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases556NATO": "텀블러로 사용한 5.56 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases3030Win": "텀블러로 사용한 .30-30 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases308Win": "텀블러로 사용한 .308 탄피 닦기",
+    "AmmoMaking_TumbleSpentCases12Gauge": "텀블러로 사용한 12게이지 황동 산탄 탄피 닦기"
 }

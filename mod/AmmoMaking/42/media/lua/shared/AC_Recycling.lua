@@ -248,7 +248,9 @@ AC_Recycling.SPENT = {
 -- item -> brass units for every calibre's spent case: the
 -- brass of the case it was. The fired primer cup is
 -- thrown away with the primer.
-function AC_Recycling.getSpentScrappable()
+function AC_Recycling.getSpentScrappable(
+    list
+)
 
     local units = {}
 
@@ -258,7 +260,7 @@ function AC_Recycling.getSpentScrappable()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.LIST
     )
     do
 
@@ -281,26 +283,72 @@ end
 
 
 -- The spent source, whether or not the feature is on (the
--- add-on's recipe script is generated from it).
-function AC_Recycling.getSpentSource()
+-- add-on's recipe script is generated from it). calibre
+-- (optional): the spent cases of that one calibre of a
+-- calibre add-on, under ids of their own.
+function AC_Recycling.getSpentSource(
+    calibre
+)
 
     local spent =
         AC_Recycling.SPENT
 
 
+    local tag =
+        calibre
+        and (calibre.suffix .. "_")
+        or ""
+
+
     return {
         id = "spent",
 
-        idPrefix = spent.idPrefix,
+        idPrefix = spent.idPrefix .. tag,
 
-        callbackPrefix = spent.callbackPrefix,
+        callbackPrefix = spent.callbackPrefix .. tag,
 
         batchUnits = spent.batchUnits,
 
         scrapPerBatch = spent.scrapPerBatch,
 
-        components = AC_Recycling.getSpentScrappable,
+        components = function()
+
+            return
+                AC_Recycling.getSpentScrappable(
+                    calibre and { calibre } or nil
+                )
+        end,
+
+        calibre = calibre and calibre.id or nil,
     }
+end
+
+
+-- The name of the spent scrapping of the largest named
+-- batch not above units (a calibre add-on's big cases
+-- weigh more than any vanilla one).
+function AC_Recycling.getSpentSizeName(
+    units
+)
+
+    local spent =
+        AC_Recycling.SPENT
+
+
+    local best = nil
+
+
+    for size in pairs(spent.names) do
+
+        if size <= units
+            and (not best or size > best)
+        then
+            best = size
+        end
+    end
+
+
+    return best and spent.names[best] or spent.fallbackName
 end
 
 

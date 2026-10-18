@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Leere Hülse 7.62x39",
     "AmmoMaking.Bullet762x39": "Kupfergeschoss 7.62x39",
     "AmmoMaking.CastBullet762x39": "Gegossenes Bleigeschoss 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Abgeschossene Hülse 7.62x39",
     "AmmoMaking.DieSet223Rem": "Wiederlade-Matrizensatz .223",
     "AmmoMaking.Case223Rem": "Leere Hülse .223",
     "AmmoMaking.Bullet223Rem": "Kupfergeschoss .223",
-    "AmmoMaking.CastBullet223Rem": "Gegossenes Bleigeschoss .223"
+    "AmmoMaking.CastBullet223Rem": "Gegossenes Bleigeschoss .223",
+    "AmmoMaking.SpentCase223Rem": "Abgeschossene Hülse .223"
 }

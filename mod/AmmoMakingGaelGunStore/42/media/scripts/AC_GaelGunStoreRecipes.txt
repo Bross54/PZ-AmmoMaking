@@ -88,6 +88,140 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_FormCase762x39M43AtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase762x39M43AtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet762x39M43] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case762x39M43,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets762x39M43AtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets762x39M43AtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet762x39M43] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet762x39M43,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound762x39M43AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound762x39M43AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case762x39M43],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.Bullet762x39M43],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet762x39M43] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.762x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound762x39M43AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound762x39M43AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case762x39M43],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.CastBullet762x39M43],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet762x39M43] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.762x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase762x39M43
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase762x39M43,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase762x39M43],
+            item 1 [AmmoMaking.DieSet762x39M43] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case762x39M43,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases762x39M43
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases762x39M43,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase762x39M43],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase762x39M43,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass762x39M43_10
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass762x39M43_10,
+        inputs
+        {
+            item 4 [AmmoMaking.SpentCase762x39M43],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet762x39M43
     {
         time = 150,
@@ -324,6 +458,139 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_FormCase32ACPAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase32ACPAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet32ACP] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case32ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets32ACPAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets32ACPAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet32ACP] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet32ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound32ACPAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound32ACPAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case32ACP],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.Bullet32ACP],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet32ACP] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets32,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound32ACPAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound32ACPAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case32ACP],
+            item 1 [AmmoMaking.SmallPistolPrimer],
+            item 1 [AmmoMaking.CastBullet32ACP],
+            item 1 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet32ACP] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets32,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase32ACP
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase32ACP,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase32ACP],
+            item 1 [AmmoMaking.DieSet32ACP] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case32ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases32ACP
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases32ACP,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase32ACP],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase32ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass32ACP_5
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass32ACP_5,
+        inputs
+        {
+            item 8 [AmmoMaking.SpentCase32ACP],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet32ACP
     {
         time = 150,
@@ -556,6 +823,140 @@ module Base
         outputs
         {
             item 1 Base.9x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase9x39AtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase9x39AtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet9x39] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case9x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets9x39AtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets9x39AtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet9x39] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet9x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound9x39AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound9x39AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case9x39],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.Bullet9x39],
+            item 2 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet9x39] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.9x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound9x39AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound9x39AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case9x39],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.CastBullet9x39],
+            item 2 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet9x39] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.9x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase9x39
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase9x39,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase9x39],
+            item 1 [AmmoMaking.DieSet9x39] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case9x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases9x39
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases9x39,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase9x39],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase9x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass9x39_10
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass9x39_10,
+        inputs
+        {
+            item 4 [AmmoMaking.SpentCase9x39],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
         }
     }
 
@@ -795,6 +1196,140 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_FormCase545x39AtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase545x39AtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet545x39] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case545x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets545x39AtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets545x39AtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet545x39] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 2 AmmoMaking.Bullet545x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound545x39AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound545x39AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case545x39],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.Bullet545x39],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet545x39] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.545x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound545x39AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound545x39AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case545x39],
+            item 1 [AmmoMaking.SmallRiflePrimer],
+            item 1 [AmmoMaking.CastBullet545x39],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet545x39] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.545x39Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase545x39
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase545x39,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase545x39],
+            item 1 [AmmoMaking.DieSet545x39] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case545x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases545x39
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases545x39,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase545x39],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase545x39,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass545x39_10
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass545x39_10,
+        inputs
+        {
+            item 4 [AmmoMaking.SpentCase545x39],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet545x39
     {
         time = 150,
@@ -1028,6 +1563,140 @@ module Base
         outputs
         {
             item 1 Base.762x54rBullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase762x54RAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase762x54RAtPress,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet762x54R] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case762x54R,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets762x54RAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets762x54RAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet762x54R] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet762x54R,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound762x54RAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound762x54RAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case762x54R],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet762x54R],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet762x54R] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.762x54rBullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound762x54RAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound762x54RAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case762x54R],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet762x54R],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet762x54R] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.762x54rBullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase762x54R
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase762x54R,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase762x54R],
+            item 1 [AmmoMaking.DieSet762x54R] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case762x54R,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases762x54R
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases762x54R,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase762x54R],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase762x54R,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass762x54R_15
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass762x54R_15,
+        inputs
+        {
+            item 8 [AmmoMaking.SpentCase762x54R],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 3 Base.BrassScrap,
         }
     }
 
@@ -1267,6 +1936,140 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_FormCase792x57AtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase792x57AtPress,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet792x57] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case792x57,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets792x57AtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets792x57AtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet792x57] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet792x57,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound792x57AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound792x57AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case792x57],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet792x57],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet792x57] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.792x57Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound792x57AtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound792x57AtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case792x57],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet792x57],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet792x57] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.792x57Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase792x57
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase792x57,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase792x57],
+            item 1 [AmmoMaking.DieSet792x57] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case792x57,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases792x57
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases792x57,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase792x57],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase792x57,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass792x57_15
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass792x57_15,
+        inputs
+        {
+            item 8 [AmmoMaking.SpentCase792x57],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 3 Base.BrassScrap,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet792x57
     {
         time = 150,
@@ -1500,6 +2303,140 @@ module Base
         outputs
         {
             item 1 Base.30_06Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase3006SprAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase3006SprAtPress,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet3006Spr] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case3006Spr,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets3006SprAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets3006SprAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet3006Spr] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet3006Spr,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound3006SprAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound3006SprAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case3006Spr],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet3006Spr],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet3006Spr] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.30_06Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound3006SprAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound3006SprAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case3006Spr],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet3006Spr],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet3006Spr] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.30_06Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase3006Spr
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase3006Spr,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase3006Spr],
+            item 1 [AmmoMaking.DieSet3006Spr] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case3006Spr,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases3006Spr
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases3006Spr,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase3006Spr],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase3006Spr,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass3006Spr_15
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass3006Spr_15,
+        inputs
+        {
+            item 8 [AmmoMaking.SpentCase3006Spr],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 3 Base.BrassScrap,
         }
     }
 
@@ -1739,6 +2676,140 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_FormCase303BritAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase303BritAtPress,
+        inputs
+        {
+            item 3 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet303Brit] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case303Brit,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets303BritAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets303BritAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet303Brit] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet303Brit,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound303BritAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound303BritAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case303Brit],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet303Brit],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet303Brit] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.303Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound303BritAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound303BritAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case303Brit],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet303Brit],
+            item 5 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet303Brit] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.303Bullets,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase303Brit
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase303Brit,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase303Brit],
+            item 1 [AmmoMaking.DieSet303Brit] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case303Brit,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases303Brit
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases303Brit,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase303Brit],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase303Brit,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass303Brit_15
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass303Brit_15,
+        inputs
+        {
+            item 8 [AmmoMaking.SpentCase303Brit],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 3 Base.BrassScrap,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet303Brit
     {
         time = 150,
@@ -1975,6 +3046,139 @@ module Base
         }
     }
 
+    craftRecipe AmmoMaking_FormCase50AEAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase50AEAtPress,
+        inputs
+        {
+            item 2 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet50AE] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case50AE,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets50AEAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets50AEAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet50AE] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet50AE,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound50AEAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound50AEAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case50AE],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.Bullet50AE],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet50AE] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets50Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound50AEAtPress
+    {
+        time = 24,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound50AEAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case50AE],
+            item 1 [AmmoMaking.LargePistolPrimer],
+            item 1 [AmmoMaking.CastBullet50AE],
+            item 3 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet50AE] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets50Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase50AE
+    {
+        time = 80,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase50AE,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase50AE],
+            item 1 [AmmoMaking.DieSet50AE] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case50AE,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases50AE
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases50AE,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase50AE],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase50AE,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass50AE_10
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass50AE_10,
+        inputs
+        {
+            item 4 [AmmoMaking.SpentCase50AE],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.BrassScrap,
+        }
+    }
+
     craftRecipe AmmoMaking_RegrindDieSet50AE
     {
         time = 150,
@@ -2207,6 +3411,140 @@ module Base
         outputs
         {
             item 1 Base.Bullets50,
+        }
+    }
+
+    craftRecipe AmmoMaking_FormCase50BMGAtPress
+    {
+        time = 96,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onFormCase50BMGAtPress,
+        inputs
+        {
+            item 6 [AmmoMaking.BrassCaseCup],
+            item 1 [AmmoMaking.DieSet50BMG] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case50BMG,
+        }
+    }
+
+    craftRecipe AmmoMaking_SwageBullets50BMGAtPress
+    {
+        time = 72,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Metalworking,
+        OnCreate = AC_Materials.onSwageBullets50BMGAtPress,
+        inputs
+        {
+            item 1 [Base.CopperScrap],
+            item 1 [AmmoMaking.DieSet50BMG] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Bullet50BMG,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleRound50BMGAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleRound50BMGAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case50BMG],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.Bullet50BMG],
+            item 10 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet50BMG] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 Base.Bullets50,
+        }
+    }
+
+    craftRecipe AmmoMaking_AssembleCastRound50BMGAtPress
+    {
+        time = 48,
+        timedAction = UseHandPress,
+        Tags = AmmoMakingReloadingPress,
+        category = Weaponry,
+        OnCreate = AC_Materials.onAssembleCastRound50BMGAtPress,
+        inputs
+        {
+            item 1 [AmmoMaking.Case50BMG],
+            item 1 [AmmoMaking.LargeRiflePrimer],
+            item 1 [AmmoMaking.CastBullet50BMG],
+            item 10 [Base.GunPowder],
+            item 1 [AmmoMaking.DieSet50BMG] mode:keep flags[MayDegradeVeryLight],
+            item 1 [AmmoMaking.GasCheck],
+        }
+        outputs
+        {
+            item 1 Base.Bullets50,
+        }
+    }
+
+    craftRecipe AmmoMaking_ResizeSpentCase50BMG
+    {
+        time = 160,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onResizeSpentCase50BMG,
+        inputs
+        {
+            item 2 [AmmoMaking.SpentCase50BMG],
+            item 1 [AmmoMaking.DieSet50BMG] mode:keep flags[MayDegradeVeryLight],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.Case50BMG,
+        }
+    }
+
+    craftRecipe AmmoMaking_CleanSpentCases50BMG
+    {
+        time = 60,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onCleanSpentCases50BMG,
+        inputs
+        {
+            item 5 [AmmoMaking.SpentCase50BMG],
+            item 1 [Base.SteelWool],
+        }
+        outputs
+        {
+            item 5 AmmoMaking.SpentCase50BMG,
+        }
+    }
+
+    craftRecipe AmmoMaking_ScrapSpentBrass50BMG_30
+    {
+        time = 100,
+        timedAction = MakingHammer_Surface,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onScrapSpentBrass50BMG_30,
+        inputs
+        {
+            item 4 [AmmoMaking.SpentCase50BMG],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 3 Base.BrassScrap,
         }
     }
 

@@ -222,17 +222,38 @@ if AC_Features.hasContent("spentCases") then
 end
 
 
--- Hot Brass casings, with the bridge add-on.
-if AC_Features.hasContent("hotBrass") then
+-- A calibre add-on carries its calibres' spent cases.
+for itemType,
+    entry
+in pairs(
+    AC_Calibres.buildSpentUnits(AC_Calibres.getActiveExtensions())
+)
+do
 
-    for itemType,
-        entry
-    in pairs(
-        AC_Calibres.buildHotBrassUnits()
-    )
-    do
+    AC_Materials.UNITS[itemType] = entry
+end
 
-        AC_Materials.UNITS[itemType] = entry
+
+-- Another mod's casings, with the add-on that carries
+-- their resizing (Hot Brass bridge, MFS pack).
+for _,
+    bridge
+in pairs(
+    AC_SpentCases.CASING_BRIDGES
+)
+do
+
+    if AC_Features.hasContent(bridge.feature) then
+
+        for itemType,
+            entry
+        in pairs(
+            AC_Calibres.buildCasingUnits(bridge.field)
+        )
+        do
+
+            AC_Materials.UNITS[itemType] = entry
+        end
     end
 end
 
@@ -789,17 +810,26 @@ if AC_Features.hasContent("spentCases") then
             recipe
         )
     end
-end
 
 
--- Hot Brass casings resized at the die set (the bridge
--- add-on), whenever its content is in the game.
-if AC_Features.hasContent("hotBrass") then
+    -- And the brass catcher (AC_SpentCases.CATCHER), the
+    -- case tumbler and its tumbling (TUMBLER).
+    table.insert(
+        AC_Materials.RECIPES,
+        AC_SpentCases.buildCatcherRecipe()
+    )
+
+
+    table.insert(
+        AC_Materials.RECIPES,
+        AC_SpentCases.buildTumblerRecipe()
+    )
+
 
     for _,
         recipe
     in ipairs(
-        AC_SpentCases.buildHotBrassRecipes()
+        AC_SpentCases.buildTumbleRecipes()
     )
     do
 
@@ -807,6 +837,35 @@ if AC_Features.hasContent("hotBrass") then
             AC_Materials.RECIPES,
             recipe
         )
+    end
+end
+
+
+-- Another mod's casings resized at the die set (Hot
+-- Brass bridge, MFS pack), whenever the add-on that
+-- carries the recipes is in the game. In a fixed order,
+-- so the recipe list is the same on every machine.
+for _,
+    key
+in ipairs(
+    { "hotBrass", "mfs" }
+)
+do
+
+    if AC_Features.hasContent(AC_SpentCases.CASING_BRIDGES[key].feature) then
+
+        for _,
+            recipe
+        in ipairs(
+            AC_SpentCases.buildCasingBridgeRecipes(key)
+        )
+        do
+
+            table.insert(
+                AC_Materials.RECIPES,
+                recipe
+            )
+        end
     end
 end
 

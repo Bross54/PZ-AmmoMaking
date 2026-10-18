@@ -99,8 +99,11 @@ AC_Features.DEFINITIONS = {
         -- Hot Brass (Workshop 3610677934) spawns a casing
         -- item of its own for every shot, from the same
         -- event and the same two eject functions. Both at
-        -- once would leave two cases per round.
-        conflicts = { "HBVCEFb42" },
+        -- once would leave two cases per round. Modern
+        -- Firearms System (3633421539) does the same with
+        -- its MFSEject casings and replaces both eject
+        -- functions without calling vanilla's.
+        conflicts = { "HBVCEFb42", "ModernFirearmsSystem" },
 
         what = "fired rounds leave spent brass, which is scrapped at a quarter or resized at the die set two for one, for no XP",
     },
@@ -293,6 +296,34 @@ AC_Features.DEFINITIONS = {
         singlePlayerOnly = false,
 
         what = "the 5.8x42, 5.45x39, 8.6mm, 14.5mm and .50 BMG of Modern Firearms System are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packGuns93",
+
+        name = "Handloading for Guns of 93",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        mod = "AmmoMakingGuns93",
+
+        singlePlayerOnly = false,
+
+        what = "the 10mm, .25, .30-06, .30 Carbine, .380, .40, .45 Colt, 7.62x39, 7.92x57 and 12 gauge slugs of Guns of 93 are handloaded like the vanilla rounds",
+    },
+
+    {
+        id = "packPSA",
+
+        name = "Handloading for Post Soviet Armory",
+
+        stability = AC_Features.EXPERIMENTAL,
+
+        mod = "AmmoMakingPSA",
+
+        singlePlayerOnly = false,
+
+        what = "the 9x18, 9x19, 9x39, 5.45x39, 7.62x25, 7.62x38R, 7.62x39, 7.62x54R, 23x75 and 12x70 of Post Soviet Armory are handloaded like the vanilla rounds",
     },
 }
 

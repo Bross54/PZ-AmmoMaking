@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Wyczyść wystrzelone łuski 5,56 mm wełną stalową",
     "AmmoMaking_CleanSpentCases3030Win": "Wyczyść wystrzelone łuski .30-30 wełną stalową",
     "AmmoMaking_CleanSpentCases308Win": "Wyczyść wystrzelone łuski .308 wełną stalową",
-    "AmmoMaking_CleanSpentCases12Gauge": "Wyczyść wystrzelone mosiężne łuski śrutowe kal. 12 wełną stalową"
+    "AmmoMaking_CleanSpentCases12Gauge": "Wyczyść wystrzelone mosiężne łuski śrutowe kal. 12 wełną stalową",
+    "AmmoMaking_MakeBrassCatcher": "Zrób łapacz łusek",
+    "AmmoMaking_MakeCaseTumbler": "Zrób bęben polerski",
+    "AmmoMaking_TumbleSpentCases9mm": "Wyczyść wystrzelone łuski 9 mm w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases38Special": "Wyczyść wystrzelone łuski .38 Special w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases45ACP": "Wyczyść wystrzelone łuski .45 ACP w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Wyczyść wystrzelone łuski .357 Magnum w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Wyczyść wystrzelone łuski .44 Magnum w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases556NATO": "Wyczyść wystrzelone łuski 5,56 mm w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases3030Win": "Wyczyść wystrzelone łuski .30-30 w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases308Win": "Wyczyść wystrzelone łuski .308 w bębnie polerskim",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Wyczyść wystrzelone mosiężne łuski śrutowe kal. 12 w bębnie polerskim"
 }

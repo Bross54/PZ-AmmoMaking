@@ -400,8 +400,10 @@ AC_Calibres.PRESS = {
     minimumTime = 20,
 
     -- The hand steps that have a press version. The die
-    -- set is forged, not pressed.
-    steps = { "case", "bullet", "assemble" },
+    -- set is forged, not pressed. assembleCast is the
+    -- assembly on a cast bullet (AC_Casting), for the
+    -- calibres that cast.
+    steps = { "case", "bullet", "assemble", "assembleCast" },
 
     idSuffix = "AtPress",
 
@@ -830,6 +832,80 @@ end
 -- lubing. For an extension's add-on script
 -- (tests/render_addons.lua); the game builds the same
 -- recipes through the lists above.
+-- What an extension's add-on carries beyond its hand
+-- recipes:
+--   its press recipes: the engine shows them only where
+--     the press add-on's station exists (REQUIRES FUTURE
+--     IN-GAME VERIFICATION: a recipe whose bench tag no
+--     station has is simply never offered);
+--   its spent cases (items of the add-on too): resized
+--     two for one, cleaned and scrapped like the vanilla
+--     calibres' in the spent cases add-on. They are only
+--     ever left by a shot where that add-on is on
+--     (AC_SpentCases.getSpentCaseForRound reads ALL).
+function AC_Calibres.buildExtensionExtras(
+    calibre
+)
+
+    local recipes = {}
+
+
+    local function add(
+        list
+    )
+
+        for _,
+            recipe
+        in ipairs(
+            list
+        )
+        do
+
+            table.insert(
+                recipes,
+                recipe
+            )
+        end
+    end
+
+
+    add(AC_Calibres.buildPressRecipes(calibre))
+
+
+    if AC_SpentCases then
+
+        add(AC_SpentCases.buildResizeRecipes({ calibre }))
+
+        add(AC_SpentCases.buildCleanRecipes({ calibre }))
+    end
+
+
+    if AC_Recycling then
+
+        for _,
+            recipe
+        in ipairs(
+            AC_Recycling.buildRecipes({ AC_Recycling.getSpentSource(calibre) })
+        )
+        do
+
+            -- buildRecipes() ends with the recast, which the
+            -- main mod ships.
+            if recipe.recyclingSource then
+
+                table.insert(
+                    recipes,
+                    recipe
+                )
+            end
+        end
+    end
+
+
+    return recipes
+end
+
+
 function AC_Calibres.buildAllRecipesOf(
     calibre
 )
@@ -857,6 +933,11 @@ function AC_Calibres.buildAllRecipesOf(
 
 
     add(AC_Calibres.buildCalibreRecipes(calibre))
+
+    if calibre.extension then
+
+        add(AC_Calibres.buildExtensionExtras(calibre))
+    end
 
     add(AC_Calibres.buildRegrindRecipes({ calibre }))
 
@@ -1245,6 +1326,10 @@ AC_Calibres.LIST = {
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.9x19_Casing",
 
+        -- What Modern Firearms System ejects for it
+        -- (MFSEject/Init.lua, AMMO_TO_CASING).
+        mfsCasing = "MFSEject.9x19_Casing",
+
         box = "Base.Bullets9mmBox",
 
         roundsPerBox = 50,
@@ -1263,6 +1348,9 @@ AC_Calibres.LIST = {
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.38_Casing",
 
+        -- No mfsCasing: Modern Firearms System makes this
+        -- round a 6.8mm and ejects a .30-06 casing for it.
+
         box = "Base.Bullets38Box",
 
         roundsPerBox = 50,
@@ -1280,6 +1368,10 @@ AC_Calibres.LIST = {
 
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.45_Casing",
+
+        -- What Modern Firearms System ejects for it
+        -- (MFSEject/Init.lua, AMMO_TO_CASING).
+        mfsCasing = "MFSEject.45_Casing",
 
         box = "Base.Bullets45Box",
 
@@ -1335,6 +1427,10 @@ AC_Calibres.LIST = {
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.44_Casing",
 
+        -- What Modern Firearms System ejects for it
+        -- (MFSEject/Init.lua, AMMO_TO_CASING).
+        mfsCasing = "MFSEject.44_Casing",
+
         box = "Base.Bullets44Box",
 
         roundsPerBox = 20,
@@ -1372,6 +1468,10 @@ AC_Calibres.LIST = {
 
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.556x45_Casing",
+
+        -- What Modern Firearms System ejects for it
+        -- (MFSEject/Init.lua, AMMO_TO_CASING).
+        mfsCasing = "MFSEject.556x45_Casing",
 
         box = "Base.556Box",
 
@@ -1419,6 +1519,10 @@ AC_Calibres.LIST = {
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.762x51_Casing",
 
+        -- What Modern Firearms System ejects for it
+        -- (MFSEject/Init.lua, AMMO_TO_CASING).
+        mfsCasing = "MFSEject.762x51_Casing",
+
         box = "Base.308Box",
 
         roundsPerBox = 20,
@@ -1451,6 +1555,10 @@ AC_Calibres.LIST = {
 
         -- What Hot Brass ejects for it (its Init.lua).
         hotBrassCasing = "HBVCEF.12Gauge_Hull_Red",
+
+        -- What Modern Firearms System ejects for it
+        -- (MFSEject/Init.lua, AMMO_TO_CASING).
+        mfsCasing = "MFSEject.12Gauge_Hull_Red",
 
         box = "Base.ShotgunShellsBox",
 
@@ -1510,6 +1618,8 @@ AC_Calibres.EXTENSIONS = {
         box = "Base.762Box",
         roundsPerBox = 20,
         ammoType = "mvgi:bullets_762",
+        -- VFE's firearms name the same item vfe:bullets_762.
+        ammoTypes = { packVFE = "vfe:bullets_762" },
         primerFamily = "SmallRifle",
         cupsPerCase = 2,
         bulletsPerScrap = 1,
@@ -1530,6 +1640,8 @@ AC_Calibres.EXTENSIONS = {
         box = "Base.223Box",
         roundsPerBox = 20,
         ammoType = "vfe:bullets_223",
+        -- Rain's firearms name it firearms:bullets_223.
+        ammoTypes = { packRains = "firearms:bullets_223", packRainsExpanded = "firearms:bullets_223" },
         primerFamily = "SmallRifle",
         cupsPerCase = 2,
         bulletsPerScrap = 2,
@@ -1572,6 +1684,8 @@ AC_Calibres.EXTENSIONS = {
         box = "Base.762x39Box",
         roundsPerBox = 30,
         ammoType = "firearms:bullets_762x39",
+        -- GaelGunStore's firearms name it ggs:762x39_bullets.
+        ammoTypes = { packGaelGunStore = "ggs:762x39_bullets" },
         primerFamily = "SmallRifle",
         cupsPerCase = 2,
         bulletsPerScrap = 1,
@@ -1768,6 +1882,8 @@ AC_Calibres.EXTENSIONS = {
         box = "Base.Bullets50Box",
         roundsPerBox = 20,
         ammoType = "ggs:bullets_50",
+        -- Modern Firearms System's name it efk:cat_bullets50.
+        ammoTypes = { packMFS = "efk:cat_bullets50" },
         primerFamily = "LargeRifle",
         cupsPerCase = 6,
         bulletsPerScrap = 1,
@@ -2122,6 +2238,347 @@ AC_Calibres.EXTENSIONS = {
         powderUses = 16,
         assembleLevel = 6,
     }),
+
+    ------------------------------------------------
+    -- Guns of 93: B42 Test Build (Workshop 3183820077,
+    -- mod guns93; AmmoType keys from its registries.lua,
+    -- read 2026-10-18). Its .22 is rimfire; its 5.56 and
+    -- .308 belts are machine-gun links; both left out. Its
+    -- slugs are an item of their own (Base.SlugBullets),
+    -- unlike vanilla's one shell, so they are a calibre.
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "10mm Auto",
+        class = "pistol",
+        suffix = "10mmG93",
+        extension = { "packGuns93" },
+        template = ".357 Magnum",
+        round = "Base.10mmBullets",
+        box = "Base.10mmBox",
+        roundsPerBox = 50,
+        ammoType = "guns93:bullets_10mm",
+        primerFamily = "LargePistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 1,
+        powderUses = 2,
+        assembleLevel = 4,
+    }),
+    AC_Calibres.define({
+        id = ".25 ACP",
+        class = "pistol",
+        suffix = "25ACPG93",
+        extension = { "packGuns93" },
+        template = ".357 Magnum",
+        round = "Base.25Bullets",
+        box = "Base.25Box",
+        roundsPerBox = 100,
+        ammoType = "guns93:bullets_25",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = ".30-06 (G93)",
+        class = "rifle",
+        suffix = "3006G93",
+        extension = { "packGuns93" },
+        template = ".308",
+        round = "Base.3006Bullets",
+        box = "Base.3006Box",
+        roundsPerBox = 20,
+        ammoType = "guns93:bullets_3006",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = ".30 Carbine",
+        class = "rifle",
+        suffix = "30CarbineG93",
+        extension = { "packGuns93" },
+        template = ".308",
+        round = "Base.30CarBullets",
+        box = "Base.30CarBox",
+        roundsPerBox = 20,
+        ammoType = "guns93:bullets_30car",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 2,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = ".380 ACP",
+        class = "pistol",
+        suffix = "380ACPG93",
+        extension = { "packGuns93" },
+        template = ".357 Magnum",
+        round = "Base.380Bullets",
+        box = "Base.380Box",
+        roundsPerBox = 50,
+        ammoType = "guns93:bullets_380",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = ".40 S&W",
+        class = "pistol",
+        suffix = "40SWG93",
+        extension = { "packGuns93" },
+        template = ".357 Magnum",
+        round = "Base.40Bullets",
+        box = "Base.40Box",
+        roundsPerBox = 50,
+        ammoType = "guns93:bullets_40",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = ".45 Colt (G93)",
+        class = "pistol",
+        suffix = "45ColtG93",
+        extension = { "packGuns93" },
+        template = ".357 Magnum",
+        round = "Base.45LCBullets",
+        box = "Base.45LCBox",
+        roundsPerBox = 50,
+        ammoType = "guns93:bullets_45lc",
+        primerFamily = "LargePistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 1,
+        powderUses = 2,
+        assembleLevel = 4,
+    }),
+    AC_Calibres.define({
+        id = "7.62x39 (G93)",
+        class = "rifle",
+        suffix = "762x39G93",
+        extension = { "packGuns93" },
+        template = ".308",
+        round = "Base.76239Bullets",
+        box = "Base.76239Box",
+        roundsPerBox = 20,
+        ammoType = "guns93:bullets_76239",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.92x57 (G93)",
+        class = "rifle",
+        suffix = "792x57G93",
+        extension = { "packGuns93" },
+        template = ".308",
+        round = "Base.792Bullets",
+        box = "Base.792Box",
+        roundsPerBox = 20,
+        ammoType = "guns93:bullets_792",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "12 Gauge Slug",
+        class = "shotgun",
+        suffix = "12GaSlugG93",
+        extension = { "packGuns93" },
+        template = "12 Gauge",
+        round = "Base.SlugBullets",
+        box = "Base.SlugBulletBox",
+        roundsPerBox = 25,
+        ammoType = "guns93:bullets_slug",
+        primerFamily = "LargePistol",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+        wads = 1,
+        assembleLevel = 4,
+    }),
+
+    ------------------------------------------------
+    -- Post Soviet Armory B42 (Workshop 3722136144, mod
+    -- PostSovietArmoryB42; keys
+    -- Post_Soviet_Armory_B42:<item, lower case>). Its
+    -- .22 LR is rimfire; its 7.65x21 has no firearm.
+    -- 23x75 is the KS-23's 4-gauge shell: twice the 12
+    -- gauge's brass and powder, two wads.
+    ------------------------------------------------
+    AC_Calibres.define({
+        id = "9x18",
+        class = "pistol",
+        suffix = "9x18PSA",
+        extension = { "packPSA" },
+        template = ".357 Magnum",
+        round = "Base.Bullets9x18mm",
+        box = "Base.Bullets9x18mm_Box",
+        roundsPerBox = 16,
+        ammoType = "Post_Soviet_Armory_B42:bullets9x18mm",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = "9x19",
+        class = "pistol",
+        suffix = "9x19PSA",
+        extension = { "packPSA" },
+        template = ".357 Magnum",
+        round = "Base.Bullets9x19mm",
+        box = "Base.Bullets9x19mm_Box",
+        roundsPerBox = 30,
+        ammoType = "Post_Soviet_Armory_B42:bullets9x19mm",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = "9x39 (PSA)",
+        class = "rifle",
+        suffix = "9x39PSA",
+        extension = { "packPSA" },
+        template = ".308",
+        round = "Base.Bullets9x39mm",
+        box = "Base.Bullets9x39mm_Box",
+        roundsPerBox = 10,
+        ammoType = "Post_Soviet_Armory_B42:bullets9x39mm",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 2,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "5.45x39 (PSA)",
+        class = "rifle",
+        suffix = "545x39PSA",
+        extension = { "packPSA" },
+        template = ".308",
+        round = "Base.Bullets545x39",
+        box = "Base.Bullets545x39_Box",
+        roundsPerBox = 30,
+        ammoType = "Post_Soviet_Armory_B42:bullets545x39",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 2,
+        powderUses = 3,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.62x25",
+        class = "pistol",
+        suffix = "762x25PSA",
+        extension = { "packPSA" },
+        template = ".357 Magnum",
+        round = "Base.Bullets762x25",
+        box = "Base.Bullets762x25_Box",
+        roundsPerBox = 40,
+        ammoType = "Post_Soviet_Armory_B42:bullets762x25",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = "7.62x38R",
+        class = "pistol",
+        suffix = "762x38RPSA",
+        extension = { "packPSA" },
+        template = ".357 Magnum",
+        round = "Base.Bullets762x38R",
+        box = "Base.Bullets762x38R_Box",
+        roundsPerBox = 14,
+        ammoType = "Post_Soviet_Armory_B42:bullets762x38r",
+        primerFamily = "SmallPistol",
+        cupsPerCase = 1,
+        bulletsPerScrap = 2,
+        powderUses = 1,
+        assembleLevel = 3,
+    }),
+    AC_Calibres.define({
+        id = "7.62x39 (PSA)",
+        class = "rifle",
+        suffix = "762x39PSA",
+        extension = { "packPSA" },
+        template = ".308",
+        round = "Base.Bullets762x39",
+        box = "Base.Bullets762x39_Box",
+        roundsPerBox = 30,
+        ammoType = "Post_Soviet_Armory_B42:bullets762x39",
+        primerFamily = "SmallRifle",
+        cupsPerCase = 2,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "7.62x54R (PSA)",
+        class = "rifle",
+        suffix = "762x54RPSA",
+        extension = { "packPSA" },
+        template = ".308",
+        round = "Base.Bullets762x54R",
+        box = "Base.Bullets762x54R_Box",
+        roundsPerBox = 20,
+        ammoType = "Post_Soviet_Armory_B42:bullets762x54r",
+        primerFamily = "LargeRifle",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 5,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "23x75",
+        class = "shotgun",
+        suffix = "23x75PSA",
+        extension = { "packPSA" },
+        template = "12 Gauge",
+        round = "Base.23x75ShotgunShells",
+        box = "Base.23x75ShotgunShells_Box",
+        roundsPerBox = 8,
+        ammoType = "Post_Soviet_Armory_B42:23x75shotgunshells",
+        primerFamily = "LargePistol",
+        cupsPerCase = 6,
+        bulletsPerScrap = 1,
+        powderUses = 6,
+        wads = 2,
+        assembleLevel = 5,
+    }),
+    AC_Calibres.define({
+        id = "12x70",
+        class = "shotgun",
+        suffix = "12x70PSA",
+        extension = { "packPSA" },
+        template = "12 Gauge",
+        round = "Base.12x70ShotgunShells",
+        box = "Base.12x70ShotgunShells_Box",
+        roundsPerBox = 10,
+        ammoType = "Post_Soviet_Armory_B42:12x70shotgunshells",
+        primerFamily = "LargePistol",
+        cupsPerCase = 3,
+        bulletsPerScrap = 1,
+        powderUses = 3,
+        wads = 1,
+        assembleLevel = 4,
+    }),
 }
 
 
@@ -2146,6 +2603,28 @@ function AC_Calibres.extensionFeatures(
 
 
     return {}
+end
+
+
+-- The AmmoType a pack's gun mod gives the calibre's
+-- round. A round several gun mods share is the same item
+-- under a key of each mod's own (ammoTypes, by feature);
+-- ammoType is the first pack's. Read from the installed
+-- gun mods; tests/engine_snapshot.lua records what their
+-- firearms name (gunMods).
+function AC_Calibres.ammoTypeOf(
+    calibre,
+    feature
+)
+
+    local byPack =
+        calibre.ammoTypes
+
+
+    return
+        byPack
+        and byPack[feature]
+        or calibre.ammoType
 end
 
 
@@ -3013,6 +3492,31 @@ end
 -- buildRecipes() looks at the switch.
 ------------------------------------------------
 
+-- What a press recipe is called, from its hand recipe's
+-- name: " (Press)" added, or ", Press" inside a name that
+-- already ends in a bracket ("... (Cast Bullet, Press)").
+function AC_Calibres.pressName(
+    handName
+)
+
+    handName =
+        tostring(handName or "")
+
+
+    if string.sub(handName, -1) == ")" then
+
+        return
+            string.sub(handName, 1, -2)
+            .. ", "
+            .. string.match(AC_Calibres.PRESS.nameSuffix, "%(([^)]*)%)")
+            .. ")"
+    end
+
+
+    return handName .. AC_Calibres.PRESS.nameSuffix
+end
+
+
 function AC_Calibres.buildPressRecipes(
     calibre
 )
@@ -3038,10 +3542,32 @@ function AC_Calibres.buildPressRecipes(
     local recipes = {}
 
 
+    -- The calibre's own steps, then its cast assembly.
+    local hands =
+        AC_Calibres.buildCalibreRecipes(calibre)
+
+
+    if AC_Casting then
+
+        for _,
+            cast
+        in ipairs(
+            AC_Casting.buildCalibreRecipes(calibre)
+        )
+        do
+
+            table.insert(
+                hands,
+                cast
+            )
+        end
+    end
+
+
     for _,
         hand
     in ipairs(
-        AC_Calibres.buildCalibreRecipes(calibre)
+        hands
     )
     do
 
@@ -3176,7 +3702,7 @@ function AC_Calibres.validatePress(
 
     -- A step the press names must be one a calibre has, and
     -- never the die set: that is forged.
-    local known = { case = true, bullet = true, assemble = true }
+    local known = { case = true, bullet = true, assemble = true, assembleCast = true }
 
 
     for _,
@@ -3380,8 +3906,26 @@ function AC_Calibres.buildRecipes()
         end
 
 
+        -- An extension's add-on carries its press and
+        -- spent-case recipes, so they are there whenever
+        -- its content is.
+        if calibre.extension then
+
+            for _,
+                recipe
+            in ipairs(
+                AC_Calibres.buildExtensionExtras(calibre)
+            )
+            do
+
+                table.insert(
+                    recipes,
+                    recipe
+                )
+            end
+
         -- Off until the press station exists.
-        if AC_Calibres.PRESS.enabled then
+        elseif AC_Calibres.PRESS.enabled then
 
             for _,
                 recipe
@@ -3423,9 +3967,13 @@ end
 -- buildUnits(): the items exist only with the spent-cases
 -- add-on, and AC_Materials takes these in only when that
 -- feature is on.
--- Hot Brass casings (the bridge add-on): the brass of the
--- case they were, like a spent case of the mod.
-function AC_Calibres.buildHotBrassUnits()
+-- Another mod's ejected casings (field: hotBrassCasing
+-- for the Hot Brass bridge, mfsCasing for the Modern
+-- Firearms System pack): the brass of the case they
+-- were, like a spent case of the mod.
+function AC_Calibres.buildCasingUnits(
+    field
+)
 
     local units = {}
 
@@ -3437,9 +3985,9 @@ function AC_Calibres.buildHotBrassUnits()
     )
     do
 
-        if calibre.hotBrassCasing then
+        if calibre[field] then
 
-            units[calibre.hotBrassCasing] = {
+            units[calibre[field]] = {
                 metal = "brass",
                 units = AC_Calibres.CONFIG.cupUnits * calibre.cupsPerCase,
             }
@@ -3451,7 +3999,18 @@ function AC_Calibres.buildHotBrassUnits()
 end
 
 
-function AC_Calibres.buildSpentUnits()
+function AC_Calibres.buildHotBrassUnits()
+
+    return
+        AC_Calibres.buildCasingUnits(
+            "hotBrassCasing"
+        )
+end
+
+
+function AC_Calibres.buildSpentUnits(
+    list
+)
 
     local units = {}
 
@@ -3459,7 +4018,7 @@ function AC_Calibres.buildSpentUnits()
     for _,
         calibre
     in ipairs(
-        AC_Calibres.LIST
+        list or AC_Calibres.LIST
     )
     do
 

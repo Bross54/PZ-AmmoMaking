@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Nettoyer des douilles tirées 5.56 à la paille de fer",
     "AmmoMaking_CleanSpentCases3030Win": "Nettoyer des douilles tirées .30-30 à la paille de fer",
     "AmmoMaking_CleanSpentCases308Win": "Nettoyer des douilles tirées .308 à la paille de fer",
-    "AmmoMaking_CleanSpentCases12Gauge": "Nettoyer des douilles de cartouche en laiton tirées cal.12 à la paille de fer"
+    "AmmoMaking_CleanSpentCases12Gauge": "Nettoyer des douilles de cartouche en laiton tirées cal.12 à la paille de fer",
+    "AmmoMaking_MakeBrassCatcher": "Fabriquer un récupérateur de douilles",
+    "AmmoMaking_MakeCaseTumbler": "Fabriquer un tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases9mm": "Nettoyer des douilles tirées 9mm au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases38Special": "Nettoyer des douilles tirées .38 Special au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases45ACP": "Nettoyer des douilles tirées .45 Auto au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Nettoyer des douilles tirées .357 Magnum au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Nettoyer des douilles tirées .44 Magnum au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases556NATO": "Nettoyer des douilles tirées 5.56 au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases3030Win": "Nettoyer des douilles tirées .30-30 au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases308Win": "Nettoyer des douilles tirées .308 au tonneau de polissage",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Nettoyer des douilles de cartouche en laiton tirées cal.12 au tonneau de polissage"
 }

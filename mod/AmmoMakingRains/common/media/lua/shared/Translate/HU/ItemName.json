@@ -3,12 +3,15 @@
     "AmmoMaking.Case223Rem": "Üres .223 hüvely",
     "AmmoMaking.Bullet223Rem": ".223 rézlövedék",
     "AmmoMaking.CastBullet223Rem": ".223 öntött ólomlövedék",
+    "AmmoMaking.SpentCase223Rem": "Kilőtt .223 hüvely",
     "AmmoMaking.DieSet762x51": "7.62x51 újratöltő matricakészlet",
     "AmmoMaking.Case762x51": "Üres 7.62x51 hüvely",
     "AmmoMaking.Bullet762x51": "7.62x51 rézlövedék",
     "AmmoMaking.CastBullet762x51": "7.62x51 öntött ólomlövedék",
+    "AmmoMaking.SpentCase762x51": "Kilőtt 7.62x51 hüvely",
     "AmmoMaking.DieSet762x39M43": "7.62x39 M43 újratöltő matricakészlet",
     "AmmoMaking.Case762x39M43": "Üres 7.62x39 M43 hüvely",
     "AmmoMaking.Bullet762x39M43": "7.62x39 M43 rézlövedék",
-    "AmmoMaking.CastBullet762x39M43": "7.62x39 M43 öntött ólomlövedék"
+    "AmmoMaking.CastBullet762x39M43": "7.62x39 M43 öntött ólomlövedék",
+    "AmmoMaking.SpentCase762x39M43": "Kilőtt 7.62x39 M43 hüvely"
 }

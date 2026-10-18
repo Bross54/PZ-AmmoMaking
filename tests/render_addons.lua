@@ -96,7 +96,7 @@ function A.pressNames(handNames)
     for _, recipe in ipairs(A.pressRecipes()) do
         local hand = handNames[recipe.handRecipe]
         assert(hand and hand ~= "", "no name for " .. tostring(recipe.handRecipe))
-        table.insert(list, { recipe.id, hand .. AC_Calibres.PRESS.nameSuffix })
+        table.insert(list, { recipe.id, AC_Calibres.pressName(hand) })
     end
     return A.renderNames(list)
 end
@@ -141,7 +141,16 @@ A.EXTENSION_PACKS = {
       gunMod = "Real Firearms", requires = "RealFirearms", incompatible = {} },
     { feature = "packMFS", root = "mod/AmmoMakingMFS/", prefix = "MFS",
       title = "Ammo Making: Modern Firearms System (experimental)", poster = "MFS",
-      gunMod = "Modern Firearms System", requires = "ModernFirearmsSystem", incompatible = {} },
+      gunMod = "Modern Firearms System", requires = "ModernFirearmsSystem", incompatible = {},
+      -- MFS ejects casings of its own for the vanilla rounds: their
+      -- resizing travels with this pack (AC_SpentCases.CASING_BRIDGES.mfs).
+      casingBridge = "mfs" },
+    { feature = "packGuns93", root = "mod/AmmoMakingGuns93/", prefix = "Guns93",
+      title = "Ammo Making: Guns of 93 (experimental)", poster = "GUNS OF 93",
+      gunMod = "Guns of 93", requires = "guns93", incompatible = {} },
+    { feature = "packPSA", root = "mod/AmmoMakingPSA/", prefix = "PSA",
+      title = "Ammo Making: Post Soviet Armory (experimental)", poster = "PSA",
+      gunMod = "Post Soviet Armory", requires = "PostSovietArmoryB42", incompatible = {} },
 }
 
 function A.getPack(feature)
@@ -211,6 +220,17 @@ function A.extensionItems(calibre, mainItems)
             table.insert(items, { name = string.match(fullType, "%.([%w_]+)$"), fullType = fullType, fields = fields })
         end
     end
+    -- Its spent case, made from its case as the spent cases add-on makes
+    -- the vanilla calibres' (AC_SpentCases.buildItems).
+    local caseFields = {}
+    for _, item in ipairs(items) do
+        if item.fullType == calibre.case then
+            for _, field in ipairs(item.fields) do caseFields[field[1]] = field[2] end
+        end
+    end
+    for _, spent in ipairs(AC_SpentCases.buildItems(function(fullType) return fullType == calibre.case and caseFields or nil end, { calibre })) do
+        table.insert(items, spent)
+    end
     return items, template
 end
 
@@ -236,23 +256,28 @@ function A.extensionItemNames(calibres, mainItems)
     for _, calibre in ipairs(calibres) do
         for _, item in ipairs((A.extensionItems(calibre, mainItems))) do
             for _, field in ipairs(item.fields) do
-                if field[1] == "DisplayName" then table.insert(list, { item.fullType, field[2] }) end
+                if field[1] == "DisplayName" then table.insert(list, { item.fullType, tostring(field[2]) }) end
             end
         end
     end
     return A.renderNames(list)
 end
 
-function A.extensionRecipes(calibres)
+-- pack (optional): a pack with a casingBridge adds the resizing of its
+-- gun mod's casings after its calibres' recipes.
+function A.extensionRecipes(calibres, pack)
     local recipes = {}
     for _, calibre in ipairs(calibres) do
         for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do table.insert(recipes, recipe) end
     end
+    if pack and pack.casingBridge then
+        for _, recipe in ipairs(AC_SpentCases.buildCasingBridgeRecipes(pack.casingBridge)) do table.insert(recipes, recipe) end
+    end
     return recipes
 end
 
-function A.extensionScriptBody(calibres, RENDER)
-    return RENDER.renderModule(A.extensionRecipes(calibres))
+function A.extensionScriptBody(calibres, RENDER, pack)
+    return RENDER.renderModule(A.extensionRecipes(calibres, pack))
 end
 
 -- The pack's mod.info. version: the main mod's modversion.
@@ -275,21 +300,54 @@ function A.packInfo(pack, version)
     return table.concat(lines, "\n") .. "\n"
 end
 
+-- The names of a casing bridge's resizings: the spent cases' resizing of
+-- the calibre, with the bridge's suffix.
+function A.casingBridgeNames(key, handNames)
+    local list = {}
+    for _, recipe in ipairs(AC_SpentCases.buildCasingBridgeRecipes(key)) do
+        local form = handNames[recipe.formRecipe]
+        assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
+        table.insert(list, { recipe.id, AC_SpentCases.getResizeName(form) .. AC_SpentCases.CASING_BRIDGES[key].nameSuffix })
+    end
+    return list
+end
+
 -- handNames: the main mod's recipe names. Each recipe is named after the
 -- template's recipe of the same id, the calibre's name in place of the
--- template's.
-function A.extensionNames(calibres, handNames)
+-- template's. pack (optional): its casing bridge's names follow.
+function A.extensionNames(calibres, handNames, pack)
     local list = {}
     for _, calibre in ipairs(calibres) do
         local template = nil
         for _, c in ipairs(AC_Calibres.LIST) do if c.id == calibre.template then template = c end end
         assert(template, "no template calibre " .. tostring(calibre.template))
-        for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do
-            local templateId = swap(recipe.id, calibre.suffix, template.suffix)
+        local function nameOf(id)
+            local templateId = swap(id, calibre.suffix, template.suffix)
             local name = handNames[templateId]
             assert(name and name ~= "", "no name for " .. templateId)
-            table.insert(list, { recipe.id, swap(name, template.id, calibre.id) })
+            return swap(name, template.id, calibre.id)
         end
+        for _, recipe in ipairs(AC_Calibres.buildAllRecipesOf(calibre)) do
+            local name
+            if recipe.press then
+                -- Named after its hand recipe, as the press add-on names the
+                -- vanilla calibres' ("... (Press)").
+                name = AC_Calibres.pressName(nameOf(recipe.handRecipe))
+            elseif recipe.resize then
+                name = AC_SpentCases.getResizeName(nameOf(recipe.formRecipe))
+            elseif recipe.clean then
+                name = AC_SpentCases.getCleanName(nameOf(recipe.formRecipe))
+            elseif recipe.recyclingSource then
+                local units = tonumber(string.match(recipe.id, "(%d+)$"))
+                name = AC_Recycling.getSpentSizeName(units) .. " - " .. calibre.id
+            else
+                name = nameOf(recipe.id)
+            end
+            table.insert(list, { recipe.id, name })
+        end
+    end
+    if pack and pack.casingBridge then
+        for _, entry in ipairs(A.casingBridgeNames(pack.casingBridge, handNames)) do table.insert(list, entry) end
     end
     return A.renderNames(list)
 end
@@ -317,13 +375,7 @@ function A.hotBrassScriptBody(RENDER)
 end
 
 function A.hotBrassNames(handNames)
-    local list = {}
-    for _, recipe in ipairs(AC_SpentCases.buildHotBrassRecipes()) do
-        local form = handNames[recipe.formRecipe]
-        assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
-        table.insert(list, { recipe.id, AC_SpentCases.getResizeName(form) .. AC_SpentCases.HOT_BRASS.nameSuffix })
-    end
-    return A.renderNames(list)
+    return A.renderNames(A.casingBridgeNames("hotBrass", handNames))
 end
 
 function A.hotBrassInfo(version)
@@ -365,9 +417,32 @@ function A.spentItems(mainItems)
 end
 
 -- One item block per calibre.
+-- The brass catcher (AC_SpentCases.CATCHER), after the spent cases.
+function A.catcherItem()
+    local c = AC_SpentCases.CATCHER
+    return {
+        name = string.match(c.item, "%.([%w_]+)$"), fullType = c.item, displayName = c.displayName,
+        fields = { { "DisplayName", c.displayName }, { "DisplayCategory", c.category }, { "ItemType", "base:normal" },
+                   { "Icon", c.icon }, { "Weight", c.weight } },
+    }
+end
+
+-- The case tumbler (AC_SpentCases.TUMBLER), after the catcher.
+function A.tumblerItem()
+    local t = AC_SpentCases.TUMBLER
+    return {
+        name = string.match(t.item, "%.([%w_]+)$"), fullType = t.item, displayName = t.displayName,
+        fields = { { "DisplayName", t.displayName }, { "DisplayCategory", t.category }, { "ItemType", "base:normal" },
+                   { "Icon", t.icon }, { "Weight", t.weight } },
+    }
+end
+
 function A.spentItemsBody(mainItems)
     local blocks = {}
-    for _, item in ipairs(A.spentItems(mainItems)) do
+    local items = A.spentItems(mainItems)
+    table.insert(items, A.catcherItem())
+    table.insert(items, A.tumblerItem())
+    for _, item in ipairs(items) do
         local lines = { "    item " .. item.name, "    {" }
         for _, field in ipairs(item.fields) do
             table.insert(lines, "        " .. field[1] .. " = " .. tostring(field[2]) .. ",")
@@ -383,6 +458,8 @@ function A.spentItemNames(mainItems)
     for _, item in ipairs(A.spentItems(mainItems)) do
         table.insert(list, { item.fullType, item.displayName })
     end
+    table.insert(list, { AC_SpentCases.CATCHER.item, AC_SpentCases.CATCHER.displayName })
+    table.insert(list, { AC_SpentCases.TUMBLER.item, AC_SpentCases.TUMBLER.displayName })
     return A.renderNames(list)
 end
 
@@ -402,6 +479,9 @@ function A.spentRecipes()
     local recipes = A.spentScrapRecipes()
     for _, recipe in ipairs(AC_SpentCases.buildResizeRecipes()) do table.insert(recipes, recipe) end
     for _, recipe in ipairs(AC_SpentCases.buildCleanRecipes()) do table.insert(recipes, recipe) end
+    table.insert(recipes, AC_SpentCases.buildCatcherRecipe())
+    table.insert(recipes, AC_SpentCases.buildTumblerRecipe())
+    for _, recipe in ipairs(AC_SpentCases.buildTumbleRecipes()) do table.insert(recipes, recipe) end
     return recipes
 end
 
@@ -418,10 +498,18 @@ function A.spentNames(handNames)
             local form = handNames[recipe.formRecipe]
             assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
             table.insert(list, { recipe.id, AC_SpentCases.getResizeName(form) })
+        elseif recipe.tumble then
+            local form = handNames[recipe.formRecipe]
+            assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
+            table.insert(list, { recipe.id, AC_SpentCases.getTumbleName(form) })
         elseif recipe.clean then
             local form = handNames[recipe.formRecipe]
             assert(form and form ~= "", "no name for " .. tostring(recipe.formRecipe))
             table.insert(list, { recipe.id, AC_SpentCases.getCleanName(form) })
+        elseif recipe.tumbler then
+            table.insert(list, { recipe.id, AC_SpentCases.TUMBLER.recipeName })
+        elseif recipe.catcher then
+            table.insert(list, { recipe.id, AC_SpentCases.CATCHER.recipeName })
         else
             table.insert(list, { recipe.id, AC_Recycling.getSpentRecipeName(recipe) })
         end
@@ -602,9 +690,9 @@ function A.writeAll(root, RENDER, which)
             local calibres = A.packCalibres(pack)
             local paths = A.packPaths(pack)
             writeScript(root .. "/" .. paths.items, A.extensionItemsBody(calibres, mainItems), RENDER, packHeader(pack, "the items of its calibres"))
-            writeScript(root .. "/" .. paths.script, A.extensionScriptBody(calibres, RENDER), RENDER, packHeader(pack, "the recipes of its calibres"))
+            writeScript(root .. "/" .. paths.script, A.extensionScriptBody(calibres, RENDER, pack), RENDER, packHeader(pack, "the recipes of its calibres"))
             write(root .. "/" .. paths.itemNames, A.extensionItemNames(calibres, mainItems))
-            write(root .. "/" .. paths.names, A.extensionNames(calibres, handNames))
+            write(root .. "/" .. paths.names, A.extensionNames(calibres, handNames, pack))
             write(root .. "/" .. paths.info, A.packInfo(pack, version))
             for _, path in ipairs({ paths.items, paths.script, paths.itemNames, paths.names, paths.info }) do
                 table.insert(written, path)

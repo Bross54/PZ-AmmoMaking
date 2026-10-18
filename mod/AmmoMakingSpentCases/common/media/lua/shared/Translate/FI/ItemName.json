@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Ammuttu 5,56 hylsy",
     "AmmoMaking.SpentCase3030Win": "Ammuttu .30-30 hylsy",
     "AmmoMaking.SpentCase308Win": "Ammuttu .308 hylsy",
-    "AmmoMaking.SpentHull12Gauge": "Ammuttu 12 Gauge messinkihylsy"
+    "AmmoMaking.SpentHull12Gauge": "Ammuttu 12 Gauge messinkihylsy",
+    "AmmoMaking.BrassCatcher": "Hylsynkerääjä",
+    "AmmoMaking.CaseTumbler": "Rumpukiillotin"
 }

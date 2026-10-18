@@ -16,6 +16,7 @@ local facts = {
     lootLists = {},
     sprites = {},
     stationSprites = {}, -- vanilla station tile -> the entity expected to claim it
+    gunMods = {},        -- gun mod id -> what each calibre pack expects of it
     sounds = {},
     modItems = {},
 }
@@ -48,6 +49,11 @@ for _, recipe in ipairs(AC_Materials.RECIPES) do
         facts.timedActions[recipe.timedAction] = facts.timedActions[recipe.timedAction] or where
     end
 end
+
+-- The add-ons' recipes are listed only while their content is in the game;
+-- what they name is probed either way.
+recipeLines(AC_SpentCases.buildCatcherRecipe(), "recipe " .. AC_SpentCases.CATCHER.recipeId)
+recipeLines(AC_SpentCases.buildTumblerRecipe(), "recipe " .. AC_SpentCases.TUMBLER.recipeId)
 
 -- Vanilla recipes the conservation checks model by id.
 for _, recipe in ipairs(AC_Materials.VANILLA_RECIPES) do
@@ -112,6 +118,29 @@ for _, station in pairs(AC_GeologyDebug.STATIONS) do
 end
 facts.sounds[AC_Mining.CONFIG.sound] = "mining"
 facts.sounds[AC_GeologySampling.CONFIG.digSound] = "digging a sample"
+
+-- Gun mods: each calibre pack names its gun mod, the rounds it loads and the
+-- AmmoType that mod's firearms give each round. AC_ROOT is set by
+-- tools/pz_compat.py.
+if AC_ROOT then
+    local ADDONS = dofile(AC_ROOT .. "/tests/render_addons.lua")
+    for _, pack in ipairs(ADDONS.EXTENSION_PACKS) do
+        local entry = facts.gunMods[pack.requires] or { packs = {}, rounds = {}, ammoTypes = {} }
+        facts.gunMods[pack.requires] = entry
+        table.insert(entry.packs, pack.feature)
+        for _, calibre in ipairs(ADDONS.packCalibres(pack)) do
+            entry.rounds[calibre.round] = calibre.id
+            entry.ammoTypes[AC_Calibres.ammoTypeOf(calibre, pack.feature)] = calibre.id
+        end
+        if pack.casingBridge then
+            local field = AC_SpentCases.CASING_BRIDGES[pack.casingBridge].field
+            entry.casings = entry.casings or {}
+            for _, calibre in ipairs(AC_Calibres.LIST) do
+                if calibre[field] then entry.casings[calibre[field]] = calibre.id end
+            end
+        end
+    end
+end
 
 -- The press is described and switched off; what it names is watched, not
 -- required.

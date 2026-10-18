@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Spent 5.56 Case",
     "AmmoMaking.SpentCase3030Win": "Spent .30-30 Case",
     "AmmoMaking.SpentCase308Win": "Spent .308 Case",
-    "AmmoMaking.SpentHull12Gauge": "Spent 12 Gauge Brass Hull"
+    "AmmoMaking.SpentHull12Gauge": "Spent 12 Gauge Brass Hull",
+    "AmmoMaking.BrassCatcher": "Brass Catcher",
+    "AmmoMaking.CaseTumbler": "Case Tumbler"
 }

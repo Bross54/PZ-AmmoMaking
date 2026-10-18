@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "ปลอกกระสุนเปล่า 7.62x39",
     "AmmoMaking.Bullet762x39": "หัวกระสุนทองแดง 7.62x39",
     "AmmoMaking.CastBullet762x39": "หัวกระสุนตะกั่วหล่อ 7.62x39",
+    "AmmoMaking.SpentCase762x39": "ปลอกกระสุนที่ยิงแล้ว 7.62x39",
     "AmmoMaking.DieSet223Rem": "ชุดดายบรรจุกระสุน .223",
     "AmmoMaking.Case223Rem": "ปลอกกระสุนเปล่า .223",
     "AmmoMaking.Bullet223Rem": "หัวกระสุนทองแดง .223",
-    "AmmoMaking.CastBullet223Rem": "หัวกระสุนตะกั่วหล่อ .223"
+    "AmmoMaking.CastBullet223Rem": "หัวกระสุนตะกั่วหล่อ .223",
+    "AmmoMaking.SpentCase223Rem": "ปลอกกระสุนที่ยิงแล้ว .223"
 }

@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Estojo Vazio 7.62x39",
     "AmmoMaking.Bullet762x39": "Projétil de Cobre 7.62x39",
     "AmmoMaking.CastBullet762x39": "Projétil de Chumbo Fundido 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Estojo Deflagrado 7.62x39",
     "AmmoMaking.DieSet223Rem": "Jogo de Matrizes de Recarga .223",
     "AmmoMaking.Case223Rem": "Estojo Vazio .223",
     "AmmoMaking.Bullet223Rem": "Projétil de Cobre .223",
-    "AmmoMaking.CastBullet223Rem": "Projétil de Chumbo Fundido .223"
+    "AmmoMaking.CastBullet223Rem": "Projétil de Chumbo Fundido .223",
+    "AmmoMaking.SpentCase223Rem": "Estojo Deflagrado .223"
 }

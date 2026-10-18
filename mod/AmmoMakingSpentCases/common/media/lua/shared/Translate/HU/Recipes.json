@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Kilőtt 5.56 hüvelyek tisztítása acél súrolóval",
     "AmmoMaking_CleanSpentCases3030Win": "Kilőtt .30-30 hüvelyek tisztítása acél súrolóval",
     "AmmoMaking_CleanSpentCases308Win": "Kilőtt .308 hüvelyek tisztítása acél súrolóval",
-    "AmmoMaking_CleanSpentCases12Gauge": "Kilőtt 12 Gauge sárgaréz sörétes hüvelyek tisztítása acél súrolóval"
+    "AmmoMaking_CleanSpentCases12Gauge": "Kilőtt 12 Gauge sárgaréz sörétes hüvelyek tisztítása acél súrolóval",
+    "AmmoMaking_MakeBrassCatcher": "Hüvelygyűjtő készítése",
+    "AmmoMaking_MakeCaseTumbler": "Dobpolírozó készítése",
+    "AmmoMaking_TumbleSpentCases9mm": "Kilőtt 9mm hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases38Special": "Kilőtt .38 Special hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases45ACP": "Kilőtt .45 ACP hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Kilőtt .357 Magnum hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Kilőtt .44 Magnum hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases556NATO": "Kilőtt 5.56 hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases3030Win": "Kilőtt .30-30 hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases308Win": "Kilőtt .308 hüvelyek tisztítása dobpolírozóban",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Kilőtt 12 Gauge sárgaréz sörétes hüvelyek tisztítása dobpolírozóban"
 }

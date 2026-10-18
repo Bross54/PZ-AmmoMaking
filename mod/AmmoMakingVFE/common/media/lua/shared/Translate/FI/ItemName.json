@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Tyhjä 7.62x39 hylsy",
     "AmmoMaking.Bullet762x39": "7.62x39 kupariluoti",
     "AmmoMaking.CastBullet762x39": "7.62x39 valettu lyijyluoti",
+    "AmmoMaking.SpentCase762x39": "Ammuttu 7.62x39 hylsy",
     "AmmoMaking.DieSet223Rem": ".223 latausmatriisisarja",
     "AmmoMaking.Case223Rem": "Tyhjä .223 hylsy",
     "AmmoMaking.Bullet223Rem": ".223 kupariluoti",
-    "AmmoMaking.CastBullet223Rem": ".223 valettu lyijyluoti"
+    "AmmoMaking.CastBullet223Rem": ".223 valettu lyijyluoti",
+    "AmmoMaking.SpentCase223Rem": "Ammuttu .223 hylsy"
 }

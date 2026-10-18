@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว 5.56 ด้วยฝอยขัดหม้อ",
     "AmmoMaking_CleanSpentCases3030Win": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .30-30 ด้วยฝอยขัดหม้อ",
     "AmmoMaking_CleanSpentCases308Win": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .308 ด้วยฝอยขัดหม้อ",
-    "AmmoMaking_CleanSpentCases12Gauge": "ทำความสะอาดปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ ด้วยฝอยขัดหม้อ"
+    "AmmoMaking_CleanSpentCases12Gauge": "ทำความสะอาดปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ ด้วยฝอยขัดหม้อ",
+    "AmmoMaking_MakeBrassCatcher": "ทำถุงเก็บปลอกกระสุน",
+    "AmmoMaking_MakeCaseTumbler": "ทำเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases9mm": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว 9 มม. ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases38Special": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .38 Special ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases45ACP": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .45 ACP ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases357Magnum": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .357 Magnum ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases44Magnum": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .44 Magnum ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases556NATO": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว 5.56 ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases3030Win": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .30-30 ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases308Win": "ทำความสะอาดปลอกกระสุนที่ยิงแล้ว .308 ด้วยเครื่องขัดแบบถัง",
+    "AmmoMaking_TumbleSpentCases12Gauge": "ทำความสะอาดปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ ด้วยเครื่องขัดแบบถัง"
 }

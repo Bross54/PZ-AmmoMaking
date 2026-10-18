@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "ปลอกกระสุนที่ยิงแล้ว 5.56",
     "AmmoMaking.SpentCase3030Win": "ปลอกกระสุนที่ยิงแล้ว .30-30",
     "AmmoMaking.SpentCase308Win": "ปลอกกระสุนที่ยิงแล้ว .308",
-    "AmmoMaking.SpentHull12Gauge": "ปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ"
+    "AmmoMaking.SpentHull12Gauge": "ปลอกลูกซองทองเหลืองที่ยิงแล้ว 12 เกจ",
+    "AmmoMaking.BrassCatcher": "ถุงเก็บปลอกกระสุน",
+    "AmmoMaking.CaseTumbler": "เครื่องขัดแบบถัง"
 }

@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "7.62x39薬莢(空)",
     "AmmoMaking.Bullet762x39": "7.62x39銅弾頭",
     "AmmoMaking.CastBullet762x39": "7.62x39鋳造鉛弾頭",
+    "AmmoMaking.SpentCase762x39": "7.62x39薬莢(使用済み)",
     "AmmoMaking.DieSet223Rem": ".223用ハンドロードダイセット",
     "AmmoMaking.Case223Rem": ".223薬莢(空)",
     "AmmoMaking.Bullet223Rem": ".223銅弾頭",
-    "AmmoMaking.CastBullet223Rem": ".223鋳造鉛弾頭"
+    "AmmoMaking.CastBullet223Rem": ".223鋳造鉛弾頭",
+    "AmmoMaking.SpentCase223Rem": ".223薬莢(使用済み)"
 }

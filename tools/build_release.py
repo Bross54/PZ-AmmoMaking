@@ -64,7 +64,7 @@ MOD_INFO = MOD + "/42/mod.info"
 MODS = [MOD, "mod/AmmoMakingPress", "mod/AmmoMakingSpentCases", "mod/AmmoMakingCalibre762x39",
         "mod/AmmoMakingVFE", "mod/AmmoMakingRains", "mod/AmmoMakingRainsExpanded",
         "mod/AmmoMakingGaelGunStore", "mod/AmmoMakingRealFirearms", "mod/AmmoMakingMFS",
-        "mod/AmmoMakingHotBrass"]
+        "mod/AmmoMakingGuns93", "mod/AmmoMakingPSA", "mod/AmmoMakingHotBrass"]
 # Tile sheets built from art: description -> the mod that ships the result.
 TILE_SHEETS = ["art/reloading_press/tiles.json"]
 

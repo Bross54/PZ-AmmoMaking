@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Bersihkan Selongsong 5.56mm Bekas Pakai dengan Sabut Baja",
     "AmmoMaking_CleanSpentCases3030Win": "Bersihkan Selongsong .30-30 Bekas Pakai dengan Sabut Baja",
     "AmmoMaking_CleanSpentCases308Win": "Bersihkan Selongsong .308 Bekas Pakai dengan Sabut Baja",
-    "AmmoMaking_CleanSpentCases12Gauge": "Bersihkan Selongsong Brass 12g Bekas Pakai dengan Sabut Baja"
+    "AmmoMaking_CleanSpentCases12Gauge": "Bersihkan Selongsong Brass 12g Bekas Pakai dengan Sabut Baja",
+    "AmmoMaking_MakeBrassCatcher": "Buat Penangkap Selongsong",
+    "AmmoMaking_MakeCaseTumbler": "Buat Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases9mm": "Bersihkan Selongsong 9mm Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases38Special": "Bersihkan Selongsong .38 Special Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases45ACP": "Bersihkan Selongsong .45 ACP Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Bersihkan Selongsong .357 Magnum Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Bersihkan Selongsong .44 Magnum Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases556NATO": "Bersihkan Selongsong 5.56mm Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases3030Win": "Bersihkan Selongsong .30-30 Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases308Win": "Bersihkan Selongsong .308 Bekas Pakai dengan Mesin Tumbler",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Bersihkan Selongsong Brass 12g Bekas Pakai dengan Mesin Tumbler"
 }

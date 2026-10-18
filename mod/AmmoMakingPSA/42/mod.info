@@ -1,0 +1,7 @@
+name=Ammo Making: Post Soviet Armory (experimental)
+id=AmmoMakingPSA
+require=\AmmoMaking,\PostSovietArmoryB42
+modversion=0.11.0
+versionMin=42.21.0
+poster=poster.png
+description=EXPERIMENTAL add-on for Ammo Making and Post Soviet Armory: handload its 9x18, 9x19, 9x39 (PSA), 5.45x39 (PSA), 7.62x25, 7.62x38R, 7.62x39 (PSA), 7.62x54R (PSA), 23x75, 12x70 like the vanilla rounds, with die sets, cases, copper or cast lead bullets and the same tools. Not yet verified in game.

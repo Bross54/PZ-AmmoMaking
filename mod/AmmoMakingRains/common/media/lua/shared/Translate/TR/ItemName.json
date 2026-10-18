@@ -3,12 +3,15 @@
     "AmmoMaking.Case223Rem": "Boş .223 Kovan",
     "AmmoMaking.Bullet223Rem": ".223 Bakır Çekirdek",
     "AmmoMaking.CastBullet223Rem": ".223 Dökme Kurşun Çekirdek",
+    "AmmoMaking.SpentCase223Rem": "Atılmış .223 Kovan",
     "AmmoMaking.DieSet762x51": "7.62x51 Dolum Matris Seti",
     "AmmoMaking.Case762x51": "Boş 7.62x51 Kovan",
     "AmmoMaking.Bullet762x51": "7.62x51 Bakır Çekirdek",
     "AmmoMaking.CastBullet762x51": "7.62x51 Dökme Kurşun Çekirdek",
+    "AmmoMaking.SpentCase762x51": "Atılmış 7.62x51 Kovan",
     "AmmoMaking.DieSet762x39M43": "7.62x39 M43 Dolum Matris Seti",
     "AmmoMaking.Case762x39M43": "Boş 7.62x39 M43 Kovan",
     "AmmoMaking.Bullet762x39M43": "7.62x39 M43 Bakır Çekirdek",
-    "AmmoMaking.CastBullet762x39M43": "7.62x39 M43 Dökme Kurşun Çekirdek"
+    "AmmoMaking.CastBullet762x39M43": "7.62x39 M43 Dökme Kurşun Çekirdek",
+    "AmmoMaking.SpentCase762x39M43": "Atılmış 7.62x39 M43 Kovan"
 }

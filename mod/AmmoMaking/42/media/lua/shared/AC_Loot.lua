@@ -130,6 +130,17 @@ AC_Loot.CONFIG = {
     -- A calibre's die set may be in at most this many lists.
     maxListsPerCalibre = 4,
 
+    -- The die sets of the gun-mod packs' calibres (active
+    -- extensions) share their own budget per list: all of
+    -- them together weigh at most this times the list's
+    -- scale, split by tier, so a pack of eighteen calibres
+    -- adds no more to a list than a quarter of a common
+    -- die set: the fullest room (a row of military
+    -- lockers) stays under one die set in twelve
+    -- containers with every pack at once. Nothing of it
+    -- is used without a pack.
+    extensionListWeight = 0.25,
+
     -- COMPONENTS: no single entry may weigh more than
     -- this, and all components of one list together not
     -- more than that.
@@ -1001,7 +1012,23 @@ end
 -- validate() reports them.
 ------------------------------------------------
 
+local buildEntriesOf
+
+
 function AC_Loot.buildEntries(
+    targets,
+    calibres
+)
+
+    return
+        buildEntriesOf(
+            targets,
+            calibres
+        )
+end
+
+
+buildEntriesOf = function(
     targets,
     calibres
 )
@@ -1081,6 +1108,101 @@ function AC_Loot.buildEntries(
 end
 
 
+-- The die sets of the active packs' calibres (or of
+-- calibres, when given): the same targets and tiers, then
+-- each list's share brought down to
+-- CONFIG.extensionListWeight in all. extension = true
+-- marks them.
+function AC_Loot.buildExtensionEntries(
+    targets,
+    calibres
+)
+
+    if not calibres then
+
+        calibres =
+            AC_Calibres.getActiveExtensions
+            and AC_Calibres.getActiveExtensions()
+            or {}
+    end
+
+
+    targets =
+        targets or AC_Loot.TARGETS
+
+
+    local entries =
+        buildEntriesOf(
+            targets,
+            calibres
+        )
+
+
+    local scaleOf = {}
+
+
+    for _,
+        target
+    in ipairs(
+        targets
+    )
+    do
+
+        if type(target.list) == "string" then
+            scaleOf[target.list] = target.scale
+        end
+    end
+
+
+    local perList = {}
+
+
+    for _,
+        entry
+    in ipairs(
+        entries
+    )
+    do
+
+        perList[entry.list] =
+            (perList[entry.list] or 0) + entry.weight
+    end
+
+
+    local budget =
+        AC_Loot.CONFIG.extensionListWeight
+
+
+    for _,
+        entry
+    in ipairs(
+        entries
+    )
+    do
+
+        local total =
+            perList[entry.list]
+
+
+        local cap =
+            budget * (scaleOf[entry.list] or 1)
+
+
+        if total > cap then
+
+            entry.weight =
+                entry.weight * cap / total
+        end
+
+
+        entry.extension = true
+    end
+
+
+    return entries
+end
+
+
 ------------------------------------------------
 -- VALIDATION (pure)
 ------------------------------------------------
@@ -1132,6 +1254,14 @@ function AC_Loot.validate(
         then
             problem("tier " .. tostring(tier) .. " must weigh more than 0 and at most " .. config.maxWeight)
         end
+    end
+
+
+    if type(config.extensionListWeight) ~= "number"
+        or config.extensionListWeight <= 0
+        or config.extensionListWeight > config.maxWeight
+    then
+        problem("extensionListWeight must weigh more than 0 and at most " .. config.maxWeight)
     end
 
 
@@ -1866,9 +1996,27 @@ function AC_Loot.register(
     end
 
 
+    local entries =
+        AC_Loot.buildEntries()
+
+
+    for _,
+        entry
+    in ipairs(
+        AC_Loot.buildExtensionEntries()
+    )
+    do
+
+        table.insert(
+            entries,
+            entry
+        )
+    end
+
+
     return
         registerEntries(
-            AC_Loot.buildEntries(),
+            entries,
             names,
             procedural,
             distribution,

@@ -323,6 +323,10 @@ AC_Visuals.ICONS = {
 
     { name = "AmmoMakingSpentHull", mod = "AmmoMakingSpentCases", prefix = "Item_", size = 32 },
 
+    { name = "AmmoMakingBrassCatcher", mod = "AmmoMakingSpentCases", prefix = "Item_", size = 32 },
+
+    { name = "AmmoMakingCaseTumbler", mod = "AmmoMakingSpentCases", prefix = "Item_", size = 32 },
+
     { name = "AmmoMakingReloadingPress", mod = "AmmoMakingPress", prefix = "Build_", size = 48 },
 }
 

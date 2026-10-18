@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Douille vide 7.62x39",
     "AmmoMaking.Bullet762x39": "Balle en cuivre 7.62x39",
     "AmmoMaking.CastBullet762x39": "Balle en plomb coulé 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Douille tirée 7.62x39",
     "AmmoMaking.DieSet223Rem": "Jeu de matrices de rechargement .223",
     "AmmoMaking.Case223Rem": "Douille vide .223",
     "AmmoMaking.Bullet223Rem": "Balle en cuivre .223",
-    "AmmoMaking.CastBullet223Rem": "Balle en plomb coulé .223"
+    "AmmoMaking.CastBullet223Rem": "Balle en plomb coulé .223",
+    "AmmoMaking.SpentCase223Rem": "Douille tirée .223"
 }

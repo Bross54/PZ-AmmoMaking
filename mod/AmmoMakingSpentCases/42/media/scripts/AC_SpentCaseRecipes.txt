@@ -422,4 +422,204 @@ module Base
             item 5 AmmoMaking.SpentHull12Gauge,
         }
     }
+
+    craftRecipe AmmoMaking_MakeBrassCatcher
+    {
+        time = 120,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Miscellaneous,
+        OnCreate = AC_Materials.onMakeBrassCatcher,
+        inputs
+        {
+            item 3 [Base.RippedSheets],
+            item 1 [Base.Wire],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.BrassCatcher,
+        }
+    }
+
+    craftRecipe AmmoMaking_MakeCaseTumbler
+    {
+        time = 150,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Miscellaneous,
+        OnCreate = AC_Materials.onMakeCaseTumbler,
+        inputs
+        {
+            item 1 [Base.SheetMetal],
+            item 2 [Base.Plank],
+            item 4 [Base.Nails],
+            item 1 tags[base:hammer] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 AmmoMaking.CaseTumbler,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases9mm
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases9mm,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase9mm],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase9mm,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases38Special
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases38Special,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase38Special],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase38Special,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases45ACP
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases45ACP,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase45ACP],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase45ACP,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases357Magnum
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases357Magnum,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase357Magnum],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase357Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases44Magnum
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases44Magnum,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase44Magnum],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase44Magnum,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases556NATO
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases556NATO,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase556NATO],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase556NATO,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases3030Win
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases3030Win,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase3030Win],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase3030Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases308Win
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases308Win,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentCase308Win],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentCase308Win,
+        }
+    }
+
+    craftRecipe AmmoMaking_TumbleSpentCases12Gauge
+    {
+        time = 300,
+        timedAction = Making,
+        Tags = AnySurfaceCraft,
+        category = Metalworking,
+        OnCreate = AC_Materials.onTumbleSpentCases12Gauge,
+        inputs
+        {
+            item 20 [AmmoMaking.SpentHull12Gauge],
+            item 1 [AmmoMaking.CaseTumbler] mode:keep,
+        }
+        outputs
+        {
+            item 20 AmmoMaking.SpentHull12Gauge,
+        }
+    }
 }

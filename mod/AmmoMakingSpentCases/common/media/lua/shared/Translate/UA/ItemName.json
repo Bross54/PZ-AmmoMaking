@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Стріляна гільза 5.56мм",
     "AmmoMaking.SpentCase3030Win": "Стріляна гільза .30-30",
     "AmmoMaking.SpentCase308Win": "Стріляна гільза .308",
-    "AmmoMaking.SpentHull12Gauge": "Стріляна латунна гільза 12 калібру"
+    "AmmoMaking.SpentHull12Gauge": "Стріляна латунна гільза 12 калібру",
+    "AmmoMaking.BrassCatcher": "Гільзоуловлювач",
+    "AmmoMaking.CaseTumbler": "Галтувальний барабан"
 }

@@ -2,5 +2,6 @@
     "AmmoMaking.DieSet762x39": "Zestaw matryc do elaboracji 7.62x39",
     "AmmoMaking.Case762x39": "Pusta łuska 7.62x39",
     "AmmoMaking.Bullet762x39": "Miedziany pocisk 7.62x39",
-    "AmmoMaking.CastBullet762x39": "Odlewany ołowiany pocisk 7.62x39"
+    "AmmoMaking.CastBullet762x39": "Odlewany ołowiany pocisk 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Wystrzelona łuska 7.62x39"
 }

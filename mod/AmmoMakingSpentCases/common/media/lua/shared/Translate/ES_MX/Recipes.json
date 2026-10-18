@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "Limpiar casquillos percutidos de 5.56 con lana de acero",
     "AmmoMaking_CleanSpentCases3030Win": "Limpiar casquillos percutidos de .30-30 con lana de acero",
     "AmmoMaking_CleanSpentCases308Win": "Limpiar casquillos percutidos de .308 con lana de acero",
-    "AmmoMaking_CleanSpentCases12Gauge": "Limpiar casquillos de latón percutidos de calibre 12 con lana de acero"
+    "AmmoMaking_CleanSpentCases12Gauge": "Limpiar casquillos de latón percutidos de calibre 12 con lana de acero",
+    "AmmoMaking_MakeBrassCatcher": "Fabricar recogevainas",
+    "AmmoMaking_MakeCaseTumbler": "Fabricar pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases9mm": "Limpiar casquillos percutidos de 9mm en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases38Special": "Limpiar casquillos percutidos de .38 Especial en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases45ACP": "Limpiar casquillos percutidos de .45 ACP en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases357Magnum": "Limpiar casquillos percutidos de .357 Magnum en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases44Magnum": "Limpiar casquillos percutidos de .44 Magnum en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases556NATO": "Limpiar casquillos percutidos de 5.56 en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases3030Win": "Limpiar casquillos percutidos de .30-30 en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases308Win": "Limpiar casquillos percutidos de .308 en un pulidor de tambor",
+    "AmmoMaking_TumbleSpentCases12Gauge": "Limpiar casquillos de latón percutidos de calibre 12 en un pulidor de tambor"
 }

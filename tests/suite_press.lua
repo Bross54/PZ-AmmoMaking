@@ -208,7 +208,7 @@ return function(T)
             eq(recipe.timedAction, P.timedAction, what .. " uses vanilla's press action")
             check(recipe.benchTag ~= "AnySurfaceCraft", what .. " is not offered in the hand-craft window")
             -- Named after its hand recipe; no two recipes share a name.
-            eq(names[recipe.id], handNames[recipe.handRecipe] .. P.nameSuffix, what .. " is named after its hand recipe")
+            eq(names[recipe.id], AC_Calibres.pressName(handNames[recipe.handRecipe]), what .. " is named after its hand recipe")
             check(not seenNames[names[recipe.id]], what .. " has a name nothing else has")
             seenNames[names[recipe.id]] = true
             -- Broken tools: the die set is the only kept line, and it is the

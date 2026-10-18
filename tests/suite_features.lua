@@ -29,8 +29,10 @@ return function(T)
             { "packGaelGunStore", F.EXPERIMENTAL, "mod", "AmmoMakingGaelGunStore", false },
             { "packRealFirearms", F.EXPERIMENTAL, "mod", "AmmoMakingRealFirearms", false },
             { "packMFS", F.EXPERIMENTAL, "mod", "AmmoMakingMFS", false },
+            { "packGuns93", F.EXPERIMENTAL, "mod", "AmmoMakingGuns93", false },
+            { "packPSA", F.EXPERIMENTAL, "mod", "AmmoMakingPSA", false },
         }
-        eq(#F.DEFINITIONS, #expected, "thirteen switched features")
+        eq(#F.DEFINITIONS, #expected, "fifteen switched features")
         for index, want in ipairs(expected) do
             local definition = F.DEFINITIONS[index]
             eq(definition.id, want[1], "feature " .. index .. " is " .. want[1])
@@ -140,7 +142,7 @@ return function(T)
 
         -- A mod that already leaves a casing for every shot: spent cases
         -- stand down rather than leave a second one.
-        eq(table.concat(F.get("spentCases").conflicts, ","), "HBVCEFb42", "spent cases know the one installed mod that does the same")
+        eq(table.concat(F.get("spentCases").conflicts, ","), "HBVCEFb42,ModernFirearmsSystem", "spent cases know the two installed mods that do the same (Hot Brass, MFS's MFSEject)")
         for _, spelling in ipairs({ "HBVCEFb42", "\HBVCEFb42" }) do
             MOCK.activeMods = { "AmmoMakingSpentCases", spelling }
             local enabled, why = F.getState("spentCases")

@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Пустая гильза 7.62x39",
     "AmmoMaking.Bullet762x39": "Медная пуля 7.62x39",
     "AmmoMaking.CastBullet762x39": "Литая свинцовая пуля 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Стреляная гильза 7.62x39",
     "AmmoMaking.DieSet223Rem": "Набор матриц для снаряжения патронов .223",
     "AmmoMaking.Case223Rem": "Пустая гильза .223",
     "AmmoMaking.Bullet223Rem": "Медная пуля .223",
-    "AmmoMaking.CastBullet223Rem": "Литая свинцовая пуля .223"
+    "AmmoMaking.CastBullet223Rem": "Литая свинцовая пуля .223",
+    "AmmoMaking.SpentCase223Rem": "Стреляная гильза .223"
 }

@@ -3,8 +3,10 @@
     "AmmoMaking.Case762x39": "Casquillo vacío de 7.62x39",
     "AmmoMaking.Bullet762x39": "Proyectil de cobre de 7.62x39",
     "AmmoMaking.CastBullet762x39": "Proyectil de plomo fundido de 7.62x39",
+    "AmmoMaking.SpentCase762x39": "Casquillo percutido de 7.62x39",
     "AmmoMaking.DieSet223Rem": "Juego de matrices de recarga de .223",
     "AmmoMaking.Case223Rem": "Casquillo vacío de .223",
     "AmmoMaking.Bullet223Rem": "Proyectil de cobre de .223",
-    "AmmoMaking.CastBullet223Rem": "Proyectil de plomo fundido de .223"
+    "AmmoMaking.CastBullet223Rem": "Proyectil de plomo fundido de .223",
+    "AmmoMaking.SpentCase223Rem": "Casquillo percutido de .223"
 }

@@ -216,14 +216,57 @@ def to_python(value):
     return {key: to_python(value[key]) for key in keys}
 
 
+def workshop_mod_folder(install, mod_id):
+    """The folder of an installed Workshop mod (under mods/), found by the id in its mod.info, or None."""
+    workshop = os.path.normpath(os.path.join(install.root, "..", "..", "workshop", "content", "108600"))
+    for info in glob.glob(workshop + "/*/mods/*/**/mod.info", recursive=True):
+        with io.open(info, encoding="utf-8", errors="replace") as handle:
+            text = handle.read()
+        if re.search(r"(?mi)^id\s*=\s*" + re.escape(mod_id) + r"\s*$", text):
+            parts = os.path.normpath(info).split(os.sep)
+            return os.sep.join(parts[:parts.index("mods") + 2])
+    return None
+
+
+def gun_mod_snapshot(install, gun_mods):
+    """What each calibre pack's gun mod, as installed, has of what the pack expects:
+    its rounds, the AmmoType its firearms give them, the casings a bridge resizes."""
+    found = {}
+    for mod_id, expected in sorted(gun_mods.items()):
+        folder = workshop_mod_folder(install, mod_id)
+        if folder is None:
+            found[mod_id] = {"installed": False}
+            continue
+        items, ammo_types = set(), {}
+        # os.walk, not glob: glob skips folders whose name starts with a
+        # dot, and Real Firearms keeps guns in folders named ".45", ".357".
+        paths = [os.path.join(where, name) for where, _, names in os.walk(folder) for name in names
+                 if name.endswith(".txt") and os.sep + "scripts" in where]
+        for path in paths:
+            with io.open(path, encoding="utf-8", errors="replace") as handle:
+                text = re.sub(r"/\*.*?\*/", "", handle.read(), flags=re.S)
+            items.update(re.findall(r"(?m)^\s*item\s+(\w+)", text))
+            # Not anchored to a line: some mods write several fields on one.
+            for key in re.findall(r"\bAmmoType\s*=\s*([\w:.]+)", text):
+                ammo_types[key] = ammo_types.get(key, 0) + 1
+        found[mod_id] = {
+            "installed": True,
+            "rounds": {round_: round_.split(".", 1)[1] in items for round_ in sorted(expected.get("rounds") or {})},
+            "ammoTypes": {key: ammo_types.get(key, 0) for key in sorted(expected.get("ammoTypes") or {})},
+            "casings": {casing: casing.split(".", 1)[1] in items for casing in sorted(expected.get("casings") or {})},
+        }
+    return found
+
+
 def mod_facts():
     lua = lua_runtime()
     lua.execute("print = function() end")
     lua.execute('MOCK = dofile("%s/tests/mock_pz.lua")' % ROOT)
     lua.execute('MOCK.capturePrint = function() end')
     lua.execute('MOCK.loadMod("%s")' % MOD_LUA)
+    lua.execute('AC_ROOT = "%s"' % ROOT)
     facts = to_python(lua.eval('dofile("%s/tools/mod_facts.lua")' % ROOT))
-    for key in ("items", "itemTags", "benchTags", "timedActions", "vanillaRecipes", "lootLists", "sprites", "stationSprites", "sounds", "modItems", "uses"):
+    for key in ("items", "itemTags", "benchTags", "timedActions", "vanillaRecipes", "lootLists", "sprites", "stationSprites", "gunMods", "sounds", "modItems", "uses"):
         if isinstance(facts.get(key), list):
             facts[key] = {}
     return facts
@@ -900,6 +943,8 @@ def build_snapshot(install, jar, facts, calls):
             "benchTags": ";".join(tag.strip() for tag in bench.group(1).split(";")) if bench else "",
         }
 
+    snapshot["gunMods"] = gun_mod_snapshot(install, facts["gunMods"])
+
     sounds = install.sounds()
     snapshot["sounds"] = {name: name in sounds for name in sorted(facts["sounds"])}
 
@@ -1194,6 +1239,25 @@ def judge(snapshot, facts, calls, recorded, have_jar):
             findings.append(("WARNING", "tile %s is claimed by %s, not %s: the debug furnace tools will not find or build it" % (sprite, entry["entity"] or "no entity", expected)))
     report.group("vanilla station tiles the debug tools use (%d)" % len(facts["stationSprites"]), findings)
 
+    # Calibre packs: experimental add-ons, so what moved in a gun mod is a
+    # WARNING. A gun mod that is not installed here is not judged.
+    findings = []
+    for mod_id, entry in sorted(snapshot["gunMods"].items()):
+        expected = facts["gunMods"][mod_id]
+        if not entry["installed"]:
+            continue
+        for round_, present in entry["rounds"].items():
+            if not present:
+                findings.append(("WARNING", "%s no longer defines %s (calibre %s of %s)" % (mod_id, round_, expected["rounds"][round_], ", ".join(expected["packs"]))))
+        for key, users in entry["ammoTypes"].items():
+            if not users:
+                findings.append(("WARNING", "no firearm or magazine of %s has AmmoType %s (calibre %s)" % (mod_id, key, expected["ammoTypes"][key])))
+        for casing, present in entry["casings"].items():
+            if not present:
+                findings.append(("WARNING", "%s no longer defines the casing %s (resized for %s)" % (mod_id, casing, expected["casings"][casing])))
+    installed = sum(1 for entry in snapshot["gunMods"].values() if entry["installed"])
+    report.group("gun mods of the calibre packs (%d of %d installed)" % (installed, len(snapshot["gunMods"])), findings)
+
     findings = [("WARNING", "sound %s does not exist (%s)" % (name, facts["sounds"][name])) for name, present in snapshot["sounds"].items() if not present]
     report.group("sounds", findings)
 
@@ -1338,7 +1402,7 @@ def judge(snapshot, facts, calls, recorded, have_jar):
     else:
         if have_jar and recorded.get("version") != snapshot["version"]:
             findings.append(("WARNING", "game version %s, recorded %s" % (snapshot["version"], recorded.get("version"))))
-        for section in ("items", "art", "pressDraft", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "stationSprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
+        for section in ("items", "art", "pressDraft", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "stationSprites", "gunMods", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
             # (designBodies is compared, with what to do about it, in its
             # own group above.)
             for line in difference(recorded.get(section) or {}, snapshot[section] or {}, section):

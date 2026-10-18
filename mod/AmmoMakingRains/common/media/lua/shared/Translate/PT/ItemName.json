@@ -3,12 +3,15 @@
     "AmmoMaking.Case223Rem": "Invólucro Vazio de .223",
     "AmmoMaking.Bullet223Rem": "Projétil de Cobre de .223",
     "AmmoMaking.CastBullet223Rem": "Projétil de Chumbo Fundido de .223",
+    "AmmoMaking.SpentCase223Rem": "Invólucro Deflagrado de .223",
     "AmmoMaking.DieSet762x51": "Conjunto de Matrizes de Recarga de 7.62x51",
     "AmmoMaking.Case762x51": "Invólucro Vazio de 7.62x51",
     "AmmoMaking.Bullet762x51": "Projétil de Cobre de 7.62x51",
     "AmmoMaking.CastBullet762x51": "Projétil de Chumbo Fundido de 7.62x51",
+    "AmmoMaking.SpentCase762x51": "Invólucro Deflagrado de 7.62x51",
     "AmmoMaking.DieSet762x39M43": "Conjunto de Matrizes de Recarga de 7.62x39 M43",
     "AmmoMaking.Case762x39M43": "Invólucro Vazio de 7.62x39 M43",
     "AmmoMaking.Bullet762x39M43": "Projétil de Cobre de 7.62x39 M43",
-    "AmmoMaking.CastBullet762x39M43": "Projétil de Chumbo Fundido de 7.62x39 M43"
+    "AmmoMaking.CastBullet762x39M43": "Projétil de Chumbo Fundido de 7.62x39 M43",
+    "AmmoMaking.SpentCase762x39M43": "Invólucro Deflagrado de 7.62x39 M43"
 }

@@ -142,8 +142,10 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Spent .30-30 Case (`AmmoMaking.SpentCase3030Win`) | `AmmoMakingSpentCaseRifle`, the mod's own | `RifleAmmo`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentCase3030Win`: `Icon`, `WorldStaticModel` | a world model |
 | Spent .308 Case (`AmmoMaking.SpentCase308Win`) | `AmmoMakingSpentCaseRifle`, the mod's own | `RifleAmmo`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentCase308Win`: `Icon`, `WorldStaticModel` | a world model |
 | Spent 12 Gauge Brass Hull (`AmmoMaking.SpentHull12Gauge`) | `AmmoMakingSpentHull`, the mod's own | `ShotGunShells`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentHull12Gauge`: `Icon`, `WorldStaticModel` | a world model |
+| Brass Catcher (`AmmoMaking.BrassCatcher`) | `AmmoMakingBrassCatcher`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `BrassCatcher`: `Icon`, `WorldStaticModel` | none; a world model is optional |
+| Case Tumbler (`AmmoMaking.CaseTumbler`) | `AmmoMakingCaseTumbler`, the mod's own | none (the engine's default for an item without one) | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `CaseTumbler`: `Icon`, `WorldStaticModel` | none; a world model is optional |
 
-9 visuals named in Lua, 72 items of the main mod, 9 of the spent-cases add-on: 90 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
+9 visuals named in Lua, 72 items of the main mod, 11 of the spent-cases add-on: 92 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
 
 <!-- END PLACEHOLDER ASSET TABLE -->
 

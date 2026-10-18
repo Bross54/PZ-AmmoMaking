@@ -7,5 +7,7 @@
     "AmmoMaking.SpentCase556NATO": "Vaina Percutida de 5.56",
     "AmmoMaking.SpentCase3030Win": "Vaina Percutida de .30-30",
     "AmmoMaking.SpentCase308Win": "Vaina Percutida de .308",
-    "AmmoMaking.SpentHull12Gauge": "Vaina de Latón Percutida de Calibre 12"
+    "AmmoMaking.SpentHull12Gauge": "Vaina de Latón Percutida de Calibre 12",
+    "AmmoMaking.BrassCatcher": "Recogevainas",
+    "AmmoMaking.CaseTumbler": "Pulidor de tambor"
 }

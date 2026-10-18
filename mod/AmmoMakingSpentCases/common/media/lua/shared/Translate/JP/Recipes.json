@@ -19,5 +19,16 @@
     "AmmoMaking_CleanSpentCases556NATO": "使用済みの5.56薬莢をスチールウールで磨く",
     "AmmoMaking_CleanSpentCases3030Win": "使用済みの.30-30薬莢をスチールウールで磨く",
     "AmmoMaking_CleanSpentCases308Win": "使用済みの.308薬莢をスチールウールで磨く",
-    "AmmoMaking_CleanSpentCases12Gauge": "使用済みの12ゲージ真鍮製シェルをスチールウールで磨く"
+    "AmmoMaking_CleanSpentCases12Gauge": "使用済みの12ゲージ真鍮製シェルをスチールウールで磨く",
+    "AmmoMaking_MakeBrassCatcher": "薬莢キャッチャーを作る",
+    "AmmoMaking_MakeCaseTumbler": "薬莢タンブラーを作る",
+    "AmmoMaking_TumbleSpentCases9mm": "使用済みの9mm薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases38Special": "使用済みの.38スペシャル薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases45ACP": "使用済みの.45ACP薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases357Magnum": "使用済みの.357マグナム薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases44Magnum": "使用済みの.44マグナム薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases556NATO": "使用済みの5.56薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases3030Win": "使用済みの.30-30薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases308Win": "使用済みの.308薬莢をタンブラーで磨く",
+    "AmmoMaking_TumbleSpentCases12Gauge": "使用済みの12ゲージ真鍮製シェルをタンブラーで磨く"
 }
