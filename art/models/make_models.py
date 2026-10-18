@@ -30,6 +30,10 @@ and one generated script per mod with the model blocks:
 An item names its model as WorldStaticModel = AmmoMaking.<name>, the module
 and the name, as other mods name theirs (e.g. MFSEject.9x19_Casing).
 
+Budget: about 300 triangles a model (vanilla's world items run 48 to 160;
+these are 172 to 268). Round parts get twelve sides and smooth normals,
+caps only where they are seen, bevels only on the main bodies.
+
 Everything is deterministic: the same script gives the same bytes.
 
 REQUIRES FUTURE IN-GAME VERIFICATION: that each model shows on the ground,
@@ -379,9 +383,11 @@ class Model:
                     self.polygon([P(sx * hx, sy * (hy - r), sz * (hz - r)), P(sx * (hx - r), sy * hy, sz * (hz - r)),
                                   P(sx * (hx - r), sy * (hy - r), sz * hz)], bev, centre)
 
-    def cone(self, p0, p1, r0, r1, side, cap0=None, cap1=None, segments=16, smooth=True, turn=0.0):
+    def cone(self, p0, p1, r0, r1, side, cap0=None, cap1=None, segments=12, smooth=True, turn=0.0):
         """A cylinder or cone from p0 (radius r0) to p1 (radius r1). A cap
-        region left out leaves that end open."""
+        region left out leaves that end open; side None leaves out the
+        wall (a disc). Smooth normals let twelve sides read as round. A
+        cap costs segments - 2 triangles, the wall 2 * segments."""
         axis = sub(p1, p0)
         length = math.sqrt(dot(axis, axis))
         a = unit(axis)
@@ -393,8 +399,8 @@ class Model:
             out = add(mul(u, math.cos(ang)), mul(w, math.sin(ang)))
             return unit(add(mul(out, length), mul(a, r0 - r1)))
         top_is_p1 = p1[1] >= p0[1]
-        x0, y0, x1, y1 = side
-        for k in range(segments):
+        x0, y0, x1, y1 = side or (0, 0, 0, 0)
+        for k in range(segments if side else 0):
             q = [ring(p0, r0, k), ring(p0, r0, k + 1), ring(p1, r1, k + 1), ring(p1, r1, k)]
             if smooth:
                 ns = [radial(k), radial(k + 1), radial(k + 1), radial(k)]
@@ -415,27 +421,26 @@ class Model:
                 continue
             cx0, cy0, cx1, cy1 = cap
             mid_uv = ((cx0 + cx1) / 2, (cy0 + cy1) / 2)
-            for k in range(segments):
-                pa, pb = ring(p, radius, k), ring(p, radius, k + 1)
-                ang_a, ang_b = 2 * math.pi * k / segments, 2 * math.pi * (k + 1) / segments
-                uva = (mid_uv[0] + math.cos(ang_a) * (cx1 - cx0) / 2, mid_uv[1] + math.sin(ang_a) * (cy1 - cy0) / 2)
-                uvb = (mid_uv[0] + math.cos(ang_b) * (cx1 - cx0) / 2, mid_uv[1] + math.sin(ang_b) * (cy1 - cy0) / 2)
-                tri, uvs = [p, pa, pb], [mid_uv, uva, uvb]
+            disc = lambda k: (mid_uv[0] + math.cos(turn + 2 * math.pi * k / segments) * (cx1 - cx0) / 2,
+                              mid_uv[1] + math.sin(turn + 2 * math.pi * k / segments) * (cy1 - cy0) / 2)
+            # A fan from the first rim point: no centre vertex.
+            for k in range(1, segments - 1):
+                tri, uvs = [ring(p, radius, 0), ring(p, radius, k), ring(p, radius, k + 1)], [disc(0), disc(k), disc(k + 1)]
                 if dot(cross(sub(tri[1], tri[0]), sub(tri[2], tri[0])), direction) < 0:
-                    tri, uvs = [p, pb, pa], [mid_uv, uvb, uva]
+                    tri, uvs = [tri[0], tri[2], tri[1]], [uvs[0], uvs[2], uvs[1]]
                 self.triangle(tuple(tri), (direction,) * 3, tuple(uvs))
 
-    def beam(self, p0, p1, width, region):
-        """A square beam from p0 to p1."""
-        self.cone(p0, p1, width / math.sqrt(2), width / math.sqrt(2), region, region, region, segments=4, smooth=False, turn=math.pi / 4)
+    def beam(self, p0, p1, width, region, cap0=True, cap1=True):
+        """A square beam from p0 to p1: 8 triangles, and 2 for each end left on."""
+        self.cone(p0, p1, width / math.sqrt(2), width / math.sqrt(2), region, region if cap0 else None,
+                  region if cap1 else None, segments=4, smooth=False, turn=math.pi / 4)
 
-    def tube(self, points, radius, region, segments=8):
+    def tube(self, points, radius, region, segments=6):
+        """Round lengths from point to point, open-ended, overlapping at the bends."""
         for a, b in zip(points, points[1:]):
             self.cone(a, b, radius, radius, region, None, None, segments=segments)
-        for p in points[1:-1]:
-            self.sphere(p, radius, region, 1)
 
-    def ring(self, centre, axis, radius, thickness, region, segments=24, sides=8):
+    def ring(self, centre, axis, radius, thickness, region, segments=12, sides=4):
         """A torus round axis."""
         a = unit(axis)
         u, w = basis(a)
@@ -456,7 +461,7 @@ class Model:
                 self.triangle((q[0], q[1], q[2]), (ns[0], ns[1], ns[2]), (uv[0], uv[1], uv[2]))
                 self.triangle((q[0], q[2], q[3]), (ns[0], ns[2], ns[3]), (uv[0], uv[2], uv[3]))
 
-    def sphere(self, centre, radius, region, level=1, jitter=0.0, seed=1, squash=(1, 1, 1)):
+    def sphere(self, centre, radius, region, level=0, jitter=0.0, seed=1, squash=(1, 1, 1)):
         """An icosphere, its points pushed in and out by jitter (a rock)."""
         t = (1 + math.sqrt(5)) / 2
         verts = [unit(v) for v in [(-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0), (0, -1, t), (0, 1, t), (0, -1, -t), (0, 1, -t),
@@ -545,15 +550,15 @@ def sample():
     tag = t.region(64, 48, Atlas.tag, PAPER)
     rock = t.region(64, 64, Atlas.rock, ROCK)
     m = Model(t)
-    m.cone((0, 0.0, 0), (0, 0.010, 0), 0.032, 0.042, canvas, dark, None, segments=20)
-    m.cone((0, 0.010, 0), (0, 0.055, 0), 0.042, 0.038, canvas, None, None, segments=20)
-    m.cone((0, 0.055, 0), (0, 0.072, 0), 0.038, 0.013, canvas, None, None, segments=20)
-    m.cone((0, 0.072, 0), (0, 0.082, 0), 0.013, 0.012, dark, None, None, segments=14)
-    m.ring((0, 0.077, 0), (0, 1, 0), 0.014, 0.0028, twine, segments=18, sides=6)
-    m.cone((0, 0.082, 0), (0, 0.093, 0), 0.012, 0.022, canvas, None, dark, segments=14)
-    m.sphere((0.003, 0.094, 0.001), 0.012, rock, level=1, jitter=0.45, seed=4, squash=(1.1, 0.7, 1.0))
-    m.tube([(0.012, 0.077, 0.006), (0.02, 0.07, 0.03), (0.01, 0.058, 0.041)], 0.0012, twine, segments=5)
-    m.box((0.004, 0.047, 0.0415), (0.028, 0.02, 0.002), {"side": tag, "front": tag}, bevel=0.0005)
+    m.cone((0, 0.0, 0), (0, 0.010, 0), 0.032, 0.042, canvas, dark, None, segments=16)
+    m.cone((0, 0.010, 0), (0, 0.055, 0), 0.042, 0.038, canvas, segments=16)
+    m.cone((0, 0.055, 0), (0, 0.072, 0), 0.038, 0.013, canvas, segments=16)
+    m.cone((0, 0.072, 0), (0, 0.082, 0), 0.013, 0.012, dark, segments=8)
+    m.cone((0, 0.0745, 0), (0, 0.0795, 0), 0.0155, 0.0155, twine, segments=8)   # the twine wrap
+    m.cone((0, 0.082, 0), (0, 0.093, 0), 0.012, 0.022, canvas, None, dark, segments=10)
+    m.sphere((0.003, 0.094, 0.001), 0.012, rock, level=0, jitter=0.45, seed=4, squash=(1.1, 0.7, 1.0))
+    m.tube([(0.012, 0.077, 0.006), (0.01, 0.058, 0.041)], 0.0012, twine, segments=4)
+    m.box((0.004, 0.047, 0.0415), (0.028, 0.02, 0.002), {"side": tag, "front": tag})
     return m
 
 
@@ -568,14 +573,13 @@ def field_kit():
     glass = t.region(32, 32, Atlas.screen, GLASS)
     wood = t.region(64, 32, Atlas.wood, WOOD)
     m = Model(t)
-    m.cone((-0.11, 0.032, 0), (0.11, 0.032, 0), 0.032, 0.032, canvas, ends, ends, segments=20)
-    m.box((0, 0.0035, 0.072), (0.215, 0.007, 0.085), {"side": canvas, "top": pockets}, bevel=0.002)
+    m.cone((-0.11, 0.032, 0), (0.11, 0.032, 0), 0.032, 0.032, canvas, ends, ends)
+    m.box((0, 0.0035, 0.072), (0.215, 0.007, 0.085), {"side": canvas, "top": pockets})
     for x in (-0.068, 0.068):
-        m.ring((x, 0.032, 0), (1, 0, 0), 0.0335, 0.0035, leather, segments=24, sides=6)
-        m.box((x, 0.066, 0), (0.012, 0.005, 0.016), steel, bevel=0.0015)
-    m.ring((0.07, 0.009, 0.075), (0, 1, 0), 0.012, 0.0022, steel, segments=20, sides=6)
-    m.cone((0.07, 0.008, 0.075), (0.07, 0.0095, 0.075), 0.011, 0.011, glass, glass, glass, segments=16)
-    m.cone((0.082, 0.009, 0.075), (0.115, 0.009, 0.075), 0.0035, 0.004, wood, wood, wood, segments=8)
+        m.cone((x - 0.006, 0.032, 0), (x + 0.006, 0.032, 0), 0.0345, 0.0345, leather)     # strap
+        m.box((x, 0.066, 0), (0.012, 0.005, 0.016), steel)                                # buckle
+    m.cone((0.07, 0.007, 0.075), (0.07, 0.0105, 0.075), 0.013, 0.013, steel, None, glass, segments=10)  # lens
+    m.cone((0.083, 0.009, 0.075), (0.115, 0.009, 0.075), 0.0035, 0.004, wood, None, wood, segments=6)
     return m
 
 
@@ -592,13 +596,13 @@ def advanced_kit():
     m.box((0, 0.078, 0), (0.28, 0.034, 0.18), {"side": shell, "front": shell, "back": shell, "top": top}, bevel=0.009)
     m.box((0, 0.0605, 0), (0.274, 0.004, 0.174), dark)
     for x in (-0.045, 0.045):
-        m.box((x, 0.1, 0), (0.014, 0.012, 0.016), dark, bevel=0.003)
-    m.cone((-0.05, 0.109, 0), (0.05, 0.109, 0), 0.0075, 0.0075, rubber, rubber, rubber, segments=10)
+        m.box((x, 0.1, 0), (0.014, 0.012, 0.016), dark)
+    m.cone((-0.05, 0.109, 0), (0.05, 0.109, 0), 0.0075, 0.0075, rubber, rubber, rubber, segments=8)
     for x in (-0.09, 0.09):
-        m.box((x, 0.06, 0.0915), (0.026, 0.026, 0.006), steel, bevel=0.0015)
+        m.box((x, 0.06, 0.0915), (0.026, 0.026, 0.006), steel)
     for sx in (-1, 1):
         for sz in (-1, 1):
-            m.box((sx * 0.134, 0.012, sz * 0.084), (0.016, 0.024, 0.016), rubber, bevel=0.003)
+            m.box((sx * 0.134, 0.012, sz * 0.084), (0.016, 0.024, 0.016), rubber)
     return m
 
 
@@ -613,14 +617,14 @@ def analyzer():
     red = t.region(32, 32, Atlas.flat, (180, 50, 40))
     m = Model(t)
     m.box((0, 0.16, 0), (0.38, 0.28, 0.30), {"side": side, "back": side, "front": front, "top": top, "bottom": dark, "bevel": side}, bevel=0.012)
-    m.box((0, 0.065, 0.158), (0.2, 0.045, 0.026), {"side": dark, "front": dark}, bevel=0.004)
-    m.cone((-0.04, 0.07, 0.172), (0.04, 0.07, 0.172), 0.0035, 0.0035, side, side, side, segments=8)
+    m.box((0, 0.065, 0.158), (0.2, 0.045, 0.026), {"side": dark, "front": dark})
+    m.cone((-0.04, 0.07, 0.173), (0.04, 0.07, 0.173), 0.0035, 0.0035, side, segments=6)
     for sx in (-1, 1):
         for sz in (-1, 1):
-            m.cone((sx * 0.16, 0.0, sz * 0.12), (sx * 0.16, 0.022, sz * 0.12), 0.016, 0.014, rubber, rubber, rubber, segments=12)
-    m.cone((0.11, 0.30, -0.05), (0.11, 0.318, -0.05), 0.026, 0.024, side, None, None, segments=16)
-    m.cone((0.11, 0.318, -0.05), (0.11, 0.326, -0.05), 0.027, 0.027, red, red, red, segments=16)
-    m.tube([(-0.15, 0.06, -0.15), (-0.15, 0.03, -0.19), (-0.13, 0.006, -0.24), (-0.05, 0.006, -0.27)], 0.006, rubber, segments=8)
+            m.cone((sx * 0.16, 0.0, sz * 0.12), (sx * 0.16, 0.022, sz * 0.12), 0.016, 0.014, rubber, segments=8)
+    m.cone((0.11, 0.30, -0.05), (0.11, 0.318, -0.05), 0.026, 0.024, side)
+    m.cone((0.11, 0.318, -0.05), (0.11, 0.326, -0.05), 0.027, 0.027, red, None, red)
+    m.tube([(-0.15, 0.06, -0.15), (-0.15, 0.03, -0.19), (-0.13, 0.006, -0.24), (-0.05, 0.006, -0.27)], 0.006, rubber, segments=6)
     return m
 
 
@@ -633,18 +637,16 @@ def brass_catcher():
     brass = t.region(32, 32, Atlas.brass, BRASS)
     pile = t.region(64, 64, Atlas.pile, BRASS)
     m = Model(t)
-    m.cone((0, 0.0, 0), (0, 0.014, 0), 0.022, 0.034, net, bottom, None, segments=20)
+    m.cone((0, 0.0, 0), (0, 0.014, 0), 0.022, 0.034, net, bottom, None)
+    m.cone((0, 0.014, 0), (0, 0.1, 0), 0.034, 0.05, net)
     # What it has caught, seen through the mouth.
-    m.cone((0, 0.082, 0), (0, 0.086, 0), 0.0465, 0.0475, net, None, pile, segments=20)
-    m.cone((0, 0.014, 0), (0, 0.1, 0), 0.034, 0.05, net, None, None, segments=20)
-    m.ring((0, 0.102, 0), (0, 1, 0), 0.0505, 0.003, steel, segments=28, sides=6)
-    m.tube([(0.052, 0.102, 0), (0.075, 0.108, 0), (0.095, 0.124, 0)], 0.0028, steel, segments=6)
-    m.box((0.1, 0.13, 0), (0.014, 0.012, 0.01), steel, bevel=0.002)
-    for p0, p1 in (((-0.018, 0.088, 0.004), (-0.008, 0.112, 0.01)), ((0.012, 0.09, -0.01), (0.02, 0.114, -0.004)),
-                   ((0.0, 0.092, 0.018), (-0.004, 0.115, 0.03))):
-        m.cone(p0, p1, 0.0048, 0.0048, brass, brass, brass, segments=10)
-        rim_dir = unit(sub(p1, p0))
-        m.cone(p0, add(p0, mul(rim_dir, 0.0015)), 0.0054, 0.0054, brass, brass, brass, segments=10)
+    m.cone((0, 0.083, 0), (0, 0.084, 0), 0.047, 0.047, None, None, pile)
+    m.ring((0, 0.102, 0), (0, 1, 0), 0.0505, 0.003, steel, segments=20, sides=3)
+    m.tube([(0.052, 0.102, 0), (0.075, 0.108, 0), (0.095, 0.124, 0)], 0.0028, steel, segments=5)
+    m.box((0.1, 0.13, 0), (0.014, 0.012, 0.01), steel)
+    for p0, p1 in (((-0.018, 0.084, 0.004), (-0.008, 0.112, 0.01)), ((0.012, 0.084, -0.01), (0.02, 0.114, -0.004)),
+                   ((0.0, 0.084, 0.018), (-0.004, 0.115, 0.03))):
+        m.cone(p0, p1, 0.0048, 0.0048, brass, None, brass, segments=6)
     return m
 
 
@@ -656,25 +658,21 @@ def case_tumbler():
     dark = t.region(64, 32, Atlas.metal, STEEL_DARK)
     wood = t.region(128, 32, Atlas.wood, WOOD)
     iron = t.region(32, 32, Atlas.metal, IRON)
-    rubber = t.region(32, 32, Atlas.flat, RUBBER, 0.1)
     m = Model(t)
     for x in (-0.16, 0.16):
         for z in (-0.11, 0.11):
-            m.beam((x, 0.0, z), (x, 0.29, z * 0.12), 0.022, wood)
-        m.beam((x, 0.09, -0.085), (x, 0.09, 0.085), 0.018, wood)
+            m.beam((x, 0.0, z), (x, 0.29, z * 0.12), 0.022, wood, cap0=False)        # legs
+        m.beam((x, 0.09, -0.085), (x, 0.09, 0.085), 0.018, wood, False, False)       # crossbar
     for z in (-0.11, 0.11):
-        m.beam((-0.175, 0.012, z), (0.175, 0.012, z), 0.02, wood)
-    m.cone((-0.13, 0.30, 0), (0.13, 0.30, 0), 0.11, 0.11, drum, end, end, segments=20)
+        m.beam((-0.175, 0.012, z), (0.175, 0.012, z), 0.02, wood)                   # floor rails
+    m.cone((-0.13, 0.30, 0), (0.13, 0.30, 0), 0.11, 0.11, drum, end, end, segments=14)
     for x in (-0.09, 0.09):
-        m.ring((x, 0.30, 0), (1, 0, 0), 0.111, 0.005, dark, segments=24, sides=6)
-    m.box((0, 0.411, 0), (0.1, 0.01, 0.07), dark, bevel=0.003)
-    m.box((0.035, 0.418, 0), (0.014, 0.006, 0.02), iron, bevel=0.0015)
-    m.cone((-0.19, 0.30, 0), (0.215, 0.30, 0), 0.01, 0.01, iron, iron, iron, segments=10)
-    m.beam((0.215, 0.30, 0), (0.215, 0.215, 0), 0.012, iron)
-    m.cone((0.215, 0.215, 0), (0.26, 0.215, 0), 0.009, 0.009, wood, wood, wood, segments=10)
-    for x in (-0.16, 0.16):
-        for z in (-0.11, 0.11):
-            m.cone((x, -0.0, z), (x, 0.004, z), 0.016, 0.016, rubber, rubber, rubber, segments=10)
+        m.cone((x - 0.005, 0.30, 0), (x + 0.005, 0.30, 0), 0.114, 0.114, dark, segments=14)   # bands
+    m.box((0, 0.411, 0), (0.1, 0.01, 0.07), dark)
+    m.box((0.035, 0.418, 0), (0.014, 0.006, 0.02), iron)
+    m.cone((-0.17, 0.30, 0), (0.215, 0.30, 0), 0.01, 0.01, iron, iron, None, segments=6)      # axle
+    m.beam((0.215, 0.305, 0), (0.215, 0.215, 0), 0.012, iron)                                  # crank arm
+    m.cone((0.215, 0.215, 0), (0.26, 0.215, 0), 0.009, 0.009, wood, None, wood, segments=6)   # handle
     return m
 
 

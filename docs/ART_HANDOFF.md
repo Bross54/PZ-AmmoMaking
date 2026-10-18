@@ -156,7 +156,10 @@ a DirectX `.X` text mesh and its texture, in
 the generated scripts `AC_Models.txt` and `AC_SpentCaseModels.txt`
 (`WorldStaticModel = AmmoMaking.<name>`). Conventions are vanilla's
 `CanClosed.X`: Y up, origin at the bottom centre, metres.
-`--preview <png>` draws all six from the game's angle for a look. A real model
+`--preview <png>` draws all six from the game's angle for a look.
+Budget: about 300 triangles a model (they are 172 to 268; vanilla's
+world items run 48 to 160): twelve smooth-shaded sides for round parts,
+caps only where seen, bevels only on the main bodies. A real model
 replaces the mesh and texture under the same names (an `.fbx` of the same
 name works too: the jar loads X, Fbx, glTF and Txt). REQUIRES FUTURE
 IN-GAME VERIFICATION: shown on the ground, the right way up, the right
