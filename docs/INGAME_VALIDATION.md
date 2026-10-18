@@ -182,8 +182,13 @@ Steps
 
 Expected
 - A ghost sprite while placing; the object (a vanilla industrial tile,
-  `industry_03_61`: placeholder) stands on the tile and blocks it.
+  `industry_03_60`, `industry_03_61`, `industry_03_62`, `industry_03_63`: placeholder) stands on the tile and blocks it.
+- Rotating the cursor (R, moving the mouse around the tile, or the
+  controller bumpers) turns the machine through four faces, and the
+  placed analyzer keeps the face it was placed with after a reload.
 - Without power: "Requires Electricity", and a running assay pauses.
+  **Analyzer > Spawn Running Generator Next to Me** beside it: a running,
+  fuelled generator appears and the assay continues.
 - The collected sample is a **Laboratory Tested Geological Sample** with
   exact percentages and a tolerance line.
 - Cancel returns the sample. Pick up is refused while processing or
@@ -245,8 +250,12 @@ Result: ____
 ## 10. Metallurgy
 
 Steps
-1. **Metallurgy > Spawn Metallurgy Kit**. Build or find vanilla's
-   furnaces.
+1. **Metallurgy > Spawn Metallurgy Kit > Kit + Spawn Smelting Furnace
+   Next to Me**: a Smelting Furnace appears on a free tile next to you, no
+   materials used, and Build Cheat (admin panel) is as it was before. Then
+   **Kit + Teleport to Nearest Furnace** from a few tiles away: you land
+   next to it. The Smelting Furnace carries both furnace tags, so it
+   should list step 2's Primitive Furnace recipe too.
 2. At a **Primitive Furnace**: *Smelt Zinc Ore*. At a **Simple Furnace**:
    *Cast Zinc Ingot*, *Cast Copper Ingot*.
 3. Lead (`docs/METALLURGY_DESIGN.md` 12): take two Lead Pipes and five Jig
@@ -274,7 +283,9 @@ Result: ____
 
 Steps
 1. At the Simple Furnace: *Cast Cartridge Brass (7 Copper + 3 Zinc)*.
-2. **Metallurgy > Spawn Case Stock Kit**. At a forge: *Forge Small Brass
+2. **Metallurgy > Spawn Case Stock Kit > Kit + Spawn Forge Next to Me**
+   (a three-tile Forge appears beside you, not on you; **Kit + Teleport to
+   Nearest Forge** from a distance lands you next to it). At a forge: *Forge Small Brass
    Sheets*; then *Punch Brass Case Cups*.
 
 Expected
@@ -454,7 +465,9 @@ Steps
    (or a new world). Load.
 2. **Diagnostics > Run Compatibility Check**.
 3. **Stations > Spawn Press Build Kit**. Open the build menu, find the
-   **Reloading Press**, place it.
+   **Reloading Press**, turn it through all four faces with R, place it.
+   Then **Stations > Spawn Reloading Press Next to Me**: a second press
+   appears beside you, no materials used.
 4. Use it: craft *Form 9mm Case (Press)*, *Swage 9mm Copper Bullets
    (Press)*, *Assemble 9mm Round (Press)*.
 5. Pick the press up with the vanilla furniture tool and place it again.
@@ -463,10 +476,10 @@ Steps
 Expected
 - The world loads (if not: untick the add-on; that is the finding).
 - `feature Reloading Press: ON (on)` and OK lines for the press entity and
-  its two sprites.
+  its four sprites.
 - The press is in the build menu with a name and an icon (vanilla's hand
   press icon: placeholder), costs the kit, and appears as a programmer-art
-  sprite facing south or east.
+  sprite facing south, east, west or north.
 - A press recipe looked at elsewhere says "Requires a Reloading Press"
   (not a raw `IGUI_...` key); the placed object is named Reloading Press.
 - Its window lists 27 recipes, all `(Press)`. They use the **same** die

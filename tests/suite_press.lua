@@ -65,7 +65,7 @@ return function(T)
         check(string.find(info.name or "", "experimental", 1, true) ~= nil, "its name says it is experimental")
         check(string.find(info.description or "", "Not yet verified in game", 1, true) ~= nil, "and its description that it has not been seen in game")
 
-        -- The sheet: one tileset of eight columns, two tiles, a file number
+        -- The sheet: one tileset of eight columns, four tiles, a file number
         -- in the engine's range, the names the design fixes, written into
         -- the add-on.
         local pack = string.match(sheet, '"pack"%s*:%s*"([%w_]+)"')
@@ -83,8 +83,8 @@ return function(T)
         local indices, facings = {}, {}
         for index in string.gmatch(sheet, '"index"%s*:%s*(%d+)') do table.insert(indices, tonumber(index)) end
         for facing in string.gmatch(sheet, '"Facing"%s*:%s*"(%a)"') do table.insert(facings, facing) end
-        eq(table.concat(indices, ","), "0,1", "two tiles")
-        eq(table.concat(facings, ","), "S,E", "facing south and east, as vanilla's hand press")
+        eq(table.concat(indices, ","), "0,1,2,3", "four tiles")
+        eq(table.concat(facings, ","), "S,E,W,N", "facing south and east as vanilla's hand press, then west and north so the cursor turns it every way")
         -- Each tile has the tile properties of vanilla's Hand Press, as the
         -- snapshot recorded them from the installed tile definitions. Those
         -- include IsMoveAble and a pick-up weight: picking the station up
@@ -93,7 +93,7 @@ return function(T)
         check(#reference >= 6, "the snapshot records the hand press's tile properties (" .. #reference .. ")")
         for _, key in ipairs(reference) do
             local _, count = string.gsub(sheet, '"' .. key .. '"%s*:', "")
-            eq(count, 2, "both tiles set " .. key .. ", as vanilla's hand press does")
+            eq(count, 4, "every tile sets " .. key .. ", as vanilla's hand press does")
         end
         eq(tonumber(string.match(sheet, '"PickUpWeight"%s*:%s*(%d+)')), 400, "it weighs what the hand press weighs")
         -- The built files are there, and are the two binary formats.
@@ -113,8 +113,10 @@ return function(T)
         eq(string.match(entity, "Recipes%s*=%s*([%w_]+)"), P.benchTag, "its CraftBench tag is the calibre model's")
         local rows = {}
         for row in string.gmatch(entity, "row%s*=%s*([%w_]+)") do table.insert(rows, row) end
-        eq(table.concat(rows, ","), tileset .. "_0," .. tileset .. "_1", "its faces are the sheet's two sprites")
-        check(string.find(entity, "face S", 1, true) ~= nil and string.find(entity, "face E", 1, true) ~= nil, "south and east")
+        eq(table.concat(rows, ","), tileset .. "_0," .. tileset .. "_1," .. tileset .. "_2," .. tileset .. "_3", "its faces are the sheet's four sprites")
+        local faces = {}
+        for face in string.gmatch(entity, "face%s+(%u+)") do table.insert(faces, face) end
+        eq(table.concat(faces, ","), "S,E,W,N", "south, east, west and north, in the sheet's order")
         check(string.find(entity, "AmmoMaking:", 1, true) == nil, "the build recipe does not name the Ammo Making perk (the engine would drop it)")
         check(string.find(entity, "xuiSkin%s+default") == nil, "the entity file holds no window skin: that is a file of its own, as vanilla's is")
         local style = string.match(entity, "entityStyle%s*=%s*([%w_]+)")
@@ -142,6 +144,8 @@ return function(T)
         eq(#AC_Visuals.validate(), 0, "the placeholder table is sound: " .. table.concat(AC_Visuals.validate(), "; "))
         eq(AC_Visuals.get("pressSpriteSouth"), rows[1], "AC_Visuals mirrors the south sprite")
         eq(AC_Visuals.get("pressSpriteEast"), rows[2], "and the east sprite")
+        eq(AC_Visuals.get("pressSpriteWest"), rows[3], "and the west sprite")
+        eq(AC_Visuals.get("pressSpriteNorth"), rows[4], "and the north sprite")
         local icons = {}
         for icon in string.gmatch(skin, "Icon%s*=%s*([%w_]+)") do icons[icon] = true end
         check(icons[AC_Visuals.get("pressWindowIcon")] and next(icons, next(icons)) == nil, "and the one window icon the skin uses")
@@ -275,7 +279,25 @@ return function(T)
         local tree = T.fillWorldMenu(debugPlayer, debugPlayer.square):find("Ammo Making Debug")
         local stations = tree.submenu:find("Stations")
         check(stations ~= nil and stations.submenu ~= nil, "add-on active: the debug tree has a Stations group")
-        eq(table.concat(stations.submenu:names(), " | "), "Spawn Press Build Kit (hammer, steel bars, planks, nails)", "with the press build kit")
+        eq(table.concat(stations.submenu:names(), " | "), "Spawn Press Build Kit (hammer, steel bars, planks, nails) | Spawn Reloading Press Next to Me", "with the press build kit and a finished press")
+        -- The finished press: the add-on's own entity, built by the same
+        -- path as the debug furnace (vanilla's entity cursor, build cheat
+        -- for that one build).
+        local pressStation = AC_GeologyDebug.STATIONS.press
+        eq(pressStation.vanilla, false, "the press is the add-on's own entity, not recorded as a vanilla station")
+        eq(pressStation.entities[1].entity, AC_Compat.PRESS_ENTITY, "the spawned press is the add-on's entity")
+        eq(pressStation.spawnSprite, AC_Visuals.get("pressSpriteSouth"), "from its south face")
+        eq(#pressStation.entities[1].sprites, 4, "and it knows all four faces")
+        MOCK.cellSquares, MOCK.builtEntities = {}, {}
+        local pressPlayer = MOCK.newPlayer({ square = MOCK.registerSquare(MOCK.newSquare(7, 5, 0, T.GRASS)), x = 7.5, y = 5.5 })
+        MOCK.registerSquare(MOCK.newSquare(7, 6, 0, T.GRASS))
+        MOCK.capturePrint(true)
+        eq(AC_GeologyDebug.spawnPressNextToPlayer(pressPlayer), true, "Spawn Reloading Press Next to Me queues a build")
+        MOCK.capturePrint(false)
+        eq(MOCK.builtEntities[1] and MOCK.builtEntities[1].entity, AC_Compat.PRESS_ENTITY, "of the press")
+        eq(MOCK.builtEntities[1] and MOCK.builtEntities[1].cheat, true, "without materials")
+        eq(pressPlayer:isBuildCheat(), false, "and the build cheat is off again")
+        MOCK.cellSquares, MOCK.builtEntities = {}, {}
         local entityText = (string.gsub(readFile(ADDON .. "42/media/scripts/AC_ReloadingPress.txt"), "/%*.-%*/", ""))
         local wanted = {}
         for count, item in string.gmatch(entityText, "item%s+(%d+)%s+%[(Base%.[%w_]+)%]") do wanted[item] = tonumber(count) end
@@ -315,14 +337,16 @@ return function(T)
         MOCK.resetCraftRecipes(ids)
         AC_Materials.applySkillRequirements()
         MOCK.entityScripts = { [AC_Compat.PRESS_ENTITY] = {} }
-        MOCK.knownSprites[AC_Visuals.get("pressSpriteSouth")] = true
-        MOCK.knownSprites[AC_Visuals.get("pressSpriteEast")] = true
+        local pressFaces = { "pressSpriteSouth", "pressSpriteEast", "pressSpriteWest", "pressSpriteNorth" }
+        for _, key in ipairs(pressFaces) do MOCK.knownSprites[AC_Visuals.get(key)] = true end
         MOCK.capturePrint(true)
         local found = labels((AC_Compat.run(false)))
         eq(found["feature Reloading Press: ON (on)"], "OK", "the check reports the press as on")
         eq(found["reloading press station entity (" .. AC_Compat.PRESS_ENTITY .. ")"], "OK", "finds its entity")
         eq(found["reloading press sprite (" .. AC_Visuals.get("pressSpriteSouth") .. ")"], "OK", "and its south sprite")
         eq(found["reloading press sprite (" .. AC_Visuals.get("pressSpriteEast") .. ")"], "OK", "and its east sprite")
+        eq(found["reloading press sprite (" .. AC_Visuals.get("pressSpriteWest") .. ")"], "OK", "and its west sprite")
+        eq(found["reloading press sprite (" .. AC_Visuals.get("pressSpriteNorth") .. ")"], "OK", "and its north sprite")
         -- The add-on ticked but its scripts not loaded: said plainly.
         MOCK.entityScripts = {}
         MOCK.knownSprites[AC_Visuals.get("pressSpriteEast")] = nil
@@ -334,7 +358,7 @@ return function(T)
         eq(found["reloading press station entity"], "UNVERIFIED", "a build without the entity lookup is UNVERIFIED, not a failure")
         MOCK.entityLookup = true
         MOCK.capturePrint(false)
-        MOCK.knownSprites[AC_Visuals.get("pressSpriteSouth")] = nil
+        for _, key in ipairs(pressFaces) do MOCK.knownSprites[AC_Visuals.get(key)] = nil end
 
         -- Off again: the list is what it was, and the check probes nothing
         -- of the press.

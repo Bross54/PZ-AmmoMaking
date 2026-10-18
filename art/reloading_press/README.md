@@ -8,9 +8,9 @@ where the add-on is ticked (feature `reloadingPress`, `AC_Features.lua`).
 
 | File | What it is |
 |---|---|
-| `make_art.py` | draws the two placeholder sprites (facing south, facing east), 128 x 256 each. Original programmer art, drawn from boxes and a line; it copies nothing |
-| `src/ammomaking_press_01_0.png`, `_1.png` | the sprites it draws. **PLACEHOLDER_VISUAL**: replace these two files with final art under the same names |
-| `tiles.json` | the tile sheet: one tileset `ammomaking_press_01`, two tiles with the tile properties of vanilla's Hand Press, and where the built files go (`output`) |
+| `make_art.py` | draws the four placeholder sprites (facing south, east, west, north), 128 x 256 each. Original programmer art, drawn from boxes and a line; it copies nothing |
+| `src/ammomaking_press_01_0.png` to `_3.png` | the sprites it draws (S, E, W, N). **PLACEHOLDER_VISUAL**: replace these four files with final art under the same names |
+| `tiles.json` | the tile sheet: one tileset `ammomaking_press_01`, four tiles with the tile properties of vanilla's Hand Press, and where the built files go (`output`) |
 
 Built from them, into the add-on, by
 `python tools/build_tiles.py art/reloading_press/tiles.json`:
@@ -33,8 +33,8 @@ runs it.
 
 ## Replacing the placeholder art
 
-1. Put the new sprites at `src/ammomaking_press_01_0.png` (south) and
-   `_1.png` (east): 128 x 256, transparent background, bottom-anchored on
+1. Put the new sprites at `src/ammomaking_press_01_0.png` (south),
+   `_1.png` (east), `_2.png` (west) and `_3.png` (north): 128 x 256, transparent background, bottom-anchored on
    the floor diamond (`docs/ART_HANDOFF.md`).
 2. `python tools/build_tiles.py art/reloading_press/tiles.json`
 3. Run the suite. No Lua, script or recipe changes: the sprite names stay.
@@ -46,7 +46,7 @@ runs it.
   .tiles` and two of its texture packs and writes each back **byte for
   byte**. The files built here are written by the same code.
 - The built sheet reads back as described: tileset name, eight columns,
-  sprite names `ammomaking_press_01_0` and `_1`, the tile properties, a 128
+  sprite names `ammomaking_press_01_0` to `_3`, the tile properties, a 128
   x 256 frame, and every pixel of each sprite (`--selftest` does the same on
   generated sprites).
 - The entity script names only things that exist in 42.20.4: the timed

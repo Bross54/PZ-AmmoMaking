@@ -27,6 +27,16 @@ AC_LaboratoryAnalyzer.CONFIG = {
     -- the analyzer logic.
     worldSprite = AC_Visuals.get("analyzerWorldSprite"),
 
+    -- One sprite per direction the placement cursor
+    -- rotates through (ISBuildingObject: R key, mouse,
+    -- controller bumpers). worldSprite is the north one.
+    facingSprites = {
+        west = AC_Visuals.get("analyzerSpriteWest"),
+        north = AC_Visuals.get("analyzerWorldSprite"),
+        east = AC_Visuals.get("analyzerSpriteEast"),
+        south = AC_Visuals.get("analyzerSpriteSouth"),
+    },
+
     -- Ticks to place the analyzer. ISBuildAction takes
     -- 50 off for the Handy trait, so this must stay
     -- above 50.

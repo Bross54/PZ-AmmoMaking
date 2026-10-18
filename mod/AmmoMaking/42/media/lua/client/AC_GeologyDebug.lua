@@ -601,8 +601,10 @@ end
 -- ore to smelt, ten scrap of each metal to cast, and
 -- enough ingots that the two cast ones complete a
 -- 7 + 3 brass batch. The iron mold is used because the
--- clay one breaks on smithing. A furnace is not
--- spawned: build or find a vanilla one.
+-- clay one breaks on smithing. The kit can come with a
+-- furnace: a teleport to the nearest one, or a vanilla
+-- Smelting Furnace built next to the player (STATIONS
+-- below); the case stock kit likewise with a forge.
 ------------------------------------------------
 
 local METALLURGY_KIT = {
@@ -1752,6 +1754,878 @@ local function getSpriteName(
 end
 
 
+------------------------------------------------
+-- STATIONS FOR THE KITS
+------------------------------------------------
+--
+-- A kit can come with the station its recipes need:
+-- a teleport to the nearest one, or one built next to
+-- the player. A station is found by the sprite of any
+-- of its tiles.
+--
+-- Furnace: the metallurgy kit's recipes ask for the
+-- bench tags PrimitiveFurnace and Furnace, the forge
+-- ones (case stock, die sets) for PrimitiveForge and
+-- Forge (AC_Materials.RECIPES, AC_Calibres). In 42.20.4
+-- (media/scripts/generated/entities/blacksmith/
+-- workstations/entity_furnace_ii.txt, _iii.txt,
+-- entity_forge_ii.txt, _iii.txt) two furnaces and two
+-- forges carry both of their pair; the primitive ones
+-- carry only the first, so they are left out.
+-- tests/engine_snapshot.lua records which entity
+-- claims each vanilla sprite and its bench tags
+-- (stationSprites); vanilla = true marks those.
+--
+-- Press: the add-on's own entity, only spawned, and
+-- only while the press feature is on.
+------------------------------------------------
+
+local STATIONS = {
+
+    furnace = {
+
+        vanilla = true,
+
+        name = "Smelting Furnace",
+
+        entities = {
+
+            { entity = "Smelting_Furnace", sprites = { "crafted_01_16", "crafted_01_33" } },
+
+            { entity = "Blast_Furnace", sprites = { "crafted_02_8", "crafted_02_9", "crafted_02_10", "crafted_02_11" } },
+        },
+
+        -- One tile.
+        spawnSprite = "crafted_01_16",
+    },
+
+    forge = {
+
+        vanilla = true,
+
+        name = "Forge",
+
+        entities = {
+
+            { entity = "Forge", sprites = { "crafted_01_42", "crafted_01_116", "crafted_01_38", "crafted_01_54", "crafted_01_19", "crafted_01_36" } },
+
+            { entity = "Advanced_Forge", sprites = { "crafted_02_25", "crafted_01_18", "crafted_01_39", "crafted_02_24", "crafted_02_32", "crafted_02_26", "crafted_02_27", "crafted_02_33", "crafted_01_35", "crafted_01_55" } },
+        },
+
+        -- Three tiles in a line.
+        spawnSprite = "crafted_01_42",
+    },
+
+    press = {
+
+        vanilla = false,
+
+        name = "Reloading Press",
+
+        entities = {
+
+            {
+                entity = AC_Compat.PRESS_ENTITY,
+                sprites = {
+                    AC_Visuals.get("pressSpriteSouth"),
+                    AC_Visuals.get("pressSpriteEast"),
+                    AC_Visuals.get("pressSpriteWest"),
+                    AC_Visuals.get("pressSpriteNorth"),
+                },
+            },
+        },
+
+        spawnSprite = AC_Visuals.get("pressSpriteSouth"),
+    },
+}
+
+
+-- Tiles searched around the player for a station, on
+-- the player's level and the ground. Only loaded
+-- squares exist.
+local STATION_SEARCH_RADIUS = 100
+
+
+-- How far from the player a spawned station's corner
+-- may be: a three-tile forge needs room beside the
+-- player, not on top of them.
+local STATION_SPAWN_RADIUS = 3
+
+
+local function stationEntityOf(
+    station,
+    spriteName
+)
+
+    for _,
+        entry
+    in ipairs(
+        station.entities
+    )
+    do
+
+        for _,
+            sprite
+        in ipairs(
+            entry.sprites
+        )
+        do
+
+            if sprite == spriteName then
+                return entry.entity
+            end
+        end
+    end
+
+
+    return nil
+end
+
+
+local function findStationOn(
+    station,
+    square
+)
+
+    local objects =
+        square:getObjects()
+
+
+    for index = 0, objects:size() - 1 do
+
+        local entity =
+            stationEntityOf(
+                station,
+                getSpriteName(
+                    objects:get(index)
+                )
+            )
+
+
+        if entity then
+            return entity
+        end
+    end
+
+
+    return nil
+end
+
+
+-- The nearest square holding a tile of the station,
+-- nearest by straight distance, or nil.
+local function findNearestStation(
+    player,
+    station
+)
+
+    local cell =
+        getCell()
+
+
+    local px,
+          py =
+        playerTile(
+            player
+        )
+
+
+    local pz =
+        math.floor(
+            player:getZ()
+        )
+
+
+    local levels = { 0 }
+
+
+    if pz ~= 0 then
+
+        table.insert(
+            levels,
+            pz
+        )
+    end
+
+
+    local radius =
+        STATION_SEARCH_RADIUS
+
+
+    local best,
+          bestEntity,
+          bestDistance =
+        nil,
+        nil,
+        nil
+
+
+    for _, z in ipairs(levels) do
+
+        for x = px - radius, px + radius do
+
+            for y = py - radius, py + radius do
+
+                local square =
+                    cell:getGridSquare(
+                        x,
+                        y,
+                        z
+                    )
+
+
+                if square then
+
+                    local entity =
+                        findStationOn(
+                            station,
+                            square
+                        )
+
+
+                    local distance =
+                        (x - px) * (x - px)
+                        + (y - py) * (y - py)
+                        + (z - pz) * (z - pz)
+
+
+                    if entity
+                        and (not bestDistance or distance < bestDistance)
+                    then
+
+                        best,
+                        bestEntity,
+                        bestDistance =
+                            square,
+                            entity,
+                            distance
+                    end
+                end
+            end
+        end
+    end
+
+
+    return best, bestEntity
+end
+
+
+-- The eight squares around (x, y, z), nearest first,
+-- that a character can stand on.
+local function freeSquaresAround(
+    x,
+    y,
+    z
+)
+
+    local free = {}
+
+
+    for _,
+        offset
+    in ipairs(
+        { { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 }, { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 } }
+    )
+    do
+
+        local square =
+            getCell():getGridSquare(
+                x + offset[1],
+                y + offset[2],
+                z
+            )
+
+
+        if square
+            and square:isFree(false)
+        then
+
+            table.insert(
+                free,
+                square
+            )
+        end
+    end
+
+
+    return free
+end
+
+
+local function teleportToNearestStation(
+    player,
+    station
+)
+
+    local square,
+          entity =
+        findNearestStation(
+            player,
+            station
+        )
+
+
+    if not square then
+
+        halo(
+            player,
+            "No " .. station.name .. " within " .. STATION_SEARCH_RADIUS .. " tiles"
+        )
+
+
+        log(
+            "Debug: no "
+            .. station.name
+            .. " (or another station of that kind) on a loaded square within "
+            .. STATION_SEARCH_RADIUS
+            .. " tiles"
+        )
+
+
+        return false
+    end
+
+
+    ------------------------------------------------
+    -- Stand next to it, not inside it. A station
+    -- walled in on every side gets the player onto
+    -- its own square.
+    ------------------------------------------------
+
+    local target =
+        freeSquaresAround(
+            square:getX(),
+            square:getY(),
+            square:getZ()
+        )[1]
+        or square
+
+
+    -- (float, float, int): vanilla's debug teleports
+    -- (DebugGlobalObjectStateUI) use + 0.5 for the
+    -- middle of the tile.
+    player:teleportTo(
+        target:getX() + 0.5,
+        target:getY() + 0.5,
+        target:getZ()
+    )
+
+
+    halo(
+        player,
+        "Teleported to " .. entity
+    )
+
+
+    log(
+        "Debug: teleported next to "
+        .. entity
+        .. " at "
+        .. square:getX()
+        .. ", "
+        .. square:getY()
+        .. ", "
+        .. square:getZ()
+    )
+
+
+    return true
+end
+
+
+------------------------------------------------
+-- Corners a station of w x h tiles may be built
+-- from: within STATION_SPAWN_RADIUS of the player,
+-- nearest first, never covering the player's tile
+-- (ISBuildIsoEntity builds from the corner towards
+-- +x and +y).
+------------------------------------------------
+
+local function spawnCorners(
+    px,
+    py,
+    pz,
+    width,
+    height
+)
+
+    local corners = {}
+
+
+    for distance = 1, STATION_SPAWN_RADIUS do
+
+        for dy = -distance, distance do
+
+            for dx = -distance, distance do
+
+                local onRing =
+                    math.max(
+                        math.abs(dx),
+                        math.abs(dy)
+                    ) == distance
+
+
+                local x,
+                      y =
+                    px + dx,
+                    py + dy
+
+
+                local coversPlayer =
+                    px >= x
+                    and px <= x + width - 1
+                    and py >= y
+                    and py <= y + height - 1
+
+
+                if onRing
+                    and not coversPlayer
+                then
+
+                    local square =
+                        getCell():getGridSquare(
+                            x,
+                            y,
+                            pz
+                        )
+
+
+                    if square then
+
+                        table.insert(
+                            corners,
+                            square
+                        )
+                    end
+                end
+            end
+        end
+    end
+
+
+    return corners
+end
+
+
+------------------------------------------------
+-- Builds a station next to the player through
+-- vanilla's own entity cursor, as vanilla's debug
+-- Entity Scripts panel does (ISEntityScriptsPanel:
+-- ISBuildIsoEntity with maxTime 1), then tryBuild on
+-- the first corner the cursor accepts instead of
+-- waiting for a click.
+--
+-- No materials: ISBuildIsoEntity:create() consumes
+-- nothing when the character's build cheat is on, so
+-- it is switched on for this one build and restored
+-- when the build action completes or is cancelled.
+-- Single player only: in multiplayer create() runs on
+-- the server, which knows nothing of a client's
+-- build cheat. REQUIRES FUTURE IN-GAME VERIFICATION.
+------------------------------------------------
+
+local function spawnStationNextToPlayer(
+    player,
+    station
+)
+
+    if isClient() then
+
+        halo(
+            player,
+            station.name .. " spawn: single player only"
+        )
+
+
+        return false
+    end
+
+
+    local info =
+        SpriteConfigManager.getObjectInfoFromSprite(
+            station.spawnSprite
+        )
+
+
+    if not info then
+
+        log(
+            "WARNING: debug "
+            .. station.name
+            .. " spawn FAILED: no entity uses "
+            .. tostring(station.spawnSprite)
+            .. " on this build"
+        )
+
+
+        halo(
+            player,
+            station.name .. " spawn failed"
+        )
+
+
+        return false
+    end
+
+
+    local build =
+        ISBuildIsoEntity:new(
+            player,
+            info,
+            1,
+            ISInventoryPaneContextMenu.getContainers(
+                player
+            )
+        )
+
+
+    build.player =
+        player:getPlayerNum()
+
+
+    build.maxTime = 1
+
+
+    ------------------------------------------------
+    -- getFace() settles on the first face the entity
+    -- has from nSprite 1 on (W, N, E, S); getSprite()
+    -- then sets the direction flags isValid() reads.
+    ------------------------------------------------
+
+    local face =
+        build:getFace()
+
+
+    build:getSprite()
+
+
+    local width,
+          height =
+        1,
+        1
+
+
+    if face then
+
+        width =
+            face:getWidth()
+
+        height =
+            face:getHeight()
+    end
+
+
+    local px,
+          py =
+        playerTile(
+            player
+        )
+
+
+    local target = nil
+
+
+    for _,
+        square
+    in ipairs(
+        spawnCorners(
+            px,
+            py,
+            math.floor(
+                player:getZ()
+            ),
+            width,
+            height
+        )
+    )
+    do
+
+        if build:isValid(square) then
+
+            target = square
+
+            break
+        end
+    end
+
+
+    if not target then
+
+        halo(
+            player,
+            "No room next to you for a " .. station.name
+        )
+
+
+        return false
+    end
+
+
+    local hadCheat =
+        player:isBuildCheat()
+
+
+    if not hadCheat then
+
+        player:setBuildCheat(
+            true
+        )
+    end
+
+
+    ------------------------------------------------
+    -- tryBuild hands self.onActionComplete to the
+    -- build action for both completion and cancel
+    -- (ISBuildingObject:tryBuild), on a copy of this
+    -- table: the field travels with it.
+    ------------------------------------------------
+
+    build.onActionComplete =
+        function(self)
+
+            if not hadCheat then
+
+                player:setBuildCheat(
+                    false
+                )
+            end
+
+
+            ISBuildIsoEntity.onActionComplete(
+                self
+            )
+        end
+
+
+    build:tryBuild(
+        target:getX(),
+        target:getY(),
+        target:getZ()
+    )
+
+
+    halo(
+        player,
+        "Building a " .. station.name .. " next to you"
+    )
+
+
+    log(
+        "Debug: "
+        .. station.name
+        .. " queued at "
+        .. target:getX()
+        .. ", "
+        .. target:getY()
+        .. ", "
+        .. target:getZ()
+    )
+
+
+    return true
+end
+
+
+------------------------------------------------
+-- A running generator next to the player, so the
+-- laboratory analyzer has power after the grid is
+-- off (AC_LaboratoryAnalyzer.hasPower accepts a
+-- square that haveElectricity()). It follows
+-- vanilla's own timed-action tests
+-- (client/Tests/TimedActionsTests.lua,
+-- activate_generator): IsoGenerator.new(item, cell,
+-- square), whose constructor adds it to the square,
+-- then connected and fuelled; it is switched on here
+-- instead of by ISActivateGenerator. Single player
+-- only. REQUIRES FUTURE IN-GAME VERIFICATION.
+------------------------------------------------
+
+local GENERATOR_ITEM = "Base.Generator"
+
+
+local function spawnRunningGenerator(
+    player
+)
+
+    if isClient() then
+
+        halo(
+            player,
+            "Generator spawn: single player only"
+        )
+
+
+        return false
+    end
+
+
+    local px,
+          py =
+        playerTile(
+            player
+        )
+
+
+    local square =
+        freeSquaresAround(
+            px,
+            py,
+            math.floor(
+                player:getZ()
+            )
+        )[1]
+
+
+    if not square then
+
+        halo(
+            player,
+            "No free tile next to you for a generator"
+        )
+
+
+        return false
+    end
+
+
+    local item =
+        instanceItem(
+            GENERATOR_ITEM
+        )
+
+
+    if not item then
+
+        log(
+            "WARNING: debug generator spawn FAILED: "
+            .. GENERATOR_ITEM
+            .. " not found on this build"
+        )
+
+
+        return false
+    end
+
+
+    local generator =
+        IsoGenerator.new(
+            item,
+            getCell(),
+            square
+        )
+
+
+    generator:setConnected(
+        true
+    )
+
+
+    generator:setFuel(
+        generator:getMaxFuel()
+    )
+
+
+    generator:setActivated(
+        true
+    )
+
+
+    halo(
+        player,
+        "Running generator placed next to you"
+    )
+
+
+    log(
+        "Debug: running generator placed at "
+        .. square:getX()
+        .. ", "
+        .. square:getY()
+        .. ", "
+        .. square:getZ()
+    )
+
+
+    return true
+end
+
+
+local function spawnMetallurgyKitAndTeleport(
+    player
+)
+
+    spawnMetallurgyKit(
+        player
+    )
+
+
+    teleportToNearestStation(
+        player,
+        STATIONS.furnace
+    )
+end
+
+
+local function spawnMetallurgyKitAndFurnace(
+    player
+)
+
+    spawnMetallurgyKit(
+        player
+    )
+
+
+    spawnStationNextToPlayer(
+        player,
+        STATIONS.furnace
+    )
+end
+
+
+local function spawnCaseStockKitAndTeleport(
+    player
+)
+
+    spawnCaseStockKit(
+        player
+    )
+
+
+    teleportToNearestStation(
+        player,
+        STATIONS.forge
+    )
+end
+
+
+local function spawnCaseStockKitAndForge(
+    player
+)
+
+    spawnCaseStockKit(
+        player
+    )
+
+
+    spawnStationNextToPlayer(
+        player,
+        STATIONS.forge
+    )
+end
+
+
+local function spawnPressNextToPlayer(
+    player
+)
+
+    return
+        spawnStationNextToPlayer(
+            player,
+            STATIONS.press
+        )
+end
+
+
 local function describeAnalyzer(
     object
 )
@@ -2740,6 +3614,42 @@ AC_GeologyDebug.spawnLaboratoryAnalyzer =
 AC_GeologyDebug.spawnMetallurgyKit =
     spawnMetallurgyKit
 
+AC_GeologyDebug.STATIONS =
+    STATIONS
+
+AC_GeologyDebug.STATION_SEARCH_RADIUS =
+    STATION_SEARCH_RADIUS
+
+AC_GeologyDebug.GENERATOR_ITEM =
+    GENERATOR_ITEM
+
+AC_GeologyDebug.findNearestStation =
+    findNearestStation
+
+AC_GeologyDebug.teleportToNearestStation =
+    teleportToNearestStation
+
+AC_GeologyDebug.spawnStationNextToPlayer =
+    spawnStationNextToPlayer
+
+AC_GeologyDebug.spawnRunningGenerator =
+    spawnRunningGenerator
+
+AC_GeologyDebug.spawnCaseStockKitAndTeleport =
+    spawnCaseStockKitAndTeleport
+
+AC_GeologyDebug.spawnCaseStockKitAndForge =
+    spawnCaseStockKitAndForge
+
+AC_GeologyDebug.spawnPressNextToPlayer =
+    spawnPressNextToPlayer
+
+AC_GeologyDebug.spawnMetallurgyKitAndTeleport =
+    spawnMetallurgyKitAndTeleport
+
+AC_GeologyDebug.spawnMetallurgyKitAndFurnace =
+    spawnMetallurgyKitAndFurnace
+
 AC_GeologyDebug.spawnCaseStockKit =
     spawnCaseStockKit
 
@@ -2994,6 +3904,8 @@ local function onFillWorldObjectContextMenu(
 
     analyzerMenu:addOption("Spawn Laboratory Analyzer", player, spawnLaboratoryAnalyzer)
 
+    analyzerMenu:addOption("Spawn Running Generator Next to Me (power for the analyzer)", player, spawnRunningGenerator)
+
 
     local analyzer =
         AC_LaboratoryAnalyzer.findInWorldObjects(
@@ -3020,9 +3932,35 @@ local function onFillWorldObjectContextMenu(
         )
 
 
-    metallurgy:addOption("Spawn Metallurgy Kit (furnace tools + materials)", player, spawnMetallurgyKit)
+    -- The kit, and how to get to a furnace that takes
+    -- every one of its recipes.
+    local metallurgyKit =
+        addSubMenu(
+            metallurgy,
+            "Spawn Metallurgy Kit (furnace tools + materials)"
+        )
 
-    metallurgy:addOption("Spawn Case Stock Kit (brass + forge and punch tools)", player, spawnCaseStockKit)
+
+    metallurgyKit:addOption("Kit Only", player, spawnMetallurgyKit)
+
+    metallurgyKit:addOption("Kit + Teleport to Nearest Furnace (Smelting or Blast)", player, spawnMetallurgyKitAndTeleport)
+
+    metallurgyKit:addOption("Kit + Spawn Smelting Furnace Next to Me", player, spawnMetallurgyKitAndFurnace)
+
+
+    local caseStockKit =
+        addSubMenu(
+            metallurgy,
+            "Spawn Case Stock Kit (brass + forge and punch tools)"
+        )
+
+
+    caseStockKit:addOption("Kit Only", player, spawnCaseStockKit)
+
+    caseStockKit:addOption("Kit + Teleport to Nearest Forge", player, spawnCaseStockKitAndTeleport)
+
+    caseStockKit:addOption("Kit + Spawn Forge Next to Me", player, spawnCaseStockKitAndForge)
+
     metallurgy:addOption("Spawn Recycling Kit (one mixed batch per scrapping recipe + one recast)", player, spawnRecyclingKit)
 
 
@@ -3105,6 +4043,8 @@ local function onFillWorldObjectContextMenu(
 
 
         stations:addOption("Spawn Press Build Kit (hammer, steel bars, planks, nails)", player, spawnPressBuildKit)
+
+        stations:addOption("Spawn Reloading Press Next to Me", player, spawnPressNextToPlayer)
     end
 
 

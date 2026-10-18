@@ -15,6 +15,7 @@ local facts = {
     calibres = {},
     lootLists = {},
     sprites = {},
+    stationSprites = {}, -- vanilla station tile -> the entity expected to claim it
     sounds = {},
     modItems = {},
 }
@@ -100,7 +101,15 @@ for _, metal in ipairs(AC_Deposits.METALS) do item(AC_Mining.getOreItemType(meta
 
 for _, target in ipairs(AC_Loot.TARGETS) do facts.lootLists[target.list] = true end
 
-facts.sprites[AC_LaboratoryAnalyzer.CONFIG.worldSprite] = "the placed laboratory analyzer"
+for face, sprite in pairs(AC_LaboratoryAnalyzer.CONFIG.facingSprites) do facts.sprites[sprite] = "the placed laboratory analyzer, facing " .. face end
+-- The debug tools find and build vanilla furnaces and forges by their tiles.
+for _, station in pairs(AC_GeologyDebug.STATIONS) do
+    if station.vanilla then
+        for _, entry in ipairs(station.entities) do
+            for _, sprite in ipairs(entry.sprites) do facts.stationSprites[sprite] = entry.entity end
+        end
+    end
+end
 facts.sounds[AC_Mining.CONFIG.sound] = "mining"
 facts.sounds[AC_GeologySampling.CONFIG.digSound] = "digging a sample"
 

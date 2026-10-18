@@ -1775,8 +1775,21 @@ do
     MOCK.worldHours = 400
 
     local cursor = AC_LaboratoryAnalyzerObject:new(player, item)
-    eq(cursor.sprite, AC_LaboratoryAnalyzer.CONFIG.worldSprite, "cursor sprite from CONFIG")
-    eq(cursor.northSprite, AC_LaboratoryAnalyzer.CONFIG.worldSprite, "same sprite facing north")
+    -- ISBuildingObject:getSprite() cycles sprite (west), northSprite,
+    -- eastSprite, southSprite as the cursor rotates: four different tiles,
+    -- or rotating changes nothing on screen.
+    local faces = AC_LaboratoryAnalyzer.CONFIG.facingSprites
+    eq(cursor.sprite, faces.west, "cursor's plain sprite is the west face")
+    eq(cursor.northSprite, faces.north, "north face")
+    eq(cursor.eastSprite, faces.east, "east face")
+    eq(cursor.southSprite, faces.south, "south face")
+    eq(faces.north, AC_LaboratoryAnalyzer.CONFIG.worldSprite, "the north face is worldSprite")
+    local distinct = {}
+    for _, face in ipairs({ "west", "north", "east", "south" }) do
+        check(type(faces[face]) == "string" and MOCK.knownSprites[faces[face]], face .. " face is a known tile")
+        check(not distinct[faces[face] or face], face .. " face is a tile of its own, so rotating shows")
+        distinct[faces[face] or face] = true
+    end
     eq(cursor.player, 0, "player number stored")
     eq(cursor.noNeedHammer, true, "no hammer needed")
     eq(cursor.dragNilAfterPlace, true, "cursor ends after one placement")
@@ -2317,7 +2330,7 @@ do
             "Spawn Equipment Parts Kit (to make both kits and the analyzer)", "Spawn Mining Kit (pickaxes)",
             "Spawn Assayed Sample (current 3x3)",
         } },
-        { "Analyzer", { "Spawn Laboratory Analyzer" } },
+        { "Analyzer", { "Spawn Laboratory Analyzer", "Spawn Running Generator Next to Me (power for the analyzer)" } },
         { "Metallurgy", {
             "Spawn Metallurgy Kit (furnace tools + materials)",
             "Spawn Case Stock Kit (brass + forge and punch tools)",
@@ -2364,6 +2377,19 @@ do
         end
     end
     leaves(root.submenu, "")
+    -- The metallurgy kit comes with a way to a furnace.
+    local kitMenu = root.submenu:find("Metallurgy").submenu:find("Spawn Metallurgy Kit (furnace tools + materials)")
+    check(kitMenu ~= nil and kitMenu.submenu ~= nil, "the metallurgy kit entry opens a submenu")
+    if kitMenu and kitMenu.submenu then
+        local kitNames = {}
+        for _, option in ipairs(kitMenu.submenu.options) do table.insert(kitNames, option.name) end
+        eq(table.concat(kitNames, " | "), "Kit Only | Kit + Teleport to Nearest Furnace (Smelting or Blast) | Kit + Spawn Smelting Furnace Next to Me", "the kit's three ways")
+    end
+    local stockMenu = root.submenu:find("Metallurgy").submenu:find("Spawn Case Stock Kit (brass + forge and punch tools)")
+    check(stockMenu ~= nil and stockMenu.submenu ~= nil, "the case stock kit entry opens a submenu")
+    if stockMenu and stockMenu.submenu then
+        eq(table.concat(stockMenu.submenu:names(), " | "), "Kit Only | Kit + Teleport to Nearest Forge | Kit + Spawn Forge Next to Me", "the case stock kit's three ways")
+    end
     ctx = fillInventoryMenu(player, cartridge)
     check(ctx:find("Debug Ammo Quality") ~= nil, "quality debug in debug mode")
     check(ctx:find("Set Ammo Making Level") ~= nil, "level debug in debug mode")
@@ -3833,6 +3859,215 @@ do
     MOCK.resetCraftRecipes(ids)
     AC_Materials.applySkillRequirements()
     MOCK.debug = false
+end
+
+section("Kits with their station: a teleport to the nearest one, or one built next to the player")
+do
+    local S = AC_GeologyDebug.STATIONS
+    -- The furnaces and forges are vanilla's, by their tiles, and take every
+    -- tag of their kind the mod's recipes ask for (recorded build, no mock).
+    local wanted = { furnace = {}, forge = {} }
+    local function want(tag)
+        if string.find(tag, "Furnace", 1, true) then wanted.furnace[tag] = true end
+        if string.find(tag, "Forge", 1, true) then wanted.forge[tag] = true end
+    end
+    for _, recipe in ipairs(AC_Materials.RECIPES) do want(recipe.benchTag or "") end
+    for _, recipe in ipairs(AC_Calibres.buildRecipes()) do want(recipe.benchTag or "") end
+    check(wanted.furnace.PrimitiveFurnace and wanted.furnace.Furnace, "the metallurgy recipes ask for PrimitiveFurnace and Furnace")
+    check(wanted.forge.PrimitiveForge and wanted.forge.Forge, "case stock and die sets ask for PrimitiveForge and Forge")
+    for _, kind in ipairs({ "furnace", "forge" }) do
+        eq(S[kind].vanilla, true, kind .. ": vanilla entities")
+        for _, entry in ipairs(S[kind].entities) do
+            for _, sprite in ipairs(entry.sprites) do
+                local recorded = ENGINE.stationSprites[sprite]
+                check(recorded ~= nil and recorded.entity == entry.entity, sprite .. " is a tile of vanilla's " .. entry.entity)
+                local tags = {}
+                for tag in string.gmatch(recorded and recorded.benchTags or "", "[^;]+") do tags[tag] = true end
+                for tag in pairs(wanted[kind]) do check(tags[tag], entry.entity .. " provides " .. tag) end
+            end
+        end
+        eq(MOCK.entitySprites[S[kind].spawnSprite], ENGINE.stationSprites[S[kind].spawnSprite].entity, "(the mock's " .. kind .. " sprite is the recorded one)")
+    end
+    eq(ENGINE.stationSprites[S.furnace.spawnSprite].entity, "Smelting_Furnace", "the spawned furnace is the Smelting Furnace")
+    eq(ENGINE.stationSprites[S.forge.spawnSprite].entity, "Forge", "the spawned forge is the Forge")
+
+    local function world()
+        MOCK.cellSquares = {}
+        MOCK.builtEntities = {}
+        MOCK.buildEntityInvalid = {}
+        MOCK.client = false
+        local here = MOCK.registerSquare(MOCK.newSquare(5, 5, 0, GRASS))
+        local player = MOCK.newPlayer({ square = here, x = 5.5, y = 5.5 })
+        MOCK.players = { player }
+        return player
+    end
+    local function stationAt(x, y, sprite)
+        local square = MOCK.registerSquare(MOCK.newSquare(x, y, 0, GRASS))
+        local object = MOCK.newWorldObject({ sprite = sprite })
+        table.insert(square.objects, object)
+        object.square = square
+        return square
+    end
+    local function free(x, y) return MOCK.registerSquare(MOCK.newSquare(x, y, 0, GRASS)) end
+    local function blocked(x, y) return MOCK.registerSquare(MOCK.newSquare(x, y, 0, GRASS, { blocked = true })) end
+
+    -- Teleport: the nearest station of the kind, next to it.
+    local player = world()
+    stationAt(12, 5, "crafted_01_33")
+    free(12, 6)
+    stationAt(40, 40, "crafted_02_9")
+    stationAt(6, 9, "crafted_01_112") -- a Primitive Furnace: one tag short
+    stationAt(7, 5, "crafted_01_42")  -- a Forge: not a furnace
+    blocked(13, 5)
+    local square, entity = AC_GeologyDebug.findNearestStation(player, S.furnace)
+    check(square ~= nil and square:getX() == 12 and square:getY() == 5, "the nearest Smelting or Blast Furnace is found")
+    eq(entity, "Smelting_Furnace", "by its east tile")
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.teleportToNearestStation(player, S.furnace), true, "teleport done")
+    MOCK.capturePrint(false)
+    eq(player.x, 12.5, "onto the free square next to it")
+    eq(player.y, 6.5, "(south of it, the first free side)")
+    eq(player.teleports, 1, "one teleport")
+
+    player = world()
+    stationAt(7, 5, "crafted_01_42")
+    free(7, 6)
+    stationAt(5, 30, "crafted_02_26")
+    local forgeSquare, forgeEntity = AC_GeologyDebug.findNearestStation(player, S.forge)
+    check(forgeSquare ~= nil and forgeSquare:getX() == 7, "the nearest forge is found")
+    eq(forgeEntity, "Forge", "the Forge, not the farther Advanced Forge")
+
+    player = world()
+    stationAt(-80, 5, "crafted_02_11")
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.teleportToNearestStation(player, S.furnace)
+    MOCK.capturePrint(false)
+    eq(player.x, -79.5, "a station with no free side: the player stands on its square")
+
+    player = world()
+    stationAt(5, 5 + AC_GeologyDebug.STATION_SEARCH_RADIUS + 1, "crafted_01_16")
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.teleportToNearestStation(player, S.furnace), false, "nothing within the radius: no teleport")
+    MOCK.capturePrint(false)
+    eq(player.teleports, nil, "the player stays")
+    check(MOCK.printLogContains("no Smelting Furnace"), "and is told why")
+
+    -- Spawn: the nearest corner vanilla's entity cursor accepts, no
+    -- materials for this one build, the cheat back as it was.
+    player = world()
+    blocked(5, 6)
+    free(6, 5)
+    MOCK.buildEntityInvalid["6,5,0"] = true
+    free(5, 4)
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.spawnStationNextToPlayer(player, S.furnace), true, "furnace spawn queued")
+    MOCK.capturePrint(false)
+    eq(#MOCK.builtEntities, 1, "one build")
+    local built = MOCK.builtEntities[1] or {}
+    eq(built.entity, "Smelting_Furnace", "a Smelting Furnace")
+    eq(built.x .. "," .. built.y .. "," .. built.z, "5,4,0", "on the nearest square the cursor accepts")
+    eq(built.cheat, true, "built with the build cheat on: no materials")
+    eq(built.maxTime, 1, "at once, as vanilla's debug panel builds")
+    eq(player:isBuildCheat(), false, "the build cheat is off again afterwards")
+
+    -- A forge is three tiles (its E face, 1 x 3): all three must be free,
+    -- and none of them the player's own tile.
+    player = world()
+    free(5, 6) free(5, 7)            -- only two free below the player
+    free(6, 4) free(6, 5) free(6, 6) -- a free column to the east
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.spawnStationNextToPlayer(player, S.forge), true, "forge spawn queued")
+    MOCK.capturePrint(false)
+    built = MOCK.builtEntities[1] or {}
+    eq(built.entity, "Forge", "a Forge")
+    eq(built.x .. "," .. built.y, "6,4", "on the first corner whose three tiles are free")
+    player = world()
+    free(5, 3) free(5, 4) free(5, 6)
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnStationNextToPlayer(player, S.forge)
+    MOCK.capturePrint(false)
+    eq(#MOCK.builtEntities, 0, "a footprint across the player's own tile is never chosen")
+
+    player = world()
+    player:setBuildCheat(true)
+    free(5, 6)
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnStationNextToPlayer(player, S.furnace)
+    MOCK.capturePrint(false)
+    eq(player:isBuildCheat(), true, "a build cheat that was on stays on")
+
+    player = world()
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.spawnStationNextToPlayer(player, S.furnace), false, "no free square: nothing built")
+    MOCK.capturePrint(false)
+    eq(#MOCK.builtEntities, 0, "(no build)")
+
+    player = world()
+    free(5, 6)
+    MOCK.client = true
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.spawnStationNextToPlayer(player, S.furnace), false, "not on a multiplayer client")
+    eq(AC_GeologyDebug.spawnRunningGenerator(player), false, "(the generator neither)")
+    MOCK.capturePrint(false)
+    MOCK.client = false
+    eq(#MOCK.builtEntities, 0, "(no build)")
+
+    -- The kit options hand out the kit as well.
+    player = world()
+    free(5, 6)
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnMetallurgyKitAndFurnace(player)
+    MOCK.capturePrint(false)
+    eq(player.inventory:count("Base.Tongs"), 1, "kit + furnace: the kit")
+    eq(#MOCK.builtEntities, 1, "kit + furnace: the furnace")
+    player = world()
+    stationAt(8, 5, "crafted_01_16")
+    free(8, 6)
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnMetallurgyKitAndTeleport(player)
+    MOCK.capturePrint(false)
+    eq(player.inventory:count("Base.Tongs"), 1, "kit + teleport: the kit")
+    eq(player.teleports, 1, "kit + teleport: the teleport")
+    player = world()
+    free(6, 4) free(6, 5) free(6, 6)
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnCaseStockKitAndForge(player)
+    MOCK.capturePrint(false)
+    eq(player.inventory:count("Base.MetalworkingPunch"), 1, "case stock kit + forge: the kit")
+    eq(MOCK.builtEntities[1] and MOCK.builtEntities[1].entity, "Forge", "case stock kit + forge: the forge")
+    player = world()
+    stationAt(9, 5, "crafted_01_19")
+    free(9, 6)
+    MOCK.capturePrint(true)
+    AC_GeologyDebug.spawnCaseStockKitAndTeleport(player)
+    MOCK.capturePrint(false)
+    eq(player.inventory:count("Base.MetalworkingPunch"), 1, "case stock kit + teleport: the kit")
+    eq(player.teleports, 1, "case stock kit + teleport: the teleport")
+
+    -- A running generator: the analyzer's square then has electricity.
+    player = world()
+    local spot = free(5, 6)
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.spawnRunningGenerator(player), true, "generator placed")
+    MOCK.capturePrint(false)
+    local generator = spot.specialObjects[1]
+    check(generator ~= nil and generator.__class == "IsoGenerator", "an IsoGenerator on the free square next to the player")
+    if generator then
+        eq(generator:isConnected(), true, "connected")
+        eq(generator:isActivated(), true, "running")
+        eq(generator.fuel, generator:getMaxFuel(), "full of fuel")
+        eq(generator.item and generator.item:getFullType(), AC_GeologyDebug.GENERATOR_ITEM, "made from the vanilla generator item")
+    end
+    eq(AC_GeologyDebug.GENERATOR_ITEM, "Base.Generator", "the vanilla generator item")
+    player = world()
+    MOCK.capturePrint(true)
+    eq(AC_GeologyDebug.spawnRunningGenerator(player), false, "no free square: no generator")
+    MOCK.capturePrint(false)
+
+    MOCK.cellSquares = {}
+    MOCK.builtEntities = {}
+    MOCK.buildEntityInvalid = {}
 end
 
 ------------------------------------------------
@@ -9588,6 +9823,9 @@ do
     AC_Compat.run(true)
     MOCK.capturePrint(false)
     check(MOCK.printLogContains("OK: analyzer world sprite (industry_03_61)"), "analyzer sprite probed")
+    for _, face in ipairs({ "west (industry_03_60)", "east (industry_03_63)", "south (industry_03_62)" }) do
+        check(MOCK.printLogContains("OK: analyzer sprite facing " .. face), "analyzer sprite facing " .. face .. " probed")
+    end
     check(MOCK.printLogContains("OK: IsoGridSquare:AddSpecialObject"), "placement square method probed")
     check(MOCK.printLogContains("OK: IsoGridSquare:hasGridPower"), "grid power method probed")
     check(MOCK.printLogContains("OK: AC_LaboratoryAnalyzerObject loaded"), "building object load probed")
@@ -9601,6 +9839,14 @@ do
     MOCK.knownSprites["industry_03_61"] = true
     eq(s4.warnings, 1, "missing analyzer sprite is one WARNING")
     check(MOCK.printLogContains("WARNING: analyzer world sprite industry_03_61 not found"), "sprite WARNING line")
+    MOCK.knownSprites["industry_03_62"] = nil
+    MOCK.clearPrintLog()
+    MOCK.capturePrint(true)
+    local _, s4b = AC_Compat.run(true)
+    MOCK.capturePrint(false)
+    MOCK.knownSprites["industry_03_62"] = true
+    eq(s4b.warnings, 1, "a missing face is one WARNING too")
+    check(MOCK.printLogContains("WARNING: analyzer sprite facing south industry_03_62 not found"), "south face WARNING line")
     -- That WARNING is reached although getSprite() returned a sprite: the
     -- engine never returns nil, it makes the sprite on the spot. The probe
     -- has to look at the id.
@@ -9620,7 +9866,7 @@ do
         local _, summaryNoId = AC_Compat.run(true)
         MOCK.capturePrint(false)
         getSprite = realGet
-        eq(summaryNil.warnings, 1, "a nil sprite is a WARNING")
+        eq(summaryNil.warnings, 4, "a nil sprite is a WARNING, one per analyzer face")
         eq(summaryNoId.warnings, 0, "a sprite without getID is not a WARNING")
         check(summaryNoId.unverified >= 1, "it is UNVERIFIED")
         check(MOCK.printLogContains("IsoSprite:getID unavailable"), "and says why")
@@ -10718,8 +10964,10 @@ do
     local pressTag = ENGINE.benchTags[AC_Calibres.PRESS.benchTag]
     check(pressTag ~= nil and pressTag.stations == 0 and pressTag.vanillaRecipes == 0, "the press's bench tag is used by nothing in vanilla")
     eq(ENGINE.timedActions[AC_Calibres.PRESS.timedAction], true, "the press's timed action exists in vanilla")
-    local analyzerTile = ENGINE.sprites[AC_LaboratoryAnalyzer.CONFIG.worldSprite]
-    check(type(analyzerTile) == "table" and analyzerTile.entity == false and analyzerTile.moveable == false, "the analyzer's tile exists, is claimed by no entity and is not a vanilla moveable")
+    for face, sprite in pairs(AC_LaboratoryAnalyzer.CONFIG.facingSprites) do
+        local analyzerTile = ENGINE.sprites[sprite]
+        check(type(analyzerTile) == "table" and analyzerTile.entity == false and analyzerTile.moveable == false, "the analyzer's tile facing " .. face .. " exists, is claimed by no entity and is not a vanilla moveable")
+    end
 end
 
 section("Shell variants: one round per ammo type, the pellets are the gun's")

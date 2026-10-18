@@ -42,9 +42,14 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 
 | Feature | Current placeholder | Vanilla source / reference | Where configured | Final asset needed later |
 |---|---|---|---|---|
-| Laboratory Assay Analyzer, placed | `industry_03_61` (world sprite) | vanilla tile of the industry_03 sheet, found with the tile inspector; claimed by no vanilla entity and not a vanilla moveable | `AC_Visuals.LIST`, key `analyzerWorldSprite` | a one-tile laboratory instrument on a stand, one or two faces |
+| Laboratory Assay Analyzer, placed, facing north | `industry_03_61` (world sprite) | vanilla tile of the industry_03 sheet, found with the tile inspector; claimed by no vanilla entity and not a vanilla moveable | `AC_Visuals.LIST`, key `analyzerWorldSprite` | a one-tile laboratory instrument on a stand, facing north |
+| Laboratory Assay Analyzer, placed, facing west | `industry_03_60` (world sprite) | vanilla tile of the industry_03 sheet, the analyzer's machine seen from the other side; claimed by no vanilla entity and not a vanilla moveable | `AC_Visuals.LIST`, key `analyzerSpriteWest` | the same instrument facing west |
+| Laboratory Assay Analyzer, placed, facing east | `industry_03_63` (world sprite) | vanilla tile of the industry_03 sheet, the analyzer's machine seen from the front; claimed by no vanilla entity and not a vanilla moveable | `AC_Visuals.LIST`, key `analyzerSpriteEast` | the same instrument facing east |
+| Laboratory Assay Analyzer, placed, facing south | `industry_03_62` (world sprite) | vanilla tile of the industry_03 sheet, the analyzer's machine seen from the front; claimed by no vanilla entity and not a vanilla moveable | `AC_Visuals.LIST`, key `analyzerSpriteSouth` | the same instrument facing south |
 | Reloading Press, facing south (add-on AmmoMakingPress) | `ammomaking_press_01_0` (world sprite) | the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py | `AC_Visuals.LIST`, key `pressSpriteSouth` (mirrors `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt`, which the engine reads) | a single-stage bench press on a short wooden stand, facing south, 128 x 256 |
 | Reloading Press, facing east (add-on AmmoMakingPress) | `ammomaking_press_01_1` (world sprite) | the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py | `AC_Visuals.LIST`, key `pressSpriteEast` (mirrors `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt`, which the engine reads) | the same press facing east, 128 x 256 |
+| Reloading Press, facing west (add-on AmmoMakingPress) | `ammomaking_press_01_2` (world sprite) | the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py | `AC_Visuals.LIST`, key `pressSpriteWest` (mirrors `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt`, which the engine reads) | the same press facing west, 128 x 256 |
+| Reloading Press, facing north (add-on AmmoMakingPress) | `ammomaking_press_01_3` (world sprite) | the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py | `AC_Visuals.LIST`, key `pressSpriteNorth` (mirrors `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt`, which the engine reads) | the same press facing north, 128 x 256 |
 | Reloading Press, crafting window and build menu (add-on AmmoMakingPress) | `Build_AmmoMakingReloadingPress` (window icon) | the add-on's own icon, 48 x 48, drawn by art/icons/make_icons.py | `AC_Visuals.LIST`, key `pressWindowIcon` (mirrors `mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress_xuiSkin.txt`, which the engine reads) | none needed: original art; redraw it when the press's sprites get final art |
 
 ### Items of the main mod (configured in the item script)
@@ -138,7 +143,7 @@ What final art is wanted for each is specified in `docs/ART_HANDOFF.md`.
 | Spent .308 Case (`AmmoMaking.SpentCase308Win`) | `AmmoMakingSpentCaseRifle`, the mod's own | `RifleAmmo`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentCase308Win`: `Icon`, `WorldStaticModel` | a world model |
 | Spent 12 Gauge Brass Hull (`AmmoMaking.SpentHull12Gauge`) | `AmmoMakingSpentHull`, the mod's own | `ShotGunShells`, vanilla | `mod/AmmoMakingSpentCases/42/media/scripts/AC_SpentCaseItems.txt`, item `SpentHull12Gauge`: `Icon`, `WorldStaticModel` | a world model |
 
-4 visuals named in Lua, 72 items of the main mod, 9 of the spent-cases add-on: 85 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
+9 visuals named in Lua, 72 items of the main mod, 9 of the spent-cases add-on: 90 placeholders in all. An item with an icon of the mod's own is still listed while its world model is borrowed.
 
 <!-- END PLACEHOLDER ASSET TABLE -->
 

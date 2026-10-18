@@ -8,8 +8,9 @@ press on a short wooden stand, in the game's 2:1 isometric projection, one
 vanilla or third-party pixel. It is a placeholder: good enough to tell where
 the station stands and which way it faces, not meant as final art.
 
-Writes src/ammomaking_press_01_0.png (facing south) and _1.png (facing
-east). The drawing is deterministic: the same script gives the same pixels.
+Writes src/ammomaking_press_01_0.png (facing south), _1.png (facing east),
+_2.png (facing west) and _3.png (facing north). The drawing is
+deterministic: the same script gives the same pixels.
 """
 
 import os
@@ -63,34 +64,44 @@ def press(facing):
         box(draw, u, v, u + 0.08, v + 0.08, 0, 46, wood)
     box(draw, 0.16, 0.16, 0.84, 0.84, 46, 54, wood)
 
-    # The press: a base plate, two columns, a head, the ram between them.
+    # The lever: from the head, up and out towards the side the press faces.
+    # Facing north or west it points away from the viewer, so it is drawn
+    # first and the press stands in front of it.
+    pivot = project(0.5, 0.5, 122)
+    tip = {"S": project(0.5, 1.02, 168), "E": project(1.02, 0.5, 168),
+           "N": project(0.5, -0.02, 135), "W": project(-0.02, 0.5, 135)}[facing]   # lower: same length on screen
+
+    def lever():
+        draw.line([pivot, tip], fill=OUTLINE, width=5)
+        draw.line([pivot, tip], fill=steel + (255,), width=3)
+        draw.ellipse((tip[0] - 5, tip[1] - 5, tip[0] + 5, tip[1] + 5), fill=(40, 40, 44, 255), outline=OUTLINE)
+
+    if facing in ("N", "W"):
+        lever()
+
+    # The press: a base plate, two columns behind the ram (on the side away
+    # from the operator), a head, the ram between them.
     box(draw, 0.36, 0.36, 0.64, 0.64, 54, 60, iron)
-    if facing == "S":
-        columns = ((0.38, 0.46), (0.56, 0.46))
-    else:
-        columns = ((0.46, 0.38), (0.46, 0.56))
+    columns = {"S": ((0.38, 0.46), (0.56, 0.46)), "N": ((0.38, 0.48), (0.56, 0.48)),
+               "E": ((0.46, 0.38), (0.46, 0.56)), "W": ((0.48, 0.38), (0.48, 0.56))}[facing]
     for u, v in columns:
         box(draw, u, v, u + 0.06, v + 0.06, 60, 112, steel)
     box(draw, 0.47, 0.47, 0.53, 0.53, 60, 84, brass)      # the die and case holder
-    box(draw, 0.36, 0.42, 0.64, 0.58, 112, 122, iron) if facing == "S" else box(draw, 0.42, 0.36, 0.58, 0.64, 112, 122, iron)
+    if facing in ("S", "N"):
+        box(draw, 0.36, 0.42, 0.64, 0.58, 112, 122, iron)
+    else:
+        box(draw, 0.42, 0.36, 0.58, 0.64, 112, 122, iron)
     box(draw, 0.47, 0.47, 0.53, 0.53, 96, 112, steel)     # the ram
 
-    # The lever: from the head, up and out towards the side the press faces.
-    pivot = project(0.5, 0.5, 122)
-    if facing == "S":
-        tip = project(0.5, 1.02, 168)
-    else:
-        tip = project(1.02, 0.5, 168)
-    draw.line([pivot, tip], fill=OUTLINE, width=5)
-    draw.line([pivot, tip], fill=steel + (255,), width=3)
-    draw.ellipse((tip[0] - 5, tip[1] - 5, tip[0] + 5, tip[1] + 5), fill=(40, 40, 44, 255), outline=OUTLINE)
+    if facing in ("S", "E"):
+        lever()
     return image
 
 
 def main():
     out = os.path.join(HERE, "src")
     os.makedirs(out, exist_ok=True)
-    for index, facing in enumerate(("S", "E")):
+    for index, facing in enumerate(("S", "E", "W", "N")):
         path = os.path.join(out, "ammomaking_press_01_%d.png" % index)
         press(facing).save(path, format="PNG", optimize=False, compress_level=9)
         print("Wrote " + os.path.relpath(path, os.path.dirname(os.path.dirname(HERE))).replace("\\", "/"))

@@ -527,7 +527,7 @@ For whoever draws the press. Every figure is read from the installed
 | | Specification | Source |
 |---|---|---|
 | Footprint | **one tile**. The vanilla Hand Press and Key Duplicator are one tile per face; the two-tile vanilla benches are the wrong shape for a bench-top press | FILE entity scripts, `newtiledefinitions.tiles.txt` |
-| Orientations | **two faces: S and E**, as vanilla's `Hand_Press` (`crafted_01_72` S, `crafted_01_73` E). N and W are optional; the entity script takes `face N` / `face W` if they are drawn | FILE `entity_handpress.txt` |
+| Orientations | **four faces: S, E, W, N** (since 2026-10-18). Vanilla's `Hand_Press` has S and E only (`crafted_01_72` S, `crafted_01_73` E); W and N were added so the build cursor turns the press every way, written as vanilla's four-faced entities write them (`face W`, `face N`, e.g. `entity_piano.txt`) | FILE `entity_handpress.txt`, `entity_piano.txt` |
 | Canvas per face | **128 x 256 px** at the game's 2x scale (every tile in `Tiles2x.pack` has that full size); a 64 x 128 version for the 1x pack is optional | `Tiles2x.pack` entries, `fullW`, `fullH` |
 | The drawing inside it | bottom-anchored on the floor diamond. Vanilla's hand press occupies 110 x 154 px at offset (4, 94) for S and 103 x 141 at (18, 107) for E; a reloading press on a stand should fill about the same box | `Tiles2x.pack` entry of `crafted_01_72`, `_73` |
 | Projection and light | the game's 2:1 isometric projection; the floor diamond of a tile is 128 x 64 px at 2x; light from the upper left, as vanilla furniture | vanilla tiles |

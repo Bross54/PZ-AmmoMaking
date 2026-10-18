@@ -120,7 +120,7 @@ the tables are small. Nothing here has been balanced yet.
 | `digActionTime`, `digSound`, `digSoundRadius`, `shovelWearChance` | `AC_GeologySampling.CONFIG` | 150, `Shoveling`, 15, 10 % | dig action |
 | `fieldAssayXP`, `advancedAssayXP` | `AC_GeologySampling.CONFIG` | 3, 6 | assay XP |
 | `processingHours`, `measurementError`, `assayXP` | `AC_LaboratoryAnalyzer.CONFIG` | 24 h, 2 points, 10 | laboratory |
-| `worldSprite` | `AC_LaboratoryAnalyzer.CONFIG` | `industry_03_61` (temporary vanilla tile) | placement cursor, compat check |
+| `worldSprite`, `facingSprites` | `AC_LaboratoryAnalyzer.CONFIG` | `industry_03_61` (north); west `_60`, south `_62`, east `_63` (temporary vanilla tiles, one machine seen from four sides) | placement cursor (one face per rotation), compat check |
 | `placeActionTime`, `pickUpActionTime` | `AC_LaboratoryAnalyzer.CONFIG` | 100, 50 ticks | placement (`ISBuildAction` subtracts 50 for Handy, keep > 50), pickup |
 | `baseActionTime`, `skillTimeReductionPerLevel` | `AC_Mining.CONFIG` | 400, 4 % per level | mining duration |
 | `minimumAssayRank` | `AC_Mining.CONFIG` | 1 | which assays unlock mining |
@@ -380,7 +380,8 @@ same unchanged files). An earlier note said 42.20.2, read from a stale log.
 | Removal with `transmitRemoveItemFromSquare` then `RemoveTileObject` | CONFIRMED pattern: `ISAddTakeDispenserBottle:complete()` |
 | `setIsDismantable(false)` keeps a thumpable out of vanilla dismantle / move handling | CONFIRMED: `ISMoveableSpriteProps.fromObject`, `ISDestroyCursor`; vanilla `MOTrap.lua` sets it the same way |
 | `hasModData()`, `getObjectIndex() == -1`, `hasGridPower()` | CONFIRMED: vanilla Lua usage, method names present in the jar |
-| `industry_03_61` exists and is not a vanilla moveable | CONFIRMED: `media/newtiledefinitions.tiles.txt` has no `IsMoveAble`, so vanilla furniture pickup cannot grab the analyzer |
+| `industry_03_61` exists and is not a vanilla moveable | CONFIRMED: `media/newtiledefinitions.tiles.txt` has no `IsMoveAble`, so vanilla furniture pickup cannot grab the analyzer; the same holds for `industry_03_60`, `_62` and `_63` |
+| `industry_03_60` to `_63` are one machine facing west, north, south and east | CONFIRMED on 2026-10-18 from the images in `Tiles2x.pack`, compared with vanilla's ovens (`appliances_cooking_01_0` to `_3`, `Facing` E, S, W, N): a tile's left face looks south, its right face east. The four tiles have no `Facing` property of their own. Before this the cursor used `_61` for every direction, so rotating it changed nothing on screen |
 | `getSprite(name)` returns nil for an unknown tile | **WRONG, corrected on 2026-10-02.** JAR `IsoSpriteManager#getSprite`: an unknown name is created on the spot and returned, with `IsoSprite.DEFAULT_SPRITE_ID` (20000000) as its id. The game-start probe of the analyzer's sprite therefore reported OK for any name; it now compares `sprite:getID()` with the default id (public, and called by vanilla's debug Lua) |
 | The placed object keeps its ModData through save/reload and chunk unload | **REQUIRES IN-GAME VERIFICATION** |
 
@@ -918,16 +919,19 @@ Ammo Making Debug
 │                Inspect Clicked Tile Objects · Reset Depletion (tile / 3x3) ·
 │                Spawn Sampling Kit · Spawn Equipment Parts Kit · Spawn Mining Kit ·
 │                Spawn Assayed Sample
-├─ Analyzer      Spawn Laboratory Analyzer · (clicked analyzer:) Inspect Analyzer State ·
-│                Complete Analyzer Job
-├─ Metallurgy    Spawn Metallurgy Kit · Spawn Case Stock Kit · Spawn Recycling Kit ·
-│                Inspect Station Recipes · Print Material Ledger (inventory)
+├─ Analyzer      Spawn Laboratory Analyzer · Spawn Running Generator Next to Me ·
+│                (clicked analyzer:) Inspect Analyzer State · Complete Analyzer Job
+├─ Metallurgy    Spawn Metallurgy Kit ▸ Kit Only · Kit + Teleport to Nearest Furnace ·
+│                  Kit + Spawn Smelting Furnace Next to Me ·
+│                Spawn Case Stock Kit ▸ Kit Only · Kit + Teleport to Nearest Forge ·
+│                  Kit + Spawn Forge Next to Me ·
+│                Spawn Recycling Kit · Inspect Station Recipes · Print Material Ledger (inventory)
 ├─ Ammunition    Spawn Calibre Kit ▸ one entry per calibre · Spawn Primer and Powder Kit ·
 │                Print Calibre Definitions · Print Primer Families ·
 │                Verify Ammo Dependencies · Inspect Ammo Components (inventory) ·
 │                Inspect Loads (magazines and firearms carried) ·
 │                (spent cases on:) Spawn Spent Cases Kit
-├─ Stations      (press on:) Spawn Press Build Kit
+├─ Stations      (press on:) Spawn Press Build Kit · Spawn Reloading Press Next to Me
 ├─ Set Ammo Making Level ▸ 0 … 10
 └─ Diagnostics   Run Compatibility Check · Print Feature Flags · Print Save Schema ·
                  Print Placeholder Visuals
@@ -943,19 +947,44 @@ Everything prints to `console.txt`. From the Lua console:
   count and, when quality tracking is on, its tally record. Read-only.
 - **Spawn Spent Cases Kit**: ten spent cases of each calibre and a hammer:
   one batch for each spent-scrapping recipe. Only with the feature on.
-- **Spawn Press Build Kit**: exactly `AC_Calibres.PRESS.buildKit`. The press
-  itself is built from the build menu; no placed object is spawned.
+- **Spawn Press Build Kit**: exactly `AC_Calibres.PRESS.buildKit`, to build
+  the press from the build menu.
+- **Spawn Reloading Press Next to Me**: a finished press, built the same way
+  as the debug furnace below (`STATIONS.press`). Single player only.
 - **Print Feature Flags**, **Print Save Schema**, **Print Placeholder
   Visuals**: `AC_Features.describe()`, `AC_SaveData.SCHEMA` and
   `AC_Visuals.LIST`, one line each. Read-only.
 - **Spawn Metallurgy Kit**: tongs, a ceramic crucible, an iron ingot mold
   (it does not break), 22 charcoal, one zinc ore, ten scrap of each metal,
   six copper and two zinc ingots: every furnace recipe once, with the two
-  cast ingots completing a 7 + 3 brass batch. About 130 weight. No furnace
-  is spawned; build one or use vanilla debug.
+  cast ingots completing a 7 + 3 brass batch. About 130 weight. Its submenu
+  adds a furnace that takes every one of those recipes (vanilla's Smelting
+  or Blast Furnace, the two entities with both `PrimitiveFurnace` and
+  `Furnace`):
+  - **Kit + Teleport to Nearest Furnace**: the nearest one on a loaded
+    square within `STATION_SEARCH_RADIUS` (100) tiles, on the player's level
+    and the ground, found by its tiles; the player lands on a free square
+    next to it. Nothing found: a halo line and no teleport.
+  - **Kit + Spawn Smelting Furnace Next to Me**: vanilla's own entity cursor
+    (`ISBuildIsoEntity`, as vanilla's debug Entity Scripts panel uses it)
+    builds one on the nearest corner within 3 tiles whose whole footprint
+    the cursor accepts and that does not cover the player, with the build
+    cheat on for that one build (no materials) and restored afterwards.
+    Single player only. REQUIRES FUTURE IN-GAME VERIFICATION.
+  `tools/pz_compat.py` records which entity claims each furnace and forge
+  tile and its bench tags (`stationSprites` in `tests/engine_snapshot.lua`).
 - **Spawn Case Stock Kit**: a ball-peen hammer, tongs, a metalworking
   punch, one charcoal, one brass ingot and two small brass sheets: forge the
-  ingot at a forge, punch the sheets at any surface.
+  ingot at a forge, punch the sheets at any surface. Its submenu works like
+  the metallurgy kit's, with a forge: vanilla's Forge or Advanced Forge (both
+  carry `PrimitiveForge` and `Forge`, the case stock and die-set tags; the
+  Primitive Forge only the first). The spawned one is a Forge, three tiles
+  in a line.
+- **Spawn Running Generator Next to Me**: a vanilla generator
+  (`Base.Generator`) on a free square next to the player, connected, full
+  and running, as vanilla's timed-action tests set one up
+  (`IsoGenerator.new`). Gives a placed analyzer power after the grid is off.
+  Single player only. REQUIRES FUTURE IN-GAME VERIFICATION.
 - **Spawn Calibre Kit → <calibre>**: the die set, a hammer, and the cups,
   copper scrap, primers of the calibre's family, gunpowder and, for a shell,
   wadding for five rounds of that calibre, computed from its definition.

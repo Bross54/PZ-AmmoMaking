@@ -35,6 +35,32 @@
                         "PickUpWeight": 400,
                         "solidtrans": ""
                     }
+                },
+                {
+                    "index": 2,
+                    "image": "src/ammomaking_press_01_2.png",
+                    "properties": {
+                        "BlocksPlacement": "",
+                        "CustomName": "Press",
+                        "Facing": "W",
+                        "GroupName": "Reloading",
+                        "IsMoveAble": "",
+                        "PickUpWeight": 400,
+                        "solidtrans": ""
+                    }
+                },
+                {
+                    "index": 3,
+                    "image": "src/ammomaking_press_01_3.png",
+                    "properties": {
+                        "BlocksPlacement": "",
+                        "CustomName": "Press",
+                        "Facing": "N",
+                        "GroupName": "Reloading",
+                        "IsMoveAble": "",
+                        "PickUpWeight": 400,
+                        "solidtrans": ""
+                    }
                 }
             ]
         }

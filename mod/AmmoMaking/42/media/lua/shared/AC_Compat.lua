@@ -1198,6 +1198,30 @@ local function checkAnalyzerSprite(
         "analyzer world sprite",
         "a placed analyzer would be invisible; change the entry analyzerWorldSprite of AC_Visuals"
     )
+
+
+    local faces =
+        AC_LaboratoryAnalyzer.CONFIG.facingSprites
+
+
+    for _,
+        face
+    in ipairs(
+        {
+            { "west", "analyzerSpriteWest" },
+            { "east", "analyzerSpriteEast" },
+            { "south", "analyzerSpriteSouth" },
+        }
+    )
+    do
+
+        checkSprite(
+            results,
+            faces[face[1]],
+            "analyzer sprite facing " .. face[1],
+            "an analyzer placed facing " .. face[1] .. " would be invisible; change the entry " .. face[2] .. " of AC_Visuals"
+        )
+    end
 end
 
 
@@ -2660,7 +2684,7 @@ AC_Compat.FEATURE_CHECKS.reloadingPress =
         for _,
             key
         in ipairs(
-            { "pressSpriteSouth", "pressSpriteEast" }
+            { "pressSpriteSouth", "pressSpriteEast", "pressSpriteWest", "pressSpriteNorth" }
         )
         do
 

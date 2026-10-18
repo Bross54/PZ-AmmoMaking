@@ -395,6 +395,7 @@ MOCK.knownScriptItems = {
     ["Base.Bullets357Box"] = true, ["Base.Bullets44Box"] = true, ["Base.556Box"] = true,
     ["Base.3030Box"] = true, ["Base.308Box"] = true, ["Base.ShotgunShellsBox"] = true,
     ["Base.CopperOre"] = true,
+    ["Base.Generator"] = true,  -- the debug tools' running generator
     ["AmmoMaking.ZincOre"] = true,
     ["AmmoMaking.GeologicalSample"] = true,
     ["AmmoMaking.FieldAssayKit"] = true,
@@ -766,6 +767,14 @@ local function newPlayer(opts)
     function player:addCombatMuscleStrain() end
     function player:getEmitter() return nil end
     function player:isTimedActionInstant() return false end
+    -- IsoGameCharacter build cheat and IsoPlayer.teleportTo(float, float, int).
+    function player:isBuildCheat() return self.buildCheat == true end
+    function player:setBuildCheat(on) self.buildCheat = on end
+    function player:teleportTo(x, y, z)
+        self.x, self.y, self.z = x, y, z
+        self.square = MOCK.cellSquares[math.floor(x) .. "," .. math.floor(y) .. "," .. z] or self.square
+        self.teleports = (self.teleports or 0) + 1
+    end
     function player:totalXP()
         local total = 0
         for _, v in ipairs(self.xpLog) do total = total + v end
@@ -852,6 +861,8 @@ local function newSquare(x, y, z, spriteName, opts)
     -- No square:Is(): it does not exist on Build 42.20.4 (calling it
     -- raised "Tried to call nil" in game).
     function square:hasWater() return self.water end
+    -- isFree(boolean): opts.blocked makes a square one nobody can stand on.
+    function square:isFree(_) return not opts.blocked end
     function square:haveElectricity() return false end
     function square:hasGridPower() return opts.gridPower == true end
     return MOCK.strict(square, "IsoGridSquare")
@@ -906,7 +917,7 @@ MOCK.newWorldObject = newWorldObject
 -- (IsoSprite.DEFAULT_SPRITE_ID) instead of a tile's own. An earlier
 -- version of this mock returned nil for an unknown name, and the mod's
 -- sprite probe was written against that.
-MOCK.knownSprites = { ["industry_03_61"] = true }
+MOCK.knownSprites = { ["industry_03_60"] = true, ["industry_03_61"] = true, ["industry_03_62"] = true, ["industry_03_63"] = true }
 MOCK.DEFAULT_SPRITE_ID = 20000000
 MOCK.spritesMadeOnTheSpot = {}
 
@@ -1084,6 +1095,82 @@ Metabolics = enum("Metabolics", { "DiggingSpade", "HeavyDomestic" })
 ISInventoryPaneContextMenu = { transfers = {} }
 function ISInventoryPaneContextMenu.transferIfNeeded(player, item)
     table.insert(ISInventoryPaneContextMenu.transfers, item)
+end
+function ISInventoryPaneContextMenu.getContainers(player) return arrayList({ player:getInventory() }) end
+
+-- SpriteConfigManager.getObjectInfoFromSprite: an ObjectInfo for a sprite
+-- some entity's SpriteConfig uses, else nil. MOCK.entitySprites names the
+-- sprites; the tests pin them against tests/engine_snapshot.lua.
+MOCK.entitySprites = {
+    ["crafted_01_16"] = "Smelting_Furnace",
+    ["crafted_01_42"] = "Forge",
+    ["ammomaking_press_01_0"] = "AmmoMaking_ReloadingPress",
+}
+-- The first face ISBuildIsoEntity:getFace() settles on from nSprite 1 (W,
+-- N, E, S), as width x height: the Smelting Furnace and the Forge have S
+-- and E only, so it is their E face (Forge E: three rows of one tile).
+MOCK.entityFaceSizes = { Smelting_Furnace = { 1, 1 }, Forge = { 1, 3 }, AmmoMaking_ReloadingPress = { 1, 1 } }
+SpriteConfigManager = {}
+function SpriteConfigManager.getObjectInfoFromSprite(sprite)
+    local entity = MOCK.entitySprites[sprite]
+    if not entity then return nil end
+    return { entity = entity, sprite = sprite, getName = function() return entity end }
+end
+
+-- IsoGenerator(InventoryItem, IsoCell, IsoGridSquare): its constructor adds
+-- it to the square (vanilla MOGenerator.lua says so).
+IsoGenerator = {}
+function IsoGenerator.new(item, cell, square)
+    local o = newWorldObject({ class = "IsoGenerator" })
+    o.connected, o.activated, o.fuel, o.item = false, false, 0, item
+    function o:setConnected(on) self.connected = on end
+    function o:setActivated(on) self.activated = on end
+    function o:setFuel(fuel) self.fuel = fuel end
+    function o:getMaxFuel() return 100 end
+    function o:isConnected() return self.connected end
+    function o:isActivated() return self.activated end
+    o = MOCK.strict(o, "IsoGenerator")
+    table.insert(square.objects, o)
+    table.insert(square.specialObjects, o)
+    o.square = square
+    return o
+end
+
+-- Vanilla's entity cursor (server/BuildingObjects/ISBuildIsoEntity.lua),
+-- only as far as the debug furnace spawn uses it. tryBuild records the
+-- build, with the build cheat as create() would see it, and then plays
+-- the build action's end: ISBuildingObject:tryBuild gives the action
+-- self.onActionComplete for completion and cancel alike.
+MOCK.builtEntities = {}
+MOCK.buildEntityInvalid = {}
+ISBuildIsoEntity = {}
+ISBuildIsoEntity.__index = ISBuildIsoEntity
+function ISBuildIsoEntity:new(character, objectInfo, nSprite, containers)
+    local o = setmetatable({ character = character, objectInfo = objectInfo, nSprite = nSprite, containers = containers }, self)
+    return o
+end
+function ISBuildIsoEntity:getSprite() return self.objectInfo.sprite end
+function ISBuildIsoEntity:getFace()
+    local size = MOCK.entityFaceSizes[self.objectInfo.entity] or { 1, 1 }
+    return { getWidth = function() return size[1] end, getHeight = function() return size[2] end }
+end
+-- Valid when every square of the footprint exists, is free and is not
+-- marked invalid by the test (vanilla checks each square of the face).
+function ISBuildIsoEntity:isValid(square)
+    local size = MOCK.entityFaceSizes[self.objectInfo.entity] or { 1, 1 }
+    for dx = 0, size[1] - 1 do
+        for dy = 0, size[2] - 1 do
+            local x, y, z = square:getX() + dx, square:getY() + dy, square:getZ()
+            local part = MOCK.cellSquares[x .. "," .. y .. "," .. z]
+            if not part or not part:isFree(false) or MOCK.buildEntityInvalid[x .. "," .. y .. "," .. z] then return false end
+        end
+    end
+    return true
+end
+function ISBuildIsoEntity:onActionComplete() self.completed = true end
+function ISBuildIsoEntity:tryBuild(x, y, z)
+    table.insert(MOCK.builtEntities, { entity = self.objectInfo.entity, x = x, y = y, z = z, cheat = self.character:isBuildCheat(), maxTime = self.maxTime })
+    self:onActionComplete()
 end
 Perks = enum("Perk", { "Strength", "Crafting" })
 

@@ -65,6 +65,7 @@ CLASSES = {
     "IsoGridSquare": "zombie.iso.IsoGridSquare",
     "IsoObject": "zombie.iso.IsoObject",
     "IsoThumpable": "zombie.iso.objects.IsoThumpable",
+    "IsoGenerator": "zombie.iso.objects.IsoGenerator",
     "IsoWorldInventoryObject": "zombie.iso.objects.IsoWorldInventoryObject",
     "IsoCell": "zombie.iso.IsoCell",
     "IsoWorld": "zombie.iso.IsoWorld",
@@ -222,7 +223,7 @@ def mod_facts():
     lua.execute('MOCK.capturePrint = function() end')
     lua.execute('MOCK.loadMod("%s")' % MOD_LUA)
     facts = to_python(lua.eval('dofile("%s/tools/mod_facts.lua")' % ROOT))
-    for key in ("items", "itemTags", "benchTags", "timedActions", "vanillaRecipes", "lootLists", "sprites", "sounds", "modItems", "uses"):
+    for key in ("items", "itemTags", "benchTags", "timedActions", "vanillaRecipes", "lootLists", "sprites", "stationSprites", "sounds", "modItems", "uses"):
         if isinstance(facts.get(key), list):
             facts[key] = {}
     return facts
@@ -888,6 +889,17 @@ def build_snapshot(install, jar, facts, calls):
             "entity": claimed.get(sprite, False),
         }
 
+    # Vanilla station tiles the debug tools look for: who claims each and
+    # the bench tags that entity provides.
+    snapshot["stationSprites"] = {}
+    for sprite in sorted(facts["stationSprites"]):
+        owner = claimed.get(sprite, False)
+        bench = re.search(r"component\s+CraftBench\s*\{[^}]*?Recipes\s*=\s*([^,\n}]*)", entities.get(owner, "")) if owner else None
+        snapshot["stationSprites"][sprite] = {
+            "entity": owner,
+            "benchTags": ";".join(tag.strip() for tag in bench.group(1).split(";")) if bench else "",
+        }
+
     sounds = install.sounds()
     snapshot["sounds"] = {name: name in sounds for name in sorted(facts["sounds"])}
 
@@ -1175,6 +1187,13 @@ def judge(snapshot, facts, calls, recorded, have_jar):
                 findings.append(("WARNING", "tile %s is now a vanilla moveable: furniture pickup can take it" % sprite))
     report.group("sprites", findings)
 
+    findings = []
+    for sprite, entry in snapshot["stationSprites"].items():
+        expected = facts["stationSprites"][sprite]
+        if entry["entity"] != expected:
+            findings.append(("WARNING", "tile %s is claimed by %s, not %s: the debug furnace tools will not find or build it" % (sprite, entry["entity"] or "no entity", expected)))
+    report.group("vanilla station tiles the debug tools use (%d)" % len(facts["stationSprites"]), findings)
+
     findings = [("WARNING", "sound %s does not exist (%s)" % (name, facts["sounds"][name])) for name, present in snapshot["sounds"].items() if not present]
     report.group("sounds", findings)
 
@@ -1319,7 +1338,7 @@ def judge(snapshot, facts, calls, recorded, have_jar):
     else:
         if have_jar and recorded.get("version") != snapshot["version"]:
             findings.append(("WARNING", "game version %s, recorded %s" % (snapshot["version"], recorded.get("version"))))
-        for section in ("items", "art", "pressDraft", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
+        for section in ("items", "art", "pressDraft", "itemTags", "benchTags", "timedActions", "recipes", "firearms", "magazines", "sprites", "stationSprites", "sounds", "design", "luaMethods") + (("ammoTypes", "events", "globals", "functions", "members", "classes") if have_jar else ()):
             # (designBodies is compared, with what to do about it, in its
             # own group above.)
             for line in difference(recorded.get(section) or {}, snapshot[section] or {}, section):

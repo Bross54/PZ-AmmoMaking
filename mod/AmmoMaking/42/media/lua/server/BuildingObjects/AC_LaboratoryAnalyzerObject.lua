@@ -361,27 +361,30 @@ function AC_LaboratoryAnalyzerObject:new(
 
 
     ------------------------------------------------
-    -- One sprite for every direction for now.
+    -- One face per direction. ISBuildingObject's
+    -- plain sprite is its west face (getSprite(),
+    -- nSprite 1); with a single sprite for all four
+    -- the cursor rotated but always looked the same.
     ------------------------------------------------
 
-    local sprite =
-        AC_LaboratoryAnalyzer.CONFIG.worldSprite
+    local faces =
+        AC_LaboratoryAnalyzer.CONFIG.facingSprites
 
 
     o:setSprite(
-        sprite
+        faces.west
     )
 
     o:setNorthSprite(
-        sprite
+        faces.north
     )
 
     o:setEastSprite(
-        sprite
+        faces.east
     )
 
     o:setSouthSprite(
-        sprite
+        faces.south
     )
 
 

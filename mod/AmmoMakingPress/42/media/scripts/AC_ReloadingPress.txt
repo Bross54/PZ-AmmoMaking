@@ -9,11 +9,13 @@
    It follows vanilla's Hand_Press field for field
    (media/scripts/generated/entities/pottery/workstations/entity_hand_press.txt,
    42.20.4): a CraftBench whose Recipes tag is the press's own, two faces,
-   a build recipe. Its window skin is in AC_ReloadingPress_xuiSkin.txt, a
+   a build recipe; four faces where the hand press has two (S, E, W, N,
+   as vanilla's four-faced entities, e.g. entity_piano.txt), so the build
+   cursor turns it every way. Its window skin is in AC_ReloadingPress_xuiSkin.txt, a
    file of its own as vanilla's is. The skill line and the tooltip follow
    vanilla's welded stations (entity_feedingtrough.txt).
 
-   PLACEHOLDER_VISUAL: the two sprites are the add-on's own tile sheet
+   PLACEHOLDER_VISUAL: the four sprites are the add-on's own tile sheet
    (art/reloading_press/, built by tools/build_tiles.py), programmer art
    drawn from boxes. They are the add-on's own names, so no other entity
    can claim them. The window icon, Build_AmmoMakingReloadingPress, is the
@@ -55,6 +57,20 @@ module Base
                 layer
                 {
                     row = ammomaking_press_01_1,
+                }
+            }
+            face W
+            {
+                layer
+                {
+                    row = ammomaking_press_01_2,
+                }
+            }
+            face N
+            {
+                layer
+                {
+                    row = ammomaking_press_01_3,
                 }
             }
         }

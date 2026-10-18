@@ -54,13 +54,66 @@ AC_Visuals.LIST = {
 
         kind = "world sprite",
 
-        feature = "Laboratory Assay Analyzer, placed",
+        feature = "Laboratory Assay Analyzer, placed, facing north",
 
         source = "vanilla tile of the industry_03 sheet, found with the tile inspector; claimed by no vanilla entity and not a vanilla moveable",
 
-        final = "a one-tile laboratory instrument on a stand, one or two faces",
+        final = "a one-tile laboratory instrument on a stand, facing north",
 
-        usedBy = "AC_LaboratoryAnalyzer.CONFIG.worldSprite",
+        usedBy = "AC_LaboratoryAnalyzer.CONFIG.worldSprite and facingSprites.north",
+    },
+
+    -- The other three faces of the same vanilla machine
+    -- (industry_03_60 to _63, read from the texture pack
+    -- against the Facing of vanilla's ovens): the left
+    -- face of a tile looks south, the right face east.
+
+    {
+        key = "analyzerSpriteWest",
+
+        value = "industry_03_60",
+
+        kind = "world sprite",
+
+        feature = "Laboratory Assay Analyzer, placed, facing west",
+
+        source = "vanilla tile of the industry_03 sheet, the analyzer's machine seen from the other side; claimed by no vanilla entity and not a vanilla moveable",
+
+        final = "the same instrument facing west",
+
+        usedBy = "AC_LaboratoryAnalyzer.CONFIG.facingSprites.west",
+    },
+
+    {
+        key = "analyzerSpriteEast",
+
+        value = "industry_03_63",
+
+        kind = "world sprite",
+
+        feature = "Laboratory Assay Analyzer, placed, facing east",
+
+        source = "vanilla tile of the industry_03 sheet, the analyzer's machine seen from the front; claimed by no vanilla entity and not a vanilla moveable",
+
+        final = "the same instrument facing east",
+
+        usedBy = "AC_LaboratoryAnalyzer.CONFIG.facingSprites.east",
+    },
+
+    {
+        key = "analyzerSpriteSouth",
+
+        value = "industry_03_62",
+
+        kind = "world sprite",
+
+        feature = "Laboratory Assay Analyzer, placed, facing south",
+
+        source = "vanilla tile of the industry_03 sheet, the analyzer's machine seen from the front; claimed by no vanilla entity and not a vanilla moveable",
+
+        final = "the same instrument facing south",
+
+        usedBy = "AC_LaboratoryAnalyzer.CONFIG.facingSprites.south",
     },
 
     {
@@ -93,6 +146,42 @@ AC_Visuals.LIST = {
         source = "the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py",
 
         final = "the same press facing east, 128 x 256",
+
+        usedBy = "the entity's SpriteConfig; probed by AC_Compat when the press is on",
+
+        mirror = "mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt",
+    },
+
+    {
+        key = "pressSpriteWest",
+
+        value = "ammomaking_press_01_2",
+
+        kind = "world sprite",
+
+        feature = "Reloading Press, facing west (add-on AmmoMakingPress)",
+
+        source = "the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py",
+
+        final = "the same press facing west, 128 x 256",
+
+        usedBy = "the entity's SpriteConfig; probed by AC_Compat when the press is on",
+
+        mirror = "mod/AmmoMakingPress/42/media/scripts/AC_ReloadingPress.txt",
+    },
+
+    {
+        key = "pressSpriteNorth",
+
+        value = "ammomaking_press_01_3",
+
+        kind = "world sprite",
+
+        feature = "Reloading Press, facing north (add-on AmmoMakingPress)",
+
+        source = "the add-on's own tile sheet: programmer art drawn by art/reloading_press/make_art.py",
+
+        final = "the same press facing north, 128 x 256",
 
         usedBy = "the entity's SpriteConfig; probed by AC_Compat when the press is on",
 
