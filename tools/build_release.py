@@ -69,7 +69,7 @@ MODS = [MOD, "mod/AmmoMakingPress", "mod/AmmoMakingSpentCases", "mod/AmmoMakingC
 TILE_SHEETS = ["art/reloading_press/tiles.json"]
 
 # What a release may contain.
-ALLOWED_EXTENSIONS = {".lua", ".txt", ".json", ".info", ".png", ".tiles", ".pack"}
+ALLOWED_EXTENSIONS = {".lua", ".txt", ".json", ".info", ".png", ".tiles", ".pack", ".x"}
 FORBIDDEN_NAMES = re.compile(r"(?i)(\.bak$|\.orig$|\.rej$|\.tmp$|\.swp$|~$|^thumbs\.db$|^\.ds_store$|^desktop\.ini$|\.log$|\.md$|\.py$)")
 # A drive letter path, a home directory, or this machine's library folders.
 LOCAL_PATH = re.compile(r"(?i)([a-z]:[\\/](users|steamlibrary|program files|project zomboid)|/home/\w+|/users/\w+|steamapps)")
@@ -345,6 +345,10 @@ def main():
         code, last, _ = gate_python("art/workshop/make_workshop_art.py", "posters", "--check")
         if code != 0:
             raise Failure("art/workshop/make_workshop_art.py --check fails: " + last)
+        print("PASS     " + last)
+        code, last, _ = gate_python("art/models/make_models.py", "world models", "--check")
+        if code != 0:
+            raise Failure("art/models/make_models.py --check fails: " + last)
         print("PASS     " + last)
         code, last, _ = gate_python("tools/build_tiles.py", "tile builder", "--selftest")
         if code != 0:

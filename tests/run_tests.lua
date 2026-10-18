@@ -10588,7 +10588,17 @@ do
         end
         if not f.WorldStaticModel then table.insert(noWorldModel, id) end
         for _, key in ipairs({ "StaticModel", "WorldStaticModel" }) do
-            if f[key] then eq(art.models[f[key]], true, id .. ": its " .. key .. " " .. f[key] .. " is a model vanilla defines") end
+            local own = f[key] and string.match(f[key], "^AmmoMaking%.([%w_]+)$")
+            if own then
+                -- A model of the mod's own (art/models/make_models.py): its
+                -- block in the mod's model script, its mesh and its texture.
+                local script = readFile(ROOT .. "/mod/AmmoMaking/42/media/scripts/AC_Models.txt") or ""
+                check(string.find(script, "model%s+" .. own .. "%s") ~= nil, id .. ": its model " .. own .. " is in AC_Models.txt")
+                check(readFile(ROOT .. "/mod/AmmoMaking/42/media/models_X/WorldItems/" .. own .. ".X") ~= nil, id .. ": and its mesh is shipped")
+                check(readFile(ROOT .. "/mod/AmmoMaking/42/media/textures/WorldItems/" .. own .. ".png") ~= nil, id .. ": and its texture")
+            elseif f[key] then
+                eq(art.models[f[key]], true, id .. ": its " .. key .. " " .. f[key] .. " is a model vanilla defines")
+            end
         end
         for tag in string.gmatch(f.Tags or "", "[^;%s]+") do
             eq(art.tags[tag], true, id .. ": its tag " .. tag .. " is one vanilla items carry")
@@ -10604,13 +10614,12 @@ do
         if not (produced[id] or looted[id]) then table.insert(noSource, id) end
     end
     eq(count, 72, "seventy-two items")
-    -- The five items of the geology stage name no world model; every item
-    -- of the later stages does. (What the game draws for an item without
-    -- one is engine behaviour; the sample and the dropped analyzer were
-    -- used that way in game.)
+    -- Every item names a world model; the geology stage's are the mod's own
+    -- programmer art (art/models/make_models.py). Only the prototype test
+    -- cartridge has none.
     table.sort(noWorldModel)
-    eq(table.concat(noWorldModel, ", "), "AmmoMaking.AdvancedFieldAssayKit, AmmoMaking.FieldAssayKit, AmmoMaking.GeologicalSample, AmmoMaking.LaboratoryAssayAnalyzer, AmmoMaking.TestCartridge",
-        "only the five geology-stage items have no world model")
+    eq(table.concat(noWorldModel, ", "), "AmmoMaking.TestCartridge",
+        "only the prototype test cartridge has no world model")
     table.sort(unused)
     eq(#unused, 0, "no item is declared and used by nothing: " .. table.concat(unused, ", "))
 

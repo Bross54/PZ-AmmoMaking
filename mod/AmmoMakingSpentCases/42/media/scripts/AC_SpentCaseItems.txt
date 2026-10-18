@@ -129,6 +129,7 @@ module AmmoMaking
         ItemType = base:normal,
         Icon = AmmoMakingBrassCatcher,
         Weight = 0.3,
+        WorldStaticModel = AmmoMaking.AmmoMakingBrassCatcher,
     }
 
     item CaseTumbler
@@ -138,5 +139,6 @@ module AmmoMaking
         ItemType = base:normal,
         Icon = AmmoMakingCaseTumbler,
         Weight = 3,
+        WorldStaticModel = AmmoMaking.AmmoMakingCaseTumbler,
     }
 }

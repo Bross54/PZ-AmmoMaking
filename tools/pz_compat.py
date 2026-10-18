@@ -295,7 +295,8 @@ def mod_item_art():
         if fields.get("Icon") and not own_texture(fields["Icon"]):
             art["icons"].setdefault(fields["Icon"], name)
         for key in ("StaticModel", "WorldStaticModel"):
-            if fields.get(key):
+            # AmmoMaking.<name>: a model of the mod's own (art/models).
+            if fields.get(key) and not fields[key].startswith("AmmoMaking."):
                 art["models"].setdefault(fields[key], name)
         if fields.get("DisplayCategory"):
             art["categories"].setdefault(fields["DisplayCategory"], name)

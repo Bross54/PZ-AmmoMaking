@@ -423,7 +423,7 @@ function A.catcherItem()
     return {
         name = string.match(c.item, "%.([%w_]+)$"), fullType = c.item, displayName = c.displayName,
         fields = { { "DisplayName", c.displayName }, { "DisplayCategory", c.category }, { "ItemType", "base:normal" },
-                   { "Icon", c.icon }, { "Weight", c.weight } },
+                   { "Icon", c.icon }, { "Weight", c.weight }, { "WorldStaticModel", "AmmoMaking.AmmoMakingBrassCatcher" } },
     }
 end
 
@@ -433,7 +433,7 @@ function A.tumblerItem()
     return {
         name = string.match(t.item, "%.([%w_]+)$"), fullType = t.item, displayName = t.displayName,
         fields = { { "DisplayName", t.displayName }, { "DisplayCategory", t.category }, { "ItemType", "base:normal" },
-                   { "Icon", t.icon }, { "Weight", t.weight } },
+                   { "Icon", t.icon }, { "Weight", t.weight }, { "WorldStaticModel", "AmmoMaking.AmmoMakingCaseTumbler" } },
     }
 end
 
@@ -583,7 +583,7 @@ function A.renderPlaceholders(mainItems, spentItems)
             table.insert(lines, "| " .. table.concat({
                 (fields.DisplayName or item.fullType) .. " (`" .. item.fullType .. "`)",
                 "`" .. tostring(fields.Icon) .. "`, " .. (own and "the mod's own" or "vanilla"),
-                fields.WorldStaticModel and ("`" .. fields.WorldStaticModel .. "`, vanilla") or "none (the engine's default for an item without one)",
+                fields.WorldStaticModel and ("`" .. fields.WorldStaticModel .. "`, " .. (string.find(fields.WorldStaticModel, "AmmoMaking.", 1, true) == 1 and "the mod's own (art/models/make_models.py)" or "vanilla")) or "none (the engine's default for an item without one)",
                 "`" .. script .. "`, item `" .. string.match(item.fullType, "([^%.]+)$") .. "`: `Icon`, `WorldStaticModel`",
                 own and (fields.WorldStaticModel and "a world model" or "none; a world model is optional")
                     or ("a 32 x 32 icon" .. (fields.WorldStaticModel and " and a world model" or "; a world model is optional")),

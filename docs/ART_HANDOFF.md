@@ -143,6 +143,21 @@ Priority 1 is what a player looks at most or what is plainly wrong today.
 | **Reloading Press**, all four faces | tile sprite, four faces, **one tile** | a single-stage bench press on a short wooden stand: cast frame, long lever, ram, a die in the top. Muted colours, dark outline, to sit beside vanilla's `crafted_01` workshop set. Vanilla's hand press fills about 110 x 154 px at offset (4, 94) for south and 103 x 141 at (18, 107) for east; fill about the same box | `art/reloading_press/src/ammomaking_press_01_0.png` (S), `ammomaking_press_01_1.png` (E), `ammomaking_press_01_2.png` (W), `ammomaking_press_01_3.png` (N), then `python tools/build_tiles.py art/reloading_press/tiles.json` | the programmer art drawn by `art/reloading_press/make_art.py`; the sprite names `ammomaking_press_01_0` to `ammomaking_press_01_3` and the `AC_Visuals` keys `pressSpriteSouth`, `pressSpriteEast`, `pressSpriteWest`, `pressSpriteNorth` stay. Redraw the window icon `Build_AmmoMakingReloadingPress` to match |
 | **Laboratory Assay Analyzer**, placed | tile sprite, one tile, four faces (the cursor rotates through west, north, east, south) | a bench-top instrument on a stand: a boxy steel cabinet with a small window, a dial and a sample tray; clearly electrical; the same instrument as `Item_AmmoMakingAnalyzer` | a new sheet, e.g. `art/laboratory_analyzer/` with its own `tiles.json`, shipped by the main mod (`pack=`, `tiledef=`) | `AC_Visuals` keys `analyzerWorldSprite` (north) and `analyzerSpriteWest`, `analyzerSpriteEast`, `analyzerSpriteSouth` (today the vanilla tiles `industry_03_61`, `industry_03_60`, `industry_03_63`, `industry_03_62`) |
 
+### Programmer-art world models (since 2026-10-18)
+
+The six items that had no world model (geological sample, both assay kits,
+the analyzer as an item, the brass catcher, the case tumbler) have models of
+their own drawn from boxes and cylinders by `art/models/make_models.py`: a
+DirectX `.X` text mesh and a palette texture each, in
+`<mod>/42/media/models_X/WorldItems/` and `textures/WorldItems/`, named by
+the generated scripts `AC_Models.txt` and `AC_SpentCaseModels.txt`
+(`WorldStaticModel = AmmoMaking.<name>`). Conventions are vanilla's
+`CanClosed.X`: Y up, origin at the bottom centre, metres. A real model
+replaces the mesh and texture under the same names (an `.fbx` of the same
+name works too: the jar loads X, Fbx, glTF and Txt). REQUIRES FUTURE
+IN-GAME VERIFICATION: shown on the ground, the right way up, the right
+size.
+
 ### Priority 2: world models of the things made by the hundred
 
 Every item below has its own icon and a borrowed vanilla world model
